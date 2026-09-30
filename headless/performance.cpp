@@ -627,8 +627,12 @@ void Snapshot() {
 }
 
 #ifndef EDEN_DEV_PROFILE
-// Release builds: the JIT's block hook (derived a32_interface.cpp) resolves here and does nothing.
+// Release builds: the JIT's block hook (derived a32_interface.cpp) resolves here and does nothing,
+// as does the shared JIT's compile-phase hook (headless/dynarmic/jit_impl.inc). Native packages
+// cannot import an undefined weak symbol.
 extern "C" void eden_jit_block(unsigned, unsigned long long, const void*, unsigned long long) {}
+extern "C" void eden_jit_phases(unsigned, unsigned long long, unsigned long long, unsigned long long,
+                                unsigned long long) {}
 #endif
 
 #ifdef EDEN_DEV_PROFILE
