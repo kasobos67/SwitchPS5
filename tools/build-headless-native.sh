@@ -27,7 +27,7 @@ if [[ ! -f "$scratch/sdk/.complete" ]]; then
 fi
 if [[ ! -f "$scratch/cdeps/.complete" ]]; then
     mkdir -p "$scratch/cdeps"
-    cp -a "${EDEN_CDEPS_SOURCE:-$root/../ps5-yamagi/.deps/pacbrew/v0.40.2/sysroot/user/homebrew}/." "$scratch/cdeps/"
+    cp -a "${EDEN_CDEPS_SOURCE:-$root/.deps/pacbrew-0.40.2/opt/ps5-payload-sdk/target/user/homebrew}/." "$scratch/cdeps/"
     touch "$scratch/cdeps/.complete"
 fi
 export PS5_PAYLOAD_SDK="$scratch/sdk"
@@ -67,6 +67,8 @@ python3 -B "$root/headless/check_slab_lifetime.py" \
     "$scratch/source/src/core/hle/kernel/slab_helpers.h"
 echo "Building Eden with $jobs parallel jobs"
 cmake --build "$scratch/native-local" --target eden-headless core -j "$jobs"
+# Source checks of the release configuration (development builds opt out: EDEN_SKIP_SOURCE_CHECKS=1).
+[[ ${EDEN_SKIP_SOURCE_CHECKS:-0} == 1 ]] && exit 0
 python3 -B "$root/headless/check_audio_shutdown.py" "$scratch/native-local/headless/core.cpp" "$scratch/source/src/core/core.cpp"
 python3 -B "$root/tools/check-load-failure.py"
 python3 -B "$root/tools/check-nso-memory.py"

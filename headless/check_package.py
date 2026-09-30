@@ -21,6 +21,8 @@ BASE_REQUIRED = {'eboot.bin', 'core-homebrew.nro', 'sce_module/libc.prx',
 REQUIRED = set(BASE_REQUIRED)
 REQUIRED.update(p.relative_to(APP).as_posix() for p in (APP / 'ui').rglob('*') if p.is_file())
 RECEIPT = ROOT / 'HEADLESS_CANDIDATE.json'
+# The pinned OpenGL SDK release (tools/deps.json): digest of its manifest.sha256.
+GL_SDK_MANIFEST_SHA256 = 'b01e47d85771c93305879f20c0ea4358a7bbe8be8e35ce03f6391548ea246aad'
 
 
 def digest(path):
@@ -83,12 +85,13 @@ if __name__ == '__main__':
             '../ps5-opengl/tools/Assert-Ps5ForegroundIdle.ps1',
             '../../docs/ps5-homebrew-dev-protocol/scripts/send-controller.sh',
             '../../docs/ps5-homebrew-dev-protocol/scripts/controllers/launch.c',
-            '../../docs/ps5-homebrew-dev-protocol/scripts/controllers/close.c')]
+            '../../docs/ps5-homebrew-dev-protocol/scripts/controllers/close.c')
+            if not p.startswith('../') or (ROOT / p).exists()]  # console tooling of a development layout
         frontend = json.loads((OUT / 'frontend.json').read_text())
         if frontend['renderer'] == 'opengl-4.6-compatibility':
-            sdk = ROOT / '.deps/ps5-opengl-sdk-local-3b66914/sdk'
+            sdk = ROOT / '.deps/ps5-opengl-sdk-0.6.0/sdk'
             manifest = sdk / 'manifest.sha256'
-            assert digest(manifest) == '801cf25b90d8faf82bc067a899f03a8136721826b6fdfc92245673d21edf221d'
+            assert digest(manifest) == GL_SDK_MANIFEST_SHA256
             paths.append(manifest)
             for line in manifest.read_text().splitlines():
                 expected, name = line.split('  ', 1)
@@ -104,7 +107,7 @@ if __name__ == '__main__':
             else:
                 paths += [ROOT / 'build/vulkan-isolated' / name for name in
                           ('libps5vk.a', 'libpsbc.a', 'manifest.json')]
-            paths.append(ROOT / '../ps5-vulkan-eden/dist-sdk/lib/libSceAgcDriver.so')
+            paths.append(ROOT / 'build/stubs/libSceAgcDriver.so')
         old = json.loads((ROOT / 'CANDIDATE.json').read_text())
         previous = {p: old['files']['dist/PPSA99121/' + p]
                     for p in BASE_REQUIRED - {'core-homebrew.nro'}

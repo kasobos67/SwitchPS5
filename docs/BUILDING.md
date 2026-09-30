@@ -1,58 +1,87 @@
 # Building ProsperoEden
 
-ProsperoEden builds on Linux (Ubuntu 26.04; WSL works) with the PS5 Payload SDK.
-The release build is `tools/ci/build-release.sh`. It produces
-`dist/ProsperoEden-vX.Y.Z.zip`, the `PPSA99008` folder to copy to
-`/data/homebrew/PPSA99008`, plus `SHA256SUMS` and the release notes.
-
-## What the build uses
-
-- **Eden** at commit `5f142c7926d0c7fcbbd0ce30794d72f638a43b2a`, as the archive
-  pinned in `UPSTREAM.json`, with Eden's own hash-pinned CPM dependencies.
-  ProsperoEden does not modify Eden's files. The PS5 frontend in `headless/`
-  replaces and derives sources at configure time (`headless/inject.cmake`).
-- **PS5 Native App Boilerplate**, which provides the Payload SDK v0.42, the
-  runtime `libc.prx` and the native packaging tool.
-- **ps5-opengl**, a prebuilt OpenGL 4.6 SDK (checked by hash in
-  `headless/CMakeLists.txt`) plus its `libSceAgc` link stubs.
-- **Mihawk's PS5 Mesa (RADV) and PS5 Vulkan**, a pinned RADV release archive
-  isolated with `tools/isolate-radv.py`. It is built by
-  `tools/build-radv-dependencies.sh`, and PS5 Vulkan supplies the link recipe
-  and the platform libraries.
-- **ps5-vulkan**, for its `libSceAgcDriver` link stub.
-- **SDL2, RmlUi and FreeType**, the prebuilt PS5 libraries vendored in
-  ProsperoRadio.
-- **OpenSSL and zlib** from pacbrew v0.40.2.
-- Small contracts from our research repositories, in `third_party/`.
-
-These inputs sit beside this repository, as sibling folders and in `.deps/`,
-the way a development checkout lays them out. `build-release.sh` links them in
-from the checkout named by `EDEN_DEV_CHECKOUT`.
-
-Host tools: `clang-18`, `lld-18` and `llvm-18` (including `llvm-readobj-18`),
-`clang` with its compiler-rt builtins, `cmake`, `ninja`, `ccache`, `make`,
-`nasm`, `glslangValidator`, `spirv-val`, binutils, and Python 3.11 or later.
-
-## Local build
+ProsperoEden builds on Linux (Ubuntu 26.04; WSL works). One command builds the release:
 
 ```bash
-EDEN_DEV_CHECKOUT=/path/to/development/checkout bash tools/ci/build-release.sh
+make
 ```
 
-The first build takes a while. Later builds reuse the cache in
-`~/.cache/ps5-eden-headless.*` and ccache.
+The first run fetches every dependency at its pinned revision, builds the RADV driver and
+Eden for the PS5, and writes the release files to `dist/`:
+
+- `ProsperoEden-vX.Y.Z.zip`: the `PPSA99008` folder to copy to `/data/homebrew/PPSA99008`;
+- `SHA256SUMS` and `release-notes.md`.
+
+The first build takes a while (RADV and Eden are large). Later builds reuse everything that
+already exists: the dependencies, this checkout's build cache in
+`~/.cache/ps5-eden-headless.<hash>`, and ccache.
+
+## Make targets
+
+| Target | What it does |
+|---|---|
+| `make` / `make release` | Release files in `dist/` |
+| `make package` | Only the app folder, `build/release/PPSA99008` |
+| `make install PS5_HOST=<address>` | Copy `build/release/PPSA99008` to a console over FTP (close ProsperoEden first) |
+| `make dev DEV_TITLE=<title ID>` | Development build, `build/dev/PPSA99008` (or `EDEN_DEV_PACKAGE_DIR`): profiling counters, `dev-settings.txt` switches, boots the given title |
+| `make test` | Host (Linux) build of the emulator and its test suites |
+| `make deps` | Fetch missing dependencies at their pinned revisions |
+| `make deps-status` | List the dependencies, where they live and whether they match their pins |
+| `make prepare` | Everything besides Eden itself: build cache, FFmpeg, packaging tool, driver stub, RADV |
+| `make toolchain` | Check the host tools |
+| `make clean` | Remove `build/` and `dist/` |
+| `make distclean` | Also remove the fetched `.deps` and this checkout's build cache |
+
+`JOBS=<n>` sets the number of parallel compile jobs (default: all cores).
+
+## Dependencies
+
+Every input is pinned in `tools/deps.json` and fetched by `make deps` (`tools/deps.py`) only when
+it is missing: archives are checked against their SHA-256/SHA-512 before use and git
+repositories are fetched at their pinned commit. Nothing that already exists is modified, so a
+checkout you work in stays at whatever revision it has (`make deps-status` shows it).
+Downloads are cached in `~/.cache/prosperoeden-deps` (`PROSPEROEDEN_DEPS_CACHE`).
+
+Inside this repository, in `.deps/`:
+
+- **Eden** at commit `5f142c7926d0c7fcbbd0ce30794d72f638a43b2a` (GitHub mirror archive), with
+  Eden's own hash-pinned packages, which its configure step downloads. ProsperoEden does not
+  modify Eden's files: the PS5 frontend in `headless/` replaces and derives sources at
+  configure time (`headless/inject.cmake`).
+- **FFmpeg** at the commit Eden pins, built with only the decoders games use.
+- **PS5 OpenGL 4.6 SDK 0.6.0** (release archive), for the launcher and the OpenGL renderer.
+- **OpenSSL and zlib** from pacbrew v0.40.2.
+- **LLVM 18.1.8 compiler-rt** emulated-TLS sources and **fmt 12.1.0** headers.
+
+Next to this repository (`../`), as git checkouts:
+
+- **ps5-native-app-boilerplate**: the PS5 Payload SDK v0.42, the runtime `libc.prx` and the
+  native packaging tool;
+- **psradio** (`../ps5-radio-browser`): the prebuilt PS5 SDL2, RmlUi and FreeType libraries;
+- **Mihawk's PS5_Vulkan, PS5_Mesa and PS5_PayloadSDK** (`../mihawk-*-review`): RADV and its
+  build recipe. `make prepare` builds RADV once and isolates it beside the OpenGL Mesa
+  (`tools/isolate-radv.py`).
+
+The `libSceAgcDriver` import facade both drivers link against is built from
+`tools/stubs/libSceAgcDriver.c`. Small contracts from our research repositories are in
+`third_party/`.
+
+## Host tools
+
+`make toolchain` checks them: `clang-18`, `lld-18` and the LLVM 18 tools, `cmake`, `ninja`,
+`ccache`, `make`, `nasm`, `meson`, `rsync`, `git`, `glslangValidator`, `spirv-val`, `bison`,
+`flex`, `curl`, `wget`, `unzip`, and Python 3.11 or later with `venv`, `mako` and `yaml`.
 
 ## Release workflow
 
-`.github/workflows/release.yml` runs on a self-hosted runner labelled
-`prosperoeden`, because the prebuilt inputs are not published. Set
-`EDEN_DEV_CHECKOUT` in the runner's `.env` file.
+`.github/workflows/release.yml` runs `tools/ci/build-release.sh` (`make release`) on a
+self-hosted runner labelled `prosperoeden`. `EDEN_DEV_CHECKOUT` in the runner's `.env` may name a
+development checkout whose dependencies are reused instead of fetched.
 
-- **Manual run** (Actions > Release build > Run workflow): builds the ZIP and
-  keeps it as a 7-day artifact.
-- **Tag `vX.Y.Z`**: builds the ZIP, checks that the tag matches the package
-  version, and publishes a pre-release. The release notes come from the
-  README's "Changes in vX.Y.Z" section.
+- **Manual run** (Actions > Release build > Run workflow): builds the release files and keeps
+  them as a 7-day artifact.
+- **Tag `vX.Y.Z`**: builds them, checks that the tag matches the package version, and publishes
+  a pre-release. The release notes come from the README's "Changes in vX.Y.Z" section.
 
 To cut a release:
 

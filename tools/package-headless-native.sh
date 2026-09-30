@@ -24,7 +24,7 @@ cp "$scratch/native-local/bin/eden-headless.map" "$out/link.map"
 cp "$scratch/native-local/CMakeCache.txt" "$out/CMakeCache.txt"
 stub_flags=(--stub-dir "$scratch/sdk/target/lib")
 if grep -qx 'EDEN_PS5_OPENGL:BOOL=ON' "$out/CMakeCache.txt"; then
-    gl46="$root/.deps/ps5-opengl-sdk-local-3b66914/sdk"
+    gl46="$root/.deps/ps5-opengl-sdk-0.6.0/sdk"
     stub_flags=()
     for stub in "$scratch/sdk/target/lib/"*.so; do
         case "${stub##*/}" in libSceAgc.so|libSceAgcDriver.so) continue ;; esac
@@ -32,7 +32,7 @@ if grep -qx 'EDEN_PS5_OPENGL:BOOL=ON' "$out/CMakeCache.txt"; then
     done
     driver_stub="$gl46/lib/libSceAgcDriver.so"
     if grep -qx 'EDEN_PS5_VULKAN:BOOL=ON' "$out/CMakeCache.txt"; then
-        driver_stub="$root/../ps5-vulkan-eden/dist-sdk/lib/libSceAgcDriver.so"
+        driver_stub="$root/build/stubs/libSceAgcDriver.so"
     fi
     stub_flags+=(--stub "$gl46/lib/libSceAgc.so" --stub "$driver_stub")
 fi

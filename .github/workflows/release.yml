@@ -1,8 +1,8 @@
 name: Release build
 
-# Builds the release ZIP on a self-hosted runner that holds the prebuilt inputs
-# (docs/BUILDING.md). A manual run keeps the ZIP as a 7-day artifact; a v* tag
-# also publishes it as a pre-release.
+# Builds the release ZIP (make release, which fetches pinned dependencies; docs/BUILDING.md)
+# on the self-hosted runner. A manual run keeps the ZIP as a 7-day artifact; a v* tag also
+# publishes it as a pre-release.
 on:
   push:
     tags: ['v*']

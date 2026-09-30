@@ -80,7 +80,7 @@ if(EDEN_VULKAN_DRIVER STREQUAL "RADV")
         message(FATAL_ERROR "Build and isolate the pinned RADV release archive first")
     endif()
     target_link_libraries(video_core PRIVATE "${radv_archive}"
-        "${PORT_ROOT}/../ps5-vulkan-eden/dist-sdk/lib/libSceAgcDriver.so"
+        "${PORT_ROOT}/build/stubs/libSceAgcDriver.so"
         "${sdk}/target/lib/libSceSysmodule.so")
 else()
 set(vk_isolated "${PORT_ROOT}/build/vulkan-isolated")
@@ -90,6 +90,6 @@ foreach(archive libps5vk.a libpsbc.a)
     endif()
 endforeach()
 target_link_libraries(video_core PRIVATE "${vk_isolated}/libps5vk.a" "${vk_isolated}/libpsbc.a"
-    "${PORT_ROOT}/../ps5-vulkan-eden/dist-sdk/lib/libSceAgcDriver.so"
+    "${PORT_ROOT}/build/stubs/libSceAgcDriver.so"
     "${sdk}/target/lib/libSceSysmodule.so")
 endif()

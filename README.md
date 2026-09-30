@@ -14,7 +14,7 @@ This is an early alpha. Video, audio, controller input, and saves have been conf
 
 ## Source code
 
-The complete ProsperoEden source is in this repository: the PS5 frontend and launcher in `headless/`, and the build and packaging tools in `tools/`. See [docs/BUILDING.md](docs/BUILDING.md) to build the release ZIP.
+The complete ProsperoEden source is in this repository: the PS5 frontend and launcher in `headless/`, and the build and packaging tools in `tools/`. To build it yourself, run `make` on Linux (Ubuntu 26.04; WSL works). It fetches every dependency at its pinned revision and writes the release files to `dist/`; `make help` lists the other targets. See [docs/BUILDING.md](docs/BUILDING.md).
 
 ## Project foundation
 

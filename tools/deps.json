@@ -1,0 +1,110 @@
+{
+  "about": "Pinned inputs of the ProsperoEden build. `make deps` (tools/deps.py) fetches every missing item and leaves existing checkouts and files untouched. Paths are relative to this repository; ../ means next to it, the layout the build expects.",
+  "items": [
+    {
+      "name": "eden",
+      "about": "Eden emulator source at the pinned commit (GitHub mirror archive)",
+      "kind": "archive",
+      "url": "https://github.com/eden-emulator/mirror/archive/5f142c7926d0c7fcbbd0ce30794d72f638a43b2a.tar.gz",
+      "sha256": "35ec0bb96b197181e66c0aeb8f44f0ff05334be832c631c50a4f1e271277285f",
+      "save": ".deps/eden-5f142c79.tar.gz",
+      "extract": ".deps",
+      "creates": ".deps/mirror-5f142c7926d0c7fcbbd0ce30794d72f638a43b2a/CMakeLists.txt"
+    },
+    {
+      "name": "ffmpeg",
+      "about": "FFmpeg source as pinned by Eden's cpmfile.json, built for the PS5 decoders",
+      "kind": "archive",
+      "url": "https://github.com/FFmpeg/FFmpeg/archive/c7b5f1537d9c52efa50fd10d106ca015ddde1818.tar.gz",
+      "sha512": "ed177621176b3961bdcaa339187d3a7688c1c8b060b79c4bb0257cbc67ad7021ae5d5adca5303b45625abbbe3d9aafdd87ce777b8690ac295290d744c875489a",
+      "extract": ".deps/ffmpeg-c7b5f1537d",
+      "strip": 1,
+      "creates": ".deps/ffmpeg-c7b5f1537d/configure"
+    },
+    {
+      "name": "fmt",
+      "about": "fmt 12.1.0 headers for the build-time startup checks",
+      "kind": "archive",
+      "url": "https://github.com/fmtlib/fmt/archive/refs/tags/12.1.0.tar.gz",
+      "sha256": "ea7de4299689e12b6dddd392f9896f08fb0777ac7168897a244a6d6085043fea",
+      "save": ".deps/fmt-12.1.0.tar.gz",
+      "extract": ".deps",
+      "creates": ".deps/fmt-12.1.0/include/fmt/format.h"
+    },
+    {
+      "name": "compiler-rt",
+      "about": "LLVM 18.1.8 emulated-TLS runtime (emutls.c and its headers) for the PS5 build",
+      "kind": "files",
+      "dest": ".deps/compiler-rt-18.1.8",
+      "creates": ".deps/compiler-rt-18.1.8/emutls.c",
+      "files": [
+        {"name": "emutls.c", "url": "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-18.1.8/compiler-rt/lib/builtins/emutls.c", "sha256": "a4437f3e329a0835adbc7df38e36df12f358d05c073b11813c409f849c2345d2"},
+        {"name": "int_endianness.h", "url": "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-18.1.8/compiler-rt/lib/builtins/int_endianness.h", "sha256": "ec5175561075845b7b16a92ad5ecdfd42a284de2736dd07e4ca7011b75c37709"},
+        {"name": "int_lib.h", "url": "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-18.1.8/compiler-rt/lib/builtins/int_lib.h", "sha256": "b31130f10484636895daa13b91b63d47ea82b45547f29e4dd136b48a67854d30"},
+        {"name": "int_types.h", "url": "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-18.1.8/compiler-rt/lib/builtins/int_types.h", "sha256": "26517abcfb05e989f4ac18b38779bc118637e0a5b3e44536c3733cc47b33026e"},
+        {"name": "int_util.h", "url": "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-18.1.8/compiler-rt/lib/builtins/int_util.h", "sha256": "63d06198ab720a75c20bfd84be895c2746581b129168bae6201e7384bbb0473b"},
+        {"name": "cxa_thread_atexit.reference.cpp", "url": "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-18.1.8/libcxxabi/src/cxa_thread_atexit.cpp", "sha256": "a36d48fd9f3d5b8ba4d94387d66c83cd2f2e96ad64677dde714f0daba7272ad6"}
+      ]
+    },
+    {
+      "name": "pacbrew",
+      "about": "OpenSSL and zlib for the PS5 from pacbrew v0.40.2",
+      "kind": "archive",
+      "url": "https://github.com/ps5-payload-dev/pacbrew-repo/releases/download/v0.40.2/ps5-payload-dev.tar.gz",
+      "sha256": "a85f65de418a8e6a898c6c3e3c870d50fff7618a200e4dd59ea9692af6ecec4d",
+      "extract": ".deps/pacbrew-0.40.2",
+      "creates": ".deps/pacbrew-0.40.2/opt/ps5-payload-sdk/target/user/homebrew/lib/libcrypto.a"
+    },
+    {
+      "name": "opengl-sdk",
+      "about": "PS5 OpenGL 4.6 SDK 0.6.0 (launcher UI and the OpenGL renderer)",
+      "kind": "archive",
+      "url": "https://github.com/blackbearreloaded/ps5-opengl/releases/download/v0.6.0/ps5-opengl-sdk-0.6.0.tar.gz",
+      "sha256": "dca4baacb7892cdb61ee5d44d3b8fecbba69454ce363e348b92f96996b6655ca",
+      "extract": ".deps",
+      "creates": ".deps/ps5-opengl-sdk-0.6.0/sdk/lib/libps5_opengl_core33.a"
+    },
+    {
+      "name": "boilerplate",
+      "about": "PS5 Native App Boilerplate: Payload SDK v0.42, runtime libc.prx and the native packaging tool",
+      "kind": "git",
+      "url": "https://github.com/blackbearreloaded/ps5-native-app-boilerplate.git",
+      "commit": "dd44bbdc75437332ed22e3ba95126733419ef25a",
+      "path": "../ps5-native-app-boilerplate",
+      "setup": ["bash", "tools/setup-native-dependencies.sh"],
+      "setup_creates": ".deps/native/ps5-payload-sdk/bin/prospero-clang"
+    },
+    {
+      "name": "psradio",
+      "about": "ProsperoRadio: the prebuilt PS5 SDL2, RmlUi and FreeType libraries under vendor/ps5",
+      "kind": "git",
+      "url": "https://github.com/blackbearreloaded/psradio.git",
+      "commit": "2268c1abe609327e6c325bcb98bda4b376c20f55",
+      "path": "../ps5-radio-browser"
+    },
+    {
+      "name": "ps5-vulkan-tools",
+      "about": "Mihawk's PS5_Vulkan: the RADV build and link recipes",
+      "kind": "git",
+      "url": "https://github.com/mihawk-99/PS5_Vulkan.git",
+      "commit": "71026e7ec1951fe72ae5b9118ff0905216a4c220",
+      "path": "../mihawk-vulkan-review"
+    },
+    {
+      "name": "ps5-mesa",
+      "about": "Mihawk's PS5 Mesa (RADV) source",
+      "kind": "git",
+      "url": "https://github.com/mihawk-99/PS5_Mesa.git",
+      "commit": "cedb774b27d089fa81f46add28d0a8c13ff0f7d2",
+      "path": "../mihawk-mesa-review"
+    },
+    {
+      "name": "ps5-payload-sdk-fork",
+      "about": "Mihawk's PS5 Payload SDK fork used to build RADV",
+      "kind": "git",
+      "url": "https://github.com/mihawk-99/PS5_PayloadSDK.git",
+      "commit": "95c08f27386fc698f6bbe21dde3030140a41d10b",
+      "path": "../mihawk-sdk-review"
+    }
+  ]
+}

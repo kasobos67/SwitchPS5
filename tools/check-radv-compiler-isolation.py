@@ -9,7 +9,7 @@ def defined(path):
     return {p[0] for line in lines if len(p := line.split()) > 1 and len(p[1]) == 1}
 
 gl = set()
-for archive in (root/'.deps/ps5-opengl-diagnostic/lib').glob('*.a'):
+for archive in (root/'.deps/ps5-opengl-sdk-0.6.0/sdk/lib').glob('*.a'):
     with archive.open('rb') as stream:
         if stream.read(8) == b'!<arch>\n':
             gl.update(defined(archive))
