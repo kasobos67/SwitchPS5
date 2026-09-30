@@ -61,6 +61,9 @@ extern "C" std::int64_t sceKernelGetDirectMemorySize();
 #include "core/hle/service/am/applet_manager.h"
 #include "core/hle/service/am/frontend/applets.h"
 #include "core/hle/service/filesystem/filesystem.h"
+#include "core/hle/service/ns/language.h"
+#include "core/hle/service/set/settings_server.h"
+#include "core/hle/service/set/settings_types.h"
 #include "hid_core/frontend/emulated_controller.h"
 #include "hid_core/hid_core.h"
 #ifdef PS5_NATIVE
@@ -87,6 +90,24 @@ public:
         return std::make_unique<Core::Frontend::GraphicsContext>();
     }
 };
+
+// The game's own closest language to the chosen one, following Eden's (the console's) fallback
+// order; supported holds the game's NACP language flags. The chosen language when none matches.
+static Settings::Language ClosestGameLanguage(Settings::Language chosen, uint32_t supported) {
+    namespace NS = Service::NS;
+    const auto code = Service::Set::GetLanguageCodeFromIndex(static_cast<std::size_t>(chosen));
+    const auto application = NS::ConvertToApplicationLanguage(code);
+    const auto* priorities = application ? NS::GetApplicationLanguagePriorityList(*application) : nullptr;
+    if (!priorities) return chosen;
+    for (const auto language : *priorities) {
+        if ((supported & NS::GetSupportedLanguageFlag(language)) == 0) continue;
+        const auto match = NS::ConvertToLanguageCode(language);
+        const auto& codes = Service::Set::available_language_codes;
+        for (std::size_t i = 0; match && i < codes.size(); ++i)
+            if (codes[i] == *match) return static_cast<Settings::Language>(i);
+    }
+    return chosen;
+}
 
 #ifdef PS5_NATIVE
 // First start with filesystem access: copy what the sandbox kept (settings, covers, Eden's saves
@@ -674,9 +695,31 @@ int main(int argc, char** argv) {
                       static_cast<int>(Settings::Language::Thai) == 19 &&
                       static_cast<int>(Settings::Region::Taiwan) == 6, "Eden's language or region order changed");
         {
-            const int language = Eden::LoadPreferences().language;
-            Settings::values.language_index.SetValue(static_cast<Settings::Language>(Eden::kLanguageSettings[language]));
-            Settings::values.region_index.SetValue(static_cast<Settings::Region>(Eden::kLanguageRegions[language]));
+            // Eden only finds a game's supported languages here when an update supplies its control
+            // data. Without them it hands the game the chosen language as it is, and a game that does
+            // not know it (an older one given pt-BR) falls back to Japanese; so pick the game's own
+            // closest language first, from the control data the launcher also reads.
+            const int choice = Eden::LoadPreferences().language;
+            auto language = static_cast<Settings::Language>(Eden::kLanguageSettings[choice]);
+            bool updated = false;
+            uint32_t supported = 0;
+#ifdef PS5_NATIVE
+            if (game && guest) {
+                char update[64]{};
+                unsigned dlc = 0;
+                const uint64_t title = eden_game_title_id(guest);
+                updated = title && eden_game_addons(title, update, sizeof(update), &dlc) && update[0];
+                if (!updated) supported = eden_game_supported_languages(guest, Eden::AssetsPath("keys").c_str());
+            }
+#endif
+            if (supported) language = ClosestGameLanguage(language, supported);
+            Settings::values.language_index.SetValue(language);
+            Settings::values.region_index.SetValue(static_cast<Settings::Region>(Eden::kLanguageRegions[choice]));
+            const std::string code(reinterpret_cast<const char*>(
+                &Service::Set::available_language_codes[static_cast<std::size_t>(language)]), 8);
+            Eden::Report("launch", ("Language: " + std::string(code.c_str()) + " (chosen " +
+                                    Eden::kLanguageKeys[choice] + ", game languages " +
+                                    (supported ? "read" : updated ? "from its update" : "unknown") + ")").c_str());
         }
         std::unique_ptr<Eden::Pad> pad;
         bool return_to_menu = false;

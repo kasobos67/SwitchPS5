@@ -20,6 +20,10 @@ int eden_extract_game_metadata(const char* rom_path, const char* keys_dir,
                                const char* cover_tga_path, char* title,
                                size_t title_capacity);
 
+// The languages the game declares in its own control data (NACP flags: bit n is NS
+// ApplicationLanguage n), or 0 when they cannot be read.
+uint32_t eden_game_supported_languages(const char* rom_path, const char* keys_dir);
+
 // Update and DLC files (NSP or XCI, any depth) in updates_dir, read with the provider that also
 // applies them to a running game. Replaces the previous scan; eden_game_addons queries it.
 void eden_scan_addons(const char* updates_dir, const char* keys_dir);

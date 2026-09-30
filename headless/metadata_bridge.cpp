@@ -22,6 +22,7 @@
 #include "core/file_sys/card_image.h"
 #include "core/file_sys/common_funcs.h"
 #include "core/file_sys/content_archive.h"
+#include "core/file_sys/control_metadata.h"
 #include "core/file_sys/nca_metadata.h"
 #include "core/file_sys/registered_cache.h"
 #include "core/file_sys/romfs.h"
@@ -162,6 +163,29 @@ int eden_extract_game_metadata(const char* rom_path, const char* keys_dir,
     if (const auto icon = FindIcon(romfs); icon && WriteTga(icon, cover_tga_path))
         result |= EDEN_METADATA_COVER;
     return result;
+}
+
+uint32_t eden_game_supported_languages(const char* rom_path, const char* keys_dir) {
+    if (!rom_path || !keys_dir) return 0;
+    try {
+        Common::FS::SetEdenPath(Common::FS::EdenPath::KeysDir, keys_dir);
+        FileSys::RealVfsFilesystem vfs;
+        const auto file = vfs.OpenFile(rom_path, FileSys::OpenMode::Read);
+        if (!file) return 0;
+        std::string path = rom_path;
+        std::transform(path.begin(), path.end(), path.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        const auto romfs = OpenControlRomFs(file, path.ends_with(".xci"));
+        if (!romfs) return 0;
+        auto nacp = romfs->GetFile("control.nacp");
+        if (!nacp) nacp = romfs->GetFile("Control.nacp");
+        FileSys::RawNACP raw{};
+        if (!nacp || nacp->ReadObject(&raw) != sizeof(raw)) return 0;
+        return static_cast<uint32_t>(raw.supported_languages);
+    } catch (const std::exception& error) {
+        std::fprintf(stderr, "[ProsperoEden] languages: %s\n", error.what());
+        return 0;
+    }
 }
 
 namespace {
