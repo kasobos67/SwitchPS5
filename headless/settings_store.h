@@ -7,6 +7,7 @@
 //                "upscaling_filter": "bilinear" },
 //     "audio": { "volume": 100, "mute": false },
 //     "controls": { "vibration": true },
+//     "system": { "language": "en-US" },
 //     "diagnostics": { "detailed_logging": false },
 //     "game_files": "/mnt/ext1/eden",
 //     "library": { "last_game": "Game [id].nsp", "recent": ["Game [id].nsp"] },
@@ -45,6 +46,20 @@ inline constexpr const char* kResolutionLabels[] = {"0.5x (faster, softer)", "0.
 inline constexpr int kNativeResolution = 2;
 inline constexpr const char* kUpscalingFilterKeys[] = {"bilinear", "fsr", "bicubic", "nearest"};
 inline constexpr const char* kUpscalingFilterLabels[] = {"Bilinear", "AMD FSR", "Bicubic", "Nearest"};
+// Settings > Language: the system language games see, in launcher order. Each entry maps to Eden's
+// Settings::Language and to the Settings::Region consoles sold with that language have (indices in
+// Eden's enum order; headless/main.cpp checks them). Eden's older "Chinese" and "Taiwanese" codes
+// are left out: games use Chinese (Simplified) and Chinese (Traditional) instead.
+inline constexpr const char* kLanguageKeys[] = {"en-US", "en-GB", "fr", "fr-CA", "de", "it", "es", "es-419", "pt",
+                                                "pt-BR", "nl", "ru", "pl", "ja", "ko", "zh-Hans", "zh-Hant", "th"};
+inline constexpr const char* kLanguageLabels[] = {"English (US)", "English (UK)", "French", "French (Canada)",
+    "German", "Italian", "Spanish", "Spanish (Latin America)", "Portuguese", "Portuguese (Brazil)", "Dutch",
+    "Russian", "Polish", "Japanese", "Korean", "Chinese (Simplified)", "Chinese (Traditional)", "Thai"};
+inline constexpr int kLanguageSettings[] = {1, 12, 2, 13, 3, 4, 5, 14, 9, 17, 8, 10, 18, 0, 7, 15, 16, 19};
+inline constexpr int kLanguageRegions[] = {1, 2, 2, 1, 2, 2, 2, 1, 2, 1, 2, 2, 2, 0, 5, 4, 6, 1};
+static_assert(std::size(kLanguageLabels) == std::size(kLanguageKeys) &&
+              std::size(kLanguageSettings) == std::size(kLanguageKeys) &&
+              std::size(kLanguageRegions) == std::size(kLanguageKeys));
 struct Preferences {
     bool hud = true;
     int volume = 100;
@@ -54,6 +69,7 @@ struct Preferences {
     int resolution = kNativeResolution;  // index into kResolutionKeys
     int upscaling_filter = 0;            // index into kUpscalingFilterKeys
     bool vibration = true;
+    int language = 0;                    // index into kLanguageKeys (English (US), Eden's default)
 };
 
 inline int KeyIndex(const std::string& value, const char* const* keys, int count, int fallback) {
@@ -192,6 +208,8 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
                                        kUpscalingFilterKeys, int(std::size(kUpscalingFilterKeys)),
                                        result.upscaling_filter);
     result.vibration = Settings::Bool(document, Json::json_pointer("/controls/vibration"), result.vibration);
+    result.language = KeyIndex(Settings::String(document, Json::json_pointer("/system/language")),
+                               kLanguageKeys, int(std::size(kLanguageKeys)), result.language);
     return result;
 }
 
@@ -199,7 +217,8 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     if (value.volume < 0 || value.volume > 100 ||
         (value.backend != GraphicsBackend::OpenGL && value.backend != GraphicsBackend::Vulkan) ||
         value.resolution < 0 || value.resolution >= int(std::size(kResolutionKeys)) ||
-        value.upscaling_filter < 0 || value.upscaling_filter >= int(std::size(kUpscalingFilterKeys))) return false;
+        value.upscaling_filter < 0 || value.upscaling_filter >= int(std::size(kUpscalingFilterKeys)) ||
+        value.language < 0 || value.language >= int(std::size(kLanguageKeys))) return false;
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
     document["video"]["renderer"] = value.backend == GraphicsBackend::Vulkan ? "vulkan" : "opengl";
@@ -209,6 +228,7 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     document["audio"]["volume"] = value.volume;
     document["audio"]["mute"] = value.mute;
     document["controls"]["vibration"] = value.vibration;
+    document["system"]["language"] = kLanguageKeys[value.language];
     document["diagnostics"]["detailed_logging"] = value.detailed_logging;
     return Settings::Write(document, file);
 }

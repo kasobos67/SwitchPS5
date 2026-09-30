@@ -112,7 +112,7 @@ button { margin: 0; padding: 0; border: 0px transparent; border-radius: 0px; bac
 .settings-detail-copy { position: absolute; left: 36px; top: 144px; width: 748px; height: 80px; color: #c5d0bd; font-size: 24px; line-height: 36px; }
 .settings-detail-label { position: absolute; left: 36px; width: 230px; height: 36px; color: #dfe8a6; font-size: 20px; line-height: 30px; letter-spacing: 2px; }
 .settings-detail-value { position: absolute; left: 264px; width: 520px; height: 36px; color: #e2e8d7; font-size: 20px; line-height: 30px; }
-.settings-detail-one { top: 294px; } .settings-detail-two { top: 366px; } .settings-detail-three { top: 438px; } .settings-detail-four { top: 510px; }
+.settings-detail-one { top: 294px; } .settings-detail-two { top: 366px; } .settings-detail-three { top: 438px; } .settings-detail-four { top: 510px; } .settings-detail-five { top: 582px; }
 
 .dialog { display: none; position: absolute; left: 0px; top: 0px; width: 1920px; height: 1080px; background-color: rgba(1, 8, 6, 0.69); }
 .dialog.open { display: block; }
@@ -125,7 +125,7 @@ button { margin: 0; padding: 0; border: 0px transparent; border-radius: 0px; bac
 .dialog-row span { position: absolute; left: 36px; top: 0px; width: 660px; height: 94px; color: #f2f4e9; font-size: 24px; line-height: 92px; text-align: left; }
 .dialog-row-0 { top: 190px; } .dialog-row-1 { top: 302px; } .dialog-row-2 { top: 414px; }
 #settings-dialog .dialog-row { left: 42px; }
-#settings-dialog .dialog-row-0 { top: 78px; } #settings-dialog .dialog-row-1 { top: 190px; } #settings-dialog .dialog-row-2 { top: 302px; } #settings-dialog .dialog-row-3 { top: 414px; }
+#settings-dialog .dialog-row-0 { top: 76px; } #settings-dialog .dialog-row-1 { top: 178px; } #settings-dialog .dialog-row-2 { top: 280px; } #settings-dialog .dialog-row-3 { top: 382px; }
 .dialog-hint { position: absolute; left: 42px; top: 613px; width: 736px; height: 40px; color: #dfe8a6; font-size: 20px; line-height: 36px; text-align: center; }
 .settings-details { position: absolute; left: 42px; top: 184px; width: 736px; height: 280px; color: #e2e8d7; font-size: 24px; line-height: 40px; }
 .settings-low { top: 490px; }
@@ -167,7 +167,7 @@ button { margin: 0; padding: 0; border: 0px transparent; border-radius: 0px; bac
 .about-note { position: absolute; left: 36px; top: 552px; width: 748px; height: 108px; color: #b7c6b5; font-size: 24px; line-height: 36px; }
 
 /* Settings > Game files: the folder browser. */
-#settings-dialog .dialog-row-4 { top: 526px; }
+#settings-dialog .dialog-row-4 { top: 484px; } #settings-dialog .dialog-row-5 { top: 586px; }
 .settings-detail-five { top: 582px; }
 #files-path { position: absolute; left: 30px; top: 58px; width: 760px; height: 30px; overflow: hidden; white-space: nowrap; color: #e2e8d7; font-size: 20px; line-height: 28px; }
 #files-list-viewport { position: absolute; left: 30px; top: 104px; width: 760px; height: 518px; overflow: hidden; }

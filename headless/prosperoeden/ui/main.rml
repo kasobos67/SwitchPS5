@@ -96,6 +96,7 @@
         <span id="settings-row-2" class="dialog-row dialog-row-2"><img class="dialog-row-chrome base-chrome" src="chrome/dialog-row-normal.tga" width="736" height="94" alt=""/><img class="dialog-row-chrome focused-chrome" src="chrome/dialog-row-focused.tga" width="736" height="94" alt=""/><span>Controls</span></span>
         <span id="settings-row-3" class="dialog-row dialog-row-3"><img class="dialog-row-chrome base-chrome" src="chrome/dialog-row-normal.tga" width="736" height="94" alt=""/><img class="dialog-row-chrome focused-chrome" src="chrome/dialog-row-focused.tga" width="736" height="94" alt=""/><span id="diagnostics-label">Diagnostics</span></span>
         <span id="settings-row-4" class="dialog-row dialog-row-4"><img class="dialog-row-chrome base-chrome" src="chrome/dialog-row-normal.tga" width="736" height="94" alt=""/><img class="dialog-row-chrome focused-chrome" src="chrome/dialog-row-focused.tga" width="736" height="94" alt=""/><span>Game files</span></span>
+        <span id="settings-row-5" class="dialog-row dialog-row-5"><img class="dialog-row-chrome base-chrome" src="chrome/dialog-row-normal.tga" width="736" height="94" alt=""/><img class="dialog-row-chrome focused-chrome" src="chrome/dialog-row-focused.tga" width="736" height="94" alt=""/><span id="language-label">Language: English (US)</span></span>
         </section>
         <aside class="settings-detail-panel"><img class="library-panel-chrome" src="chrome/dialog-panel.tga" width="820" height="720" alt=""/>
           <span class="detail-kicker">ON THIS CONSOLE</span>
@@ -105,6 +106,7 @@
           <span class="settings-detail-label settings-detail-two">AUDIO</span><span class="settings-detail-value settings-detail-two">Volume and mute</span>
           <span class="settings-detail-label settings-detail-three">CONTROLS</span><span class="settings-detail-value settings-detail-three">Shortcuts and vibration support</span>
           <span class="settings-detail-label settings-detail-four">DIAGNOSTICS</span><span class="settings-detail-value settings-detail-four">Setup status and detailed logs</span>
+          <span class="settings-detail-label settings-detail-five">LANGUAGE</span><span class="settings-detail-value settings-detail-five">The language games use</span>
           <span class="settings-detail-label settings-detail-five">GAME FILES</span><span class="settings-detail-value settings-detail-five">Folder for keys, firmware and games</span>
         </aside>
         <footer class="library-footer icon-footer"><span class="controller-hint lib-hint-select"><img class="hint-icon-0" src="icons/cross-mono.tga" width="26" height="26" alt=""/><span>Select</span></span><span class="controller-hint lib-hint-back"><img class="hint-icon-0" src="icons/circle-mono.tga" width="26" height="26" alt=""/><span>Back</span></span><span class="controller-hint lib-hint-browse"><img class="hint-icon-0" src="icons/updown-mono.tga" width="26" height="26" alt=""/><span>Browse settings</span></span></footer>

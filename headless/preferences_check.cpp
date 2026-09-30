@@ -30,6 +30,18 @@ int main() {
     assert(Eden::LoadPreferences(file).volume == 40);
     assert(Read(file).find("\"renderer\": \"opengl\"") != std::string::npos);
 
+    // Language: English (US) by default, saved by code, invalid values rejected or ignored.
+    assert(saved.language == 0);
+    saved.language = 13;
+    assert(Eden::SavePreferences(saved, file));
+    assert(Eden::LoadPreferences(file).language == 13 && std::string(Eden::kLanguageLabels[13]) == "Japanese");
+    assert(Read(file).find("\"language\": \"ja\"") != std::string::npos);
+    saved.language = int(std::size(Eden::kLanguageKeys));
+    assert(!Eden::SavePreferences(saved, file));
+    const std::string unknown_language = std::string(directory) + "/unknown-language.json";
+    std::ofstream(unknown_language) << R"({"system": {"language": "xx"}})";
+    assert(Eden::LoadPreferences(unknown_language).language == 0);
+
     // Last and recent games.
     assert(Eden::SaveLastGame("Sample Quest [id].nsp", file));
     assert(Eden::LoadLastGame(file) == "Sample Quest [id].nsp");

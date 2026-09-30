@@ -668,6 +668,16 @@ int main(int argc, char** argv) {
         Settings::values.nvdec_emulation = game ? Settings::NvdecEmulation::Cpu
                                                 : Settings::NvdecEmulation::Off;
         Settings::values.use_gdbstub = false;
+        // Settings > Language: the system language games see, with its console region.
+        static_assert(static_cast<int>(Settings::Language::EnglishBritish) == 12 &&
+                      static_cast<int>(Settings::Language::ChineseTraditional) == 16 &&
+                      static_cast<int>(Settings::Language::Thai) == 19 &&
+                      static_cast<int>(Settings::Region::Taiwan) == 6, "Eden's language or region order changed");
+        {
+            const int language = Eden::LoadPreferences().language;
+            Settings::values.language_index.SetValue(static_cast<Settings::Language>(Eden::kLanguageSettings[language]));
+            Settings::values.region_index.SetValue(static_cast<Settings::Region>(Eden::kLanguageRegions[language]));
+        }
         std::unique_ptr<Eden::Pad> pad;
         bool return_to_menu = false;
         if (devices || game) {

@@ -402,8 +402,16 @@ void EdenApp::HandleInput(const radio_input_event_t& event) {
         return;
     }
     if (dialog_) {
-        const int count = dialog_ == 1 ? static_cast<int>(games.size()) : 5;
+        const int count = dialog_ == 1 ? static_cast<int>(games.size()) : dialog_ == 2 ? 6 : 5;
         if (event.key == RADIO_INPUT_CIRCLE) Close();
+        else if (dialog_ == 2 && dialog_selected_ == 5 &&
+                 (event.key == RADIO_INPUT_LEFT || event.key == RADIO_INPUT_RIGHT || event.key == RADIO_INPUT_CROSS)) {
+            // Settings > Language: the next or previous language, saved at once.
+            const int languages = int(std::size(Eden::kLanguageKeys));
+            preferences_.language = (preferences_.language + (event.key == RADIO_INPUT_LEFT ? languages - 1 : 1)) % languages;
+            if (!Eden::SavePreferences(preferences_)) Eden::Report("settings", "Could not write preferences");
+            UpdateDialog();
+        }
         else if (dialog_ == 2 && event.key == RADIO_INPUT_CROSS && dialog_selected_ == 4) OpenFiles();
         else if (dialog_ == 2 && event.key == RADIO_INPUT_CROSS) {
             static constexpr const char* pages[] = {"video-dialog", "audio-dialog", "controls-dialog", "diagnostics-dialog"};
@@ -509,9 +517,11 @@ void EdenApp::UpdateDialog() {
     static constexpr const char* rom_formats[] = {"rom-format-0", "rom-format-1", "rom-format-2",
         "rom-format-3", "rom-format-4", "rom-format-5", "rom-format-6"};
     static constexpr const char* settings_rows[] = {"settings-row-0", "settings-row-1", "settings-row-2",
-        "settings-row-3", "settings-row-4"};
-    for (int row = 0; row < 5; ++row)
+        "settings-row-3", "settings-row-4", "settings-row-5"};
+    for (int row = 0; row < 6; ++row)
         SetClass(document_, settings_rows[row], "focused", dialog_ == 2 && dialog_selected_ == row);
+    SetText(document_, "language-label",
+            (std::string("Language: ") + Eden::kLanguageLabels[preferences_.language]).c_str());
 
     if (dialog_ == 1) {
         const int scroll = dialog_selected_ < 7 ? 0 : dialog_selected_ - 6;
