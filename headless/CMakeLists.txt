@@ -959,6 +959,40 @@ list(REMOVE_ITEM core_sources hle/kernel/k_thread.cpp)
 list(APPEND core_sources "${PORT_BUILD_DIR}/k_thread.cpp")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# Game exit: the application's page table frees every physical page it maps (~1 s for a 4 GiB
+# game) although the kernel shutdown that finalizes it recreates the memory manager at the next
+# initialization. Skip those frees during a kernel shutdown; an in-game process exit (applets)
+# still frees its pages.
+file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/kernel/k_page_table_base.cpp" page_table_source)
+set(page_free_old [=[        // Get physical pages.
+        KPageGroup pg(m_system.Kernel(), m_block_info_manager);
+        this->MakePageGroup(pg, addr, size / PageSize);
+
+        // Free the pages.
+        pg.CloseAndReset(m_system.Kernel());
+    };]=])
+string(FIND "${page_table_source}" "${page_free_old}" page_free_at)
+if(page_free_at LESS 0)
+    message(FATAL_ERROR "Pinned page table finalization changed")
+endif()
+string(REPLACE "${page_free_old}" [=[        // The memory manager is recreated after a kernel shutdown.
+        if (m_system.Kernel().IsShuttingDown()) {
+            return;
+        }
+
+        // Get physical pages.
+        KPageGroup pg(m_system.Kernel(), m_block_info_manager);
+        this->MakePageGroup(pg, addr, size / PageSize);
+
+        // Free the pages.
+        pg.CloseAndReset(m_system.Kernel());
+    };]=] page_table_source "${page_table_source}")
+write_derived("${PORT_BUILD_DIR}/k_page_table_base.cpp" "${page_table_source}")
+get_target_property(page_table_core_sources core SOURCES)
+list(REMOVE_ITEM page_table_core_sources hle/kernel/k_page_table_base.cpp)
+list(APPEND page_table_core_sources "${PORT_BUILD_DIR}/k_page_table_base.cpp")
+set_property(TARGET core PROPERTY SOURCES "${page_table_core_sources}")
+
 # A server's stopped flag only covers its inner request loop; stopping the CPU
 # immediately after it fires can abandon the applet destructor mid-cleanup.
 file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/kernel/kernel.cpp" kernel_source)
@@ -970,6 +1004,218 @@ string(REPLACE "    void Initialize(KernelCore& kernel) {"
     "    void Initialize(KernelCore& kernel) {\n        services_closing = false;" kernel_source "${kernel_source}")
 string(REPLACE "        std::scoped_lock lk{server_lock};\n        server_managers.clear();"
     "        decltype(server_managers) closing_managers;\n        {\n            std::scoped_lock lk{server_lock};\n            services_closing = true;\n            closing_managers.swap(server_managers);\n        }\n        for (auto& manager : closing_managers) manager->RequestStop();\n        closing_managers.clear();\n        for (auto* thread : service_threads) {\n            s32 index;\n            KSynchronizationObject* objects[] = {thread};\n            ASSERT(KSynchronizationObject::Wait(system.Kernel(), &index, objects, 1, -1).IsSuccess());\n            thread->Close(system.Kernel());\n        }\n        service_threads.clear();" kernel_source "${kernel_source}")
+if(EDEN_DEV_PROFILE)
+    # Development: time the service shutdown phases and every slow manager destruction, named by
+    # the service process that ran it.
+    string(PREPEND kernel_source "#include <algorithm>\n#include <chrono>\n#include <cstdio>\n#include <string>\n")
+    string(REPLACE "    bool services_closing = false;" "    bool services_closing = false;\n    std::vector<std::string> server_names;" kernel_source "${kernel_source}")
+    string(REPLACE "            impl->server_managers.emplace_back(std::move(server_manager));\n        }"
+        "            impl->server_managers.emplace_back(std::move(server_manager));\n            auto* eden_process = GetCurrentProcessPointer(*this);\n            impl->server_names.emplace_back(eden_process ? eden_process->GetName() : \"?\");\n        }" kernel_source "${kernel_source}")
+    string(REPLACE [=[        decltype(server_managers) closing_managers;
+        {
+            std::scoped_lock lk{server_lock};
+            services_closing = true;
+            closing_managers.swap(server_managers);
+        }
+        for (auto& manager : closing_managers) manager->RequestStop();
+        closing_managers.clear();
+        for (auto* thread : service_threads) {
+            s32 index;
+            KSynchronizationObject* objects[] = {thread};
+            ASSERT(KSynchronizationObject::Wait(system.Kernel(), &index, objects, 1, -1).IsSuccess());
+            thread->Close(system.Kernel());
+        }
+        service_threads.clear();]=] [=[        using EdenClock = std::chrono::steady_clock;
+        const auto eden_ms = [](EdenClock::time_point from) {
+            return std::chrono::duration<double, std::milli>(EdenClock::now() - from).count();
+        };
+        const auto eden_start = EdenClock::now();
+        decltype(server_managers) closing_managers;
+        decltype(server_names) closing_names;
+        {
+            std::scoped_lock lk{server_lock};
+            services_closing = true;
+            closing_managers.swap(server_managers);
+            closing_names.swap(server_names);
+        }
+        const double eden_lock_ms = eden_ms(eden_start);
+        const size_t eden_count = closing_managers.size();
+        auto eden_phase = EdenClock::now();
+        double eden_stop_worst = 0;
+        for (auto& manager : closing_managers) {
+            const auto eden_one = EdenClock::now();
+            manager->RequestStop();
+            eden_stop_worst = std::max(eden_stop_worst, eden_ms(eden_one));
+        }
+        const double eden_stop_ms = eden_ms(eden_phase);
+        eden_phase = EdenClock::now();
+        double eden_worst = 0;
+        for (size_t i = 0; i < closing_managers.size(); ++i) {
+            const auto eden_one = EdenClock::now();
+            closing_managers[i].reset();
+            const double ms = eden_ms(eden_one);
+            eden_worst = std::max(eden_worst, ms);
+            if (ms >= 20.0) {
+                std::fprintf(stderr, "EDEN_SHUTDOWN_MANAGER index=%zu name=%s ms=%.1f\n", i,
+                             i < closing_names.size() ? closing_names[i].c_str() : "?", ms);
+            }
+        }
+        closing_managers.clear();
+        const double eden_destroy_ms = eden_ms(eden_phase);
+        eden_phase = EdenClock::now();
+        double eden_wait_worst = 0;
+        const size_t eden_threads = service_threads.size();
+        for (auto* thread : service_threads) {
+            const auto eden_one = EdenClock::now();
+            s32 index;
+            KSynchronizationObject* objects[] = {thread};
+            ASSERT(KSynchronizationObject::Wait(system.Kernel(), &index, objects, 1, -1).IsSuccess());
+            thread->Close(system.Kernel());
+            eden_wait_worst = std::max(eden_wait_worst, eden_ms(eden_one));
+        }
+        service_threads.clear();
+        std::fprintf(stderr, "EDEN_SHUTDOWN_SERVICES managers=%zu threads=%zu lock_ms=%.1f stop_ms=%.1f "
+                     "worst_stop_ms=%.1f destroy_ms=%.1f worst_manager_ms=%.1f wait_ms=%.1f "
+                     "worst_wait_ms=%.1f total_ms=%.1f\n", eden_count, eden_threads, eden_lock_ms,
+                     eden_stop_ms, eden_stop_worst, eden_destroy_ms, eden_worst, eden_ms(eden_phase),
+                     eden_wait_worst, eden_ms(eden_start));]=] kernel_source "${kernel_source}")
+    # Development: time the kernel teardown steps after the services close (>= 20 ms each), and
+    # the cost of an unbuffered stderr line on the console.
+    function(eden_patch_kernel match replacement)
+        string(FIND "${kernel_source}" "${match}" found_at)
+        if(found_at LESS 0)
+            message(FATAL_ERROR "Pinned kernel shutdown changed")
+        endif()
+        string(REPLACE "${match}" "${replacement}" patched "${kernel_source}")
+        set(kernel_source "${patched}" PARENT_SCOPE)
+    endfunction()
+    eden_patch_kernel([=[    void Shutdown(KernelCore& kernel) {
+        worker_task_manager.WaitForRequests();]=] [=[    void Shutdown(KernelCore& kernel) {
+        auto eden_last = std::chrono::steady_clock::now();
+        const auto eden_mark = [&eden_last](const char* step) {
+            const auto now = std::chrono::steady_clock::now();
+            const double ms = std::chrono::duration<double, std::milli>(now - eden_last).count();
+            if (ms >= 20.0) std::fprintf(stderr, "EDEN_SHUTDOWN_KERNEL step=%s ms=%.1f\n", step, ms);
+            eden_last = std::chrono::steady_clock::now();
+        };
+        {
+            const auto probe = std::chrono::steady_clock::now();
+            for (int line = 0; line < 20; ++line) std::fprintf(stderr, "EDEN_SHUTDOWN_WRITE_PROBE line=%d\n", line);
+            std::fprintf(stderr, "EDEN_SHUTDOWN_WRITE_PROBE lines=20 ms=%.1f\n",
+                         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - probe).count());
+            eden_last = std::chrono::steady_clock::now();
+        }
+        worker_task_manager.WaitForRequests();
+        eden_mark("worker_tasks");]=])
+    eden_patch_kernel([=[        CloseServices();
+
+        if (application_process) {
+            application_process->Close(system.Kernel());
+            application_process = nullptr;
+        }
+]=] [=[        CloseServices();
+        eden_mark("close_services");
+
+        if (application_process) {
+            application_process->Close(system.Kernel());
+            application_process = nullptr;
+        }
+        eden_mark("application_process");
+]=])
+    eden_patch_kernel([=[        CleanupObject(system_resource_limit);
+]=] [=[        CleanupObject(system_resource_limit);
+        eden_mark("persistent_objects");
+]=])
+    eden_patch_kernel([=[            schedulers[core_id].reset();
+        }
+]=] [=[            schedulers[core_id].reset();
+        }
+        eden_mark("schedulers");
+]=])
+    eden_patch_kernel([=[                registered_in_use_objects.clear();
+            }
+        }
+]=] [=[                registered_in_use_objects.clear();
+            }
+        }
+        eden_mark("in_use_objects");
+]=])
+    eden_patch_kernel([=[        global_object_list_container.reset();
+]=] [=[        global_object_list_container.reset();
+        eden_mark("object_container");
+]=])
+    eden_patch_kernel([=[        hardware_timer.reset();
+]=] [=[        hardware_timer.reset();
+        eden_mark("hardware_timer");
+]=])
+endif()
+if(EDEN_DEV_PROFILE)
+    # Development: time the application process teardown steps (>= 20 ms each).
+    file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/kernel/k_process.cpp" process_source)
+    string(PREPEND process_source "#include <chrono>\n#include <cstdio>\n")
+    # First occurrence after KProcess::Finalize only: the comments recur in other functions.
+    function(eden_patch_process match replacement)
+        string(FIND "${process_source}" "void KProcess::Finalize(KernelCore& kernel) {" finalize_at)
+        string(SUBSTRING "${process_source}" ${finalize_at} -1 tail)
+        string(FIND "${tail}" "${match}" found_at)
+        if(finalize_at LESS 0 OR found_at LESS 0)
+            message(FATAL_ERROR "Pinned process finalization changed")
+        endif()
+        math(EXPR found_at "${finalize_at} + ${found_at}")
+        string(LENGTH "${match}" match_length)
+        math(EXPR after_at "${found_at} + ${match_length}")
+        string(SUBSTRING "${process_source}" 0 ${found_at} head)
+        string(SUBSTRING "${process_source}" ${after_at} -1 rest)
+        set(process_source "${head}${replacement}${rest}" PARENT_SCOPE)
+    endfunction()
+    eden_patch_process([=[void KProcess::Finalize(KernelCore& kernel) {
+    // Delete the process local region.
+    this->DeleteThreadLocalRegion(kernel, m_plr_address);
+]=] [=[void KProcess::Finalize(KernelCore& kernel) {
+    auto eden_last = std::chrono::steady_clock::now();
+    const auto eden_mark = [&eden_last](const char* step) {
+        const auto now = std::chrono::steady_clock::now();
+        const double ms = std::chrono::duration<double, std::milli>(now - eden_last).count();
+        if (ms >= 20.0) std::fprintf(stderr, "EDEN_SHUTDOWN_PROCESS step=%s ms=%.1f\n", step, ms);
+        eden_last = std::chrono::steady_clock::now();
+    };
+    // Delete the process local region.
+    this->DeleteThreadLocalRegion(kernel, m_plr_address);
+    eden_mark("local_region");
+]=])
+    eden_patch_process([=[    m_page_table.Finalize();
+]=] [=[    eden_mark("used_memory_size");
+    m_page_table.Finalize();
+    eden_mark("page_table");
+]=])
+    eden_patch_process([=[    // Free all shared memory infos.
+]=] [=[    eden_mark("system_resource");
+    // Free all shared memory infos.
+]=])
+    eden_patch_process([=[    // Our thread local page list must be empty at this point.
+]=] [=[    eden_mark("shared_memory");
+    // Our thread local page list must be empty at this point.
+]=])
+    eden_patch_process([=[    // Clear expensive resources, as the destructor is not called for guest objects.
+    for (auto& interface : m_arm_interfaces) {
+        interface.reset();
+    }
+    m_exclusive_monitor.reset();
+]=] [=[    eden_mark("resource_limit");
+    // Clear expensive resources, as the destructor is not called for guest objects.
+    for (auto& interface : m_arm_interfaces) {
+        interface.reset();
+    }
+    eden_mark("arm_interfaces");
+    m_exclusive_monitor.reset();
+    eden_mark("exclusive_monitor");
+]=])
+    write_derived("${PORT_BUILD_DIR}/k_process.cpp" "${process_source}")
+    get_target_property(process_core_sources core SOURCES)
+    list(REMOVE_ITEM process_core_sources hle/kernel/k_process.cpp)
+    list(APPEND process_core_sources "${PORT_BUILD_DIR}/k_process.cpp")
+    set_property(TARGET core PROPERTY SOURCES "${process_core_sources}")
+endif()
 # Never wait for service fibers while holding their registration mutex. A late
 # registration keeps caller ownership, stops, and runs its normal completion path.
 string(REPLACE "        if (impl->is_shutting_down) {\n            return;\n        }\n\n        impl->server_managers.emplace_back(std::move(server_manager));"
@@ -982,14 +1228,50 @@ write_derived("${PORT_BUILD_DIR}/include/${server_header}" "${server_header_sour
 file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/service/server_manager.cpp" server_source)
 string(REPLACE "ServerManager::~ServerManager() {\n    // Signal stop.\n    m_stop_source.request_stop();\n    m_wakeup_event->Signal(m_system.Kernel());"
     "void ServerManager::RequestStop() {\n    m_stop_source.request_stop();\n    m_wakeup_event->Signal(m_system.Kernel());\n}\n\nServerManager::~ServerManager() {\n    RequestStop();" server_source "${server_source}")
-if(PS5_NATIVE)
-    string(PREPEND server_source "#include <cstdio>\n")
-    foreach(stage "m_stopped.Wait();" "m_threads.clear();" "delete session;")
-        string(REPLACE ";" "" label "${stage}")
-        string(REPLACE "${stage}"
-            "std::fprintf(stderr, \"[service-close] manager=%p begin ${label}\\n\", static_cast<void*>(this));\n    ${stage}\n    std::fprintf(stderr, \"[service-close] manager=%p end ${label}\\n\", static_cast<void*>(this));"
-            server_source "${server_source}")
-    endforeach()
+if(EDEN_DEV_PROFILE)
+    # Development: split a slow manager destruction into its phases.
+    string(PREPEND server_source "#include <chrono>\n#include <cstdio>\n")
+    function(eden_patch_server match replacement)
+        string(FIND "${server_source}" "${match}" found_at)
+        if(found_at LESS 0)
+            message(FATAL_ERROR "Pinned ServerManager destructor changed")
+        endif()
+        string(REPLACE "${match}" "${replacement}" patched "${server_source}")
+        set(server_source "${patched}" PARENT_SCOPE)
+    endfunction()
+    eden_patch_server([=[ServerManager::~ServerManager() {
+    RequestStop();]=] [=[ServerManager::~ServerManager() {
+    RequestStop();
+    const auto eden_t0 = std::chrono::steady_clock::now();]=])
+    eden_patch_server([=[    m_stopped.Wait();
+    m_threads.clear();]=] [=[    m_stopped.Wait();
+    const auto eden_t1 = std::chrono::steady_clock::now();
+    m_threads.clear();
+    const auto eden_t2 = std::chrono::steady_clock::now();]=])
+    eden_patch_server([=[    // Clean up sessions.]=] [=[    const auto eden_t3 = std::chrono::steady_clock::now();
+    size_t eden_sessions = 0;
+    // Clean up sessions.]=])
+    eden_patch_server([=[        delete session;
+    }
+
+    // Close wakeup event.]=] [=[        delete session;
+        ++eden_sessions;
+    }
+    const auto eden_t4 = std::chrono::steady_clock::now();
+
+    // Close wakeup event.]=])
+    eden_patch_server([=[        // Write event is owned by ServiceManager
+    }
+}]=] [=[        // Write event is owned by ServiceManager
+    }
+    const auto eden_t5 = std::chrono::steady_clock::now();
+    const auto eden_span = [](auto a, auto b) { return std::chrono::duration<double, std::milli>(b - a).count(); };
+    if (eden_span(eden_t0, eden_t5) >= 10.0) {
+        std::fprintf(stderr, "EDEN_SHUTDOWN_DTOR manager=%p stopped=%.1f threads=%.1f ports=%.1f sessions=%.1f n=%zu events=%.1f\n",
+                     static_cast<void*>(this), eden_span(eden_t0, eden_t1), eden_span(eden_t1, eden_t2),
+                     eden_span(eden_t2, eden_t3), eden_span(eden_t3, eden_t4), eden_sessions, eden_span(eden_t4, eden_t5));
+    }
+}]=])
 endif()
 write_derived("${PORT_BUILD_DIR}/server_manager.cpp" "${server_source}")
 get_target_property(core_sources core SOURCES)

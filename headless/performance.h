@@ -19,6 +19,8 @@ void SampleGpuFrame(unsigned frame);
 #ifdef EDEN_DEV_PROFILE
 void BeginPcSampling();
 void PollGpuPc();
+// Guest core whose host PCs the development sampler collects (dev-settings pc_core=N, default 0).
+inline std::atomic<unsigned> pc_sample_core{0};
 #endif
 // One writer per guest core. JIT state is read only by its owning worker after Run.
 enum class CpuPhase : unsigned { Kernel, Guest, Idle };

@@ -403,13 +403,13 @@ void RegisterWorker(const char* name) {
         Worker worker;
         worker.thread = pthread_self();
 #ifdef EDEN_DEV_PROFILE
-        if (pc_sampling && (i == 4 || i == 0)) {
+        if (pc_sampling && (i == 4 || i == pc_sample_core.load())) {
             sigset_t mask;
             sigemptyset(&mask);
             sigaddset(&mask, SIGUSR2);
             if (pthread_sigmask(SIG_UNBLOCK, &mask, nullptr))
                 throw std::runtime_error("Cannot enable development PC sampler");
-            if (i == 0) {
+            if (i == pc_sample_core.load()) {
                 core_sample_thread = pthread_self();
                 core_sample_ready.store(true, std::memory_order_release);
             }

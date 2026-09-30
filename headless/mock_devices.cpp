@@ -88,6 +88,12 @@ int sceUserServiceInitialize(void*) { return state.user_init_result; }
 int sceUserServiceGetInitialUser(int* user) { *user = 42; return 0; }
 int sceUserServiceGetForegroundUser(int* user) { *user = state.foreground_user; return state.user_result; }
 int sceUserServiceTerminate() { ++state.user_terminations; return 0; }
+// Only the foreground user is signed in on the host.
+int sceUserServiceGetLoginUserIdList(std::int32_t* users) {
+    users[0] = state.foreground_user;
+    users[1] = users[2] = users[3] = -1;
+    return state.user_result;
+}
 int scePadInit() { return 0; }
 int scePadOpen(int user, int type, int index, const void*) {
     state.last_pad_user = user;
@@ -95,6 +101,7 @@ int scePadOpen(int user, int type, int index, const void*) {
     ++state.pad_opens;
     return state.pad_open_result;
 }
+int scePadGetHandle(int, int, int) { return -1; }
 int scePadClose(int) { ++state.pad_closes; return 0; }
 int scePadRead(int, ps5::pad::Data* data, int capacity) {
     std::scoped_lock lock(state.mutex);

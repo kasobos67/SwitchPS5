@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
+#include <array>
 #include <atomic>
 #include <condition_variable>
 #include <memory>
@@ -12,8 +13,11 @@
 #include "ps5_pad.hpp"
 
 namespace Eden {
+// DualSense controllers as guest Pro Controllers. Player 1 is the controller of the user who
+// launched the game; controllers of other signed-in users become players 2-4 as they appear.
 class Pad final {
 public:
+    static constexpr std::size_t kMaxPlayers = 4;
     explicit Pad(float deadzone = 0.08f, float trigger_threshold = 0.5f);
     ~Pad();
     Pad(const Pad&) = delete;
@@ -22,18 +26,32 @@ public:
     bool Poll();
     bool TakeReturnToMenu() { return return_to_menu.exchange(false); }
     bool TakeHudToggle() { return hud_toggle.exchange(false); }
+    // Players with a controller (bit per player), and those whose controller came or went.
+    unsigned ConnectedPlayers() const { return connected_players.load(); }
+    unsigned TakeConnectionChanges() { return connection_changes.exchange(0); }
     void Close();
-    void Consume(std::span<const ps5::pad::Data> samples);
+    void Consume(std::span<const ps5::pad::Data> samples) { Consume(0, samples); }
+    void Consume(std::size_t player, std::span<const ps5::pad::Data> samples);
     InputCommon::VirtualGamepad& Engine() { return *engine; }
 private:
+    struct Slot {
+        int user = -1;
+        int handle = -1;
+        u32 last_buttons = 0;
+    };
+    void Rescan();
+    void OpenSlot(std::size_t player, int user);
+    void CloseSlot(std::size_t player);
     std::shared_ptr<InputCommon::VirtualGamepad> engine;
     float deadzone;
     float trigger_threshold;
-    int handle = -1;
+    std::array<Slot, kMaxPlayers> slots{};
     bool owns_user_service = false;
     std::atomic<bool> return_to_menu = false;
     std::atomic<bool> hud_toggle = false;
-    u32 last_buttons = 0;
+    std::atomic<unsigned> connected_players = 0;
+    std::atomic<unsigned> connection_changes = 0;
+    unsigned polls_since_scan = 0;
     u64 polls = 0, samples_read = 0, usable_samples = 0, intercepted_samples = 0, circle_samples = 0, read_errors = 0;
     int last_result = 0;
 };

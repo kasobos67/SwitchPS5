@@ -27,6 +27,8 @@
 #include <nlohmann/json.hpp>
 #include "devices.h"
 #include "diagnostics.h"
+#include "log_pipe.h"
+#include "controller_applet.h"
 #include "preferences.h"
 #include "metadata_bridge.h"
 #ifdef EDEN_PS5_OPENGL
@@ -56,7 +58,10 @@ extern "C" std::int64_t sceKernelGetDirectMemorySize();
 #include "core/frontend/emu_window.h"
 #include "core/frontend/graphics_context.h"
 #include "core/hle/service/am/applet_manager.h"
+#include "core/hle/service/am/frontend/applets.h"
 #include "core/hle/service/filesystem/filesystem.h"
+#include "hid_core/frontend/emulated_controller.h"
+#include "hid_core/hid_core.h"
 #ifdef PS5_NATIVE
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-private-field"
@@ -146,6 +151,10 @@ int main(int argc, char** argv) {
         // Batch SDK success traces; phase receipts still flush explicitly.
         static char stdout_buffer[64 * 1024];
         if (std::setvbuf(stdout, stdout_buffer, _IOFBF, sizeof(stdout_buffer)) != 0) return 2;
+        // Console storage writes take ~25 ms each; background threads copy both streams to disk.
+        static Eden::LogPipe stderr_pipe, stdout_pipe;
+        if (!stderr_pipe.Attach(stderr) || !stdout_pipe.Attach(stdout))
+            Eden::Report("logs", "Asynchronous log writing unavailable; writing directly");
         std::set_new_handler([] {
             ps5_opengl_heap_snapshot("allocation_failure", 0);
             std::fflush(stdout);
@@ -462,6 +471,9 @@ int main(int argc, char** argv) {
                 } else if (entry.starts_with("idle_spin_us=")) {
                     // Guest cores spin this long on their interrupt flag before sleeping (W1).
                     Eden::Performance::idle_spin_iterations = static_cast<unsigned>(std::stoul(entry.substr(13)) * 50);
+                } else if (entry.starts_with("pc_core=") && entry.size() == 9 && entry[8] >= '0' && entry[8] <= '3') {
+                    // Host PC samples from this guest core instead of core 0 (with --pc-sample).
+                    Eden::Performance::pc_sample_core = static_cast<unsigned>(entry[8] - '0');
                 } else if (entry == "replay=off") {
                     // The profile title takes controller and runner input instead of the timed replay.
                 } else if (entry == "large_pages=off") {
@@ -605,9 +617,14 @@ int main(int argc, char** argv) {
             pad = std::make_unique<Eden::Pad>();
             if (!pad->Open()) throw std::runtime_error("PS5 controller initialization failed");
             Settings::values.audio_output_device_id = "ps5";
-            auto& player = Settings::values.players.GetValue()[0];
-            player.connected = true;
-            player.controller_type = Settings::ControllerType::ProController;
+            // One Pro Controller per signed-in user's DualSense; later changes apply mid-game.
+            const unsigned connected = pad->ConnectedPlayers();
+            (void)pad->TakeConnectionChanges();
+            for (std::size_t index = 0; index < Eden::Pad::kMaxPlayers; ++index) {
+                auto& player = Settings::values.players.GetValue()[index];
+                player.connected = index == 0 || (connected & (1u << index)) != 0;
+                player.controller_type = Settings::ControllerType::ProController;
+            }
         }
         {
 #ifdef EDEN_PS5_OPENGL
@@ -652,6 +669,12 @@ int main(int argc, char** argv) {
                 // Like Eden's Qt/Android frontends, reset shutdown state for each load.
                 system.SetShuttingDown(false);
                 system.GetFileSystemController().CreateFactories(*system.GetFilesystem());
+                if (pad) {
+                    // A game's "connect controllers" screen: one player per PS5 controller in use.
+                    Service::AM::Frontend::FrontendAppletSet applets;
+                    applets.controller = std::make_unique<Eden::PadControllerApplet>(system.HIDCore(), *pad);
+                    system.GetFrontendAppletHolder().SetFrontendAppletSet(std::move(applets));
+                }
                 Service::AM::FrontendAppletParameters params{
                     .applet_id = Service::AM::AppletId::Application,
                 };
@@ -819,6 +842,23 @@ int main(int argc, char** argv) {
                             (seconds >= 50 && seconds < 200 && seconds % 5 == 0) || seconds >= 200);
                         }
 #endif
+                        if (const unsigned changed = pad->TakeConnectionChanges()) {
+                            // A controller that came or went connects or disconnects its player.
+                            const unsigned connected = pad->ConnectedPlayers();
+                            for (std::size_t index = 1; index < Eden::Pad::kMaxPlayers; ++index) {
+                                if (!(changed & (1u << index))) continue;
+                                const bool present = (connected & (1u << index)) != 0;
+                                Settings::values.players.GetValue()[index].connected = present;
+                                auto* controller = system.HIDCore().GetEmulatedControllerByIndex(index);
+                                if (present) {
+                                    controller->SetNpadStyleIndex(Core::HID::NpadStyleIndex::Fullkey);
+                                    controller->Connect();
+                                } else {
+                                    controller->Disconnect();
+                                }
+                                LOG_INFO(Input, "EDEN_PLAYER player={} connected={}", index + 1, present);
+                            }
+                        }
 #ifdef EDEN_PS5_OPENGL
                         if (pad->TakeHudToggle()) Eden::ToggleHud();
 #else

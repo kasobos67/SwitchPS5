@@ -21,6 +21,10 @@ for name in ('__wrap_malloc', '__wrap_free', '__wrap_pthread_create', '__wrap_pt
     assert symbols[name][1] == 't', (name, symbols.get(name))
 assert symbols['vkGetInstanceProcAddr'] == symbols['radv_GetInstanceProcAddr']
 assert 'ps5vk_private_open_memstream' not in symbols
+# The SDK's static libc defines these as direct syscalls, which native titles may not make;
+# the libkernel imports (fcntl(F_DUPFD), pipe) must be used instead.
+for name in ('dup', 'pipe2'):
+    assert name not in symbols, f'{name} links the SDK libc direct syscall'
 link = (build/'bin/eden-headless.map').read_text()
 assert 'heap_wrap' not in link, 'A second SDK heap wrapper owner was linked'
 assert 'libps5vk.a' not in link and 'libpsbc.a' not in link, 'Old Vulkan implementation linked'
