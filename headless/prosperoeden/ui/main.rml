@@ -77,7 +77,7 @@
           <img id="game-cover" src="icons/prosperoeden.tga" width="288" height="288" alt=""/><span id="cover-caption"></span>
           <span class="game-detail-label game-detail-line-0">FORMAT</span><span id="game-detail-format" class="game-detail-value game-detail-line-0">-</span>
           <span class="game-detail-label game-detail-line-1">SIZE</span><span id="game-detail-size" class="game-detail-value game-detail-line-1">-</span>
-          <span class="game-detail-label game-detail-line-2">STATUS</span><span class="game-detail-value game-detail-line-2 ready">READY</span>
+          <span class="game-detail-label game-detail-line-2">ADD-ONS</span><span id="game-detail-addons" class="game-detail-value game-detail-line-2">-</span>
           <span class="game-path-label">FILE</span><span id="game-detail-path" class="game-path">-</span>
           <span id="game-mode-setting"><img src="chrome/dialog-row-normal.tga" width="736" height="94" alt=""/><span class="game-mode-label">Console mode</span><span id="game-mode-value"><span id="mode-docked" class="mode-option"><img src="icons/mode-docked.tga" width="48" height="32" alt=""/><span>Docked</span></span><span id="mode-handheld" class="mode-option"><img src="icons/mode-handheld.tga" width="48" height="32" alt=""/><span>Handheld</span></span><span id="mode-unavailable">Unavailable</span></span></span>
           <span id="game-mode-hint"><img src="icons/leftright-mono.tga" width="26" height="26" alt=""/><span id="game-mode-hint-text">Change mode. Saved per game.</span></span>
@@ -192,6 +192,7 @@
           <span class="about-setup-label about-keys">KEYS</span><span id="about-keys-path" class="about-setup-path about-keys">keys/prod.keys</span>
           <span class="about-setup-label about-firmware">FIRMWARE</span><span id="about-firmware-path" class="about-setup-path about-firmware">firmware/*.nca</span>
           <span class="about-setup-label about-games">GAMES</span><span id="about-games-path" class="about-setup-path about-games">roms/ (NSP or XCI)</span>
+          <span class="about-setup-label about-updates">UPDATES, DLC</span><span id="about-updates-path" class="about-setup-path about-updates">updates/ (NSP or XCI)</span>
           <span class="about-divider about-setup-divider"></span>
           <span class="about-note">Use extracted firmware NCA files. Choose the folder in Settings, Game files; restart the app after changing it.</span>
         </aside>

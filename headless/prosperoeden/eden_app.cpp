@@ -58,9 +58,19 @@ struct GameInfo {
     std::string path;
     std::string cover;
     uint64_t title_id = 0;
+    std::string addons;  // game details, ADD-ONS: "Update 1.2.0, 2 DLC", or "None"
 };
 
 std::vector<GameInfo> games;
+
+std::string AddOnSummary(uint64_t title_id) {
+    char update[64]{};
+    unsigned dlc = 0;
+    eden_game_addons(title_id, update, sizeof(update), &dlc);
+    std::string text = update[0] ? std::string("Update ") + update : std::string{};
+    if (dlc) text += (text.empty() ? "" : ", ") + std::to_string(dlc) + " DLC";
+    return text.empty() ? "None" : text;
+}
 
 // Names of the subfolders (folders = true) or regular files in path, sorted without regard
 // to case. Unlike ReadNativeDirectory, an odd entry is skipped rather than failing the
@@ -198,6 +208,7 @@ void LoadGames() {
     std::error_code directory_error;
     const auto entries = Eden::ReadNativeDirectory(Eden::AssetsPath("roms"), directory_error);
     if (directory_error) return;
+    eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str());
     for (const auto& entry : entries) {
         const std::string file = entry.path().filename().string();
         const std::size_t dot = file.find_last_of('.');
@@ -217,9 +228,10 @@ void LoadGames() {
         const char* cover = cover_path.c_str();
         const int metadata = eden_extract_game_metadata(path.c_str(), Eden::AssetsPath("keys").c_str(), cover,
                                                         title, sizeof(title));
+        const uint64_t title_id = eden_game_title_id(path.c_str());
         games.push_back({metadata & EDEN_METADATA_TITLE ? title : file.substr(0, dot), format,
                          size, file, metadata & EDEN_METADATA_COVER ? cover : "",
-                         eden_game_title_id(path.c_str())});
+                         title_id, AddOnSummary(title_id)});
     }
     std::sort(games.begin(), games.end(), [](const GameInfo& a, const GameInfo& b) { return a.name < b.name; });
 }
@@ -307,6 +319,7 @@ bool EdenApp::Initialize(Rml::ElementDocument* document, const std::string& laun
     SetText(document_, "about-keys-path", ShortPath(Eden::AssetsPath("keys/prod.keys"), 36).c_str());
     SetText(document_, "about-firmware-path", ShortPath(Eden::AssetsPath("firmware/*.nca"), 36).c_str());
     SetText(document_, "about-games-path", (ShortPath(Eden::AssetsPath("roms"), 36) + "/ (NSP or XCI)").c_str());
+    SetText(document_, "about-updates-path", (ShortPath(Eden::AssetsPath("updates"), 36) + "/ (NSP or XCI)").c_str());
     const int installed = CountInstalledGames();
     const std::string system = std::to_string(installed) + (installed == 1 ? " game" : " games") +
         " installed  /  " + (setup_ready_ ? "Firmware ready" : "Setup required");
@@ -524,6 +537,8 @@ void EdenApp::UpdateDialog() {
             SetText(document_, "game-detail-title", "No ROM selected");
             SetText(document_, "game-detail-format", "-");
             SetText(document_, "game-detail-size", "-");
+            SetText(document_, "game-detail-addons", "-");
+            SetClass(document_, "game-detail-addons", "ready", false);
             SetText(document_, "game-detail-path", "-");
             if (Rml::Element* cover = document_->GetElementById("game-cover"))
                 cover->SetAttribute("src", "icons/prosperoeden.tga");
@@ -533,6 +548,8 @@ void EdenApp::UpdateDialog() {
             SetText(document_, "game-detail-title", game.name.c_str());
             SetText(document_, "game-detail-format", game.format.c_str());
             SetText(document_, "game-detail-size", game.size.c_str());
+            SetText(document_, "game-detail-addons", game.addons.c_str());
+            SetClass(document_, "game-detail-addons", "ready", game.addons != "None");
             SetText(document_, "game-detail-path", game.path.c_str());
             if (Rml::Element* cover = document_->GetElementById("game-cover"))
                 cover->SetAttribute("src", game.cover.empty() ? "icons/prosperoeden.tga" : game.cover);

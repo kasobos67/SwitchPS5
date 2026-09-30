@@ -10,7 +10,9 @@
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
+#include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -21,6 +23,7 @@
 #include "core/file_sys/common_funcs.h"
 #include "core/file_sys/content_archive.h"
 #include "core/file_sys/nca_metadata.h"
+#include "core/file_sys/registered_cache.h"
 #include "core/file_sys/romfs.h"
 #include "core/file_sys/submission_package.h"
 #include "core/file_sys/vfs/vfs_real.h"
@@ -159,6 +162,59 @@ int eden_extract_game_metadata(const char* rom_path, const char* keys_dir,
     if (const auto icon = FindIcon(romfs); icon && WriteTga(icon, cover_tga_path))
         result |= EDEN_METADATA_COVER;
     return result;
+}
+
+namespace {
+struct AddOns {
+    std::string update;
+    unsigned dlc = 0;
+};
+// Base title ID -> its update and DLC files, from the last eden_scan_addons.
+std::map<uint64_t, AddOns>& ScannedAddOns() {
+    static std::map<uint64_t, AddOns> scanned;
+    return scanned;
+}
+}
+
+void eden_scan_addons(const char* updates_dir, const char* keys_dir) {
+    auto& scanned = ScannedAddOns();
+    scanned.clear();
+    if (!updates_dir || !keys_dir) return;
+    try {
+        Common::FS::SetEdenPath(Common::FS::EdenPath::KeysDir, keys_dir);
+        FileSys::RealVfsFilesystem vfs;
+        auto directory = vfs.OpenDirectory(updates_dir, FileSys::OpenMode::Read);
+        if (!directory) return;
+        const FileSys::ExternalContentProvider provider({std::move(directory)});
+        for (const auto& entry : provider.ListEntriesFilter(FileSys::TitleType::Update, std::nullopt, std::nullopt)) {
+            auto& addons = scanned[FileSys::GetBaseTitleID(entry.title_id)];
+            if (!addons.update.empty()) continue;
+            // Newest first; the display version comes from the update's own control data.
+            if (const auto versions = provider.ListUpdateVersions(entry.title_id); !versions.empty()) {
+                addons.update = versions.front().version_string.empty()
+                    ? "v" + std::to_string(versions.front().version) : versions.front().version_string;
+            } else if (const auto version = provider.GetEntryVersion(entry.title_id)) {
+                addons.update = "v" + std::to_string(*version);
+            }
+        }
+        std::set<uint64_t> dlc;
+        for (const auto& entry : provider.ListEntriesFilter(FileSys::TitleType::AOC, std::nullopt, std::nullopt))
+            if (dlc.insert(entry.title_id).second) ++scanned[FileSys::GetBaseTitleID(entry.title_id)].dlc;
+    } catch (const std::exception& error) {
+        std::fprintf(stderr, "[ProsperoEden] updates: %s\n", error.what());
+        scanned.clear();
+    }
+}
+
+int eden_game_addons(uint64_t title_id, char* update_version, size_t capacity, unsigned* dlc_count) {
+    if (update_version && capacity) update_version[0] = '\0';
+    if (dlc_count) *dlc_count = 0;
+    const auto& scanned = ScannedAddOns();
+    const auto found = scanned.find(FileSys::GetBaseTitleID(title_id));
+    if (!title_id || found == scanned.end()) return 0;
+    if (update_version && capacity) std::snprintf(update_version, capacity, "%s", found->second.update.c_str());
+    if (dlc_count) *dlc_count = found->second.dlc;
+    return !found->second.update.empty() || found->second.dlc != 0;
 }
 
 const char* eden_startup_error() {

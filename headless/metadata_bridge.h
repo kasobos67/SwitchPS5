@@ -20,6 +20,13 @@ int eden_extract_game_metadata(const char* rom_path, const char* keys_dir,
                                const char* cover_tga_path, char* title,
                                size_t title_capacity);
 
+// Update and DLC files (NSP or XCI, any depth) in updates_dir, read with the provider that also
+// applies them to a running game. Replaces the previous scan; eden_game_addons queries it.
+void eden_scan_addons(const char* updates_dir, const char* keys_dir);
+// For a base game: the newest update's display version (empty without one) and its DLC count.
+// Returns nonzero when either exists.
+int eden_game_addons(uint64_t title_id, char* update_version, size_t capacity, unsigned* dlc_count);
+
 #ifdef __cplusplus
 }
 #endif

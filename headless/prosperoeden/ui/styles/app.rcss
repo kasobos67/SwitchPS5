@@ -162,9 +162,9 @@ button { margin: 0; padding: 0; border: 0px transparent; border-radius: 0px; bac
 .about-credit-panel .about-port { top: 496px; height: 72px; }
 .about-setup-label { position: absolute; left: 36px; width: 216px; height: 36px; color: #b7c6b5; font-size: 20px; line-height: 30px; }
 .about-setup-path { position: absolute; left: 252px; width: 532px; height: 72px; color: #f2f4e9; font-size: 24px; line-height: 34px; }
-.about-keys { top: 200px; } .about-firmware { top: 292px; } .about-games { top: 384px; }
-.about-setup-divider { top: 492px; }
-.about-note { position: absolute; left: 36px; top: 536px; width: 748px; height: 108px; color: #b7c6b5; font-size: 24px; line-height: 36px; }
+.about-keys { top: 196px; } .about-firmware { top: 276px; } .about-games { top: 356px; } .about-updates { top: 436px; }
+.about-setup-divider { top: 524px; }
+.about-note { position: absolute; left: 36px; top: 552px; width: 748px; height: 108px; color: #b7c6b5; font-size: 24px; line-height: 36px; }
 
 /* Settings > Game files: the folder browser. */
 #settings-dialog .dialog-row-4 { top: 526px; }

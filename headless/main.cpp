@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
                 " app=" + Eden::AppDir() + " data=" + Eden::UserDir() + " game_files=" + Eden::AssetsDir();
             Eden::Report("filesystem access", access.c_str());
             if (Eden::FilesystemAccess() && Eden::AssetsDir() == Eden::kDefaultAssetsDir)
-                for (const char* folder : {"/keys", "/firmware", "/roms"})
+                for (const char* folder : {"/keys", "/firmware", "/roms", "/updates"})
                     (void)mkdir((std::string{Eden::kDefaultAssetsDir} + folder).c_str(), 0777);
             // RADV keeps its shader cache in the app folder (radv_ps5_platform.c's default is /app0).
             if (Eden::FilesystemAccess())
@@ -724,6 +724,9 @@ int main(int argc, char** argv) {
                 };
                 // Like Eden's Qt/Android frontends, reset shutdown state for each load.
                 system.SetShuttingDown(false);
+                // Update and DLC files (NSP or XCI) in the game files' updates folder apply to their
+                // base game: Eden's ExternalContentProvider, which the patch manager checks first.
+                Settings::values.external_content_dirs = {Eden::AssetsPath("updates")};
                 system.GetFileSystemController().CreateFactories(*system.GetFilesystem());
                 if (pad) {
                     // A game's "connect controllers" screen: one player per PS5 controller in use.

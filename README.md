@@ -44,6 +44,7 @@ The complete ProsperoEden source is in this repository: the PS5 frontend and lau
 - **Folder browser** - pick the game files folder in **Settings > Game files**. It shows how many keys, firmware files, and games each folder holds. Hold L1/R1 to page quickly.
 - **Library** - game covers, **Continue Playing**, and **Recently Played**, which keep working after you move your files.
 - **Per-game settings** - renderer, resolution, upscaling filter and Handheld / Docked mode for each game (Triangle in the Library).
+- **Game updates and DLC** - put update and DLC files (NSP or XCI) in the `updates` folder next to `roms`. They apply when the game starts, and each game's details show the update version and DLC count.
 - **Shader cache** - shaders compiled in earlier sessions are loaded when a game starts, so an effect stutters only the first time it appears.
 - **In-game shortcuts** - a performance overlay (Select + R1), and Select + L1 to end the game and return to the library.
 - **Settings in one place** - a single JSON file under `/data/prosperoeden`, with game volume, mute, and detailed logging options. Logs keep the previous session.
@@ -137,6 +138,7 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 - **Vibration and motion.** DualSense rumble for games that use it (turn it off in **Settings > Controls**), and the controller's gyro and accelerometer for motion controls.
 - **Resolution and upscaling.** **Settings > Video** now sets the internal rendering resolution (0.5x to 2x) and the filter that scales it to the TV: Bilinear, AMD FSR, Bicubic or Nearest.
 - **Per-game settings.** Press Triangle on a game in the Library to give it its own renderer, resolution and upscaling filter.
+- **Game updates and DLC.** Put update and DLC files (NSP or XCI) in the `updates` folder next to `roms`; the newest update and all DLC apply when the game starts, and the game details show them.
 - **Build it yourself.** `make` fetches every dependency at its pinned revision and builds the release. The OpenGL renderer now uses the published PS5 OpenGL 4.6 SDK 0.6.0.
 
 ## Changes in v1.000.030
@@ -170,7 +172,6 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 - **FPKG support** - install ProsperoEden as a fake package, alongside the current homebrew folder install.
 - **More performance** - CPU and GPU work to keep demanding games at their target frame rate.
 - **More reliable game loading** - fix the remaining hangs on the loading screen.
-- **Game updates and DLC** - load update and DLC files (NSP) placed next to the base game.
 
 ## Issues are disabled
 
