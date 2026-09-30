@@ -140,6 +140,7 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 - **Vibration and motion.** DualSense rumble for games that use it (turn it off in **Settings > Controls**), and the controller's gyro and accelerometer for motion controls.
 - **Resolution and upscaling.** **Settings > Video** now sets the internal rendering resolution (0.5x to 2x) and the filter that scales it to the TV: Bilinear, AMD FSR, Bicubic or Nearest.
 - **Per-game settings.** Press Triangle on a game in the Library to give it its own renderer, resolution and upscaling filter.
+- **Language setting.** **Settings > Language** picks the language games use (18 languages), with the console region that goes with it. It applies when a game starts.
 - **Game updates and DLC.** Put update and DLC files (NSP or XCI) in the `updates` folder next to `roms`; the newest update and all DLC apply when the game starts, and the game details show them.
 - **Build it yourself.** `make` fetches every dependency at its pinned revision and builds the release. The OpenGL renderer now uses the published PS5 OpenGL 4.6 SDK 0.6.0.
 
@@ -177,7 +178,6 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 - **Faster exit in every game** - a few games still take up to several minutes to close.
 - **Touchpad button in every game** - in some games the touchpad (Select) does not respond and only the Create (Share) button works.
 - **Controller selection screen** - some games wait forever on the screen that asks you to choose a controller.
-- **Language setting** - choose the language games use, in Settings.
 - **Import saves from Ryujinx** - copy a game's save from a Ryujinx data folder into ProsperoEden. Eden's desktop app can already link Ryujinx saves, and the code that finds them is in the shared code ProsperoEden builds; ProsperoEden needs its own import step in the launcher.
 - **More game compatibility** - validate more games on the PS5, and fix what keeps them from running well, such as games that crash at launch.
 
