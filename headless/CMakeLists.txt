@@ -8,6 +8,8 @@ set(PORT_ROOT "${CMAKE_CURRENT_LIST_DIR}/..")
 set(PORT_BUILD_DIR "${CMAKE_BINARY_DIR}/headless")
 # One compiled-code namespace per guest process for the A64 JITs (headless/dynarmic/jit_group.h).
 include("${CMAKE_CURRENT_LIST_DIR}/dynarmic/shared-jit.cmake")
+# Register-allocator bookkeeping visits only the host locations in use (compile time).
+include("${CMAKE_CURRENT_LIST_DIR}/dynarmic/reg_alloc.cmake")
 if(PS5_NATIVE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(EDEN_SHARED_JIT ON)
 endif()
@@ -205,6 +207,9 @@ target_sources(dynarmic PRIVATE "${CMAKE_CURRENT_LIST_DIR}/dynarmic/block_range_
 target_compile_definitions(dynarmic PRIVATE EDEN_BLOCK_RANGE_PAGES=1)
 if(EDEN_SHARED_JIT)
     eden_shared_jit_sources()
+endif()
+if(PS5_NATIVE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    eden_reg_alloc_sources()
 endif()
 
 # Patch lookup must not create a large empty record for every compiled block.
