@@ -3,12 +3,15 @@
 //
 //   {
 //     "version": 1,
-//     "video": { "renderer": "vulkan", "fps_overlay": true },
+//     "video": { "renderer": "vulkan", "fps_overlay": true, "resolution": "1x",
+//                "upscaling_filter": "bilinear" },
 //     "audio": { "volume": 100, "mute": false },
+//     "controls": { "vibration": true },
 //     "diagnostics": { "detailed_logging": false },
 //     "game_files": "/mnt/ext1/eden",
 //     "library": { "last_game": "Game [id].nsp", "recent": ["Game [id].nsp"] },
-//     "games": { "0100000000010000": { "console_mode": "handheld" } }
+//     "games": { "0100000000010000": { "console_mode": "handheld", "renderer": "opengl",
+//                                      "resolution": "0.75x", "upscaling_filter": "fsr" } }
 //   }
 //
 // Missing or mistyped values read as their defaults. Writes replace the file atomically. The
@@ -34,13 +37,30 @@ enum class GraphicsBackend { OpenGL, Vulkan };
 inline const char* BackendName(GraphicsBackend backend) {
     return backend == GraphicsBackend::OpenGL ? "OpenGL" : "Vulkan";
 }
+// Settings > Video: the internal rendering resolution (a scale of the game's own 720p handheld
+// or 1080p docked output) and the filter that scales the result to the TV output.
+inline constexpr const char* kResolutionKeys[] = {"0.5x", "0.75x", "1x", "1.5x", "2x"};
+inline constexpr const char* kResolutionLabels[] = {"0.5x (faster, softer)", "0.75x (faster)", "1x (native)",
+                                                    "1.5x (sharper)", "2x (sharpest)"};
+inline constexpr int kNativeResolution = 2;
+inline constexpr const char* kUpscalingFilterKeys[] = {"bilinear", "fsr", "bicubic", "nearest"};
+inline constexpr const char* kUpscalingFilterLabels[] = {"Bilinear", "AMD FSR", "Bicubic", "Nearest"};
 struct Preferences {
     bool hud = true;
     int volume = 100;
     bool mute = false;
     bool detailed_logging = false;
     GraphicsBackend backend = GraphicsBackend::Vulkan;
+    int resolution = kNativeResolution;  // index into kResolutionKeys
+    int upscaling_filter = 0;            // index into kUpscalingFilterKeys
+    bool vibration = true;
 };
+
+inline int KeyIndex(const std::string& value, const char* const* keys, int count, int fallback) {
+    for (int i = 0; i < count; ++i)
+        if (value == keys[i]) return i;
+    return fallback;
+}
 
 inline bool ValidRomFilename(std::string_view name) {
     if (name.size() < 5 || name.size() > 255) return false;
@@ -166,18 +186,29 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     result.mute = Settings::Bool(document, Json::json_pointer("/audio/mute"), result.mute);
     result.detailed_logging = Settings::Bool(document, Json::json_pointer("/diagnostics/detailed_logging"),
                                              result.detailed_logging);
+    result.resolution = KeyIndex(Settings::String(document, Json::json_pointer("/video/resolution")),
+                                 kResolutionKeys, int(std::size(kResolutionKeys)), result.resolution);
+    result.upscaling_filter = KeyIndex(Settings::String(document, Json::json_pointer("/video/upscaling_filter")),
+                                       kUpscalingFilterKeys, int(std::size(kUpscalingFilterKeys)),
+                                       result.upscaling_filter);
+    result.vibration = Settings::Bool(document, Json::json_pointer("/controls/vibration"), result.vibration);
     return result;
 }
 
 inline bool SavePreferences(const Preferences& value, const std::string& file = SettingsFile()) {
     if (value.volume < 0 || value.volume > 100 ||
-        (value.backend != GraphicsBackend::OpenGL && value.backend != GraphicsBackend::Vulkan)) return false;
+        (value.backend != GraphicsBackend::OpenGL && value.backend != GraphicsBackend::Vulkan) ||
+        value.resolution < 0 || value.resolution >= int(std::size(kResolutionKeys)) ||
+        value.upscaling_filter < 0 || value.upscaling_filter >= int(std::size(kUpscalingFilterKeys))) return false;
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
     document["video"]["renderer"] = value.backend == GraphicsBackend::Vulkan ? "vulkan" : "opengl";
     document["video"]["fps_overlay"] = value.hud;
+    document["video"]["resolution"] = kResolutionKeys[value.resolution];
+    document["video"]["upscaling_filter"] = kUpscalingFilterKeys[value.upscaling_filter];
     document["audio"]["volume"] = value.volume;
     document["audio"]["mute"] = value.mute;
+    document["controls"]["vibration"] = value.vibration;
     document["diagnostics"]["detailed_logging"] = value.detailed_logging;
     return Settings::Write(document, file);
 }
@@ -201,6 +232,47 @@ inline bool SaveGameDocked(uint64_t title_id, bool docked, const std::string& fi
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
     document["games"][Settings::TitleKey(title_id)]["console_mode"] = docked ? "docked" : "handheld";
+    return Settings::Write(document, file);
+}
+
+// Library > Game settings: renderer, resolution and upscaling filter for one game; -1 (absent
+// from the file) uses Settings > Video.
+struct GameSettings {
+    int renderer = -1;          // 0 OpenGL, 1 Vulkan
+    int resolution = -1;        // index into kResolutionKeys
+    int upscaling_filter = -1;  // index into kUpscalingFilterKeys
+};
+inline constexpr const char* kRendererKeys[] = {"opengl", "vulkan"};
+
+inline GameSettings LoadGameSettings(uint64_t title_id, const std::string& file = SettingsFile()) {
+    GameSettings result;
+    if (!title_id) return result;
+    using Settings::Json;
+    const Json document = Settings::Load(file);
+    const std::string base = "/games/" + Settings::TitleKey(title_id);
+    const auto key = [&](const char* name) { return Settings::String(document, Json::json_pointer(base + "/" + name)); };
+    result.renderer = KeyIndex(key("renderer"), kRendererKeys, int(std::size(kRendererKeys)), -1);
+    result.resolution = KeyIndex(key("resolution"), kResolutionKeys, int(std::size(kResolutionKeys)), -1);
+    result.upscaling_filter = KeyIndex(key("upscaling_filter"), kUpscalingFilterKeys,
+                                       int(std::size(kUpscalingFilterKeys)), -1);
+    return result;
+}
+
+inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const std::string& file = SettingsFile()) {
+    if (!title_id || value.renderer >= int(std::size(kRendererKeys)) ||
+        value.resolution >= int(std::size(kResolutionKeys)) ||
+        value.upscaling_filter >= int(std::size(kUpscalingFilterKeys))) return false;
+    Settings::Json document = Settings::Load(file);
+    document["version"] = 1;
+    auto& game = document["games"][Settings::TitleKey(title_id)];
+    if (!game.is_object()) game = Settings::Json::object();
+    const auto store = [&](const char* name, int index, const char* const* keys) {
+        if (index < 0) game.erase(name);
+        else game[name] = keys[index];
+    };
+    store("renderer", value.renderer, kRendererKeys);
+    store("resolution", value.resolution, kResolutionKeys);
+    store("upscaling_filter", value.upscaling_filter, kUpscalingFilterKeys);
     return Settings::Write(document, file);
 }
 

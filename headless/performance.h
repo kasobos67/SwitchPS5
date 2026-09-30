@@ -19,8 +19,20 @@ void SampleGpuFrame(unsigned frame);
 #ifdef EDEN_DEV_PROFILE
 void BeginPcSampling();
 void PollGpuPc();
+// Development: A64 block compilation split into translate, optimize, emit and the emitter's
+// block-range registration (part of emit), per guest core, in nanoseconds.
+inline std::array<std::array<std::atomic<unsigned long long>, 4>, 4> jit_phase_ns{};
+// Development: A64 blocks per guest core that no core had compiled before, that this core had
+// compiled before (after an invalidation), and that another core compiled first, by how long
+// before: under 1 ms, 10 ms, 100 ms, 1 s, 10 s, and later.
+inline std::array<std::array<std::atomic<unsigned long long>, 8>, 4> jit_duplicates{};
 // Guest core whose host PCs the development sampler collects (dev-settings pc_core=N, default 0).
 inline std::atomic<unsigned> pc_sample_core{0};
+// Development: sample that core at ~500 Hz from its registration (dev-settings pc_fast=on).
+inline std::atomic<bool> pc_fast{false};
+// Development: honour capture-once.txt from a session's first 30 s segment instead of its fifth
+// (dev-settings capture=early; the runner's lifecycle returns need a capture within ~80 s).
+inline std::atomic<bool> capture_early{false};
 #endif
 // One writer per guest core. JIT state is read only by its owning worker after Run.
 enum class CpuPhase : unsigned { Kernel, Guest, Idle };

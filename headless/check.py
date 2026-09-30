@@ -51,7 +51,7 @@ def fixture(data, max_size=5 * 4096):
 
 def receipt(text, log, cycles=1):
     assert cycles in (1, 3, 20)
-    expected = (['core_constructed', 'core_initialized'] +
+    expected = (['session_start', 'core_constructed', 'core_initialized'] +
                 ['nro_loaded', 'cpu_manager_ready', 'guest_exit_callback', 'core_shutdown'] * cycles +
                 ['core_destroyed', 'HEADLESS_COMPLETE'])
     assert text.splitlines() == [name + '\tPASS' for name in expected]

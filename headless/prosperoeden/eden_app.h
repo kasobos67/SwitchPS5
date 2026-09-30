@@ -28,6 +28,10 @@ private:
     bool BrowseTo(const std::string& directory);
     void HandleFilesInput(const radio_input_event_t& event);
     void UpdateFiles();
+    // Library > Game settings for the selected game.
+    void OpenGameSettings();
+    void HandleGameSettingsInput(const radio_input_event_t& event);
+    void UpdateGameSettings(const char* message = nullptr);
 
     Rml::ElementDocument* document_ = nullptr;
     Eden::Preferences preferences_;

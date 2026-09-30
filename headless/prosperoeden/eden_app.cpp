@@ -328,6 +328,10 @@ void EdenApp::HandleInput(const radio_input_event_t& event) {
         HandleFilesInput(event);
         return;
     }
+    if (dialog_ == 9) {
+        HandleGameSettingsInput(event);
+        return;
+    }
     if (dialog_ >= 3) {
         auto* select = static_cast<Rml::ElementFormControlSelect*>(document_->GetElementById("video-backend"));
         if (dialog_ == 3 && select->IsSelectBoxVisible()) {
@@ -353,7 +357,9 @@ void EdenApp::HandleInput(const radio_input_event_t& event) {
         }
         if ((dialog_ == 3 || dialog_ == 4) &&
             (event.key == RADIO_INPUT_UP || event.key == RADIO_INPUT_DOWN)) {
-            option_ = 1 - option_;
+            // Video: renderer, resolution, upscaling filter, FPS overlay. Audio: volume, mute.
+            const int options = dialog_ == 3 ? 4 : 2;
+            option_ = (option_ + (event.key == RADIO_INPUT_DOWN ? 1 : options - 1)) % options;
             UpdateSettings();
             return;
         }
@@ -361,7 +367,13 @@ void EdenApp::HandleInput(const radio_input_event_t& event) {
         const bool adjust = event.key == RADIO_INPUT_LEFT || event.key == RADIO_INPUT_RIGHT;
         if (dialog_ == 3 && option_ == 0 && activate) {
             select->Focus(); select->ShowSelectBox();
-        } else if (dialog_ == 3 && option_ == 1 && (activate || adjust)) {
+        } else if (dialog_ == 3 && (option_ == 1 || option_ == 2) && (activate || adjust)) {
+            const int step = event.key == RADIO_INPUT_LEFT ? -1 : 1;
+            int& value = option_ == 1 ? preferences_.resolution : preferences_.upscaling_filter;
+            const int count = option_ == 1 ? int(std::size(Eden::kResolutionKeys)) : int(std::size(Eden::kUpscalingFilterKeys));
+            value = (value + step + count) % count;
+            SaveSettings();
+        } else if (dialog_ == 3 && option_ == 3 && (activate || adjust)) {
             preferences_.hud = !preferences_.hud; SaveSettings();
         } else if (dialog_ == 4 && option_ == 0 && adjust) {
             preferences_.volume = std::clamp(preferences_.volume +
@@ -369,6 +381,8 @@ void EdenApp::HandleInput(const radio_input_event_t& event) {
             SaveSettings();
         } else if (dialog_ == 4 && option_ == 1 && (activate || adjust)) {
             preferences_.mute = !preferences_.mute; SaveSettings();
+        } else if (dialog_ == 5 && (activate || adjust)) {
+            preferences_.vibration = !preferences_.vibration; SaveSettings();
         } else if (dialog_ == 6 && (activate || adjust)) {
             preferences_.detailed_logging = !preferences_.detailed_logging; SaveSettings();
         }
@@ -394,6 +408,8 @@ void EdenApp::HandleInput(const radio_input_event_t& event) {
             SetText(document_, "game-mode-hint-text", saved ? "Saved for this game. Applies on next launch." :
                     "Could not save console mode. Please try again.");
         }
+        else if (dialog_ == 1 && count > 0 && event.key == RADIO_INPUT_TRIANGLE)
+            OpenGameSettings();
         else if (dialog_ == 1 && setup_ready_ && count > 0 && event.key == RADIO_INPUT_CROSS)
             selected_game_ = Eden::AssetsPath("roms/" + games[dialog_selected_].path);
         else if (count > 0 && event.key == RADIO_INPUT_UP) {
@@ -546,6 +562,7 @@ void EdenApp::Open(const char* id, int dialog) {
 
 void EdenApp::Close() {
     SetClass(document_, "about-dialog", "open", false);
+    SetClass(document_, "game-settings-dialog", "open", false);
     SetClass(document_, "rom-dialog", "open", false);
     SetClass(document_, "settings-dialog", "open", false);
     SetClass(document_, "files-dialog", "open", false);
@@ -558,14 +575,21 @@ void EdenApp::UpdateSettings() {
     auto* backend = static_cast<Rml::ElementFormControlSelect*>(document_->GetElementById("video-backend"));
     backend->SetSelection(preferences_.backend == Eden::GraphicsBackend::OpenGL ? 0 : 1);
     SetText(document_, "hud-label", preferences_.hud ? "FPS overlay: On" : "FPS overlay: Off");
+    SetText(document_, "resolution-label",
+            (std::string("Resolution: ") + Eden::kResolutionLabels[preferences_.resolution]).c_str());
+    SetText(document_, "filter-label",
+            (std::string("Upscaling filter: ") + Eden::kUpscalingFilterLabels[preferences_.upscaling_filter]).c_str());
     const std::string volume = "Game volume: " + std::to_string(preferences_.volume) + "%";
     SetText(document_, "volume-label", volume.c_str());
     SetText(document_, "mute-label", preferences_.mute ? "Mute: On" : "Mute: Off");
+    SetText(document_, "vibration-label", preferences_.vibration ? "Vibration: On" : "Vibration: Off");
     SetText(document_, "logging-label", preferences_.detailed_logging ? "Detailed logging: On" : "Detailed logging: Off");
     const std::string setup = eden_startup_error();
     SetText(document_, "setup-details", setup.empty() ?
         "Keys and firmware: startup checks passed. Game-specific compatibility is checked at launch." : setup.c_str());
-    SetClass(document_, "hud-setting", "focused", option_ == 1);
+    SetClass(document_, "resolution-setting", "focused", dialog_ == 3 && option_ == 1);
+    SetClass(document_, "filter-setting", "focused", dialog_ == 3 && option_ == 2);
+    SetClass(document_, "hud-setting", "focused", dialog_ == 3 && option_ == 3);
     SetClass(document_, "volume-setting", "focused", option_ == 0);
     SetClass(document_, "mute-setting", "focused", option_ == 1);
     SetClass(document_, "video-backend-chrome", "dimmed", option_ != 0);
@@ -577,6 +601,69 @@ void EdenApp::SaveSettings() {
     SetText(document_, hints[dialog_ - 3], saved ? "Saved. Applies when a game starts. O Back" : "Could not save settings. Please try again.");
     if (!saved) Eden::Report("settings", "Could not write preferences");
     UpdateSettings();
+}
+
+void EdenApp::OpenGameSettings() {
+    if (games.empty() || !games[dialog_selected_].title_id) {
+        SetText(document_, "game-mode-hint-text", "This game's settings cannot be saved (no title ID).");
+        return;
+    }
+    SetText(document_, "game-settings-name", games[dialog_selected_].name.c_str());
+    SetClass(document_, "game-settings-dialog", "open", true);
+    dialog_ = 9;
+    option_ = 0;
+    UpdateGameSettings();
+}
+
+void EdenApp::HandleGameSettingsInput(const radio_input_event_t& event) {
+    const auto id = games[dialog_selected_].title_id;
+    if (event.key == RADIO_INPUT_CIRCLE) {
+        SetClass(document_, "game-settings-dialog", "open", false);
+        dialog_ = 1;
+        UpdateDialog();
+        return;
+    }
+    if (event.key == RADIO_INPUT_UP || event.key == RADIO_INPUT_DOWN) {
+        option_ = (option_ + (event.key == RADIO_INPUT_DOWN ? 1 : 3)) % 4;
+        UpdateGameSettings();
+        return;
+    }
+    if (event.key != RADIO_INPUT_LEFT && event.key != RADIO_INPUT_RIGHT && event.key != RADIO_INPUT_CROSS) return;
+    const int step = event.key == RADIO_INPUT_LEFT ? -1 : 1;
+    bool saved;
+    if (option_ == 0) {
+        saved = Eden::SaveGameDocked(id, !Eden::LoadGameDocked(id));
+    } else {
+        auto game = Eden::LoadGameSettings(id);
+        // -1 (Default) then each value.
+        const auto cycle = [step](int value, int count) { return (value + 1 + step + count + 1) % (count + 1) - 1; };
+        if (option_ == 1) game.renderer = cycle(game.renderer, int(std::size(Eden::kRendererKeys)));
+        if (option_ == 2) game.resolution = cycle(game.resolution, int(std::size(Eden::kResolutionKeys)));
+        if (option_ == 3) game.upscaling_filter = cycle(game.upscaling_filter, int(std::size(Eden::kUpscalingFilterKeys)));
+        saved = Eden::SaveGameSettings(id, game);
+    }
+    if (!saved) Eden::Report("settings", "Could not write game settings");
+    UpdateGameSettings(saved ? "Saved for this game. Applies on next launch." : "Could not save. Please try again.");
+}
+
+void EdenApp::UpdateGameSettings(const char* message) {
+    const auto id = games.empty() ? 0 : games[dialog_selected_].title_id;
+    const auto game = Eden::LoadGameSettings(id);
+    const auto global = Eden::LoadPreferences();
+    static constexpr const char* renderers[] = {"OpenGL", "Vulkan"};
+    const std::string renderer = game.renderer >= 0 ? renderers[game.renderer] :
+        std::string("Default (") + Eden::BackendName(global.backend) + ")";
+    const std::string resolution = game.resolution >= 0 ? Eden::kResolutionLabels[game.resolution] :
+        std::string("Default (") + Eden::kResolutionKeys[global.resolution] + ")";
+    const std::string filter = game.upscaling_filter >= 0 ? Eden::kUpscalingFilterLabels[game.upscaling_filter] :
+        std::string("Default (") + Eden::kUpscalingFilterLabels[global.upscaling_filter] + ")";
+    SetText(document_, "gs-mode-label", Eden::LoadGameDocked(id) ? "Console mode: Docked" : "Console mode: Handheld");
+    SetText(document_, "gs-renderer-label", ("Renderer: " + renderer).c_str());
+    SetText(document_, "gs-resolution-label", ("Resolution: " + resolution).c_str());
+    SetText(document_, "gs-filter-label", ("Upscaling filter: " + filter).c_str());
+    static constexpr const char* rows[] = {"gs-mode-setting", "gs-renderer-setting", "gs-resolution-setting", "gs-filter-setting"};
+    for (int row = 0; row < 4; ++row) SetClass(document_, rows[row], "focused", option_ == row);
+    SetText(document_, "game-settings-hint", message ? message : "UP / DOWN Select / LEFT / RIGHT Change / O Back");
 }
 
 void EdenApp::OpenFiles() {

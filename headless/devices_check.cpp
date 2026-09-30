@@ -109,6 +109,51 @@ void CheckPad() {
         CHECK(!pad.Engine().GetButton({}, 7)); CHECK(!pad.Engine().GetButton({}, 19));
         sample.buttons = 0; consume();
 
+        // Motion: Eden's SDL mapping of a DualSense (G, turns per second, microsecond deltas).
+        constexpr float pi = std::numbers::pi_v<float>;
+        sample.acceleration = {0.25f, 1.0f, -0.5f};
+        sample.angular_velocity = {pi, 0.0f, -2.0f * pi};
+        auto motion_device = Common::Input::CreateInputDeviceFromString("engine:virtual_gamepad,port:0,motion:0");
+        int motion_updates = 0;
+        motion_device->SetCallback({[&](const auto&) { ++motion_updates; }});
+        sample.timestamp_us = 1000; consume(); // The first sample only starts the clock.
+        CHECK(motion_updates == 0);
+        sample.timestamp_us = 5000; consume();
+        CHECK(motion_updates == 1);
+        auto motion = pad.Engine().GetMotion({}, 0);
+        CHECK(motion.delta_timestamp == 4000);
+        CHECK(motion.accel_x == -0.25f); CHECK(motion.accel_y == -0.5f); CHECK(motion.accel_z == -1.0f);
+        CHECK(motion.gyro_x == 0.5f); CHECK(motion.gyro_y == 1.0f); CHECK(motion.gyro_z == 0.0f);
+        consume(); CHECK(motion_updates == 1); // A repeated sample is not new motion.
+        sample.connected = 0; consume(); // Away: at rest instead of turning on.
+        CHECK(motion_updates == 2);
+        motion = pad.Engine().GetMotion({}, 0);
+        CHECK(motion.gyro_x == 0.0f); CHECK(motion.gyro_y == 0.0f); CHECK(motion.accel_z == -1.0f);
+        sample.connected = 1; sample.acceleration = {}; sample.angular_velocity = {}; sample.timestamp_us = 0;
+
+        // Rumble: both guest sides on one DualSense; low band -> large motor, high band -> small.
+        {
+            using Common::Input::DriverResult;
+            using Type = Common::Input::VibrationAmplificationType;
+            auto left = Common::Input::CreateOutputDeviceFromString("engine:virtual_gamepad,port:0,pad:1");
+            auto right = Common::Input::CreateOutputDeviceFromString("engine:virtual_gamepad,port:0,pad:2");
+            auto handheld = Common::Input::CreateOutputDeviceFromString("engine:virtual_gamepad,port:8,pad:1");
+            CHECK(left->IsVibrationEnabled());
+            state.vibrations.clear();
+            CHECK(pad.Poll()); CHECK(state.vibrations.empty());
+            CHECK(left->SetVibration({.low_amplitude = 1.0f, .type = Type::Exponential}) == DriverResult::Success);
+            CHECK(right->SetVibration({.high_amplitude = 0.5f, .type = Type::Linear}) == DriverResult::Success);
+            CHECK(pad.Poll()); CHECK(state.vibrations.size() == 1);
+            CHECK(state.vibrations[0].large_motor == 255); CHECK(state.vibrations[0].small_motor == 154);
+            CHECK(pad.Poll()); CHECK(state.vibrations.size() == 1); // Unchanged levels are not resent.
+            CHECK(left->SetVibration({}) == DriverResult::Success);
+            CHECK(right->SetVibration({}) == DriverResult::Success);
+            CHECK(pad.Poll()); CHECK(state.vibrations.size() == 2);
+            CHECK(state.vibrations[1].large_motor == 0); CHECK(state.vibrations[1].small_motor == 0);
+            CHECK(handheld->SetVibration({.high_amplitude = 1.0f, .type = Type::Exponential}) == DriverResult::Success);
+            CHECK(pad.Poll()); CHECK(state.vibrations.size() == 3); CHECK(state.vibrations[2].small_motor == 255);
+        }
+
         auto button = Common::Input::CreateInputDeviceFromString("engine:virtual_gamepad,port:0,button:0");
         std::vector<bool> changes;
         button->SetCallback({[&](const auto& status) { changes.push_back(status.button_status.value); }});
@@ -130,6 +175,8 @@ void CheckPad() {
         }
         state.read_result = 0; consume(); pad.Close(); pad.Close();
         CHECK(!pad.Engine().GetButton({}, 9));
+        CHECK(state.vibrations.size() == 4); // Closing stops the motors.
+        CHECK(state.vibrations[3].large_motor == 0); CHECK(state.vibrations[3].small_motor == 0);
         CHECK(state.pad_closes == 1); CHECK(state.user_terminations == 1);
     }
     state.user_init_result = -1; // A service owned by the embedding application.
@@ -142,7 +189,7 @@ void CheckPad() {
     { Eden::Pad pad; CHECK(!pad.Open()); }
     CHECK(state.user_terminations == 3); CHECK(state.pad_closes == 2);
     state.pad_open_result = 7;
-    std::puts("Pad mappings, calibration, 64-sample edges, disconnect and ownership PASS");
+    std::puts("Pad mappings, calibration, motion, rumble, 64-sample edges, disconnect and ownership PASS");
 }
 
 void CheckAudio() {

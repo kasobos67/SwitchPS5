@@ -130,7 +130,8 @@ button { margin: 0; padding: 0; border: 0px transparent; border-radius: 0px; bac
 .settings-details { position: absolute; left: 42px; top: 184px; width: 736px; height: 280px; color: #e2e8d7; font-size: 24px; line-height: 40px; }
 .settings-low { top: 490px; }
 .setting-disabled { color: #b7c6b5; }
-#hud-setting { top: 330px; }
+/* Settings > Video: renderer, resolution, upscaling filter, FPS overlay. */
+#resolution-setting { top: 292px; } #filter-setting { top: 394px; } #hud-setting { top: 496px; }
 .dimmed { opacity: 0.55; }
 .video-backend-chrome { position: absolute; left: 42px; top: 190px; width: 736px; height: 94px; }
 #video-backend { position: absolute; left: 42px; top: 190px; width: 736px; height: 94px; color: #f2f4e9; font-size: 28px; line-height: 90px; background-color: transparent; border: 0px transparent; }
@@ -205,6 +206,10 @@ button { margin: 0; padding: 0; border: 0px transparent; border-radius: 0px; bac
 
 .lib-hint-select { left: 0px; width: 140px; } .lib-hint-back { left: 160px; width: 130px; }
 .lib-hint-browse { left: 310px; width: 250px; } .lib-hint-mode { left: 580px; width: 250px; }
+.lib-hint-options { left: 850px; width: 250px; }
+/* Library > Game settings: console mode, renderer, resolution, upscaling filter. */
+#game-settings-name { white-space: nowrap; overflow: hidden; }
+#gs-mode-setting { top: 190px; } #gs-renderer-setting { top: 292px; } #gs-resolution-setting { top: 394px; } #gs-filter-setting { top: 496px; }
 /* Library console mode: both modes side by side, the saved one lit. */
 #game-mode-value { right: 16px; width: 420px; }
 #game-mode-value .mode-option { position: absolute; top: 15px; width: 200px; height: 64px; opacity: 0.35; }

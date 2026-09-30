@@ -21,7 +21,7 @@ block = jit.split('    CodePtr GetBlock(', 1)[1].split(
 for statement in (
     'A64::Translate(ir_block, arch_descriptor, get_code,',
     'Optimization::Optimize(ir_block, conf, polyfill_options);',
-    'const auto entrypoint = emitter.Emit(ir_block, false).entrypoint;',
+    'const auto emitted = emitter.Emit(ir_block, false);',
 ):
     assert statement in block
 

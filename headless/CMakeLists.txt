@@ -6,6 +6,11 @@ if(NOT EDEN_VULKAN_DRIVER MATCHES "^(CUSTOM|RADV)$")
 endif()
 set(PORT_ROOT "${CMAKE_CURRENT_LIST_DIR}/..")
 set(PORT_BUILD_DIR "${CMAKE_BINARY_DIR}/headless")
+# One compiled-code namespace per guest process for the A64 JITs (headless/dynarmic/jit_group.h).
+include("${CMAKE_CURRENT_LIST_DIR}/dynarmic/shared-jit.cmake")
+if(PS5_NATIVE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(EDEN_SHARED_JIT ON)
+endif()
 file(MAKE_DIRECTORY "${PORT_BUILD_DIR}")
 file(MAKE_DIRECTORY "${PORT_BUILD_DIR}/recovery/common")
 file(REMOVE "${PORT_BUILD_DIR}/include/common/slot_vector.h")
@@ -163,6 +168,7 @@ foreach(bits 32 64)
     if(bits EQUAL 64)
         file(READ "${PROJECT_SOURCE_DIR}/src/dynarmic/src/dynarmic/backend/x64/a64_emit_x64.h" emitter_header)
         string(REPLACE "Emit(IR::Block& block) noexcept" "Emit(IR::Block& block, bool publish = true) noexcept" emitter_header "${emitter_header}")
+        eden_shared_jit_emitter_header()
         write_derived("${PORT_BUILD_DIR}/include/dynarmic/backend/x64/a64_emit_x64.h" "${emitter_header}")
         string(REPLACE "A64EmitX64::Emit(IR::Block& block) noexcept" "A64EmitX64::Emit(IR::Block& block, bool publish) noexcept" emitter "${emitter}")
         string(REPLACE "    code.DisableWriting();\n    shared_labels.clear();" "    if (publish) code.DisableWriting();\n    shared_labels.clear();" emitter "${emitter}")
@@ -174,12 +180,31 @@ foreach(bits 32 64)
     endif()
     string(REPLACE "${lookup_transitions}"
         "        // Prelude occupies separate RX pages throughout guest-code patching.\n        (*fast_dispatch_table_lookup)(location.Value()) = {};" emitter "${emitter}")
+    if(bits EQUAL 64)
+        eden_shared_jit_emitter()
+    endif()
     write_derived("${PORT_BUILD_DIR}/a${bits}_emit_x64.cpp" "${emitter}")
     get_target_property(jit_sources dynarmic SOURCES)
     list(FILTER jit_sources EXCLUDE REGEX "(^|/)a${bits}_emit_x64\\.cpp$")
     set_property(TARGET dynarmic PROPERTY SOURCES "${jit_sources}")
     target_sources(dynarmic PRIVATE "${PORT_BUILD_DIR}/a${bits}_emit_x64.cpp")
 endforeach()
+endif()
+
+# Compiled-block code ranges by 4 KiB guest page (headless/dynarmic/block_range_information.*):
+# upstream's interval map of hash sets split intervals and copied sets on every compilation that
+# overlaps earlier blocks, ~8% of A64 compile time on the console.
+file(READ "${CMAKE_CURRENT_LIST_DIR}/dynarmic/block_range_information.h" range_header)
+write_derived("${PORT_BUILD_DIR}/include/dynarmic/backend/block_range_information.h" "${range_header}")
+get_target_property(range_sources dynarmic SOURCES)
+list(FILTER range_sources EXCLUDE REGEX "(^|/)block_range_information\\.cpp$")
+set_property(TARGET dynarmic PROPERTY SOURCES "${range_sources}")
+target_sources(dynarmic PRIVATE "${CMAKE_CURRENT_LIST_DIR}/dynarmic/block_range_information.cpp")
+# The override header shadows upstream's only by include order, which build tools do not track:
+# a definition on the target recompiles every dynarmic object that saw the upstream layout.
+target_compile_definitions(dynarmic PRIVATE EDEN_BLOCK_RANGE_PAGES=1)
+if(EDEN_SHARED_JIT)
+    eden_shared_jit_sources()
 endif()
 
 # Patch lookup must not create a large empty record for every compiled block.
@@ -360,6 +385,9 @@ string(REPLACE "${mark_test}" [=[        if (*ctx.conf.page_table_marked_bit == 
     if(EDEN_A32_FASTMEM)
         include("${EDEN_PORT_DIR}/checked-fastmem.cmake")
     endif()
+    if(EDEN_SHARED_JIT)
+        eden_shared_jit_memory_inc()
+    endif()
     write_derived("${PORT_BUILD_DIR}/include/${memory_inc}" "${memory_source}")
 set(exclusive_lookup [=[template<typename EmitContext>
 Xbyak::RegExp EmitExclusiveVAddrLookup(BlockOfCode& code, EmitContext& ctx, size_t bitsize,
@@ -377,6 +405,9 @@ Xbyak::RegExp EmitExclusiveVAddrLookup(BlockOfCode& code, EmitContext& ctx, size
 set(fastmem_declaration "template<typename EmitContext>\nXbyak::RegExp EmitFastmemVAddr")
 string(REPLACE "${fastmem_declaration}" "${exclusive_lookup}${fastmem_declaration}"
     memory_emitter "${memory_emitter}")
+if(EDEN_SHARED_JIT)
+    eden_shared_jit_memory_header()
+endif()
 write_derived("${PORT_BUILD_DIR}/include/${memory_relative}" "${memory_emitter}")
 # New include overlays do not invalidate objects whose depfile still names
 # upstream headers. Derive both translation units so the first build cannot
@@ -385,6 +416,9 @@ get_target_property(jit_sources dynarmic SOURCES)
 foreach(bits 32 64)
     set(memory_unit "a${bits}_emit_x64_memory.cpp")
     file(READ "${PROJECT_SOURCE_DIR}/src/dynarmic/src/dynarmic/backend/x64/${memory_unit}" memory_source)
+    if(EDEN_SHARED_JIT)
+        eden_shared_jit_memory_unit(${bits})
+    endif()
     write_derived("${PORT_BUILD_DIR}/${memory_unit}" "${memory_source}")
     list(FILTER jit_sources EXCLUDE REGEX "(^|/)a${bits}_emit_x64_memory\\.cpp$")
     list(APPEND jit_sources "${PORT_BUILD_DIR}/${memory_unit}")
@@ -447,6 +481,17 @@ endif()
             message(FATAL_ERROR "Pinned JIT block lookup changed.")
         endif()
         string(REPLACE "${compile_site}" "${compile_site}        struct EdenCompileTimer {\n            unsigned core;\n            std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();\n            ~EdenCompileTimer() {\n                if (eden_jit_compile)\n                    eden_jit_compile(core, static_cast<unsigned long long>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start).count()));\n            }\n        } eden_compile_timer{unsigned(conf.processor_id)};\n" jit_source "${jit_source}")
+        # Development: the compile phases of every block (eden_jit_phases).
+        set(phase_old "            A64::Translate(ir_block, arch_descriptor, get_code, {conf.define_unpredictable_behaviour, conf.wall_clock_cntpct});\n            Optimization::Optimize(ir_block, conf, polyfill_options);\n            const auto entrypoint = emitter.Emit(ir_block, false).entrypoint;")
+        string(FIND "${jit_source}" "${phase_old}" phase_at)
+        if(phase_at LESS 0)
+            message(FATAL_ERROR "Pinned JIT compile batch changed.")
+        endif()
+        string(REPLACE "${phase_old}" "            const auto eden_t0 = std::chrono::steady_clock::now();\n            A64::Translate(ir_block, arch_descriptor, get_code, {conf.define_unpredictable_behaviour, conf.wall_clock_cntpct});\n            const auto eden_t1 = std::chrono::steady_clock::now();\n            Optimization::Optimize(ir_block, conf, polyfill_options);\n            const auto eden_t2 = std::chrono::steady_clock::now();\n            const auto entrypoint = emitter.Emit(ir_block, false).entrypoint;\n            if (eden_jit_phases) {\n                const auto eden_ns = [](auto a, auto b) { return static_cast<unsigned long long>(std::chrono::duration_cast<std::chrono::nanoseconds>(b - a).count()); };\n                eden_jit_phases(unsigned(conf.processor_id), eden_ns(eden_t0, eden_t1), eden_ns(eden_t1, eden_t2), eden_ns(eden_t2, std::chrono::steady_clock::now()), descriptor.Value());\n            }" jit_source "${jit_source}")
+        string(PREPEND jit_source "extern \"C\" void eden_jit_phases(unsigned core, unsigned long long translate, unsigned long long optimize, unsigned long long emit, unsigned long long location) __attribute__((weak));\n")
+    endif()
+    if(EDEN_SHARED_JIT)
+        eden_shared_jit_interface()
     endif()
     write_derived("${PORT_BUILD_DIR}/a64_interface.cpp" "#include <chrono>\n#include <cstdio>\nextern \"C\" void eden_jit_evacuation(unsigned core) __attribute__((weak));\nextern \"C\" void eden_jit_compile(unsigned core, unsigned long long ns) __attribute__((weak));\n${jit_source}")
     get_target_property(jit_sources dynarmic SOURCES)
@@ -1224,6 +1269,9 @@ string(REPLACE "    manager->LoopProcess();" "    if (server_manager) manager->R
 set(server_header "core/hle/service/server_manager.h")
 file(READ "${PROJECT_SOURCE_DIR}/src/${server_header}" server_header_source)
 string(REPLACE "    Result LoopProcess();" "    void RequestStop();\n    Result LoopProcess();" server_header_source "${server_header_source}")
+if(EDEN_DEV_PROFILE)
+    string(REPLACE "    Mutex m_selection_mutex;" "    Mutex m_selection_mutex;\n    std::string m_eden_names;" server_header_source "${server_header_source}")
+endif()
 write_derived("${PORT_BUILD_DIR}/include/${server_header}" "${server_header_source}")
 file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/service/server_manager.cpp" server_source)
 string(REPLACE "ServerManager::~ServerManager() {\n    // Signal stop.\n    m_stop_source.request_stop();\n    m_wakeup_event->Signal(m_system.Kernel());"
@@ -1239,6 +1287,14 @@ if(EDEN_DEV_PROFILE)
         string(REPLACE "${match}" "${replacement}" patched "${server_source}")
         set(server_source "${patched}" PARENT_SCOPE)
     endfunction()
+    eden_patch_server([=[    // Add the new server to sm: and get the moved server port.
+    Kernel::KServerPort* server_port{};]=] [=[    // Add the new server to sm: and get the moved server port.
+    Kernel::KServerPort* server_port{};
+    m_eden_names += service_name + " ";]=])
+    eden_patch_server([=[    // Create a new port.
+    auto* port = Kernel::KPort::Create(m_system.Kernel());]=] [=[    // Create a new port.
+    auto* port = Kernel::KPort::Create(m_system.Kernel());
+    m_eden_names += service_name + " ";]=])
     eden_patch_server([=[ServerManager::~ServerManager() {
     RequestStop();]=] [=[ServerManager::~ServerManager() {
     RequestStop();
@@ -1267,8 +1323,8 @@ if(EDEN_DEV_PROFILE)
     const auto eden_t5 = std::chrono::steady_clock::now();
     const auto eden_span = [](auto a, auto b) { return std::chrono::duration<double, std::milli>(b - a).count(); };
     if (eden_span(eden_t0, eden_t5) >= 10.0) {
-        std::fprintf(stderr, "EDEN_SHUTDOWN_DTOR manager=%p stopped=%.1f threads=%.1f ports=%.1f sessions=%.1f n=%zu events=%.1f\n",
-                     static_cast<void*>(this), eden_span(eden_t0, eden_t1), eden_span(eden_t1, eden_t2),
+        std::fprintf(stderr, "EDEN_SHUTDOWN_DTOR manager=%p services=%s stopped=%.1f threads=%.1f ports=%.1f sessions=%.1f n=%zu events=%.1f\n",
+                     static_cast<void*>(this), m_eden_names.c_str(), eden_span(eden_t0, eden_t1), eden_span(eden_t1, eden_t2),
                      eden_span(eden_t2, eden_t3), eden_span(eden_t3, eden_t4), eden_sessions, eden_span(eden_t4, eden_t5));
     }
 }]=])
@@ -1315,6 +1371,21 @@ if(NOT pad_hash STREQUAL "6a9708fe7ab59afa69899e1981e84decf1492a97e8ebd08194f8e2
    NOT audio_hash STREQUAL "5274633c4f7cd4598fc4cdbfe5b044cbfca908845eb22157e73a80dca8faa0f6")
     message(FATAL_ERROR "Native device contracts changed; review the adapter ABI first.")
 endif()
+# Guest rumble: with no mapped buttons (this frontend binds the virtual_gamepad engine), send each
+# player's left and right vibration to the PS5 controller engine (headless/pad.cpp).
+file(READ "${PROJECT_SOURCE_DIR}/src/hid_core/frontend/emulated_controller.cpp" controller_source)
+set(rumble_outputs "    output_params[LeftIndex] = left_joycon;\n    output_params[RightIndex] = right_joycon;\n")
+string(FIND "${controller_source}" "${rumble_outputs}" rumble_outputs_at)
+if(rumble_outputs_at LESS 0)
+    message(FATAL_ERROR "Pinned controller output parameters changed")
+endif()
+string(REPLACE "${rumble_outputs}" "${rumble_outputs}    if (output_params[LeftIndex].Get(\"engine\", \"\").empty()) {\n        const auto rumble_port = std::to_string(Service::HID::NpadIdTypeToIndex(npad_id_type));\n        output_params[LeftIndex] = Common::ParamPackage{\"engine:virtual_gamepad,port:\" + rumble_port + \",pad:1\"};\n        output_params[RightIndex] = Common::ParamPackage{\"engine:virtual_gamepad,port:\" + rumble_port + \",pad:2\"};\n    }\n"
+    controller_source "${controller_source}")
+write_derived("${PORT_BUILD_DIR}/emulated_controller.cpp" "#include <string>\n${controller_source}")
+get_target_property(controller_sources hid_core SOURCES)
+list(FILTER controller_sources EXCLUDE REGEX "(^|/)emulated_controller\\.cpp$")
+list(APPEND controller_sources "${PORT_BUILD_DIR}/emulated_controller.cpp")
+set_property(TARGET hid_core PROPERTY SOURCES "${controller_sources}")
 add_library(eden-pad STATIC "${EDEN_PORT_DIR}/pad.cpp"
     "${PROJECT_SOURCE_DIR}/src/input_common/input_engine.cpp"
     "${PROJECT_SOURCE_DIR}/src/input_common/input_poller.cpp"

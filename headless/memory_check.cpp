@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <algorithm>
+#include <map>
 #include <bit>
 #include <chrono>
 #include <cstdio>
@@ -930,7 +931,189 @@ static void BenchFastmemA32() {
     }
 }
 
+// Shared compiled code (headless/dynarmic/jit_group.h): four guest cores run one branchy program
+// through one page table, so they share one JIT group. Small code caches force whole-group clears
+// while the cores run, and another thread invalidates random code ranges and clears the caches;
+// every core must still end with the checksum of its own path through the program.
+extern "C" bool eden_jit_shared;
+extern "C" void eden_jit_path_counters(unsigned core, unsigned long long* out);
+static std::atomic<unsigned long long> shared_check_compiles{0};
+extern "C" void eden_jit_compile(unsigned, unsigned long long) {
+    shared_check_compiles.fetch_add(1, std::memory_order_relaxed);
+}
+// same_path: every core starts at the same block, so the cores need the same blocks at once.
+static void CheckSharedJit(unsigned rounds, bool shared, unsigned disturb, bool same_path) {
+    struct SharedProgram : Memory<false> {
+        const std::vector<uint32_t>* program{};
+        std::optional<uint32_t> MemoryReadCode(uint64_t pc) override {
+            require(pc >= 0x1000 && (pc - 0x1000) % 4 == 0 && (pc - 0x1000) / 4 < program->size());
+            return (*program)[(pc - 0x1000) / 4];
+        }
+    };
+    constexpr unsigned blocks = 16384, functions = 64, cores = 4;
+    constexpr uint64_t base = 0x1000, end = base + blocks * 32, function_base = end + 4;
+    const auto next = [](unsigned i) { return (i * 7919u + 13u) % blocks; };
+    const auto slot = [](unsigned i) { return base + uint64_t(i) * 32; };
+    const auto branch = [](uint32_t opcode, uint64_t from, uint64_t to) {
+        return opcode | uint32_t(((to - from) / 4) & 0x3ffffff);
+    };
+    std::vector<uint32_t> program;
+    for (unsigned i = 0; i < blocks; ++i) {
+        const uint64_t pc = slot(i);
+        const unsigned function = (i / 8) % functions;
+        program.push_back(i % 8 == 0 ? branch(0x94000000u, pc, function_base + function * 8) : 0xd503201fu);  // BL f / NOP
+        program.push_back(0x91000021u | ((i & 0xfffu) << 10));                                    // ADD X1, X1, #i
+        program.push_back(0xf1000442u);                                                           // SUBS X2, X2, #1
+        program.push_back(0x54000000u | uint32_t((((end - (pc + 12)) / 4) & 0x7ffff) << 5));      // B.EQ end
+        program.push_back(branch(0x14000000u, pc + 16, slot(next(i))));                           // B next
+        for (unsigned pad = 0; pad < 3; ++pad) program.push_back(0xd503201fu);
+    }
+    program.push_back(0xd4000001u);  // end: SVC #0
+    for (unsigned function = 0; function < functions; ++function) {
+        program.push_back(0x91000021u | ((function + 1) << 10));  // ADD X1, X1, #function+1
+        program.push_back(0xd65f03c0u);                           // RET
+    }
+    const auto expected = [&](unsigned i, uint64_t steps) {
+        uint64_t sum = 0;
+        for (;; i = next(i)) {
+            if (i % 8 == 0) sum += (i / 8) % functions + 1;
+            sum += i & 0xfff;
+            if (--steps == 0) return sum;
+        }
+    };
+    const bool previous = eden_jit_shared;
+    eden_jit_shared = shared;
+    std::vector<void*> pages(1 << 12);
+    ExclusiveMonitor monitor{cores};
+    std::vector<SharedProgram> memories(cores);
+    std::vector<std::unique_ptr<A64::Jit>> jits;
+    for (unsigned core = 0; core < cores; ++core) {
+        memories[core].program = &program;
+        auto config = TableConfig(memories[core], pages.data());
+        config.global_monitor = &monitor;
+        config.processor_id = core;
+        config.code_cache_size = 16 * 1024 * 1024;
+        jits.push_back(std::make_unique<A64::Jit>(config));
+        memories[core].jit = jits.back().get();
+    }
+    eden_jit_shared = previous;
+    uint64_t invalidations = 0, clears = 0;
+    const auto first_block = [&](unsigned core, unsigned round) {
+        return ((same_path ? 0 : core * 4099) + round * 31) % blocks;
+    };
+    shared_check_compiles = 0;
+    const auto start = std::chrono::steady_clock::now();
+    for (unsigned round = 0; round < rounds; ++round) {
+        const uint64_t steps = (disturb > 1 ? 400000 : 200000) + round * 50000;
+        for (unsigned core = 0; core < cores; ++core) {
+            auto& jit = *jits[core];
+            jit.Reset(); jit.ClearHalt(~HaltReason{});
+            jit.SetPC(slot(first_block(core, round)));
+            jit.SetRegister(1, 0);
+            jit.SetRegister(2, steps);
+        }
+        std::atomic<unsigned> running{cores};
+        std::thread disturber([&] {
+            uint64_t seed = 0x9e3779b97f4a7c15ULL + round;
+            unsigned tick = 0;
+            while (disturb && running.load() != 0) {
+                seed = seed * 6364136223846793005ULL + 1442695040888963407ULL;
+                const uint64_t from = base + (seed >> 33) % (end - base);
+                const size_t length = 4 + (seed >> 20) % 512;
+                for (auto& jit : jits) jit->InvalidateCacheRange(from, length);
+                ++invalidations;
+                if (disturb > 1 && tick++ % 32 == 0) {
+                    for (auto& jit : jits) jit->ClearCache();
+                    ++clears;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        });
+        std::vector<std::thread> threads;
+        for (unsigned core = 0; core < cores; ++core) threads.emplace_back([&, core] {
+            while (!Has(jits[core]->Run(), HaltReason::UserDefined1)) {}
+            running.fetch_sub(1);
+        });
+        for (auto& thread : threads) thread.join();
+        disturber.join();
+        for (unsigned core = 0; core < cores; ++core)
+            require(jits[core]->GetRegister(1) == expected(first_block(core, round), steps));
+        for (unsigned core = 0; core < cores; ++core) {
+            unsigned long long path[8]{};
+            eden_jit_path_counters(core, path);
+            std::printf("SHARED_JIT_PATH round=%u core=%u runs=%llu thunks=%llu lookups=%llu hits=%llu contended=%llu far=%llu\n",
+                        round, core, path[0], path[1], path[2], path[3], path[4], path[7]);
+        }
+        std::printf("SHARED_JIT_ROUND shared=%u disturb=%u same=%u round=%u seconds=%.3f compiles=%llu\n", unsigned(shared),
+                    disturb, unsigned(same_path), round,
+                    std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count(),
+                    static_cast<unsigned long long>(shared_check_compiles.load()));
+        std::fflush(stdout);
+    }
+    const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+    if (disturb > 1)
+        require(clears > 0);
+    std::printf("Shared JIT %s disturb=%u same=%u PASS: %u rounds x %u cores, %llu compilations, %llu invalidations, "
+                "%llu clears, %.3f s\n", shared ? "shared" : "per-core", disturb, unsigned(same_path), rounds, cores,
+                static_cast<unsigned long long>(shared_check_compiles.load()), static_cast<unsigned long long>(invalidations),
+                static_cast<unsigned long long>(clears), seconds);
+}
+
+// Dispatcher lookups of three hot loops (100k iterations each) once their blocks exist: a
+// conditional branch to itself (block link), a call and return (return stack buffer) and an
+// indirect branch (fast dispatch). Linked code needs only a handful of lookups per loop.
+static void CheckLinks() {
+    struct LoopProgram : Memory<false> {
+        std::map<uint64_t, uint32_t> code;
+        std::optional<uint32_t> MemoryReadCode(uint64_t pc) override {
+            const auto it = code.find(pc);
+            require(it != code.end());
+            return it->second;
+        }
+    };
+    const std::map<uint64_t, uint32_t> programs[] = {
+        {{0x1000, 0xf1000442u}, {0x1004, 0x54ffffe1u}, {0x1008, 0xd4000001u}},             // SUBS; B.NE; SVC
+        {{0x1000, 0x94000400u}, {0x1004, 0xf1000442u}, {0x1008, 0x54ffffc1u},               // BL f; SUBS; B.NE
+         {0x100c, 0xd4000001u}, {0x2000, 0xd65f03c0u}},                                    // SVC; f: RET
+        {{0x1000, 0xf1000442u}, {0x1004, 0x54000060u}, {0x1008, 0xd2820003u},               // SUBS; B.EQ end; MOVZ X3
+         {0x100c, 0xd61f0060u}, {0x1010, 0xd4000001u}},                                    // BR X3; end: SVC
+    };
+    const char* names[] = {"block link", "call/return", "indirect branch"};
+    std::vector<void*> pages(1 << 12);
+    for (unsigned k = 0; k < 3; ++k) {
+        LoopProgram memory;
+        memory.code = programs[k];
+        auto config = TableConfig(memory, pages.data());
+        config.processor_id = 0;
+        A64::Jit jit{config};
+        memory.jit = &jit;
+        unsigned long long before[8]{}, after[8]{};
+        eden_jit_path_counters(0, before);
+        jit.SetPC(0x1000);
+        jit.SetRegister(2, 100000);
+        while (!Has(jit.Run(), HaltReason::UserDefined1)) {}
+        require(jit.GetRegister(2) == 0);
+        eden_jit_path_counters(0, after);
+        std::printf("LINK_CHECK %s: runs=%llu thunks=%llu lookups=%llu hits=%llu\n", names[k], after[0] - before[0],
+                    after[1] - before[1], after[2] - before[2], after[3] - before[3]);
+        require(after[1] - before[1] < 16);  // a lookup per iteration means an unlinked path
+    }
+    std::puts("Linked loops PASS: block link, call/return and indirect branch without per-iteration lookups");
+}
+
 int main(int argc, char** argv) {
+    if (argc == 2 && std::strcmp(argv[1], "--link-check") == 0) {
+        CheckLinks();
+        return 0;
+    }
+    if (argc == 2 && std::strcmp(argv[1], "--shared-jit") == 0) {
+        for (bool same_path : {false, true})
+        for (unsigned disturb : {0u, 1u, 2u}) {
+            CheckSharedJit(4, false, disturb, same_path);
+            CheckSharedJit(4, true, disturb, same_path);
+        }
+        return 0;
+    }
     if (argc == 2 && std::strcmp(argv[1], "--compile-chains") == 0) {
         CheckColdCompilation(true);
         return 0;
@@ -977,6 +1160,8 @@ int main(int argc, char** argv) {
     std::printf("Page-table exclusives PASS: %u cases\n", CheckTableExclusives(backing));
     CheckAtomicLoop(backing, false);
     CheckAtomicLoopA32(backing, false);
+    CheckSharedJit(2, true, 2, true);
+    CheckLinks();
     CheckFastmemA32();
     StressFastmemA32();
     require(munmap(backing, 8192) == 0);

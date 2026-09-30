@@ -40,6 +40,7 @@
 #include "native_directory.h"
 #include "cache_budget.h"
 #include "performance.h"
+#include "stall_watchdog.h"
 #include "dev_vulkan.h"
 #include "../src/fastmem.h"
 #include "prosperoeden/frontend.h"
@@ -73,6 +74,7 @@ extern "C" std::int64_t sceKernelGetDirectMemorySize();
 #include "watch.h"
 #include "core/arm/debug.h"
 #include "core/memory.h"
+extern "C" bool eden_jit_shared;  // headless/dynarmic/jit_group_support.inc
 #endif
 #include "video_core/gpu.h"
 
@@ -119,6 +121,10 @@ static void MigrateSandboxData() {
 
 int main(int argc, char** argv) {
     try {
+#if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
+        volatile int stall_stack_marker = 0;
+        Eden::Stall::Start(reinterpret_cast<std::uintptr_t>(&stall_stack_marker));
+#endif
         std::FILE* report = stdout;
         SCOPE_EXIT { if (report != stdout) std::fclose(report); };
         std::setvbuf(report, nullptr, _IONBF, 0);
@@ -286,21 +292,25 @@ int main(int argc, char** argv) {
         guest_fault_retries = 0;
 #if defined(EDEN_DEV_PROFILE) || defined(EDEN_DEV_ROM_ID)
         if (std::exchange(autoboot_pending, false)) {
-        std::error_code rom_error;
-        // Match the title ID in the file name, else in the ROM's own metadata.
+        // Match the title ID in the file name, else in the ROM's own metadata; the game files
+        // folder first, then the pre-1.000.020 assets folder that still holds other test titles.
         const auto development_title = std::strtoull(development_id.c_str(), nullptr, 16);
-        for (const auto& entry : Eden::ReadNativeDirectory(Eden::AssetsPath("roms"), rom_error)) {
-            const auto filename = entry.path().filename().string();
-            const auto extension = entry.path().extension();
-            if (extension != ".nsp" && extension != ".xci") continue;
-            const auto path = Eden::AssetsPath("roms/" + filename);
-            if (filename.find(development_id) != std::string::npos ||
-                eden_game_title_id(path.c_str()) == development_title) {
-                selected_game = path;
-                break;
+        for (const std::string& folder : {Eden::AssetsPath("roms"), std::string{"/data/assets/roms"}}) {
+            std::error_code rom_error;
+            for (const auto& entry : Eden::ReadNativeDirectory(folder, rom_error)) {
+                const auto filename = entry.path().filename().string();
+                const auto extension = entry.path().extension();
+                if (extension != ".nsp" && extension != ".xci") continue;
+                const auto path = folder + "/" + filename;
+                if (filename.find(development_id) != std::string::npos ||
+                    eden_game_title_id(path.c_str()) == development_title) {
+                    selected_game = path;
+                    break;
+                }
             }
+            if (!selected_game.empty()) break;
         }
-        if (rom_error || selected_game.empty())
+        if (selected_game.empty())
             throw std::runtime_error("Development ROM not found");
         } else {
             selected_game = SelectProsperoEdenGame(launch_error);
@@ -332,11 +342,18 @@ int main(int argc, char** argv) {
         else setenv("PS5VK_CAPTURE_SCANOUT", "1", 1);
         std::printf("EDEN_VULKAN_MEASUREMENT quiet=%d captures=%d\n",
                     performance_run, !performance_run);
+        const auto game_video = Eden::LoadGameSettings(eden_game_title_id(selected_game.c_str()));
         const auto backend = automatic_launch ?
             (recovery_opengl ? Eden::GraphicsBackend::OpenGL : Eden::GraphicsBackend::Vulkan) :
+            game_video.renderer >= 0 ?
+            (game_video.renderer == 0 ? Eden::GraphicsBackend::OpenGL : Eden::GraphicsBackend::Vulkan) :
             Eden::LoadPreferences().backend;
 #else
-        const auto backend = Eden::LoadPreferences().backend;
+        // Library > Game settings take precedence over Settings > Video.
+        const auto game_video = Eden::LoadGameSettings(eden_game_title_id(selected_game.c_str()));
+        const auto backend = game_video.renderer >= 0 ?
+            (game_video.renderer == 0 ? Eden::GraphicsBackend::OpenGL : Eden::GraphicsBackend::Vulkan) :
+            Eden::LoadPreferences().backend;
 #ifdef EDEN_PS5_VULKAN
         // The user-facing diagnostics option controls Eden logs, not synchronous
         // driver traces for every draw. Keep those in explicit development probes.
@@ -389,6 +406,9 @@ int main(int argc, char** argv) {
         const char* user_dir = "user";
 #endif
         const auto passed = [&](const char* name) {
+#if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
+            Eden::Stall::Progress(name);
+#endif
             std::fprintf(report, "%s\tPASS\n", name);
 #ifdef PS5_NATIVE
             const auto mono_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -403,6 +423,9 @@ int main(int argc, char** argv) {
                          name, heap.uordblks + heap.hblkhd, heap.arena, heap.hblkhd, heap.fordblks);
 #endif
         };
+#if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
+        Eden::Stall::Arm();
+#endif
         passed("session_start");
         if (!std::filesystem::is_directory(user_dir)) {
             std::fputs("Run from the isolated directory containing user/.\n", stderr);
@@ -474,6 +497,16 @@ int main(int argc, char** argv) {
                 } else if (entry.starts_with("pc_core=") && entry.size() == 9 && entry[8] >= '0' && entry[8] <= '3') {
                     // Host PC samples from this guest core instead of core 0 (with --pc-sample).
                     Eden::Performance::pc_sample_core = static_cast<unsigned>(entry[8] - '0');
+                } else if (entry == "pc_fast=on") {
+                    Eden::Performance::pc_fast = true;
+                } else if (entry == "capture=early") {
+                    Eden::Performance::capture_early = true;
+                } else if (entry == "jit_shared=off") {
+                    // Every guest core keeps its own compiled blocks (headless/dynarmic/jit_group.h).
+                    eden_jit_shared = false;
+                } else if (entry == "cpu_accuracy=unsafe") {
+                    // Dynarmic's unsafe FP shortcuts on top of Auto (reduced-error estimates, inaccurate NaN).
+                    Settings::values.cpu_accuracy = Settings::CpuAccuracy::Unsafe;
                 } else if (entry == "replay=off") {
                     // The profile title takes controller and runner input instead of the timed replay.
                 } else if (entry == "large_pages=off") {
@@ -593,6 +626,25 @@ int main(int argc, char** argv) {
         Eden::Report("launch", docked ? "Console mode: Docked" : "Console mode: Handheld");
 #endif
 #endif
+#if defined(PS5_NATIVE) && defined(EDEN_PS5_OPENGL)
+        {
+            // Settings > Video: internal resolution and the filter scaling it to the output.
+            static constexpr Settings::ResolutionSetup resolutions[] = {
+                Settings::ResolutionSetup::Res1_2X, Settings::ResolutionSetup::Res3_4X, Settings::ResolutionSetup::Res1X,
+                Settings::ResolutionSetup::Res3_2X, Settings::ResolutionSetup::Res2X};
+            static constexpr Settings::ScalingFilter filters[] = {
+                Settings::ScalingFilter::Bilinear, Settings::ScalingFilter::Fsr, Settings::ScalingFilter::Bicubic,
+                Settings::ScalingFilter::NearestNeighbor};
+            const auto video = Eden::LoadPreferences();
+            const int resolution = game_video.resolution >= 0 ? game_video.resolution : video.resolution;
+            const int filter = game_video.upscaling_filter >= 0 ? game_video.upscaling_filter : video.upscaling_filter;
+            Settings::values.resolution_setup.SetValue(resolutions[resolution]);
+            Settings::values.scaling_filter.SetValue(filters[filter]);
+            Settings::UpdateRescalingInfo();
+            Eden::Report("launch", (std::string("Resolution ") + Eden::kResolutionKeys[resolution] + ", " +
+                                    Eden::kUpscalingFilterLabels[filter]).c_str());
+        }
+#endif
         Settings::values.sink_id = Settings::AudioEngine::Null;
         Settings::values.use_multi_core = true;
 #ifdef EDEN_DEV_PROFILE
@@ -617,6 +669,7 @@ int main(int argc, char** argv) {
             pad = std::make_unique<Eden::Pad>();
             if (!pad->Open()) throw std::runtime_error("PS5 controller initialization failed");
             Settings::values.audio_output_device_id = "ps5";
+            Settings::values.vibration_enabled.SetValue(Eden::LoadPreferences().vibration);
             // One Pro Controller per signed-in user's DualSense; later changes apply mid-game.
             const unsigned connected = pad->ConnectedPlayers();
             (void)pad->TakeConnectionChanges();
@@ -624,6 +677,9 @@ int main(int argc, char** argv) {
                 auto& player = Settings::values.players.GetValue()[index];
                 player.connected = index == 0 || (connected & (1u << index)) != 0;
                 player.controller_type = Settings::ControllerType::ProController;
+                // DualSense rumble (headless/pad.cpp) at Eden's full strength.
+                player.vibration_enabled = true;
+                player.vibration_strength = 100;
             }
         }
         {
@@ -722,15 +778,54 @@ int main(int argc, char** argv) {
                     });
 #endif
 #endif
+#if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
+                Eden::Stall::Trace("main gpu_start");
+#endif
                 system.GPU().Start();
+#if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
+                Eden::Stall::Trace("main gpu_started");
+#endif
                 system.GetCpuManager().OnGpuReady();
                 passed("cpu_manager_ready");
+#if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
+                Eden::Stall::Trace("main shader_cache");
+#endif
 #ifdef EDEN_PS5_OPENGL
                 // Match yuzu_cmd's ordering: GPU/context ready, cache load, guest Run.
                 if (Settings::values.use_disk_shader_cache.GetValue() && !graphics_error) {
+                    // Every cached pipeline is built before the game starts; report progress
+                    // every five seconds so a slow build can be told apart from a stalled one.
+                    std::atomic<size_t> built{0}, total{0};
+                    std::atomic<bool> counted{false};
+                    const auto load_start = std::chrono::steady_clock::now();
+                    std::jthread reporter([&](std::stop_token stop) {
+                        for (unsigned tick = 1; !stop.stop_requested(); ++tick) {
+                            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                            if (tick % 50 != 0 || stop.stop_requested()) continue;
+                            const std::string line = counted
+                                ? fmt::format("Shader cache: {} of {} pipelines built ({} s)",
+                                              built.load(), total.load(), tick / 10)
+                                : fmt::format("Shader cache: reading ({} s)", tick / 10);
+                            Eden::Report("loader", line.c_str());
+                        }
+                    });
                     system.Renderer().ReadRasterizer()->LoadDiskResources(
                         system.GetApplicationProcessProgramID(), std::stop_token{},
-                        [](VideoCore::LoadCallbackStage, size_t, size_t) {});
+                        [&](VideoCore::LoadCallbackStage stage, size_t value, size_t count) {
+                            if (stage != VideoCore::LoadCallbackStage::Build) return;
+                            built = value;
+                            total = count;
+                            counted = true;
+#if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
+                            Eden::Stall::Tick();
+#endif
+                        });
+                    reporter.request_stop();
+                    reporter.join();
+                    const auto load_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::steady_clock::now() - load_start).count();
+                    Eden::Report("loader", fmt::format("Shader cache ready: {} pipelines in {} ms",
+                                                       total.load(), load_ms).c_str());
                     std::puts("EDEN_SHADER_CACHE_LOADED");
                     std::fflush(stdout);
                 }
@@ -777,8 +872,12 @@ int main(int argc, char** argv) {
 #endif
                 Eden::TakeGuestFault(); // Nothing from an earlier session belongs to this one.
                 system.Run();
+#if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
+                Eden::Stall::Trace("main running");
+                Eden::Stall::Disarm();
+#endif
                 const auto session_start = std::chrono::steady_clock::now();
-                double session_seconds = 0;
+                [[maybe_unused]] double session_seconds = 0;  // guest-fault relaunch (PS5 only)
                 std::jthread input_worker;
                 if (pad) input_worker = std::jthread([&](std::stop_token stop) {
 #ifdef EDEN_DEV_PROFILE
@@ -919,7 +1018,8 @@ int main(int argc, char** argv) {
                             window.CaptureNextFrame(system.GPU().Renderer(), [] {});
 #else
                             std::error_code capture_error;
-                            if (segment >= 4 && std::filesystem::remove(Eden::AppFile("capture-once.txt"), capture_error))
+                            if ((segment >= 4 || Eden::Performance::capture_early) &&
+                                std::filesystem::remove(Eden::AppFile("capture-once.txt"), capture_error))
                                 window.CaptureNextFrame(system.GPU().Renderer(), [] {});
 #endif
                             lock.lock();
@@ -989,6 +1089,7 @@ int main(int argc, char** argv) {
                     }
                 }
                 if (!completion->guest_fault.empty()) {
+#ifdef PS5_NATIVE
                     // A game can run its save-load completion before its own callback exists
                     // (a boot race between two guest threads); a fresh boot normally passes. Retry early faults, report others.
                     // Four retries: two faults in a row were seen with slower GPU synchronization
@@ -1000,7 +1101,9 @@ int main(int argc, char** argv) {
                         LOG_WARNING(Frontend, "EDEN_GUEST_FAULT_RETRY {} after {:.1f} s: {}", guest_fault_retries,
                                     session_seconds, completion->guest_fault);
                         Eden::Report("guest fault", ("Restarting the game: " + completion->guest_fault).c_str());
-                    } else {
+                    } else
+#endif
+                    {
                         throw std::runtime_error("The game stopped: " + completion->guest_fault +
                             ". Reopen it from the launcher.");
                     }

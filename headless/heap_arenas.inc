@@ -30,6 +30,65 @@ static pthread_key_t eden_heap_arena_key;
 static int eden_heap_arena_key_valid;
 static atomic_flag eden_heap_arena_create_lock = ATOMIC_FLAG_INIT;
 
+static void *eden_heap_owner(const void *address);
+
+/* Per-thread allocation statistics. The live/peak/block counters are process-wide atomics, and
+ * updating them on every malloc and free made all allocating threads bounce the same cache
+ * lines: EDEN_PERF_ALLOC measured 210 ns per malloc/free pair alone and 874/1590 ns with 4/8
+ * threads, while guest cores compile JIT blocks (allocation-heavy) together during loads. Each
+ * thread now accumulates its changes and applies them every 64 operations, beyond 1 MiB, and at
+ * thread exit; snapshots lag by that much. The record also keeps the thread's arena, and a
+ * record freed by an exiting thread is reused with its arena by the next thread. */
+/* Freed small blocks are kept per thread and reused without calling into the mspace, whose
+ * calls serialise across threads even with separate arenas (EDEN_PERF_ALLOC with per-thread
+ * arenas and statistics: 232 ns per pair alone, 803/1423 ns with 4/8 threads). A bin holds blocks
+ * whose usable size is in [16 * bin, 16 * bin + 15], linked through their first word, with the
+ * usable size in the second; a request of size s takes from bin ceil(s / 16). Bins are bounded,
+ * and an exiting thread returns its blocks to their mspaces. */
+#define EDEN_TCACHE_BINS 128u
+#define EDEN_TCACHE_LIMIT 64u
+struct eden_heap_thread {
+  void *arena;
+  long live;
+  long blocks;
+  unsigned pending;
+  void *bins[EDEN_TCACHE_BINS];
+  unsigned char counts[EDEN_TCACHE_BINS];
+};
+#define EDEN_HEAP_THREADS 512u
+static struct eden_heap_thread eden_heap_threads[EDEN_HEAP_THREADS];
+static atomic_uchar eden_heap_thread_used[EDEN_HEAP_THREADS];
+
+static void eden_heap_apply(long bytes, long blocks) {
+  if (blocks)
+    atomic_fetch_add_explicit(&ps5_heap_blocks, (size_t)blocks, memory_order_relaxed);
+  if (bytes >= 0)
+    ps5_heap_resize_stats(0, (size_t)bytes);
+  else
+    ps5_heap_resize_stats((size_t)-bytes, 0);
+}
+
+static void eden_heap_flush(struct eden_heap_thread *self) {
+  eden_heap_apply(self->live, self->blocks);
+  self->live = 0;
+  self->blocks = 0;
+  self->pending = 0;
+}
+
+static void eden_heap_thread_exit(void *value) {
+  struct eden_heap_thread *self = value;
+  for (unsigned bin = 0; bin < EDEN_TCACHE_BINS; ++bin) {
+    while (self->bins[bin] != NULL) {
+      void *block = self->bins[bin];
+      self->bins[bin] = *(void **)block;
+      sceLibcMspaceFree(eden_heap_owner(block), block);
+    }
+    self->counts[bin] = 0;
+  }
+  eden_heap_flush(self);
+  atomic_store_explicit(&eden_heap_thread_used[self - eden_heap_threads], 0, memory_order_release);
+}
+
 unsigned eden_heap_arenas_created(void) {
   return atomic_load_explicit(&eden_heap_arena_count, memory_order_relaxed);
 }
@@ -63,7 +122,7 @@ static int ps5_heap_ready(void) {
     return 0;
   }
   /* libthr keeps specific data in its own storage; no recursion into malloc. */
-  eden_heap_arena_key_valid = pthread_key_create(&eden_heap_arena_key, NULL) == 0;
+  eden_heap_arena_key_valid = pthread_key_create(&eden_heap_arena_key, eden_heap_thread_exit) == 0;
 
   atomic_store_explicit(&ps5_heap_state, 2, memory_order_release);
   return 1;
@@ -114,29 +173,102 @@ static void *eden_heap_create_arena(void) {
   return arena;
 }
 
-/* This thread's arena, created on its first small allocation. NULL = main space. */
-static void *eden_heap_thread_arena(void) {
+/* This thread's record, claimed on its first allocation. NULL: none free (process-wide counters). */
+static struct eden_heap_thread *eden_heap_self(void) {
   if (!eden_heap_arena_key_valid)
     return NULL;
-  const uintptr_t stored = (uintptr_t)pthread_getspecific(eden_heap_arena_key);
-  if (stored != 0)
-    return eden_heap_arena_list[stored - 1];
+  struct eden_heap_thread *self = pthread_getspecific(eden_heap_arena_key);
+  if (self != NULL)
+    return self;
+  for (unsigned i = 0; i < EDEN_HEAP_THREADS; ++i) {
+    unsigned char expected = 0;
+    if (!atomic_compare_exchange_strong_explicit(&eden_heap_thread_used[i], &expected, 1,
+                                                 memory_order_acquire, memory_order_relaxed))
+      continue;
+    self = &eden_heap_threads[i];
+    self->live = 0;
+    self->blocks = 0;
+    self->pending = 0;
+    if (pthread_setspecific(eden_heap_arena_key, self) != 0) {
+      atomic_store_explicit(&eden_heap_thread_used[i], 0, memory_order_release);
+      return NULL;
+    }
+    return self;
+  }
+  return NULL;
+}
+
+static void eden_heap_charge(struct eden_heap_thread *self, long bytes, long blocks) {
+  self->live += bytes;
+  self->blocks += blocks;
+  if (++self->pending >= 64 || self->live > (1l << 20) || self->live < -(1l << 20))
+    eden_heap_flush(self);
+}
+
+static void eden_heap_account(long bytes, long blocks) {
+  struct eden_heap_thread *self = eden_heap_self();
+  if (self == NULL)
+    eden_heap_apply(bytes, blocks);
+  else
+    eden_heap_charge(self, bytes, blocks);
+}
+
+static void *eden_heap_record(void *address, int nonzero) {
+  struct eden_heap_thread *self = eden_heap_self();
+  if (address == NULL || self == NULL)
+    return ps5_heap_record_allocation(address, nonzero);
+  eden_heap_charge(self, (long)sceLibcMspaceMallocUsableSize(address), 1);
+  return address;
+}
+
+/* This thread's arena, created on its first small allocation. NULL = main space. */
+static void *eden_heap_thread_arena(void) {
+  struct eden_heap_thread *self = eden_heap_self();
+  if (self == NULL)
+    return NULL;
+  if (self->arena != NULL)
+    return self->arena;
   void *arena = eden_heap_create_arena();
-  unsigned index;
-  if (arena != NULL) {
-    index = atomic_load_explicit(&eden_heap_arena_count, memory_order_acquire) - 1;
-    while (eden_heap_arena_list[index] != arena)
-      --index; /* another thread may have appended meanwhile */
-  } else {
+  if (arena == NULL) {
     /* Arena limit reached: share the existing arenas round-robin. */
     const unsigned count = atomic_load_explicit(&eden_heap_arena_count, memory_order_acquire);
     if (count == 0)
       return NULL;
-    index = atomic_fetch_add_explicit(&eden_heap_next_shared, 1, memory_order_relaxed) % count;
-    arena = eden_heap_arena_list[index];
+    arena = eden_heap_arena_list[atomic_fetch_add_explicit(&eden_heap_next_shared, 1, memory_order_relaxed) % count];
   }
-  pthread_setspecific(eden_heap_arena_key, (void *)(uintptr_t)(index + 1));
+  self->arena = arena;
   return arena;
+}
+
+/* A cached block for bytes (0 < bytes <= 16 * (EDEN_TCACHE_BINS - 1)), charged as allocated. */
+static void *eden_tcache_take(size_t bytes) {
+  const size_t bin = (bytes + 15) >> 4;
+  if (bytes == 0 || bin >= EDEN_TCACHE_BINS)
+    return NULL;
+  struct eden_heap_thread *self = eden_heap_self();
+  if (self == NULL || self->bins[bin] == NULL)
+    return NULL;
+  void *block = self->bins[bin];
+  self->bins[bin] = ((void **)block)[0];
+  self->counts[bin]--;
+  eden_heap_charge(self, (long)((size_t *)block)[1], 1);
+  return block;
+}
+
+/* Keeps a freed owned block of this usable size; 0 when the bin is full or out of range. */
+static int eden_tcache_keep(void *address, size_t usable) {
+  const size_t bin = usable >> 4;
+  if (bin == 0 || bin >= EDEN_TCACHE_BINS)
+    return 0;
+  struct eden_heap_thread *self = eden_heap_self();
+  if (self == NULL || self->counts[bin] >= EDEN_TCACHE_LIMIT)
+    return 0;
+  ((void **)address)[0] = self->bins[bin];
+  ((size_t *)address)[1] = usable;
+  self->bins[bin] = address;
+  self->counts[bin]++;
+  eden_heap_charge(self, -(long)usable, -1);
+  return 1;
 }
 
 static void *eden_heap_allocate(size_t count, size_t size, int zero) {
@@ -155,9 +287,10 @@ static void *eden_heap_allocate(size_t count, size_t size, int zero) {
 }
 
 void *__wrap_malloc(size_t size) {
-  return ps5_heap_ready()
-      ? ps5_heap_record_allocation(eden_heap_allocate(1, size, 0), size != 0)
-      : __real_malloc(size);
+  if (!ps5_heap_ready())
+    return __real_malloc(size);
+  void *cached = eden_tcache_take(size);
+  return cached != NULL ? cached : eden_heap_record(eden_heap_allocate(1, size, 0), size != 0);
 }
 
 void *__wrap_calloc(size_t count, size_t size) {
@@ -167,7 +300,10 @@ void *__wrap_calloc(size_t count, size_t size) {
     atomic_fetch_add_explicit(&ps5_heap_failures, 1, memory_order_relaxed);
     return NULL;
   }
-  return ps5_heap_record_allocation(eden_heap_allocate(count, size, 1),
+  void *cached = eden_tcache_take(count * size);
+  if (cached != NULL)
+    return memset(cached, 0, count * size);
+  return eden_heap_record(eden_heap_allocate(count, size, 1),
                                     count != 0 && size != 0);
 }
 
@@ -180,7 +316,7 @@ void *__wrap_realloc(void *address, size_t size) {
   size_t before = sceLibcMspaceMallocUsableSize(address);
   void *result = sceLibcMspaceRealloc(owner, address, size);
   if (result) {
-    ps5_heap_resize_stats(before, sceLibcMspaceMallocUsableSize(result));
+    eden_heap_account((long)sceLibcMspaceMallocUsableSize(result) - (long)before, 0);
     return result;
   }
   if (size == 0) {
@@ -200,15 +336,17 @@ void *__wrap_realloc(void *address, size_t size) {
     return NULL;
   }
   memcpy(moved, address, before < size ? before : size);
-  ps5_heap_resize_stats(before, sceLibcMspaceMallocUsableSize(moved));
+  eden_heap_account((long)sceLibcMspaceMallocUsableSize(moved) - (long)before, 0);
   sceLibcMspaceFree(owner, address);
   return moved;
 }
 
 void __wrap_free(void *address) {
   if (ps5_heap_owns(address)) {
-    ps5_heap_resize_stats(sceLibcMspaceMallocUsableSize(address), 0);
-    atomic_fetch_sub_explicit(&ps5_heap_blocks, 1, memory_order_relaxed);
+    const size_t usable = sceLibcMspaceMallocUsableSize(address);
+    if (eden_tcache_keep(address, usable))
+      return;
+    eden_heap_account(-(long)usable, -1);
     sceLibcMspaceFree(eden_heap_owner(address), address);
   } else
     __real_free(address);
@@ -226,7 +364,7 @@ int __wrap_posix_memalign(void **address, size_t alignment, size_t size) {
   if (result == ENOMEM)
     result = sceLibcMspacePosixMemalign(ps5_heap_mspace, address, alignment, size);
   if (result == 0)
-    ps5_heap_record_allocation(*address, size != 0);
+    eden_heap_record(*address, size != 0);
   else if (result == ENOMEM)
     atomic_fetch_add_explicit(&ps5_heap_failures, 1, memory_order_relaxed);
   return result;

@@ -10,9 +10,47 @@
 #include <vector>
 #include "audio_core/sink/sink.h"
 #include "input_common/drivers/virtual_gamepad.h"
+#include "input_common/input_engine.h"
 #include "ps5_pad.hpp"
 
 namespace Eden {
+// The PS5 controllers as the "virtual_gamepad" input engine that Eden binds every guest
+// controller to (buttons, sticks, motion), plus DualSense rumble: Eden's controllers send each
+// player's vibration here (hid_core output params, headless/CMakeLists.txt), one device per side.
+class PadEngine final : public InputCommon::InputEngine {
+public:
+    using VirtualButton = InputCommon::VirtualGamepad::VirtualButton;
+    static constexpr std::size_t kPlayers = 10;
+    explicit PadEngine(std::string name);
+    void SetButtonState(std::size_t player, int button, bool value);
+    void SetButtonState(std::size_t player, VirtualButton button, bool value);
+    void SetStickPosition(std::size_t player, int axis, float x, float y);
+    // Gyro in turns per second, acceleration in G (Eden's convention), delta in microseconds.
+    void SetMotionState(std::size_t player, u64 delta_us, float gyro_x, float gyro_y, float gyro_z,
+                        float accel_x, float accel_y, float accel_z);
+    void SetMotionAtRest(std::size_t player);
+    void ResetControllers();
+    Common::Input::DriverResult SetVibration(const PadIdentifier& identifier,
+                                             const Common::Input::VibrationStatus& vibration) override;
+    bool IsVibrationEnabled(const PadIdentifier&) override { return true; }
+    // The DualSense motor levels for a player when they changed since the last call: large (low
+    // frequency) and small (high frequency), 0-255.
+    struct Rumble {
+        u8 large = 0;
+        u8 small = 0;
+    };
+    bool TakeRumble(std::size_t player, Rumble& rumble);
+private:
+    PadIdentifier Identifier(std::size_t player) const;
+    struct Sides {
+        Common::Input::VibrationStatus left{};
+        Common::Input::VibrationStatus right{};
+        bool changed = false;
+    };
+    std::mutex rumble_mutex;
+    std::array<Sides, kPlayers> rumble{};
+};
+
 // DualSense controllers as guest Pro Controllers. Player 1 is the controller of the user who
 // launched the game; controllers of other signed-in users become players 2-4 as they appear.
 class Pad final {
@@ -32,17 +70,18 @@ public:
     void Close();
     void Consume(std::span<const ps5::pad::Data> samples) { Consume(0, samples); }
     void Consume(std::size_t player, std::span<const ps5::pad::Data> samples);
-    InputCommon::VirtualGamepad& Engine() { return *engine; }
+    PadEngine& Engine() { return *engine; }
 private:
     struct Slot {
         int user = -1;
         int handle = -1;
         u32 last_buttons = 0;
+        u64 last_motion_us = 0;
     };
     void Rescan();
     void OpenSlot(std::size_t player, int user);
     void CloseSlot(std::size_t player);
-    std::shared_ptr<InputCommon::VirtualGamepad> engine;
+    std::shared_ptr<PadEngine> engine;
     float deadzone;
     float trigger_threshold;
     std::array<Slot, kMaxPlayers> slots{};
@@ -53,6 +92,8 @@ private:
     std::atomic<unsigned> connection_changes = 0;
     unsigned polls_since_scan = 0;
     u64 polls = 0, samples_read = 0, usable_samples = 0, intercepted_samples = 0, circle_samples = 0, read_errors = 0;
+    u64 rumble_updates = 0, rumble_errors = 0;
+    int rumble_last_error = 0;
     int last_result = 0;
 };
 

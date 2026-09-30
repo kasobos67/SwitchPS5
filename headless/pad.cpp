@@ -2,6 +2,7 @@
 #include "devices.h"
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 #include <stdexcept>
 #include "common/input.h"
 #include "common/logging.h"
@@ -20,18 +21,89 @@ namespace Eden {
 // Look for newly signed-in (or signed-out) users about once a second at the 4 ms poll interval.
 constexpr unsigned kPollsPerScan = 250;
 
+PadEngine::PadEngine(std::string name) : InputEngine(std::move(name)) {
+    for (std::size_t player = 0; player < kPlayers; ++player) PreSetController(Identifier(player));
+}
+PadIdentifier PadEngine::Identifier(std::size_t player) const {
+    return {.guid = Common::UUID{}, .port = player, .pad = 0};
+}
+void PadEngine::SetButtonState(std::size_t player, int button, bool value) {
+    if (player < kPlayers) SetButton(Identifier(player), button, value);
+}
+void PadEngine::SetButtonState(std::size_t player, VirtualButton button, bool value) {
+    SetButtonState(player, static_cast<int>(button), value);
+}
+void PadEngine::SetStickPosition(std::size_t player, int axis, float x, float y) {
+    if (player >= kPlayers) return;
+    SetAxis(Identifier(player), axis * 2, x);
+    SetAxis(Identifier(player), axis * 2 + 1, y);
+}
+void PadEngine::SetMotionState(std::size_t player, u64 delta_us, float gyro_x, float gyro_y, float gyro_z,
+                               float accel_x, float accel_y, float accel_z) {
+    if (player >= kPlayers) return;
+    SetMotion(Identifier(player), 0, {.gyro_x = gyro_x, .gyro_y = gyro_y, .gyro_z = gyro_z,
+                                      .accel_x = accel_x, .accel_y = accel_y, .accel_z = accel_z,
+                                      .delta_timestamp = delta_us});
+}
+void PadEngine::ResetControllers() {
+    for (std::size_t player = 0; player < kPlayers; ++player) {
+        SetStickPosition(player, 0, 0.0f, 0.0f);
+        SetStickPosition(player, 1, 0.0f, 0.0f);
+        for (int button = 0; button <= static_cast<int>(VirtualButton::ButtonCapture); ++button)
+            SetButtonState(player, button, false);
+        SetMotionAtRest(player);
+    }
+}
+void PadEngine::SetMotionAtRest(std::size_t player) {
+    // Level and still: gravity along -Z.
+    SetMotionState(player, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f);
+}
+Common::Input::DriverResult PadEngine::SetVibration(const PadIdentifier& identifier,
+                                                    const Common::Input::VibrationStatus& vibration) {
+    // The handheld controller (index 8) is played on player 1's DualSense.
+    const std::size_t player = identifier.port == 8 ? 0 : identifier.port;
+    if (player >= kPlayers) return Common::Input::DriverResult::InvalidParameters;
+    std::scoped_lock lock(rumble_mutex);
+    auto& sides = rumble[player];
+    (identifier.pad == 2 ? sides.right : sides.left) = vibration;
+    sides.changed = true;
+    return Common::Input::DriverResult::Success;
+}
+bool PadEngine::TakeRumble(std::size_t player, Rumble& out) {
+    if (player >= kPlayers) return false;
+    std::scoped_lock lock(rumble_mutex);
+    auto& sides = rumble[player];
+    if (!sides.changed) return false;
+    sides.changed = false;
+    // The console's HD rumble per side -> one DualSense: the low band drives the large motor and the
+    // high band the small one, with the amplitude curves of Eden's SDL driver.
+    const auto level = [](float amplitude, Common::Input::VibrationAmplificationType type) {
+        const float factor = type == Common::Input::VibrationAmplificationType::Linear ? 0.5f : 0.35f;
+        amplitude = std::clamp(amplitude, 0.0f, 1.0f);
+        return static_cast<u8>(std::lround((amplitude + std::pow(amplitude, factor)) * 0.5f * 255.0f));
+    };
+    out.large = std::max(level(sides.left.low_amplitude, sides.left.type),
+                         level(sides.right.low_amplitude, sides.right.type));
+    out.small = std::max(level(sides.left.high_amplitude, sides.left.type),
+                         level(sides.right.high_amplitude, sides.right.type));
+    return true;
+}
+
 Pad::Pad(float deadzone_, float threshold)
-    : engine{std::make_shared<InputCommon::VirtualGamepad>("virtual_gamepad")},
+    : engine{std::make_shared<PadEngine>("virtual_gamepad")},
       deadzone{deadzone_}, trigger_threshold{threshold} {
     if (!std::isfinite(deadzone) || deadzone < 0 || deadzone >= 1 ||
         !std::isfinite(threshold) || threshold <= 0 || threshold > 1)
         throw std::invalid_argument("Invalid pad calibration");
     Common::Input::RegisterInputFactory("virtual_gamepad",
         std::make_shared<InputCommon::InputFactory>(engine));
+    Common::Input::RegisterOutputFactory("virtual_gamepad",
+        std::make_shared<InputCommon::OutputFactory>(engine));
 }
 Pad::~Pad() {
     Close();
     Common::Input::UnregisterInputFactory("virtual_gamepad");
+    Common::Input::UnregisterOutputFactory("virtual_gamepad");
 }
 bool Pad::Open() {
     if (slots[0].handle >= 0) return true;
@@ -59,7 +131,13 @@ void Pad::OpenSlot(std::size_t player, int user) {
                     static_cast<unsigned>(handle));
         return;
     }
-    slots[player] = {user, handle, 0};
+    slots[player] = {user, handle, 0, 0};
+    // Classic two-motor rumble, and motion reports (on by default; failures only lose the feature).
+    const int vibration_mode = scePadSetVibrationMode(handle, ps5::pad::kVibrationModeCompatible);
+    const int motion = scePadSetMotionSensorState(handle, true);
+    if (vibration_mode < 0 || motion < 0)
+        LOG_INFO(Input, "EDEN_PAD_FEEDBACK player={} vibration_mode={:#x} motion={:#x}", player + 1,
+                 static_cast<unsigned>(vibration_mode), static_cast<unsigned>(motion));
     connected_players |= 1u << player;
     connection_changes |= 1u << player;
     LOG_INFO(Input, "EDEN_PAD_OPEN player={} user={} handle={}", player + 1, user, handle);
@@ -69,6 +147,8 @@ void Pad::CloseSlot(std::size_t player) {
     if (slot.handle < 0) return;
     const auto neutral = ps5::pad::neutral_data();
     Consume(player, {&neutral, 1});
+    const ps5::pad::Vibration stop{};
+    (void)scePadSetVibration(slot.handle, &stop);
     const int closed = scePadClose(slot.handle);
     LOG_INFO(Input, "EDEN_PAD_CLOSE player={} user={} close={}", player + 1, slot.user, closed);
     slot = {};
@@ -102,10 +182,14 @@ void Pad::Close() {
     engine->ResetControllers();
     for (std::size_t player = 0; player < kMaxPlayers; ++player) {
         if (slots[player].handle < 0) continue;
+        const ps5::pad::Vibration stop{};
+        (void)scePadSetVibration(slots[player].handle, &stop);
         const int closed = scePadClose(slots[player].handle);
         if (player == 0) {
-            LOG_INFO(Input, "EDEN_PAD_CLOSED polls={} samples={} usable={} intercepted={} circle={} errors={} last={} close={}",
-                     polls, samples_read, usable_samples, intercepted_samples, circle_samples, read_errors, last_result, closed);
+            LOG_INFO(Input, "EDEN_PAD_CLOSED polls={} samples={} usable={} intercepted={} circle={} errors={} last={} close={} "
+                     "rumble={} rumble_errors={} rumble_last={:#x}",
+                     polls, samples_read, usable_samples, intercepted_samples, circle_samples, read_errors, last_result, closed,
+                     rumble_updates, rumble_errors, static_cast<unsigned>(rumble_last_error));
         }
         slots[player] = {};
     }
@@ -124,6 +208,13 @@ bool Pad::Poll() {
     for (std::size_t player = 0; player < kMaxPlayers; ++player) {
         const int handle = slots[player].handle;
         if (handle < 0) continue;
+        PadEngine::Rumble rumble;
+        if (engine->TakeRumble(player, rumble)) {
+            const ps5::pad::Vibration vibration{.large_motor = rumble.large, .small_motor = rumble.small};
+            const int result = scePadSetVibration(handle, &vibration);
+            ++rumble_updates;
+            if (result < 0) { ++rumble_errors; rumble_last_error = result; }
+        }
         const int count = scePadRead(handle, samples.data(), samples.size());
         if (player == 0) last_result = count;
         if (count < 0 || count > static_cast<int>(samples.size())) {
@@ -186,6 +277,23 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
         engine->SetButtonState(player, Button::TriggerZR, (sample.buttons & kButtonR2) || right >= trigger_threshold);
         engine->SetStickPosition(player, 0, axis(sample.left_stick.x), -axis(sample.left_stick.y));
         engine->SetStickPosition(player, 1, axis(sample.right_stick.x), -axis(sample.right_stick.y));
+        // Motion: acceleration in G and angular velocity in rad/s, mapped to Eden's axes and units
+        // the way its SDL driver maps a DualSense.
+        auto& last_motion = slots[player].last_motion_us;
+        if (!is_usable(raw)) {
+            // Away (disconnected, or input taken by the system): stop, rather than keep turning.
+            if (last_motion) engine->SetMotionAtRest(player);
+            last_motion = 0;
+        } else if (raw.timestamp_us > last_motion) {
+            const u64 delta = last_motion ? raw.timestamp_us - last_motion : 0;
+            last_motion = raw.timestamp_us;
+            if (delta > 0 && delta < 1'000'000) {
+                constexpr float turn = 2.0f * std::numbers::pi_v<float>;
+                const auto& a = raw.acceleration;
+                const auto& w = raw.angular_velocity;
+                engine->SetMotionState(player, delta, w.x / turn, -w.z / turn, w.y / turn, -a.x, a.z, -a.y);
+            }
+        }
     }
 }
 }

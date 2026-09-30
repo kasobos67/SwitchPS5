@@ -10,6 +10,8 @@ The first run fetches every dependency at its pinned revision, builds the RADV d
 Eden for the PS5, and writes the release files to `dist/`:
 
 - `ProsperoEden-vX.Y.Z.zip`: the `PPSA99008` folder to copy to `/data/homebrew/PPSA99008`;
+- `ProsperoEden-vX.Y.Z.ffpfsc`: the same folder as a compressed PFS image that
+  ShadowMountPlus installs like a package;
 - `SHA256SUMS` and `release-notes.md`.
 
 The first build takes a while (RADV and Eden are large). Later builds reuse everything that
@@ -22,6 +24,7 @@ already exists: the dependencies, this checkout's build cache in
 |---|---|
 | `make` / `make release` | Release files in `dist/` |
 | `make package` | Only the app folder, `build/release/PPSA99008` |
+| `make image` | Only the `.ffpfsc` package image |
 | `make install PS5_HOST=<address>` | Copy `build/release/PPSA99008` to a console over FTP (close ProsperoEden first) |
 | `make dev DEV_TITLE=<title ID>` | Development build, `build/dev/PPSA99008` (or `EDEN_DEV_PACKAGE_DIR`): profiling counters, `dev-settings.txt` switches, boots the given title |
 | `make test` | Host (Linux) build of the emulator and its test suites |
@@ -71,6 +74,8 @@ The `libSceAgcDriver` import facade both drivers link against is built from
 `make toolchain` checks them: `clang-18`, `lld-18` and the LLVM 18 tools, `cmake`, `ninja`,
 `ccache`, `make`, `nasm`, `meson`, `rsync`, `git`, `glslangValidator`, `spirv-val`, `bison`,
 `flex`, `curl`, `wget`, `unzip`, and Python 3.11 or later with `venv`, `mako` and `yaml`.
+The image step fetches [PSBrew/MkPFS](https://github.com/PSBrew/MkPFS) at a pinned commit into
+`~/.cache/prosperoeden-mkpfs`.
 
 ## Release workflow
 

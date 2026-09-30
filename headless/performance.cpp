@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "performance.h"
+#include "stall_watchdog.h"
 #include "../src/fastmem.h"
 #include "common/cpu_features.h"
 #include "common/sparse_large_vector.h"
@@ -18,6 +19,7 @@
 #include <semaphore>
 #include <stdexcept>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 #include <latch>
 #include <time.h>
@@ -28,6 +30,9 @@
 #include <sys/param.h>
 #include <sys/cpuset.h>
 #endif
+
+// dynarmic A64 dispatch-path counters (headless/dynarmic/jit_group_support.inc).
+extern "C" void eden_jit_path_counters(unsigned core, unsigned long long* out) __attribute__((weak));
 
 namespace Eden::Performance {
 namespace {
@@ -48,7 +53,7 @@ static_assert(std::atomic<uintptr_t>::is_always_lock_free);
 std::array<uintptr_t, 8192> sampled_pcs{};
 std::atomic<unsigned> pc_count{};
 // Guest core 0 host PCs (JIT code, HLE, memory callbacks), sampled with the GPU thread.
-std::array<uintptr_t, 8192> sampled_core_pcs{};
+std::array<uintptr_t, 65536> sampled_core_pcs{};
 std::atomic<unsigned> core_pc_count{};
 unsigned core_pc_reported{};
 pthread_t core_sample_thread{};
@@ -398,6 +403,9 @@ void ReportGpuThread(unsigned frame) {
 }
 
 void RegisterWorker(const char* name) {
+#if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
+    Eden::Stall::NoteThread(name);
+#endif
     for (unsigned i = 0; i < names.size(); ++i) {
         if (std::strcmp(name, names[i])) continue;
         Worker worker;
@@ -412,6 +420,17 @@ void RegisterWorker(const char* name) {
             if (i == pc_sample_core.load()) {
                 core_sample_thread = pthread_self();
                 core_sample_ready.store(true, std::memory_order_release);
+                // dev-settings pc_fast=on: ~500 Hz from 45 s after registration instead of the
+                // frontend's 20 Hz polls (from 90 s), for compilation bursts at load. Signals during
+                // the boot's first seconds hung it (run radv-zb5-20260930-015220).
+                if (pc_fast.load()) {
+                    std::thread([] {
+                        std::this_thread::sleep_for(std::chrono::seconds(45));
+                        while (core_pc_count.load() < sampled_core_pcs.size() &&
+                               pthread_kill(core_sample_thread, SIGUSR2) == 0)
+                            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                    }).detach();
+                }
             }
         }
 #endif
@@ -574,10 +593,34 @@ void Snapshot() {
                         i, unsigned(cpu_state[i].phase.load(std::memory_order_relaxed)), sample.epoch,
                         sample.mono_ns, sample.cpu_ns, sample.thread, sample.pc, sample.svc, sample.fpcr,
                         sample.compilations, sample.compile_ns);
+#ifdef EDEN_DEV_PROFILE
+            const auto& dups = jit_duplicates[i];
+            std::printf("EDEN_PERF_DUPLICATES mono_ns=%lld core=%u first=%llu again=%llu lead_1ms=%llu lead_10ms=%llu "
+                        "lead_100ms=%llu lead_1s=%llu lead_10s=%llu lead_more=%llu\n", mono, i,
+                        dups[0].load(std::memory_order_relaxed), dups[1].load(std::memory_order_relaxed),
+                        dups[2].load(std::memory_order_relaxed), dups[3].load(std::memory_order_relaxed),
+                        dups[4].load(std::memory_order_relaxed), dups[5].load(std::memory_order_relaxed),
+                        dups[6].load(std::memory_order_relaxed), dups[7].load(std::memory_order_relaxed));
+            if (eden_jit_path_counters) {
+                unsigned long long path[8]{};
+                eden_jit_path_counters(i, path);
+                std::printf("EDEN_PERF_JITPATH mono_ns=%lld core=%u runs=%llu thunks=%llu lookups=%llu hits=%llu "
+                            "contended=%llu flush_all=%llu flush_locations=%llu far_links=%llu\n", mono, i,
+                            path[0], path[1], path[2], path[3], path[4], path[5], path[6], path[7]);
+            }
+            std::printf("EDEN_PERF_PROGRESS mono_ns=%lld core=%u compilations=%llu compile_ns=%llu evacuations=%llu "
+                        "translate_ns=%llu optimize_ns=%llu emit_ns=%llu ranges_ns=%llu\n",
+                        mono, i, compilation[i].calls.load(std::memory_order_relaxed),
+                        compilation[i].nanoseconds.load(std::memory_order_relaxed),
+                        evacuations[i].load(std::memory_order_relaxed),
+                        jit_phase_ns[i][0].load(std::memory_order_relaxed), jit_phase_ns[i][1].load(std::memory_order_relaxed),
+                        jit_phase_ns[i][2].load(std::memory_order_relaxed), jit_phase_ns[i][3].load(std::memory_order_relaxed));
+#else
             std::printf("EDEN_PERF_PROGRESS mono_ns=%lld core=%u compilations=%llu compile_ns=%llu evacuations=%llu\n",
                         mono, i, compilation[i].calls.load(std::memory_order_relaxed),
                         compilation[i].nanoseconds.load(std::memory_order_relaxed),
                         evacuations[i].load(std::memory_order_relaxed));
+#endif
         }
     }
     std::fflush(stdout);
@@ -748,6 +791,47 @@ extern "C" void eden_jit_evacuation(unsigned core) {
     if (core < Eden::Performance::evacuations.size())
         Eden::Performance::evacuations[core].fetch_add(1, std::memory_order_relaxed);
 }
+#ifdef EDEN_DEV_PROFILE
+// Development builds only (the per-phase and duplicate counters exist there).
+extern "C" void eden_jit_phases(unsigned core, unsigned long long translate, unsigned long long optimize,
+                                unsigned long long emit, unsigned long long location) {
+    if (core >= Eden::Performance::jit_phase_ns.size()) return;
+    auto& phases = Eden::Performance::jit_phase_ns[core];
+    phases[0].fetch_add(translate, std::memory_order_relaxed);
+    phases[1].fetch_add(optimize, std::memory_order_relaxed);
+    phases[2].fetch_add(emit, std::memory_order_relaxed);
+    // Which cores compiled each location, and when the first one did.
+    struct First { unsigned cores; long long ns; };
+    static std::mutex mutex;
+    static auto* compiled = [] {
+        auto* map = new std::unordered_map<unsigned long long, First>;
+        map->reserve(1u << 21);
+        return map;
+    }();
+    const long long now = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+    unsigned index = 0;
+    {
+        std::lock_guard lock{mutex};
+        auto [it, inserted] = compiled->try_emplace(location, First{1u << core, now});
+        if (!inserted) {
+            if (it->second.cores & (1u << core)) {
+                index = 1;
+            } else {
+                it->second.cores |= 1u << core;
+                const long long lead = now - it->second.ns;
+                index = 2;
+                for (long long bound = 1'000'000; index < 7 && lead >= bound; bound *= 10) ++index;
+            }
+        }
+    }
+    Eden::Performance::jit_duplicates[core][index].fetch_add(1, std::memory_order_relaxed);
+}
+extern "C" void eden_jit_ranges(unsigned core, unsigned long long ns) {
+    if (core < Eden::Performance::jit_phase_ns.size())
+        Eden::Performance::jit_phase_ns[core][3].fetch_add(ns, std::memory_order_relaxed);
+}
+#endif
 extern "C" void eden_jit_compile(unsigned core, unsigned long long ns) {
     if (core >= Eden::Performance::compilation.size()) return;
     Eden::Performance::compilation[core].calls.fetch_add(1, std::memory_order_relaxed);
