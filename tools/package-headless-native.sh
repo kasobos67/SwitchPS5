@@ -59,7 +59,7 @@ if game:
     assert (app / 'assets/keys/prod.keys').is_file()
 value = json.loads((template / 'sce_sys/param.json').read_text())
 value.update(titleId='PPSA99008', conceptId='99008', contentId='UP9000-PPSA99008_00-PROSPEROEDEN0001')
-value['contentVersion'] = '01.000.020'
+value['contentVersion'] = '01.000.030'
 value['localizedParameters']['en-US']['titleName'] = 'ProsperoEden'
 value['pubtools']['loudnessSnd0'] = '-28.00'
 (app / 'sce_sys/param.json').write_text(json.dumps(value, indent=2) + '\n')

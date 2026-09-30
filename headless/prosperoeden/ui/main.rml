@@ -11,7 +11,7 @@
       <header id="header">
         <img id="brand-icon" src="icons/brand-72.tga" width="72" height="72" alt=""/>
         <span id="brand-name">PROSPEROEDEN</span>
-        <span id="brand-version">PS5 EDITION  /  v1.000.020</span>
+        <span id="brand-version">PS5 EDITION  /  v1.000.030</span>
         <span id="menu-clock">--:--</span>
       </header>
       <nav id="menu">

@@ -106,7 +106,7 @@ ProsperoEden does not include keys, firmware, games, or other copyrighted consol
 
 ### Moving save data
 
-Switch emulators keep a save as the files the game wrote, so nothing is converted: folders are copied. In the Library, press Triangle on a game and pick **Save data**. The folders below are next to `roms/` in the game files folder.
+Emulators like Eden keep a save as the files the game wrote, so nothing is converted: folders are copied. In the Library, press Triangle on a game and pick **Save data**. The folders below are next to `roms/` in the game files folder.
 
 - **Import from a folder.** Copy the contents of the game's save folder (what an emulator opens as the game's save directory) into `save-import/<title ID>/`. The title ID is the 16-character code in the game's file name; Save data also shows it when there is nothing to import.
 - **Import from Ryujinx.** Copy Ryujinx's data folder (the one that holds `bis/`, or a portable folder around it) to `ryujinx/`. ProsperoEden finds the game's save in it: the first user's, and the device save when there is one.
@@ -116,7 +116,7 @@ Cross imports, and asks before it replaces a save. The save it replaces is first
 
 ### Mods
 
-A mod changes a game: a patch to its code (`.pchtxt` or `.ips` files in an `exefs` folder), replacement game files (a `romfs` folder), or cheats (a `cheats` folder). Mods made for other Switch emulators come in this layout.
+A mod changes a game: a patch to its code (`.pchtxt` or `.ips` files in an `exefs` folder), replacement game files (a `romfs` folder), or cheats (a `cheats` folder). Mods made for other emulators of the same console come in this layout.
 
 - **Add a mod.** Each mod is a folder. Copy it to `mods/<title ID>/`, next to `roms/` in the game files folder, so that a patch ends up at `mods/<title ID>/<mod name>/exefs/<file>.pchtxt`. The title ID is the 16-character code in the game's file name. The Mods screen names the exact folder, and Square creates it. The About screen shows where the `mods` folder is.
 - **Switch it on or off.** In the Library, press Triangle on the game and pick **Mods**. Every mod found is listed with a switch. A mod is on unless you switch it off, and a change applies the next time the game starts.
@@ -162,23 +162,9 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 
 ## Changes in v1.000.030
 
-- **New launcher.** Every screen is redrawn with OpenGL: smooth transitions between screens, text that stays sharp, panels that blur the artwork behind them, and sound effects for moving, selecting and going back. **Settings > Audio > Menu sounds** sets their level.
-- **Controllers on the home screen.** Four controller icons show which controllers are connected, and change as one joins or leaves.
-- **Loading screen.** An animated scene shows while a game starts, on both renderers.
-- **The Library opens at once.** The game list is read in the background, and the home screen shows each game's own name instead of its file name.
-- **New music** on the PS5 home screen.
-- **Smoother first-time gameplay.** The emulated CPU cores now share the code they compile, so each part of a game is compiled once instead of once per core. In large open-world games this halves the compile work and removes most of the stutter when gameplay starts or a new area loads.
-- **Faster compiling.** Compiling a game's code now takes about 40% less CPU time, which shortens the remaining stutter when gameplay starts or a new area loads.
-- **Startup hang fixed.** A game could stop for good right after starting, because the emulator's memory allocator could leave high-priority threads waiting on each other forever. Development builds also report where a slow start is stuck.
 - **Games close in about a second.** Select + L1 used to take 10-25 seconds to return to the library; logging no longer waits on the console's storage, and the emulator skips needless teardown work.
 - **Up to four controllers.** Each signed-in PS5 user's controller becomes the next player (player 1 is whoever launched the game); controllers can join or leave during a game, and games that ask for controllers connect every one in use.
 - The Select + L1 and Select + R1 shortcuts work from any controller.
-- **Vibration and motion.** DualSense rumble for games that use it (turn it off in **Settings > Controls**), and the controller's gyro and accelerometer for motion controls.
-- **Resolution and upscaling.** **Settings > Video** now sets the internal rendering resolution (0.5x to 2x) and the filter that scales it to the TV: Bilinear, AMD FSR, Bicubic or Nearest.
-- **Per-game settings.** Press Triangle on a game in the Library to give it its own renderer, resolution and upscaling filter.
-- **Language setting.** **Settings > Language** picks the language games use (18 languages), with the console region that goes with it. It applies when a game starts.
-- **Game updates and DLC.** Put update and DLC files (NSP or XCI) in the `updates` folder next to `roms`; the newest update and all DLC apply when the game starts, and the game details show them.
-- **Build it yourself.** `make` fetches every dependency at its pinned revision and builds the release. The OpenGL renderer now uses the published PS5 OpenGL 4.6 SDK 0.6.0.
 
 ## Changes in v1.000.020
 
