@@ -1,0 +1,89 @@
+<p align="center">
+  <img src="sce_sys/icon0.png" width="128" alt="ProsperoEden icon">
+</p>
+
+<h1 align="center">ProsperoEden</h1>
+
+<p align="center">
+  <strong>An unofficial Eden emulator port for PlayStation 5 homebrew</strong>
+</p>
+
+**ProsperoEden is an unofficial PlayStation 5 port of [Eden](https://github.com/eden-emulator/mirror)** - an accurate, high-performance emulator. All credit for the emulator core belongs to the Eden project and its contributors. ProsperoEden is not affiliated with or endorsed by the Eden team or Sony.
+
+This is an early alpha. Video, audio, controller input, and saves have been confirmed working. Compatibility and performance will vary between games. The current release is **v1.000.010**.
+
+## 🚧 Source code coming soon
+
+> [!IMPORTANT]
+> **The ProsperoEden source code will be published soon.** We are still completing performance enhancements, polishing the user interface, and preparing the project for a clean public source release. The current alpha package is available for early testing while this work continues.
+
+## Project foundation
+
+> [!IMPORTANT]
+> **Built on the [PS5 Native App Boilerplate](https://github.com/blackbearreloaded/ps5-native-app-boilerplate), the same native foundation used by ProsperoLight.**
+> It provides the native PS5 application structure, runtime, packaging, RmlUi shell, and homebrew deployment foundation.
+
+> [!IMPORTANT]
+> **Graphics are powered by [ps5-opengl](https://github.com/blackbearreloaded/ps5-opengl).**
+> This OpenGL implementation provides the native PS5 rendering layer used by the Eden graphics backend.
+
+> [!IMPORTANT]
+> **Vulkan is powered by Mihawk's [PS5 Mesa](https://github.com/mihawk-99/PS5_Mesa) and [PS5 Vulkan](https://github.com/mihawk-99/PS5_Vulkan).**
+> Mihawk's Mesa/RADV driver for the PS5 runs ProsperoEden's Vulkan renderer. Many thanks to Mihawk for this work and for [all of the PS5 projects](https://github.com/mihawk-99) behind it.
+
+> [!IMPORTANT]
+> **Thanks to [ps5-vulkan](https://github.com/mpereiraesaa/ps5-vulkan) by mpereiraesaa**, an experimental Vulkan graphics and compute API for native PS5 homebrew.
+
+## Install
+
+1. Download and extract the release ZIP.
+2. Copy the included `PPSA99008` folder to `/data/homebrew/PPSA99008` on the PS5.
+3. Supply your own legally dumped keys, firmware, and games using the paths below.
+4. Launch **ProsperoEden** and open **Library**. Setup is checked when the app opens; after adding or replacing keys or firmware, close and reopen it.
+
+The final layout should look like this:
+
+```text
+/data/homebrew/PPSA99008/
+├── assets/
+│   ├── keys/
+│   │   ├── prod.keys
+│   │   └── title.keys                 # optional
+│   ├── firmware/
+│   │   └── *.nca                      # extracted firmware NCAs
+│   └── roms/
+│       ├── Game.nsp
+│       └── Game.xci
+├── eboot.bin
+└── ...
+```
+
+ProsperoEden does not include keys, firmware, games, or other copyrighted console data. Dump these files from hardware and software you own. Do not download or redistribute them.
+
+If upgrading from the first alpha, move your firmware `.nca` files from `assets/nand/system/Contents/registered/` to `assets/firmware/`. Leave your `assets/keys/` and `assets/roms/` files in place. The release ZIP contains no user files, so copy its app files over your installation without deleting your own data.
+
+## Changes in v1.000.010
+
+- Updated OpenGL rendering and performance, including multisample operations and render-target compatibility.
+- Improved game loading and shutdown handling, including startup and return-to-launcher fixes.
+- Added a per-game **Handheld / Docked** setting in game details. The selected mode applies on the next launch.
+- Includes the normal launcher; no development autoboot or scripted input.
+
+**Known issues:** Some demanding games remain very slow and may crash when exiting. Repeatedly switching games can still encounter stability problems. This is a testing pre-release, not a compatibility guarantee.
+
+## In-game shortcuts
+
+“Select” means pressing the DualSense touchpad itself, as in ProsperoLight.
+
+| Shortcut | Action |
+|---|---|
+| Select + R1 | Toggle the performance HUD |
+| Select + L1 | End the running game and return to the ROM menu |
+
+## Credits and license
+
+ProsperoEden exists thanks to the Eden maintainers and contributors, Mihawk's PS5 Mesa and PS5 Vulkan projects, mpereiraesaa's ps5-vulkan, the PS5 Native App Boilerplate, ps5-opengl, and the wider PS5 homebrew community.
+
+ProsperoEden is distributed under [GPL-3.0](LICENSE). PlayStation and PS5 are trademarks of Sony Interactive Entertainment. ProsperoEden is an independent homebrew project and is not affiliated with or endorsed by Sony Interactive Entertainment or the Eden project.
+
+This project was developed with assistance from OpenAI Codex, including some original interface artwork. Project maintainers reviewed and validated the resulting code, tests, documentation, dependencies, and generated assets.
