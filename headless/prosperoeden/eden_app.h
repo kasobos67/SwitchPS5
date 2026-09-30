@@ -28,6 +28,10 @@ private:
     bool BrowseTo(const std::string& directory);
     void HandleFilesInput(const radio_input_event_t& event);
     void UpdateFiles();
+    // Settings > Language: a list screen like the Game files browser.
+    void OpenLanguage();
+    void HandleLanguageInput(const radio_input_event_t& event);
+    void UpdateLanguage(const char* message = nullptr);
     // Library > Game settings for the selected game.
     void OpenGameSettings();
     void HandleGameSettingsInput(const radio_input_event_t& event);
@@ -48,5 +52,6 @@ private:
     std::string browse_dir_;
     std::vector<std::string> browse_entries_; // ".." first unless at "/", then subfolders
     int browse_selected_ = 0;
+    int language_selected_ = 0;  // highlighted row of the Settings > Language screen
     std::string files_message_;
 };

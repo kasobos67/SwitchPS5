@@ -345,6 +345,10 @@ void EdenApp::HandleInput(const radio_input_event_t& event) {
         HandleGameSettingsInput(event);
         return;
     }
+    if (dialog_ == 10) {
+        HandleLanguageInput(event);
+        return;
+    }
     if (dialog_ >= 3) {
         auto* select = static_cast<Rml::ElementFormControlSelect*>(document_->GetElementById("video-backend"));
         if (dialog_ == 3 && select->IsSelectBoxVisible()) {
@@ -404,14 +408,7 @@ void EdenApp::HandleInput(const radio_input_event_t& event) {
     if (dialog_) {
         const int count = dialog_ == 1 ? static_cast<int>(games.size()) : dialog_ == 2 ? 6 : 5;
         if (event.key == RADIO_INPUT_CIRCLE) Close();
-        else if (dialog_ == 2 && dialog_selected_ == 5 &&
-                 (event.key == RADIO_INPUT_LEFT || event.key == RADIO_INPUT_RIGHT || event.key == RADIO_INPUT_CROSS)) {
-            // Settings > Language: the next or previous language, saved at once.
-            const int languages = int(std::size(Eden::kLanguageKeys));
-            preferences_.language = (preferences_.language + (event.key == RADIO_INPUT_LEFT ? languages - 1 : 1)) % languages;
-            if (!Eden::SavePreferences(preferences_)) Eden::Report("settings", "Could not write preferences");
-            UpdateDialog();
-        }
+        else if (dialog_ == 2 && dialog_selected_ == 5 && event.key == RADIO_INPUT_CROSS) OpenLanguage();
         else if (dialog_ == 2 && event.key == RADIO_INPUT_CROSS && dialog_selected_ == 4) OpenFiles();
         else if (dialog_ == 2 && event.key == RADIO_INPUT_CROSS) {
             static constexpr const char* pages[] = {"video-dialog", "audio-dialog", "controls-dialog", "diagnostics-dialog"};
@@ -593,6 +590,7 @@ void EdenApp::Close() {
     SetClass(document_, "rom-dialog", "open", false);
     SetClass(document_, "settings-dialog", "open", false);
     SetClass(document_, "files-dialog", "open", false);
+    SetClass(document_, "language-screen", "open", false);
     for (const char* element : {"header", "menu", "last-played-card", "recent-section", "startup-status", "footer"})
         SetClass(document_, element, "library-hidden", false);
     dialog_ = 0;
@@ -691,6 +689,68 @@ void EdenApp::UpdateGameSettings(const char* message) {
     static constexpr const char* rows[] = {"gs-mode-setting", "gs-renderer-setting", "gs-resolution-setting", "gs-filter-setting"};
     for (int row = 0; row < 4; ++row) SetClass(document_, rows[row], "focused", option_ == row);
     SetText(document_, "game-settings-hint", message ? message : "UP / DOWN Select / LEFT / RIGHT Change / O Back");
+}
+
+void EdenApp::OpenLanguage() {
+    language_selected_ = preferences_.language;
+    SetClass(document_, "language-screen", "open", true);
+    dialog_ = 10;
+    UpdateLanguage();
+}
+
+void EdenApp::HandleLanguageInput(const radio_input_event_t& event) {
+    const int count = int(std::size(Eden::kLanguageKeys));
+    if (event.key == RADIO_INPUT_CIRCLE) {
+        SetClass(document_, "language-screen", "open", false);
+        dialog_ = 2;
+        UpdateDialog();
+        return;
+    }
+    if (event.key == RADIO_INPUT_UP) {
+        language_selected_ = (language_selected_ + count - 1) % count;
+    } else if (event.key == RADIO_INPUT_DOWN) {
+        language_selected_ = (language_selected_ + 1) % count;
+    } else if (event.key == RADIO_INPUT_L1 || event.key == RADIO_INPUT_R1) {
+        // A page (the six visible rows) at a time, stopping at the ends.
+        language_selected_ = std::clamp(language_selected_ + (event.key == RADIO_INPUT_R1 ? 6 : -6), 0, count - 1);
+    } else if (event.key == RADIO_INPUT_CROSS) {
+        preferences_.language = language_selected_;
+        const bool saved = Eden::SavePreferences(preferences_);
+        if (!saved) Eden::Report("settings", "Could not write preferences");
+        UpdateLanguage(saved ? "Saved. Applies when a game starts." : "Could not save. Please try again.");
+        return;
+    } else {
+        return;
+    }
+    UpdateLanguage();
+}
+
+void EdenApp::UpdateLanguage(const char* message) {
+    static constexpr int kRows = 6;
+    static constexpr const char* kRegions[] = {"Japan", "USA", "Europe", "Australia", "China", "Korea", "Taiwan"};
+    const int count = int(std::size(Eden::kLanguageKeys));
+    const int scroll = language_selected_ < kRows ? 0 : language_selected_ - (kRows - 1);
+    for (int row = 0; row < kRows; ++row) {
+        const int index = scroll + row;
+        const std::string id = "language-row-" + std::to_string(row);
+        SetClass(document_, id.c_str(), "focused", index == language_selected_);
+        SetClass(document_, id.c_str(), "offscreen", index >= count);
+        SetText(document_, ("language-name-" + std::to_string(row)).c_str(), index < count ? Eden::kLanguageLabels[index] : "");
+        SetText(document_, ("language-meta-" + std::to_string(row)).c_str(),
+                index < count && index == preferences_.language ? "IN USE" : "");
+    }
+    if (Rml::Element* thumb = document_->GetElementById("language-scrollbar-thumb")) {
+        char top[24];
+        std::snprintf(top, sizeof(top), "%dpx", 408 * scroll / (count - kRows));
+        thumb->SetProperty("top", top);
+    }
+    char position[24];
+    std::snprintf(position, sizeof(position), "%d OF %d", language_selected_ + 1, count);
+    SetText(document_, "language-position", position);
+    SetText(document_, "language-current", Eden::kLanguageLabels[language_selected_]);
+    SetText(document_, "language-region", kRegions[Eden::kLanguageRegions[language_selected_]]);
+    SetText(document_, "language-in-use", Eden::kLanguageLabels[preferences_.language]);
+    SetText(document_, "language-message", message ? message : "");
 }
 
 void EdenApp::OpenFiles() {

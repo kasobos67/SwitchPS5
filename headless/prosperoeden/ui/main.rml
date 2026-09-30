@@ -147,6 +147,37 @@
         </aside>
         <footer class="library-footer icon-footer"><span class="controller-hint files-hint-open"><img class="hint-icon-0" src="icons/cross-mono.tga" width="26" height="26" alt=""/><span>Open</span></span><span class="controller-hint files-hint-back"><img class="hint-icon-0" src="icons/circle-mono.tga" width="26" height="26" alt=""/><span>Back</span></span><span class="controller-hint files-hint-use"><img class="hint-icon-0" src="icons/triangle-mono.tga" width="26" height="26" alt=""/><span>Use this folder</span></span><span class="controller-hint files-hint-default"><img class="hint-icon-0" src="icons/square-mono.tga" width="26" height="26" alt=""/><span>Default folder</span></span><span class="controller-hint files-hint-browse"><img class="hint-icon-0" src="icons/dpad-mono.tga" width="26" height="26" alt=""/><span>Browse</span></span><span class="controller-hint files-hint-page files-hint-pair"><img class="hint-icon-0" src="icons/l1-mono.tga" width="26" height="26" alt=""/><img class="hint-icon-1" src="icons/r1-mono.tga" width="26" height="26" alt=""/><span>Page</span></span></footer>
       </div>
+      <div id="language-screen" class="library-screen">
+        <img class="library-background" src="background.tga" width="1920" height="1080" alt=""/>
+        <span class="library-shade"></span>
+        <span class="library-title">Language</span>
+        <span class="library-copy">Choose the language games use</span>
+        <section class="library-list-panel">
+          <img class="library-panel-chrome" src="chrome/dialog-panel.tga" width="820" height="720" alt=""/>
+          <span class="library-panel-kicker">LANGUAGES</span>
+          <div id="language-list-viewport">
+            <span id="language-row-0" class="library-row library-row-0"><img class="library-row-chrome base-chrome" src="chrome/library-row-normal.tga" width="760" height="78" alt=""/><img class="library-row-chrome focused-chrome" src="chrome/library-row-focused.tga" width="760" height="78" alt=""/><span id="language-name-0" class="library-row-name"></span><span id="language-meta-0" class="library-row-meta language-row-meta"></span></span>
+            <span id="language-row-1" class="library-row library-row-1"><img class="library-row-chrome base-chrome" src="chrome/library-row-normal.tga" width="760" height="78" alt=""/><img class="library-row-chrome focused-chrome" src="chrome/library-row-focused.tga" width="760" height="78" alt=""/><span id="language-name-1" class="library-row-name"></span><span id="language-meta-1" class="library-row-meta language-row-meta"></span></span>
+            <span id="language-row-2" class="library-row library-row-2"><img class="library-row-chrome base-chrome" src="chrome/library-row-normal.tga" width="760" height="78" alt=""/><img class="library-row-chrome focused-chrome" src="chrome/library-row-focused.tga" width="760" height="78" alt=""/><span id="language-name-2" class="library-row-name"></span><span id="language-meta-2" class="library-row-meta language-row-meta"></span></span>
+            <span id="language-row-3" class="library-row library-row-3"><img class="library-row-chrome base-chrome" src="chrome/library-row-normal.tga" width="760" height="78" alt=""/><img class="library-row-chrome focused-chrome" src="chrome/library-row-focused.tga" width="760" height="78" alt=""/><span id="language-name-3" class="library-row-name"></span><span id="language-meta-3" class="library-row-meta language-row-meta"></span></span>
+            <span id="language-row-4" class="library-row library-row-4"><img class="library-row-chrome base-chrome" src="chrome/library-row-normal.tga" width="760" height="78" alt=""/><img class="library-row-chrome focused-chrome" src="chrome/library-row-focused.tga" width="760" height="78" alt=""/><span id="language-name-4" class="library-row-name"></span><span id="language-meta-4" class="library-row-meta language-row-meta"></span></span>
+            <span id="language-row-5" class="library-row library-row-5"><img class="library-row-chrome base-chrome" src="chrome/library-row-normal.tga" width="760" height="78" alt=""/><img class="library-row-chrome focused-chrome" src="chrome/library-row-focused.tga" width="760" height="78" alt=""/><span id="language-name-5" class="library-row-name"></span><span id="language-meta-5" class="library-row-meta language-row-meta"></span></span>
+          </div>
+          <span id="language-scrollbar"><img class="files-scrollbar-track" src="chrome/scrollbar-track.tga" width="10" height="518" alt=""/><img id="language-scrollbar-thumb" src="chrome/scrollbar-thumb.tga" width="10" height="110" alt=""/></span>
+          <span id="language-position">0 OF 0</span>
+        </section>
+        <aside class="game-detail-panel">
+          <img class="library-panel-chrome" src="chrome/dialog-panel.tga" width="820" height="720" alt=""/>
+          <span class="detail-kicker">SELECTED</span>
+          <span id="language-current"></span>
+          <span class="files-label files-line-0">REGION</span><span id="language-region" class="files-value ready files-line-0"></span>
+          <span class="files-label files-line-1">IN USE</span><span id="language-in-use" class="files-value files-line-1"></span>
+          <span class="about-divider files-divider-0"></span>
+          <span id="language-note">Games use this language when they offer it, and their own default otherwise. It applies when a game starts.</span>
+          <span id="language-message"></span>
+        </aside>
+        <footer class="library-footer icon-footer"><span class="controller-hint files-hint-open"><img class="hint-icon-0" src="icons/cross-mono.tga" width="26" height="26" alt=""/><span>Choose</span></span><span class="controller-hint files-hint-back"><img class="hint-icon-0" src="icons/circle-mono.tga" width="26" height="26" alt=""/><span>Back</span></span><span class="controller-hint language-hint-browse"><img class="hint-icon-0" src="icons/dpad-mono.tga" width="26" height="26" alt=""/><span>Browse</span></span><span class="controller-hint language-hint-page files-hint-pair"><img class="hint-icon-0" src="icons/l1-mono.tga" width="26" height="26" alt=""/><img class="hint-icon-1" src="icons/r1-mono.tga" width="26" height="26" alt=""/><span>Page</span></span></footer>
+      </div>
       <div id="video-dialog" class="dialog"><div class="dialog-panel">
         <img class="dialog-panel-chrome" src="chrome/modal-panel.tga" width="820" height="720" alt=""/>
         <span class="dialog-title">Video</span>

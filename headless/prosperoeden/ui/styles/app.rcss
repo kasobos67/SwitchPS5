@@ -203,6 +203,16 @@ button { margin: 0; padding: 0; border: 0px transparent; border-radius: 0px; bac
 .files-hint-open { left: 0px; width: 130px; } .files-hint-back { left: 150px; width: 130px; }
 .files-hint-use { left: 300px; width: 240px; } .files-hint-default { left: 560px; width: 240px; }
 .files-hint-browse { left: 820px; width: 150px; } .files-hint-page { left: 990px; width: 160px; }
+/* Settings > Language: a list screen like the Game files browser. */
+#language-list-viewport { position: absolute; left: 30px; top: 104px; width: 760px; height: 518px; overflow: hidden; }
+.language-row-meta { left: 560px; width: 170px; color: #dfe8a6; }
+#language-scrollbar { position: absolute; left: 802px; top: 104px; width: 10px; height: 518px; }
+#language-scrollbar-thumb { position: absolute; left: 0px; top: 0px; width: 10px; height: 110px; }
+#language-position { position: absolute; left: 590px; top: 678px; width: 200px; height: 30px; color: #dfe8a6; font-size: 20px; line-height: 28px; text-align: right; }
+#language-current { position: absolute; left: 36px; top: 62px; width: 748px; height: 96px; overflow: hidden; color: #fffcef; font-size: 32px; line-height: 42px; }
+#language-note { position: absolute; left: 36px; top: 390px; width: 748px; height: 110px; color: #c5d0bd; font-size: 22px; line-height: 34px; }
+#language-message { position: absolute; left: 36px; top: 534px; width: 748px; height: 80px; color: #dfe8a6; font-size: 22px; line-height: 34px; }
+.language-hint-browse { left: 300px; width: 150px; } .language-hint-page { left: 470px; width: 160px; }
 
 .lib-hint-select { left: 0px; width: 140px; } .lib-hint-back { left: 160px; width: 130px; }
 .lib-hint-browse { left: 310px; width: 250px; } .lib-hint-mode { left: 580px; width: 250px; }
