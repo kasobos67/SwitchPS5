@@ -173,6 +173,7 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 - **More performance** - CPU and GPU work to keep demanding games at their target frame rate.
 - **More reliable game loading** - fix any remaining hangs on the loading screen.
 - **Import saves from Ryujinx** - copy a game's save from a Ryujinx data folder into ProsperoEden. Eden's desktop app can already link Ryujinx saves, and the code that finds them is in the shared code ProsperoEden builds; ProsperoEden needs its own import step in the launcher.
+- **More game compatibility** - validate more games on the PS5, and fix what keeps them from running well.
 
 ## Issues are disabled
 
