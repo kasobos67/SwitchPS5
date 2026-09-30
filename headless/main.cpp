@@ -122,8 +122,7 @@ static void MigrateSandboxData() {
 int main(int argc, char** argv) {
     try {
 #if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
-        volatile int stall_stack_marker = 0;
-        Eden::Stall::Start(reinterpret_cast<std::uintptr_t>(&stall_stack_marker));
+        Eden::Stall::Start();
 #endif
         std::FILE* report = stdout;
         SCOPE_EXIT { if (report != stdout) std::fclose(report); };
@@ -802,6 +801,9 @@ int main(int argc, char** argv) {
                     std::atomic<bool> counted{false};
                     const auto load_start = std::chrono::steady_clock::now();
                     std::jthread reporter([&](std::stop_token stop) {
+#if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
+                        Eden::Stall::Trace("reporter start");
+#endif
                         for (unsigned tick = 1; !stop.stop_requested(); ++tick) {
                             std::this_thread::sleep_for(std::chrono::milliseconds(100));
                             if (tick % 50 != 0 || stop.stop_requested()) continue;
@@ -812,6 +814,9 @@ int main(int argc, char** argv) {
                             Eden::Report("loader", line.c_str());
                         }
                     });
+#if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
+                    Eden::Stall::Trace("main cache_load");
+#endif
                     system.Renderer().ReadRasterizer()->LoadDiskResources(
                         system.GetApplicationProcessProgramID(), std::stop_token{},
                         [&](VideoCore::LoadCallbackStage stage, size_t value, size_t count) {
