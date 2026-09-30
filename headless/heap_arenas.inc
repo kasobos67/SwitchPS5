@@ -29,6 +29,43 @@ static atomic_uint eden_heap_next_shared;
 static pthread_key_t eden_heap_arena_key;
 static int eden_heap_arena_key_valid;
 static atomic_flag eden_heap_arena_create_lock = ATOMIC_FLAG_INIT;
+/* Who holds the creation lock and how many threads wait for it (read by the development stall
+ * watchdog, headless/stall_watchdog.h). */
+static _Atomic unsigned long eden_heap_create_holder;
+static atomic_uint eden_heap_create_waiters;
+
+int sceKernelUsleep(unsigned int microseconds);
+
+/* Arena creation is rare (once per thread) but runs under a spin flag, and its holder also takes
+ * the main mspace lock. The emulated cores and the GPU thread run at real-time priority pinned to
+ * one CPU each; spinning there forever starves a preempted lower-priority holder queued on that
+ * CPU, which hung game starts. After a short spin, sleep so the holder can run. */
+static void eden_heap_create_acquire(void) {
+  if (atomic_flag_test_and_set_explicit(&eden_heap_arena_create_lock, memory_order_acquire)) {
+    atomic_fetch_add_explicit(&eden_heap_create_waiters, 1, memory_order_relaxed);
+    for (unsigned spins = 0;
+         atomic_flag_test_and_set_explicit(&eden_heap_arena_create_lock, memory_order_acquire); ++spins) {
+      if (spins < 64)
+        __builtin_ia32_pause();
+      else
+        sceKernelUsleep(50);
+    }
+    atomic_fetch_sub_explicit(&eden_heap_create_waiters, 1, memory_order_relaxed);
+  }
+  atomic_store_explicit(&eden_heap_create_holder, (unsigned long)pthread_self(), memory_order_relaxed);
+}
+
+static void eden_heap_create_release(void) {
+  atomic_store_explicit(&eden_heap_create_holder, 0, memory_order_relaxed);
+  atomic_flag_clear_explicit(&eden_heap_arena_create_lock, memory_order_release);
+}
+
+/* Development stall reports: the creation lock's holder (0: free) and its waiters. */
+unsigned long eden_heap_create_lock_state(unsigned *waiters) {
+  if (waiters)
+    *waiters = atomic_load_explicit(&eden_heap_create_waiters, memory_order_relaxed);
+  return atomic_load_explicit(&eden_heap_create_holder, memory_order_relaxed);
+}
 
 static void *eden_heap_owner(const void *address);
 
@@ -151,7 +188,7 @@ static void *eden_heap_owner(const void *address) {
 
 /* Allocate and register one arena block from the main space (NULL on failure). */
 static void *eden_heap_create_arena(void) {
-  while (atomic_flag_test_and_set_explicit(&eden_heap_arena_create_lock, memory_order_acquire)) {}
+  eden_heap_create_acquire();
   void *arena = NULL;
   const unsigned count = atomic_load_explicit(&eden_heap_arena_count, memory_order_relaxed);
   if (count < EDEN_HEAP_MAX_ARENAS) {
@@ -169,7 +206,7 @@ static void *eden_heap_create_arena(void) {
       }
     }
   }
-  atomic_flag_clear_explicit(&eden_heap_arena_create_lock, memory_order_release);
+  eden_heap_create_release();
   return arena;
 }
 
