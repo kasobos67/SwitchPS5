@@ -170,6 +170,7 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 - **FPKG support** - install ProsperoEden as a fake package, alongside the current homebrew folder install.
 - **More performance** - CPU and GPU work to keep demanding games at their target frame rate.
 - **More reliable game loading** - fix the remaining hangs on the loading screen.
+- **Game updates and DLC** - load update and DLC files (NSP) placed next to the base game.
 
 ## Issues are disabled
 
