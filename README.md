@@ -113,14 +113,25 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 
 ## Roadmap
 
-- **More controllers** - local multiplayer with a second DualSense and more, one per signed-in PS5 user.
-- **FPKG support** - install ProsperoEden as a fake package, alongside the current homebrew folder install.
+### In the next release
+
+Implemented and being tested on hardware now:
+
+- **Faster game exit** - Select + L1 returns to the library in about a second.
+- **More controllers** - local multiplayer with one DualSense per signed-in PS5 user.
+- **Smoother first-time gameplay** - the emulated CPU cores share the code they compile, which halves the compile work in large open-world games.
+- **Vibration and motion** - DualSense rumble for games that use it, and the controller's gyro and accelerometer for motion controls.
+- **Resolution and upscaling** - render at 0.5x to 2x of the game's resolution and choose the filter that scales it to the TV: Bilinear, AMD FSR, Bicubic or Nearest.
+- **Per-game settings** - renderer, resolution, upscaling filter and Handheld / Docked mode for each game.
+- **Game updates and DLC** - update and DLC files (NSP or XCI) in an `updates` folder next to `roms` apply when the game starts.
+- **Shader cache** - shaders built in earlier sessions load when a game starts, so an effect stutters only the first time it appears.
+- **Fewer startup hangs** - fixes a hang that could stop a game for good while it starts.
+
+### Planned
+
+- **FPKG support** - install ProsperoEden as a fake package, alongside the current homebrew folder install. Each build already produces a ShadowMountPlus package image; installing it still needs testing.
 - **More performance** - CPU and GPU work to keep demanding games at their target frame rate.
-- **Upscaling** - render below native resolution and upscale to the TV output, for smoother play in heavy games.
-- **Faster, more reliable game exit** - bring Select + L1 down to about a second and fix the remaining hangs on the loading screen.
-- **Persistent shader cache** - keep compiled shaders between sessions to remove stutter the first time an effect appears.
-- **Per-game settings** - renderer, resolution and performance options saved for each game.
-- **Vibration and motion** - DualSense rumble and gyro for games that use them.
+- **More reliable game loading** - fix any remaining hangs on the loading screen.
 
 ## Issues are disabled
 
