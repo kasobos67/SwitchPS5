@@ -169,9 +169,9 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 
 ## Roadmap
 
-- **FPKG support** - install ProsperoEden as a fake package, alongside the current homebrew folder install.
+- **FPKG support** - install ProsperoEden as a fake package, alongside the current homebrew folder install. Each build already produces a ShadowMountPlus package image; installing it still needs testing.
 - **More performance** - CPU and GPU work to keep demanding games at their target frame rate.
-- **More reliable game loading** - fix the remaining hangs on the loading screen.
+- **More reliable game loading** - fix any remaining hangs on the loading screen.
 
 ## Issues are disabled
 
