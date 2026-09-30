@@ -30,6 +30,15 @@ static void *eden_guard_mark(void *p) {
 }
 /* Diagnostic only: delay reuse, so writes after free remain attributable. */
 #include <stdatomic.h>
+int sceKernelUsleep(unsigned int microseconds);
+/* Like the arena creation lock (heap_arenas.inc): after a short spin, sleep, so a real-time
+ * thread pinned to a CPU never spins forever while a preempted holder waits for that CPU. */
+static void eden_retired_acquire(atomic_flag *lock) {
+    for (unsigned spins=0; atomic_flag_test_and_set_explicit(lock,memory_order_acquire); ++spins) {
+        if (spins<64) __builtin_ia32_pause();
+        else sceKernelUsleep(50);
+    }
+}
 #define EDEN_QUARANTINE_SLOTS 4096u
 #define EDEN_QUARANTINE_BYTES (64u*1024u*1024u)
 struct eden_retired_block { void *space,*p,*caller; size_t bytes; };
@@ -52,8 +61,7 @@ static void eden_retire_oldest(void) {
 static void eden_quarantine(void *space,void *p,void *caller) {
     if(!p) return;
     size_t bytes=sceLibcMspaceMallocUsableSize(p);
-    while(atomic_flag_test_and_set_explicit(&eden_retired_lock,memory_order_acquire))
-        __builtin_ia32_pause();
+    eden_retired_acquire(&eden_retired_lock);
     while(eden_retired_count && (eden_retired_count==EDEN_QUARANTINE_SLOTS ||
           bytes>EDEN_QUARANTINE_BYTES-eden_retired_bytes)) eden_retire_oldest();
     if(bytes>EDEN_QUARANTINE_BYTES) {
@@ -67,8 +75,7 @@ static void eden_quarantine(void *space,void *p,void *caller) {
     atomic_flag_clear_explicit(&eden_retired_lock,memory_order_release);
 }
 void eden_heap_guard_drain(void) {
-    while(atomic_flag_test_and_set_explicit(&eden_retired_lock,memory_order_acquire))
-        __builtin_ia32_pause();
+    eden_retired_acquire(&eden_retired_lock);
     while(eden_retired_count) eden_retire_oldest();
     atomic_flag_clear_explicit(&eden_retired_lock,memory_order_release);
 }
