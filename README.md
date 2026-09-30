@@ -172,6 +172,7 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 - **FPKG support** - install ProsperoEden as a fake package, alongside the current homebrew folder install. Each build already produces a ShadowMountPlus package image; installing it still needs testing.
 - **More performance** - CPU and GPU work to keep demanding games at their target frame rate.
 - **More reliable game loading** - fix any remaining hangs on the loading screen.
+- **Import saves from Ryujinx** - copy a game's save from a Ryujinx data folder into ProsperoEden. Eden's desktop app can already link Ryujinx saves, and the code that finds them is in the shared code ProsperoEden builds; ProsperoEden needs its own import step in the launcher.
 
 ## Issues are disabled
 
