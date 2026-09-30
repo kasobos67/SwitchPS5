@@ -1,0 +1,220 @@
+* { box-sizing: border-box; }
+body, div, header, nav, main, section, aside, footer, span, button, img { display: block; }
+body { width: 1920px; height: 1080px; margin: 0; overflow: hidden; background-color: #06090a; color: #f0f5f2; font-family: "Montserrat"; font-size: 24px; font-style: normal; font-weight: 500; line-height: 36px; }
+button { margin: 0; padding: 0; border: 0px transparent; border-radius: 0px; background-color: transparent; color: #f0f5f2; font-family: "Montserrat"; text-align: left; nav: auto; }
+#app-shell { position: relative; width: 1920px; height: 1080px; overflow: hidden; background-color: #06090a; }
+#background { position: absolute; left: -64px; top: -36px; width: 2048px; height: 1152px; }
+#shade { display: none; }
+.library-hidden { display: none; }
+.focused-chrome { display: none; }
+.hero-button.focused > .base-chrome, .recent-tile.focused > .base-chrome, .library-row.focused > .base-chrome, .dialog-row.focused > .base-chrome { display: none; }
+.hero-button.focused > .focused-chrome, .recent-tile.focused > .focused-chrome, .library-row.focused > .focused-chrome, .dialog-row.focused > .focused-chrome { display: block; }
+
+#header { position: absolute; left: 120px; top: 72px; width: 1680px; height: 88px; border-bottom: 1px rgba(240,245,242,0.12); }
+#brand-icon { position: absolute; left: 0px; top: 0px; width: 72px; height: 72px; }
+#brand-name { position: absolute; left: 96px; top: 0px; width: 650px; height: 44px; font-size: 36px; line-height: 44px; letter-spacing: 3px; color: #f0f5f2; }
+#brand-version { position: absolute; left: 96px; top: 48px; width: 660px; height: 28px; color: #9fac9e; font-size: 20px; line-height: 28px; letter-spacing: 1px; }
+#menu-clock { position: absolute; left: 1552px; top: 20px; width: 128px; height: 40px; color: #c1cdc2; font-size: 28px; line-height: 40px; text-align: right; }
+#menu { position: absolute; left: 1056px; top: 80px; width: 432px; height: 72px; }
+.nav-item { position: absolute; top: 0px; width: 136px; height: 64px; color: #aab8ac; font-size: 24px; line-height: 60px; text-align: center; }
+.nav-item span { position: absolute; left: 0px; top: 0px; width: 136px; height: 64px; line-height: 60px; text-align: center; }
+.nav-focus { display: none; position: absolute; left: 0px; top: 0px; width: 136px; height: 64px; }
+.nav-item.focused .nav-focus { display: block; }
+#load-rom { left: 0px; } #settings { left: 144px; } #help-about { left: 288px; }
+.nav-item.focused { color: #f0f5f2; }
+.nav-item.disabled { opacity: 0.4; }
+
+#last-played-card { position: absolute; left: 120px; top: 200px; width: 1680px; height: 480px; }
+.hero-chrome { position: absolute; left: 0px; top: 0px; width: 1680px; height: 480px; }
+#last-played-cover { position: absolute; left: 48px; top: 72px; width: 336px; height: 336px; }
+.hero-kicker { position: absolute; left: 440px; top: 64px; width: 640px; height: 32px; color: #a9db63; font-size: 20px; line-height: 30px; letter-spacing: 3px; }
+#last-played-title { position: absolute; left: 440px; top: 112px; width: 1120px; height: 112px; overflow: hidden; color: #f0f5f2; font-size: 48px; line-height: 56px; }
+#last-played-caption { position: absolute; left: 440px; top: 224px; width: 1040px; height: 36px; color: #abb8ae; font-size: 24px; line-height: 36px; }
+.hero-button { position: absolute; top: 304px; width: 272px; height: 72px; }
+#continue-game { left: 440px; } #hero-options { left: 728px; }
+.hero-button-chrome { position: absolute; left: 0px; top: 0px; width: 272px; height: 72px; }
+.hero-button span { position: absolute; left: 0px; top: 0px; width: 272px; height: 72px; font-size: 24px; line-height: 70px; text-align: center; }
+.hero-button.disabled { opacity: 0.4; }
+.hero-footnote { position: absolute; left: 440px; top: 416px; width: 840px; height: 32px; color: #8c9e90; font-size: 20px; line-height: 30px; }
+
+#recent-section { position: absolute; left: 120px; top: 712px; width: 1680px; height: 216px; }
+.section-label { position: absolute; left: 0px; top: 0px; width: 500px; height: 32px; color: #c6d2c7; font-size: 20px; line-height: 30px; letter-spacing: 3px; }
+#view-all { position: absolute; left: 1376px; top: -4px; width: 304px; height: 40px; color: #afbbaf; font-size: 20px; line-height: 40px; text-align: right; }
+.view-all-focus { display: none; position: absolute; left: 0px; top: 0px; width: 304px; height: 40px; }
+#view-all.focused .view-all-focus { display: block; }
+#view-all span { position: absolute; left: 0px; top: 0px; width: 280px; height: 40px; font-size: 20px; line-height: 40px; text-align: right; }
+#view-all.focused { color: #a9db63; }
+#recent-empty { position: absolute; left: 0px; top: 72px; width: 900px; height: 40px; color: #aab8ac; font-size: 24px; line-height: 36px; }
+.recent-tile { position: absolute; top: 48px; width: 400px; height: 144px; }
+#recent-0 { left: 0px; } #recent-1 { left: 424px; } #recent-2 { left: 848px; } #recent-3 { left: 1272px; }
+.recent-chrome { position: absolute; left: 0px; top: 0px; width: 400px; height: 144px; }
+.recent-cover { position: absolute; left: 24px; top: 24px; width: 96px; height: 96px; }
+.recent-title { position: absolute; left: 144px; top: 28px; width: 232px; height: 88px; overflow: hidden; color: #d7e1d9; font-size: 24px; line-height: 32px; }
+
+#startup-status { position: absolute; left: 120px; top: 728px; width: 1680px; height: 152px; padding: 24px; overflow: hidden; color: #f0f5f2; font-size: 24px; line-height: 36px; background-color: rgba(10, 22, 17, 0.55); border-left: 4px #a9db63; }
+#startup-status.quiet { display: none; }
+#footer { position: absolute; left: 120px; top: 952px; width: 1680px; height: 56px; color: #aab8ac; border-top: 1px rgba(240,245,242,0.1); }
+.controller-hint { position: absolute; top: 16px; height: 32px; }
+.controller-hint img { position: absolute; left: 0px; top: 0px; width: 26px; height: 26px; }
+.controller-hint span { position: absolute; left: 38px; top: 0px; height: 30px; font-size: 20px; line-height: 28px; white-space: nowrap; }
+.hint-select { left: 0px; width: 128px; } .hint-options { left: 152px; width: 128px; } .hint-nav { left: 304px; width: 168px; }
+#system-status { position: absolute; left: 928px; top: 16px; width: 752px; height: 30px; color: #9eac9f; font-size: 20px; line-height: 28px; text-align: right; }
+
+.library-screen { display: none; position: absolute; left: 0px; top: 0px; width: 1920px; height: 1080px; background-color: #07110e; }
+.library-screen.open { display: block; }
+.library-background { position: absolute; left: 0px; top: 0px; width: 1920px; height: 1080px; }
+.library-shade { position: absolute; left: 0px; top: 0px; width: 1920px; height: 1080px; background-color: rgba(3, 12, 10, 0.5); }
+.library-title { position: absolute; left: 108px; top: 62px; width: 760px; height: 68px; color: #fffcef; font-size: 48px; line-height: 64px; }
+.library-copy { position: absolute; left: 110px; top: 130px; width: 900px; height: 34px; color: #c5d0bd; font-size: 20px; line-height: 30px; }
+.library-list-panel { position: absolute; left: 108px; top: 188px; width: 820px; height: 720px; border: 0px transparent; background-color: transparent; }
+.library-panel-chrome { position: absolute; left: 0px; top: 0px; width: 820px; height: 720px; }
+.library-panel-kicker { position: absolute; left: 30px; top: 20px; width: 500px; height: 30px; color: #dfe8a6; font-size: 20px; line-height: 28px; letter-spacing: 3px; }
+#rom-list-viewport { position: absolute; left: 30px; top: 62px; width: 760px; height: 606px; overflow: hidden; }
+#rom-list-track { position: absolute; left: 0px; top: 0px; width: 760px; height: 782px; }
+.library-row { position: absolute; left: 0px; width: 760px; height: 78px; }
+.library-row.offscreen { display: none; }
+.library-row-0 { top: 0px; } .library-row-1 { top: 88px; } .library-row-2 { top: 176px; } .library-row-3 { top: 264px; } .library-row-4 { top: 352px; } .library-row-5 { top: 440px; } .library-row-6 { top: 528px; }
+.library-row-chrome { position: absolute; left: 0px; top: 0px; width: 760px; height: 78px; }
+.library-row-name { position: absolute; left: 26px; top: 20px; width: 610px; height: 38px; overflow: hidden; color: #f3f5e9; font-size: 24px; line-height: 38px; text-align: left; white-space: nowrap; }
+.library-row-meta { position: absolute; left: 650px; top: 23px; width: 80px; height: 30px; color: #b7c6b5; font-size: 20px; line-height: 28px; text-align: right; }
+#rom-scrollbar { position: absolute; left: 802px; top: 62px; width: 10px; height: 606px; }
+#rom-scrollbar.offscreen { display: none; }
+.scrollbar-track { position: absolute; left: 0px; top: 0px; width: 10px; height: 606px; }
+#rom-scrollbar-thumb { position: absolute; left: 0px; top: 0px; width: 10px; height: 110px; }
+#library-empty { display: none; position: absolute; left: 30px; top: 300px; width: 760px; height: 40px; color: #c5d0bd; font-size: 24px; line-height: 38px; text-align: center; }
+#library-empty.visible { display: block; }
+#library-position { position: absolute; left: 590px; top: 678px; width: 200px; height: 30px; color: #dfe8a6; font-size: 20px; line-height: 28px; text-align: right; }
+.game-detail-panel { position: absolute; left: 980px; top: 188px; width: 820px; height: 720px; border: 0px transparent; background-color: transparent; }
+.detail-kicker { position: absolute; left: 36px; top: 22px; width: 500px; height: 30px; color: #dfe8a6; font-size: 20px; line-height: 28px; letter-spacing: 3px; }
+#game-detail-title { position: absolute; left: 36px; top: 62px; width: 760px; height: 96px; overflow: hidden; color: #fffcef; font-size: 32px; line-height: 42px; }
+#game-cover { position: absolute; left: 36px; top: 184px; width: 288px; height: 288px; }
+#cover-caption { position: absolute; left: 36px; top: 488px; width: 288px; height: 34px; color: #b7c6b5; font-size: 20px; line-height: 30px; text-align: center; }
+.game-detail-label { position: absolute; left: 356px; width: 150px; height: 34px; color: #aebdaa; font-size: 20px; line-height: 30px; }
+.game-detail-value { position: absolute; left: 510px; width: 286px; height: 34px; color: #f2f4e9; font-size: 20px; line-height: 30px; text-align: right; }
+.game-detail-line-0 { top: 202px; } .game-detail-line-1 { top: 260px; } .game-detail-line-2 { top: 318px; }
+.game-detail-value.ready { color: #dfe8a6; }
+.game-path-label { position: absolute; left: 356px; top: 394px; width: 150px; height: 34px; color: #aebdaa; font-size: 20px; line-height: 30px; }
+.game-path { position: absolute; left: 356px; top: 434px; width: 440px; height: 96px; overflow: hidden; color: #f2f4e9; font-size: 20px; line-height: 30px; }
+#game-mode-setting { position: absolute; left: 42px; top: 550px; width: 736px; height: 94px; }
+#game-mode-setting img { position: absolute; left: 0px; top: 0px; }
+.game-mode-label { position: absolute; left: 26px; top: 0px; height: 94px; line-height: 94px; font-size: 24px; color: #f2f4e9; }
+#game-mode-value { position: absolute; right: 26px; top: 0px; height: 94px; line-height: 94px; font-size: 24px; color: #dfe8a6; }
+#game-mode-hint { position: absolute; left: 42px; top: 662px; width: 736px; height: 30px; font-size: 20px; line-height: 30px; color: #b7c6b5; }
+.library-footer { position: absolute; left: 108px; top: 955px; width: 1704px; height: 64px; color: #c5d0bd; border-top: 1px #586d5a; }
+.library-footer span { position: absolute; top: 12px; height: 38px; font-size: 20px; line-height: 38px; }
+.library-hint-select { left: 0px; width: 140px; } .library-hint-back { left: 160px; width: 130px; } .library-hint-browse { left: 320px; width: 340px; }
+
+.settings-screen { display: none; position: absolute; left: 0px; top: 0px; width: 1920px; height: 1080px; background-color: #07110e; }
+.settings-screen.open { display: block; }
+.settings-list-panel { position: absolute; left: 108px; top: 188px; width: 820px; height: 720px; }
+.settings-detail-panel { position: absolute; left: 980px; top: 188px; width: 820px; height: 720px; }
+.settings-detail-title { position: absolute; left: 36px; top: 70px; width: 748px; height: 58px; color: #fffcef; font-size: 40px; line-height: 54px; }
+.settings-detail-copy { position: absolute; left: 36px; top: 144px; width: 748px; height: 80px; color: #c5d0bd; font-size: 24px; line-height: 36px; }
+.settings-detail-label { position: absolute; left: 36px; width: 230px; height: 36px; color: #dfe8a6; font-size: 20px; line-height: 30px; letter-spacing: 2px; }
+.settings-detail-value { position: absolute; left: 264px; width: 520px; height: 36px; color: #e2e8d7; font-size: 20px; line-height: 30px; }
+.settings-detail-one { top: 294px; } .settings-detail-two { top: 366px; } .settings-detail-three { top: 438px; } .settings-detail-four { top: 510px; }
+
+.dialog { display: none; position: absolute; left: 0px; top: 0px; width: 1920px; height: 1080px; background-color: rgba(1, 8, 6, 0.69); }
+.dialog.open { display: block; }
+.dialog-panel { position: absolute; left: 550px; top: 180px; width: 820px; height: 720px; border: 0px transparent; background-color: transparent; }
+.dialog-panel-chrome { position: absolute; left: 0px; top: 0px; width: 820px; height: 720px; }
+.dialog-title { position: absolute; left: 42px; top: 38px; width: 736px; height: 68px; color: #fffcef; font-size: 48px; line-height: 62px; }
+.dialog-copy { position: absolute; left: 42px; top: 111px; width: 736px; height: 38px; color: #becbb9; font-size: 20px; line-height: 32px; }
+.dialog-row { position: absolute; left: 42px; width: 736px; height: 94px; border: 0px transparent; background-color: transparent; }
+.dialog-row-chrome { position: absolute; left: 0px; top: 0px; width: 736px; height: 94px; }
+.dialog-row span { position: absolute; left: 36px; top: 0px; width: 660px; height: 94px; color: #f2f4e9; font-size: 24px; line-height: 92px; text-align: left; }
+.dialog-row-0 { top: 190px; } .dialog-row-1 { top: 302px; } .dialog-row-2 { top: 414px; }
+#settings-dialog .dialog-row { left: 42px; }
+#settings-dialog .dialog-row-0 { top: 78px; } #settings-dialog .dialog-row-1 { top: 190px; } #settings-dialog .dialog-row-2 { top: 302px; } #settings-dialog .dialog-row-3 { top: 414px; }
+.dialog-hint { position: absolute; left: 42px; top: 613px; width: 736px; height: 40px; color: #dfe8a6; font-size: 20px; line-height: 36px; text-align: center; }
+.settings-details { position: absolute; left: 42px; top: 184px; width: 736px; height: 280px; color: #e2e8d7; font-size: 24px; line-height: 40px; }
+.settings-low { top: 490px; }
+.setting-disabled { color: #b7c6b5; }
+#hud-setting { top: 330px; }
+.dimmed { opacity: 0.55; }
+.video-backend-chrome { position: absolute; left: 42px; top: 190px; width: 736px; height: 94px; }
+#video-backend { position: absolute; left: 42px; top: 190px; width: 736px; height: 94px; color: #f2f4e9; font-size: 28px; line-height: 90px; background-color: transparent; border: 0px transparent; }
+#video-backend selectvalue { padding-left: 32px; padding-right: 70px; }
+#video-backend selectbox { margin-top: 8px; padding: 2px; background-color: transparent; border: 0px transparent; border-radius: 0px; decorator: image(../chrome/dropdown-panel.tga); overflow: hidden; }
+#video-backend option { padding: 14px 30px; line-height: 40px; }
+#video-backend option:checked { color: #dfe8a6; background-color: transparent; }
+#video-backend option:disabled { color: #829385; }
+.video-backend-arrow { position: absolute; left: 726px; top: 232px; width: 0px; height: 0px; border-top: 12px #dfe8a6; border-left: 9px transparent; border-right: 9px transparent; pointer-events: none; }
+
+.about-credit-panel { position: absolute; left: 108px; top: 188px; width: 820px; height: 720px; }
+.about-setup-panel { position: absolute; left: 980px; top: 188px; width: 820px; height: 720px; }
+.about-lead { position: absolute; left: 36px; top: 74px; width: 748px; height: 60px; color: #fffcef; font-size: 40px; line-height: 54px; }
+.about-body { position: absolute; left: 36px; top: 174px; width: 748px; height: 108px; color: #e2e8d7; font-size: 24px; line-height: 36px; }
+.about-link { position: absolute; left: 36px; top: 300px; width: 748px; height: 40px; color: #dfe8a6; font-size: 24px; line-height: 36px; }
+.about-divider { position: absolute; left: 36px; top: 390px; width: 748px; height: 1px; background-color: #536b55; }
+.about-subhead { position: absolute; left: 36px; top: 430px; width: 748px; height: 36px; color: #dfe8a6; font-size: 20px; line-height: 30px; letter-spacing: 2px; }
+.about-port { top: 488px; }
+/* Credits panel: Eden, community thanks, then the PS5 edition. */
+.about-eden-lead { top: 62px; }
+.about-eden { top: 122px; height: 72px; }
+.about-eden-link { top: 196px; }
+.about-divider-vulkan { top: 256px; }
+.about-vulkan-head { top: 276px; }
+.about-vulkan { top: 312px; height: 108px; }
+.about-divider-port { top: 440px; }
+.about-port-head { top: 460px; }
+.about-credit-panel .about-port { top: 496px; height: 72px; }
+.about-setup-label { position: absolute; left: 36px; width: 216px; height: 36px; color: #b7c6b5; font-size: 20px; line-height: 30px; }
+.about-setup-path { position: absolute; left: 252px; width: 532px; height: 72px; color: #f2f4e9; font-size: 24px; line-height: 34px; }
+.about-keys { top: 200px; } .about-firmware { top: 292px; } .about-games { top: 384px; }
+.about-setup-divider { top: 492px; }
+.about-note { position: absolute; left: 36px; top: 536px; width: 748px; height: 108px; color: #b7c6b5; font-size: 24px; line-height: 36px; }
+
+/* Settings > Game files: the folder browser. */
+#settings-dialog .dialog-row-4 { top: 526px; }
+.settings-detail-five { top: 582px; }
+#files-path { position: absolute; left: 30px; top: 58px; width: 760px; height: 30px; overflow: hidden; white-space: nowrap; color: #e2e8d7; font-size: 20px; line-height: 28px; }
+#files-list-viewport { position: absolute; left: 30px; top: 104px; width: 760px; height: 518px; overflow: hidden; }
+.files-icon { position: absolute; left: 24px; top: 23px; width: 40px; height: 32px; }
+.files-icon-up { display: none; }
+.files-row.files-up .files-icon-folder { display: none; }
+.files-row.files-up .files-icon-up { display: block; }
+.files-row-name { left: 84px; width: 552px; }
+.files-row.files-up .files-row-name { color: #dfe8a6; }
+#files-empty { display: none; position: absolute; left: 30px; top: 300px; width: 760px; height: 40px; color: #c5d0bd; font-size: 24px; line-height: 38px; text-align: center; }
+#files-empty.visible { display: block; }
+#files-scrollbar { position: absolute; left: 802px; top: 104px; width: 10px; height: 518px; }
+#files-scrollbar.offscreen { display: none; }
+.files-scrollbar-track { position: absolute; left: 0px; top: 0px; width: 10px; height: 518px; }
+#files-scrollbar-thumb { position: absolute; left: 0px; top: 0px; width: 10px; height: 110px; }
+#files-position { position: absolute; left: 590px; top: 678px; width: 200px; height: 30px; color: #dfe8a6; font-size: 20px; line-height: 28px; text-align: right; }
+#files-current { position: absolute; left: 36px; top: 62px; width: 748px; height: 96px; overflow: hidden; color: #fffcef; font-size: 32px; line-height: 42px; }
+.files-label { position: absolute; left: 36px; width: 190px; height: 34px; color: #aebdaa; font-size: 20px; line-height: 30px; letter-spacing: 2px; }
+.files-value { position: absolute; left: 236px; width: 548px; height: 34px; overflow: hidden; white-space: nowrap; color: #e8b39a; font-size: 20px; line-height: 30px; }
+.files-value.ready { color: #dfe8a6; }
+#files-in-use { color: #f2f4e9; }
+.files-line-0 { top: 190px; } .files-line-1 { top: 246px; } .files-line-2 { top: 302px; }
+.files-divider-0 { top: 366px; }
+.files-line-3 { top: 390px; } .files-line-4 { top: 446px; }
+.files-divider-1 { top: 510px; }
+#files-message { position: absolute; left: 36px; top: 534px; width: 748px; height: 108px; color: #c5d0bd; font-size: 24px; line-height: 36px; }
+/* Footer hints with the launcher's mono controller icons (Library, Settings, Game files). */
+.icon-footer .controller-hint { top: 16px; height: 32px; }
+.icon-footer .controller-hint img { position: absolute; left: 0px; top: 0px; width: 26px; height: 26px; }
+.icon-footer .controller-hint img.hint-icon-1 { left: 32px; }
+.icon-footer .controller-hint span { position: absolute; left: 38px; top: 0px; height: 30px; font-size: 20px; line-height: 28px; white-space: nowrap; }
+.icon-footer .files-hint-pair span { left: 70px; }
+.files-hint-open { left: 0px; width: 130px; } .files-hint-back { left: 150px; width: 130px; }
+.files-hint-use { left: 300px; width: 240px; } .files-hint-default { left: 560px; width: 240px; }
+.files-hint-browse { left: 820px; width: 150px; } .files-hint-page { left: 990px; width: 160px; }
+
+.lib-hint-select { left: 0px; width: 140px; } .lib-hint-back { left: 160px; width: 130px; }
+.lib-hint-browse { left: 310px; width: 250px; } .lib-hint-mode { left: 580px; width: 250px; }
+/* Library console mode: both modes side by side, the saved one lit. */
+#game-mode-value { right: 16px; width: 420px; }
+#game-mode-value .mode-option { position: absolute; top: 15px; width: 200px; height: 64px; opacity: 0.35; }
+#game-mode-value #mode-docked { left: 0px; } #game-mode-value #mode-handheld { left: 210px; }
+#game-mode-value .mode-option img { position: absolute; left: 6px; top: 16px; width: 48px; height: 32px; }
+#game-mode-value .mode-option span { position: absolute; left: 64px; top: 0px; height: 64px; line-height: 64px; font-size: 24px; color: #f2f4e9; }
+#game-mode-value .mode-option.active { opacity: 1; }
+#game-mode-value .mode-option.active span { color: #dfe8a6; }
+#mode-unavailable { display: none; position: absolute; right: 10px; top: 0px; width: 300px; height: 94px; line-height: 94px; text-align: right; color: #b7c6b5; }
+#game-mode-value.unavailable .mode-option { display: none; }
+#game-mode-value.unavailable #mode-unavailable { display: block; }
+#game-mode-hint img { position: absolute; left: 0px; top: 2px; width: 26px; height: 26px; }
+#game-mode-hint-text { position: absolute; left: 38px; top: 0px; width: 690px; height: 30px; }

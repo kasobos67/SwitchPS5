@@ -1,0 +1,15 @@
+{
+  "eden_commit": "5f142c7926d0c7fcbbd0ce30794d72f638a43b2a",
+  "archives": {
+    "eden-5f142c79.tar.gz": "35ec0bb96b197181e66c0aeb8f44f0ff05334be832c631c50a4f1e271277285f",
+    "fmt-12.1.0.tar.gz": "ea7de4299689e12b6dddd392f9896f08fb0777ac7168897a244a6d6085043fea",
+    "xbyak-7.40.1.tar.gz": "2af7aee286b0ce94422b7894de4308d26eba06ef63c1c80a3bd9719b5d798fe2",
+    "libboost1.90-dev_1.90.0-6ubuntu1_amd64.deb": "7b89698c907fd5d33ccd439674fa53803139923822181c87b910579827aca379",
+    "boost-context-1.90.0.tar.gz": "69272ce5694be4963798054735a81d1eb05055af0d7ec15f65dc373ccfbf4fed"
+  },
+  "boost_usage": "Headers and matching Boost.Context fcontext wrappers plus x86-64 SysV assembly compiled for each target; no host Boost binaries linked into the PS5 build.",
+  "native_template_commit": "4e1d1277dd0531a9a9df8c780e446b9cc26534dd",
+  "boost_context_source": "https://codeload.github.com/boostorg/context/tar.gz/refs/tags/boost-1.90.0",
+  "compiler_rt_source": "https://github.com/llvm/llvm-project/tree/llvmorg-18.1.8/compiler-rt/lib/builtins",
+  "compiler_rt_usage": "emutls.c and its four int_*.h headers. CMake changes only EMUTLS_SKIP_DESTRUCTOR_ROUNDS from 0 to 1 for libc++abi's pthread-key fallback; host uses the same helper with -femulated-tls. Cached input hashes are in CANDIDATE.json. cxa_thread_atexit.reference.cpp is inspected only."
+}

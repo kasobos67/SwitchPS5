@@ -1,0 +1,6 @@
+.deps/
+build/
+dist/
+results/
+.local/
+__pycache__/

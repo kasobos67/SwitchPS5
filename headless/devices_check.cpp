@@ -1,0 +1,373 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+#include "devices.h"
+#include "mock_devices.h"
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <numbers>
+#include <stdexcept>
+#include "common/fs/path_util.h"
+#include "common/input.h"
+#include "common/logging.h"
+#include "common/settings.h"
+#include "audio_core/sink/sink_details.h"
+#include "core/core.h"
+#include "hid_core/resources/shared_memory_format.h"
+#include "audio_core/common/audio_renderer_parameter.h"
+#include "audio_core/renderer/voice/voice_info.h"
+#include "audio_core/renderer/voice/voice_channel_resource.h"
+#include "audio_core/renderer/mix/mix_info.h"
+#include "audio_core/renderer/sink/sink_info_base.h"
+#include "audio_core/renderer/performance/performance_manager.h"
+#include "audio_core/renderer/memory/pool_mapper.h"
+#include "audio_core/renderer/command/resample/resample.h"
+
+// Freestanding renderer fixture layout must match the pinned core's IPC ABI.
+static_assert(sizeof(AudioCore::AudioRendererParameterInternal) == 0x34);
+using namespace AudioCore::Renderer;
+static_assert(sizeof(BehaviorInfo::InParameter) == 0x10);
+static_assert(sizeof(BehaviorInfo::OutStatus) == 0xb0);
+static_assert(offsetof(BehaviorInfo::OutStatus, error_count) == 0xa0);
+static_assert(sizeof(MemoryPoolInfo::InParameter) == 0x20);
+static_assert(sizeof(MemoryPoolInfo::OutStatus) == 0x10);
+static_assert(sizeof(VoiceChannelResource::InParameter) == 0x70);
+static_assert(sizeof(VoiceInfo::InParameter) == 0x170);
+static_assert(offsetof(VoiceInfo::InParameter, wave_buffer_internal) == 0x60);
+static_assert(offsetof(VoiceInfo::InParameter, channel_resource_ids) == 0x140);
+static_assert(offsetof(VoiceInfo::InParameter, flags) == 0x15c);
+static_assert(offsetof(VoiceInfo::InParameter, src_quality) == 0x15e);
+static_assert(static_cast<unsigned>(AudioCore::SrcQuality::Low) == 2);
+static_assert(static_cast<unsigned>(AudioCore::SrcQuality::High) == 1);
+static_assert(offsetof(VoiceChannelResource::InParameter, mix_volumes) == 4);
+static_assert(offsetof(VoiceChannelResource::InParameter, in_use) == 0x64);
+static_assert(offsetof(SinkInfoBase::InParameter, device) == 0x20);
+static_assert(offsetof(SinkInfoBase::DeviceInParameter, inputs) == 0x104);
+static_assert(static_cast<unsigned>(AudioCore::SampleFormat::PcmInt16) == 2);
+static_assert(sizeof(VoiceInfo::OutStatus) == 0x10);
+static_assert(sizeof(MixInfo::InParameter) == 0x930);
+static_assert(offsetof(MixInfo::InParameter, dest_mix_id) == 0x924);
+static_assert(sizeof(SinkInfoBase::InParameter) == 0x140);
+static_assert(sizeof(SinkInfoBase::OutStatus) == 0x20);
+static_assert(sizeof(PerformanceManager::InParameter) == 0x10);
+static_assert(sizeof(PerformanceManager::OutStatus) == 0x10);
+
+// Guest fixture reads this documented shared-memory ABI without linking a guest SDK.
+static_assert(offsetof(Service::HID::SharedMemoryFormat, npad) == 0x9a00);
+static_assert(offsetof(Service::HID::NpadInternalState, fullkey_lifo) == 0x28);
+static_assert(sizeof(Service::HID::NPadGenericState) == 0x28);
+static_assert(offsetof(Service::HID::NPadGenericState, npad_buttons) == 8);
+static_assert(offsetof(Service::HID::NPadGenericState, connection_status) == 0x20);
+using GuestPadRing = Service::HID::Lifo<Service::HID::NPadGenericState, 17>;
+static_assert(offsetof(GuestPadRing, entries) == 0x20);
+static_assert(sizeof(GuestPadRing::entries[0]) == 0x30);
+
+#define CHECK(x) do { if (!(x)) throw std::runtime_error(#x); } while (false)
+using Eden::Mock::state;
+using namespace AudioCore::Sink;
+using namespace std::chrono_literals;
+template<class F> void Reject(F&& f) {
+    bool rejected = false;
+    try { f(); } catch (const std::exception&) { rejected = true; }
+    CHECK(rejected);
+}
+
+void CheckPad() {
+    using namespace ps5::pad;
+    Reject([] { Eden::Pad pad(1.0f); });
+    {
+        Eden::Pad pad;
+        CHECK(pad.Open()); CHECK(pad.Open()); CHECK(state.pad_opens == 1);
+        CHECK(state.last_pad_user == 84); // Foreground user differs from initial login (42).
+        auto sample = neutral_data(); sample.connected = 1;
+        const auto consume = [&] { pad.Consume({&sample, 1}); };
+        const std::pair<ButtonMask, int> mapping[] = {
+            {kButtonCircle, 0}, {kButtonCross, 1}, {kButtonTriangle, 2}, {kButtonSquare, 3},
+            {kButtonL3, 4}, {kButtonR3, 5}, {kButtonL1, 6}, {kButtonR1, 7},
+            {kButtonL2, 8}, {kButtonR2, 9}, {kButtonOptions, 10}, {kButtonCreate, 11},
+            {kButtonLeft, 12}, {kButtonUp, 13}, {kButtonRight, 14}, {kButtonDown, 15},
+            {kButtonTouchPad, 19},
+        };
+        for (auto [mask, button] : mapping) {
+            sample.buttons = mask; consume();
+            for (int i = 0; i < 22; ++i) CHECK(pad.Engine().GetButton({}, i) == (i == button));
+        }
+        sample.buttons = 0;
+        sample.left_stick = {0, 255}; sample.right_stick = {255, 0}; consume();
+        CHECK(pad.Engine().GetAxis({}, 0) == -1); CHECK(pad.Engine().GetAxis({}, 1) == -1);
+        CHECK(pad.Engine().GetAxis({}, 2) == 1); CHECK(pad.Engine().GetAxis({}, 3) == 1);
+        sample.left_stick = {128, 132}; sample.triggers = {127, 128}; consume();
+        CHECK(pad.Engine().GetAxis({}, 0) == 0); CHECK(pad.Engine().GetAxis({}, 1) == 0);
+        CHECK(!pad.Engine().GetButton({}, 8)); CHECK(pad.Engine().GetButton({}, 9));
+
+        sample.buttons = kButtonTouchPad | kButtonL1; consume();
+        CHECK(pad.TakeReturnToMenu()); CHECK(!pad.TakeReturnToMenu());
+        CHECK(!pad.Engine().GetButton({}, 6)); CHECK(!pad.Engine().GetButton({}, 19));
+        consume(); CHECK(!pad.TakeReturnToMenu());
+        sample.buttons = 0; consume();
+        sample.buttons = kButtonTouchPad | kButtonR1; consume();
+        CHECK(pad.TakeHudToggle()); CHECK(!pad.TakeHudToggle());
+        CHECK(!pad.Engine().GetButton({}, 7)); CHECK(!pad.Engine().GetButton({}, 19));
+        sample.buttons = 0; consume();
+
+        auto button = Common::Input::CreateInputDeviceFromString("engine:virtual_gamepad,port:0,button:0");
+        std::vector<bool> changes;
+        button->SetCallback({[&](const auto& status) { changes.push_back(status.button_status.value); }});
+        for (int i = 0; i < 64; ++i) {
+            sample.buttons = i % 2 == 0 ? kButtonCircle : 0;
+            state.pad_samples.push_back(sample);
+        }
+        CHECK(pad.Poll()); CHECK(changes.size() == 64);
+        for (int i = 0; i < 64; ++i) CHECK(changes[i] == (i % 2 == 0));
+        sample.buttons = kButtonCircle; consume(); CHECK(pad.Poll());
+        CHECK(pad.Engine().GetButton({}, 0)); // Empty reads preserve the last sample.
+        sample.connected = 0; consume(); CHECK(!pad.Engine().GetButton({}, 0));
+        sample.connected = 1; consume(); CHECK(pad.Engine().GetButton({}, 0));
+        sample.buttons |= kButtonIntercepted; consume(); CHECK(!pad.Engine().GetButton({}, 0));
+        sample.buttons = kButtonCircle;
+        for (int error : {-1, 65}) {
+            consume(); state.read_result = error; CHECK(!pad.Poll());
+            CHECK(!pad.Engine().GetButton({}, 0)); CHECK(!pad.Engine().GetButton({}, 9));
+        }
+        state.read_result = 0; consume(); pad.Close(); pad.Close();
+        CHECK(!pad.Engine().GetButton({}, 9));
+        CHECK(state.pad_closes == 1); CHECK(state.user_terminations == 1);
+    }
+    state.user_init_result = -1; // A service owned by the embedding application.
+    { Eden::Pad pad; CHECK(pad.Open()); }
+    CHECK(state.pad_closes == 2); CHECK(state.user_terminations == 1);
+    state.user_init_result = 0; state.user_result = -1;
+    { Eden::Pad pad; CHECK(!pad.Open()); }
+    CHECK(state.user_terminations == 2);
+    state.user_result = 0; state.pad_open_result = -1;
+    { Eden::Pad pad; CHECK(!pad.Open()); }
+    CHECK(state.user_terminations == 3); CHECK(state.pad_closes == 2);
+    state.pad_open_result = 7;
+    std::puts("Pad mappings, calibration, 64-sample edges, disconnect and ownership PASS");
+}
+
+void CheckAudio() {
+    Core::System system;
+    Settings::values.volume = 100;
+    auto selected_sink = CreateSinkFromID(Settings::AudioEngine::Null, "ps5");
+    auto& sink = *selected_sink;
+    Reject([&] { sink.AcquireSinkStream(system, 3, "invalid", StreamType::Out); });
+    state.fail_audio_open = true;
+    Reject([&] { sink.AcquireSinkStream(system, 2, "open failure", StreamType::Out); });
+    state.fail_audio_open = false; state.fail_volume = true;
+    Reject([&] { sink.AcquireSinkStream(system, 2, "volume failure", StreamType::Out); });
+    state.fail_volume = false; CHECK(state.audio_closes == state.audio_opens);
+    for (u32 channels : {1u, 2u, 6u}) {
+        sink.SetDeviceVolume(0.5f); sink.SetSystemVolume(1);
+        auto* stream = sink.AcquireSinkStream(system, channels, "PCM check", StreamType::Out);
+        const int handle = 100 + state.audio_opens;
+        CHECK(stream->IsPaused()); CHECK(stream->GetDeviceChannels() == 2);
+        std::vector<s16> pcm(256 * channels, 1000);
+        SinkBuffer buffer{256, 0, channels, false};
+        SinkBuffer invalid{257, 0, 0, false};
+        Reject([&] { stream->AppendBuffer(invalid, pcm); });
+        stream->AppendBuffer(buffer, pcm);
+        CHECK(stream->GetQueueSize() == 1);
+        stream->Start();
+        {
+            std::unique_lock lock(state.mutex);
+            CHECK(state.wake.wait_for(lock, 2s, [&] { return state.audio[handle].size() >= 2; }));
+        }
+        stream->Stop(); CHECK(stream->IsPaused()); CHECK(stream->GetQueueSize() == 0);
+        {
+            std::scoped_lock lock(state.mutex);
+            const s16 expected = channels == 6 ? 1328 : 500;
+            for (auto value : state.audio[handle][0]) CHECK(std::abs(value - expected) <= 1);
+            // Existing Eden underrun policy repeats the last complete frame.
+            CHECK(state.audio[handle][1] == state.audio[handle][0]);
+        }
+        pcm.assign(256 * channels, 2000); buffer.tag += 10;
+        stream->AppendBuffer(buffer, pcm); CHECK(stream->GetQueueSize() == 1);
+        std::size_t count;
+        { std::scoped_lock lock(state.mutex); count = state.audio[handle].size(); }
+        stream->Start(true);
+        {
+            std::unique_lock lock(state.mutex);
+            CHECK(state.wake.wait_for(lock, 2s, [&] { return state.audio[handle].size() > count; }));
+        }
+        stream->Stop(); CHECK(stream->GetQueueSize() == 0);
+        stream->Finalize(); stream->Finalize();
+        Reject([&] { stream->AppendBuffer(buffer, pcm); });
+        sink.CloseStream(stream);
+        CHECK(state.audio_closes == state.audio_opens);
+    }
+    {
+        auto* stream = sink.AcquireSinkStream(system, 2, "queue capacity", StreamType::Out);
+        const int handle = 100 + state.audio_opens;
+        sink.SetDeviceVolume(1);
+        for (int i = 1; i <= 4; ++i) {
+            std::vector<s16> pcm(512, i * 1000);
+            SinkBuffer buffer{256, 0, static_cast<u64>(i), false};
+            stream->AppendBuffer(buffer, pcm);
+        }
+        CHECK(stream->GetQueueSize() == 4); stream->Start();
+        {
+            std::unique_lock lock(state.mutex);
+            CHECK(state.wake.wait_for(lock, 2s, [&] { return state.audio[handle].size() >= 4; }));
+        }
+        stream->Stop();
+        for (int i = 0; i < 4; ++i)
+            for (auto value : state.audio[handle][i]) CHECK(value == (i + 1) * 1000);
+        stream->ClearQueue();
+        std::vector<s16> full(65536, 1234); SinkBuffer large{32768, 0, 10, false};
+        stream->AppendBuffer(large, full);
+        std::array<s16, 2> extra{}; SinkBuffer one{1, 0, 11, false};
+        Reject([&] { stream->AppendBuffer(one, extra); });
+        CHECK(stream->GetQueueSize() == 1); stream->ClearQueue();
+        CHECK(stream->GetQueueSize() == 0); sink.CloseStream(stream);
+    }
+    {
+        auto* stream = sink.AcquireSinkStream(system, 2, "partial block tail", StreamType::Out);
+        const int handle = 100 + state.audio_opens;
+        std::vector<s16> pcm(257 * 2, 1000);
+        pcm[512] = pcm[513] = 0;
+        SinkBuffer buffer{257, 0, 98, false};
+        stream->AppendBuffer(buffer, pcm); stream->Start();
+        {
+            std::unique_lock lock(state.mutex);
+            CHECK(state.wake.wait_for(lock, 2s, [&] { return state.audio[handle].size() >= 3; }));
+        }
+        stream->Stop();
+        for (auto value : state.audio[handle][0]) CHECK(value == 1000);
+        for (int block : {1, 2})
+            for (auto value : state.audio[handle][block]) CHECK(value == 0);
+        sink.CloseStream(stream);
+    }
+    auto* stream = static_cast<Eden::AudioStream*>(sink.AcquireSinkStream(system, 2, "failure", StreamType::Out));
+    { std::scoped_lock lock(state.mutex); state.fail_output = true; }
+    stream->Start();
+    const auto deadline = std::chrono::steady_clock::now() + 2s;
+    while (stream->Healthy() && std::chrono::steady_clock::now() < deadline)
+        std::this_thread::sleep_for(1ms);
+    CHECK(!stream->Healthy()); stream->Stop();
+    std::array<s16, 512> pcm{}; SinkBuffer buffer{256, 0, 99, false};
+    Reject([&] { stream->AppendBuffer(buffer, pcm); });
+    sink.CloseStreams(); state.fail_output = false;
+    const int opened = state.audio_opens;
+    sink.AcquireSinkStream(system, 2, "input null", StreamType::In);
+    sink.CloseStreams(); CHECK(state.audio_opens == opened);
+    CHECK(state.audio_opens == state.audio_closes); CHECK(state.audio_drains == 6);
+    std::puts("Audio PCM mono/stereo/6-channel, volume, queue, underrun, pause/resume and failure cleanup PASS");
+}
+void CheckVoiceFlags() {
+    VoiceInfo voice;
+    VoiceInfo::InParameter parameter{};
+    PoolMapper mapper(nullptr, false);
+    BehaviorInfo behavior;
+    BehaviorInfo::ErrorInfo error{};
+    behavior.SetUserLibRevision(0x35564552);
+    for (unsigned mask : {0, 1, 2, 3, 0}) {
+        parameter.flags.IsVoicePlayedSampleCountResetAtLoopPointSupported = mask & 1;
+        parameter.flags.IsVoicePitchAndSrcSkippedSupported = (mask >> 1) & 1;
+        voice.UpdateParameters(error, parameter, mapper, behavior);
+        CHECK(error.error_code.IsSuccess()); CHECK(voice.flags == mask);
+    }
+    behavior.SetUserLibRevision(0x34564552);
+    parameter.flags = {1, 1};
+    voice.UpdateParameters(error, parameter, mapper, behavior);
+    CHECK(voice.flags == 0);
+    std::vector<std::int16_t> pcm(960);
+    for (unsigned i = 0; i < 480; ++i) {
+        const auto sign = i % 96 < 48 ? 1 : -1;
+        const auto second = i % 48 < 24 ? 1 : -1;
+        pcm[i * 2] = sign * 512 + second * 128;
+        pcm[i * 2 + 1] = sign * 256 + second * 256;
+    }
+    CHECK(Eden::Mock::RendererPcmMatches(pcm));
+    CHECK(!Eden::Mock::RendererPcmMatches(pcm, true)); // High filter must not silently use Low.
+    auto high = Eden::Mock::HighRendererReference();
+    CHECK(Eden::Mock::RendererPcmMatches(high, true));
+    CHECK(!Eden::Mock::RendererPcmMatches(high));
+    high[100] += 1; CHECK(!Eden::Mock::RendererPcmMatches(high, true));
+    high = Eden::Mock::HighRendererReference();
+    for (unsigned i = 0; i < 480; ++i) std::swap(high[2*i], high[2*i+1]);
+    CHECK(!Eden::Mock::RendererPcmMatches(high, true));
+    high.fill(0); CHECK(!Eden::Mock::RendererPcmMatches(high, true));
+    const auto valid = pcm;
+    for (unsigned i = 0; i < 480; ++i) std::swap(pcm[i * 2], pcm[i * 2 + 1]);
+    CHECK(!Eden::Mock::RendererPcmMatches(pcm));
+    pcm = valid; pcm[100] = 0; CHECK(!Eden::Mock::RendererPcmMatches(pcm));
+    for (unsigned missing = 0; missing < 2; ++missing) {
+        for (unsigned i = 0; i < 480; ++i) {
+            const auto sign = i % (missing ? 96 : 48) < (missing ? 48 : 24) ? 1 : -1;
+            pcm[i * 2] = sign * (missing ? 512 : 128);
+            pcm[i * 2 + 1] = sign * 256;
+        }
+        CHECK(!Eden::Mock::RendererPcmMatches(pcm));
+    }
+    for (unsigned i = 0; i < 480; ++i) {
+        const auto first = i % 48 < 24 ? 1 : -1;
+        const auto second = i % 24 < 12 ? 1 : -1;
+        pcm[i * 2] = first * 512 + second * 128;
+        pcm[i * 2 + 1] = first * 256 + second * 256;
+    }
+    CHECK(!Eden::Mock::RendererPcmMatches(pcm)); // Bypassing SRC doubles both frequencies.
+    pcm.assign(960, 0); CHECK(!Eden::Mock::RendererPcmMatches(pcm));
+    CHECK(!Eden::Mock::RendererPcmMatches({}));
+    std::puts("Two-voice PCM window rejects missing voices, silence, swapped gains and corruption PASS");
+    std::puts("Renderer voice flags remain independent and revision-gated PASS");
+}
+void CheckResampling() {
+    using Fixed = Common::FixedPoint<49, 15>;
+    constexpr unsigned count = 2400, split = 137;
+    constexpr s32 sentinel = 123456789;
+    for (auto quality : {AudioCore::SrcQuality::Low, AudioCore::SrcQuality::Medium,
+                         AudioCore::SrcQuality::High}) {
+        for (unsigned rate : {24000, 32000, 44100, 48000, 57600, 96000}) {
+            const std::int64_t step = std::int64_t(rate) * 32768 / 48000;
+            const auto ratio = Fixed::from_base(step);
+            for (bool tone : {false, true}) {
+                std::vector<s16> input(8192);
+                if (tone) for (unsigned i = 0; i < input.size(); ++i)
+                    input[i] = static_cast<s16>(std::lround(10000 * std::sin(
+                        2 * std::numbers::pi * 500 * i / rate)));
+                std::vector<s32> whole(count + 2, sentinel), chunks(count + 2, sentinel);
+                auto fraction = Fixed::from_base(8192); // Start at one quarter sample.
+                Resample(std::span{whole}.subspan(1, count), input, ratio, fraction, count, quality);
+                CHECK(whole.front() == sentinel && whole.back() == sentinel);
+                CHECK(fraction.get_frac() == (8192 + step * count) % 32768);
+                auto partial = Fixed::from_base(8192);
+                Resample(std::span{chunks}.subspan(1, split), input, ratio, partial, split, quality);
+                const auto consumed = (8192 + step * split) / 32768;
+                Resample(std::span{chunks}.subspan(1 + split, count - split),
+                         std::span<const s16>{input}.subspan(consumed), ratio, partial,
+                         count - split, quality);
+                CHECK(chunks == whole && partial == fraction);
+                // An empty output request must preserve phase and surrounding samples.
+                Resample(std::span{chunks}.subspan(1, 0), input, ratio, partial, 0, quality);
+                CHECK(chunks == whole && partial == fraction);
+                if (!tone) {
+                    CHECK(std::all_of(whole.begin() + 1, whole.end() - 1,
+                                      [](auto value) { return value == 0; }));
+                    continue;
+                }
+                if (quality == AudioCore::SrcQuality::Low) {
+                    for (unsigned i = 0; i < count; ++i)
+                        CHECK(whole[i + 1] == input[(8192 + step * i + 16384) / 32768]);
+                }
+                unsigned crossings = 0;
+                double energy = 0;
+                for (unsigned i = 1; i <= count; ++i) {
+                    energy += double(whole[i]) * whole[i];
+                    if (i > 1 && (whole[i] >= 0) != (whole[i - 1] >= 0)) ++crossings;
+                }
+                // 50 ms of a 500 Hz tone: approximately 25 cycles, unity RMS gain.
+                CHECK(crossings >= 49 && crossings <= 51);
+                CHECK(energy / count >= 45000000 && energy / count <= 55000000);
+            }
+        }
+    }
+    std::puts("SRC 3 qualities x 6 rates: silence, 500 Hz level/frequency, exact low-quality samples, split continuity and phase PASS");
+}
+int main() {
+    Common::FS::CreateEdenPaths(); Common::Log::Initialize(); Common::Log::Start();
+    int status = 0;
+    try { CheckResampling(); CheckVoiceFlags(); CheckPad(); CheckAudio(); }
+    catch (const std::exception& error) { std::fprintf(stderr, "%s\n", error.what()); status = 1; }
+    Common::Log::Stop();
+    return status;
+}

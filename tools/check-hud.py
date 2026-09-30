@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+"""FPS interval math, bounded bitmap text and startup-only queue polling."""
+from pathlib import Path
+import subprocess
+import tempfile
+root = Path(__file__).resolve().parents[1]
+graphics = (root/'headless/graphics.cpp').read_text()
+draw_hud = graphics.split('    void DrawHud(', 1)[1].split('    unsigned presented_frames', 1)[0]
+assert 'glReadPixels' not in draw_hud
+assert 'eglSwapBuffers' not in draw_hud
+present_loading = graphics.split('    void PresentLoading()', 1)[1].split('    bool LoadingTick()', 1)[0]
+assert present_loading.index('DrawHud(text, true)') < present_loading.index('eglSwapBuffers')
+assert 'vec4(0.025,0.04,0.075,0.5)' in graphics
+assert 'glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)' in graphics
+assert 'int(std::strlen(text)) * 16 + 24' in graphics
+
+with tempfile.TemporaryDirectory() as directory:
+    source = Path(directory) / 'hud.cpp'
+    binary = Path(directory) / 'hud'
+    source.write_text(r'''#include "hud.h"
+#include <cassert>
+#include <cmath>
+int main() {
+    Eden::HudClock clock;
+    clock.Present(80.0); // Long startup must not count as a slow game frame.
+    assert(clock.fps < 0);
+    clock.Present(80.5);
+    clock.Present(81.0);
+    assert(clock.fps == 2.0);
+    clock.Present(83.0);
+    assert(clock.fps < 0); // A scene-loading gap is not a one-frame FPS sample.
+    for (int i=1;i<=60;++i) clock.Present(83.0+i/60.0);
+    assert(std::abs(clock.fps-60.0)<0.001);
+    assert(std::abs(clock.worst_ms-1000.0/60.0)<0.001);
+    clock.Present(84.1);
+    assert(clock.window_worst_ms >= 99.9);
+    Eden::StartupGate gate;
+    assert(!gate.Ready(0.0));
+    assert(!gate.Ready(0.03));
+    assert(!gate.Ready(3.0)); // A startup stall restarts stabilization.
+    for (int i=1;i<8;++i) assert(!gate.Ready(3.0+i/30.0));
+    assert(gate.Ready(3.0+8.0/30.0));
+    Eden::StartupGate slow;
+    for (int i = 0; i < 5; ++i) assert(!slow.Ready(i));
+    assert(slow.Ready(5)); // Slow rendering must not remain hidden forever.
+    assert(Eden::HudGlyph(' ') == 0 && Eden::HudGlyph('F') != 0 && Eden::HudGlyph('W') != 0);
+    auto text = Eden::HudText("FPS 12.3");
+    assert(text[0] == Eden::HudGlyph('F') && text[8] == 0);
+    assert(Eden::HudText("01234567890123456789")[15] == Eden::HudGlyph('5'));
+    assert(std::string_view(Eden::FormatHudText(clock, 100, "OGL").data()) == "OGL F60 S100 W17");
+    assert(Eden::HudGlyph('V') != 0 && Eden::HudGlyph('K') != 0);
+    auto snapshot = Eden::MakeHudSnapshot(clock, 100);
+    assert(snapshot.glyphs == Eden::HudText("VLK F60 S100 W17"));
+    assert(snapshot.width == std::string_view("VLK F60 S100 W17").size() * 16 + 24);
+    clock.fps = -1;
+    assert(Eden::MakeHudSnapshot(clock, 0).glyphs == Eden::HudText("VLK F-- S-- W--"));
+    clock.fps = 1000000;
+    clock.worst_ms = 1000000;
+    assert(Eden::MakeHudSnapshot(clock, 1000000).width <= 24 * 16 + 24);
+    static_assert(sizeof(Eden::HudSnapshot) == 112);
+    assert(Eden::MakeLoadingSnapshot(0).glyphs == Eden::HudText("LOADING"));
+    assert(Eden::MakeLoadingSnapshot(0.75).glyphs == Eden::HudText("LOADING..."));
+    assert(Eden::MakeLoadingSnapshot(1).glyphs == Eden::HudText("LOADING"));
+    assert(Eden::MakeLoadingSnapshot(0).loading == 1);
+}
+''')
+    subprocess.run(['c++', '-std=c++20', '-I'+str(root/'headless'), str(source), '-o', str(binary)], check=True)
+    subprocess.run([str(binary)], check=True)
+print('HUD interval math, startup exclusion and bounded glyph text PASS')
