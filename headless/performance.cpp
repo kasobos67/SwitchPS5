@@ -804,6 +804,7 @@ extern "C" void eden_jit_phases(unsigned core, unsigned long long translate, uns
     phases[0].fetch_add(translate, std::memory_order_relaxed);
     phases[1].fetch_add(optimize, std::memory_order_relaxed);
     phases[2].fetch_add(emit, std::memory_order_relaxed);
+    if (!Eden::Performance::jit_duplicate_tracking.load(std::memory_order_relaxed)) return;
     // Which cores compiled each location, and when the first one did.
     struct First { unsigned cores; long long ns; };
     static std::mutex mutex;
@@ -812,8 +813,7 @@ extern "C" void eden_jit_phases(unsigned core, unsigned long long translate, uns
         map->reserve(1u << 21);
         return map;
     }();
-    const long long now = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    const long long now = Common::g_wall_clock.GetTimeNS().count();
     unsigned index = 0;
     {
         std::lock_guard lock{mutex};
@@ -836,6 +836,11 @@ extern "C" void eden_jit_ranges(unsigned core, unsigned long long ns) {
         Eden::Performance::jit_phase_ns[core][3].fetch_add(ns, std::memory_order_relaxed);
 }
 #endif
+// The shared JIT's compile timers (headless/dynarmic/jit_impl.inc): the qualified invariant-TSC
+// clock, about 26 ns per read against about 0.9 µs for the steady clock's system call.
+extern "C" unsigned long long eden_jit_clock_ns() {
+    return static_cast<unsigned long long>(Common::g_wall_clock.GetTimeNS().count());
+}
 extern "C" void eden_jit_compile(unsigned core, unsigned long long ns) {
     if (core >= Eden::Performance::compilation.size()) return;
     Eden::Performance::compilation[core].calls.fetch_add(1, std::memory_order_relaxed);

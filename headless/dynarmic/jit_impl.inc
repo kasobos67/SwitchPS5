@@ -266,15 +266,15 @@ private:
                 eden_state.store(previous, std::memory_order_seq_cst);
                 continue;
             }
-            const auto start = std::chrono::steady_clock::now();
+            const u64 start = EdenClockNs();
             const auto get_code = [this](u64 vaddr) { return conf.callbacks->MemoryReadCode(vaddr); };
             // LocationDescriptor ctor() does important ops (like tflags) do not skip
             auto const arch_descriptor = A64::LocationDescriptor{descriptor};
             ir_block.Reset(arch_descriptor);
             A64::Translate(ir_block, arch_descriptor, get_code, {conf.define_unpredictable_behaviour, conf.wall_clock_cntpct});
-            const auto translated = std::chrono::steady_clock::now();
+            const u64 translated = EdenClockNs();
             Optimization::Optimize(ir_block, conf, polyfill_options);
-            const auto optimized = std::chrono::steady_clock::now();
+            const u64 optimized = EdenClockNs();
             emitter.eden_pending_sites.clear();
             const auto emitted = emitter.Emit(ir_block, false);
             eden_state.store(previous, std::memory_order_seq_cst);
@@ -445,18 +445,23 @@ private:
             eden_jit_evacuation(unsigned(conf.processor_id));
     }
 
-    void EdenReportCompile(IR::LocationDescriptor descriptor, std::chrono::steady_clock::time_point start,
-                           std::chrono::steady_clock::time_point translated,
-                           std::chrono::steady_clock::time_point optimized) {
-        const auto now = std::chrono::steady_clock::now();
-        const auto ns = [](auto a, auto b) {
-            return static_cast<unsigned long long>(std::chrono::duration_cast<std::chrono::nanoseconds>(b - a).count());
-        };
+    // Compile timers. std::chrono::steady_clock is a system call on the PS5 (about 0.9 µs; four of
+    // them per compiled block were 13-15% of compile time), so the port's clock reads the invariant
+    // TSC instead; without it (host tools) the steady clock remains.
+    static u64 EdenClockNs() {
+        if (eden_jit_clock_ns)
+            return eden_jit_clock_ns();
+        return static_cast<u64>(std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count());
+    }
+
+    void EdenReportCompile(IR::LocationDescriptor descriptor, u64 start, u64 translated, u64 optimized) {
+        const u64 now = EdenClockNs();
         if (eden_jit_compile)
-            eden_jit_compile(unsigned(conf.processor_id), ns(start, now));
+            eden_jit_compile(unsigned(conf.processor_id), now - start);
         if (eden_jit_phases)
-            eden_jit_phases(unsigned(conf.processor_id), ns(start, translated), ns(translated, optimized),
-                            ns(optimized, now), descriptor.Value());
+            eden_jit_phases(unsigned(conf.processor_id), translated - start, optimized - translated,
+                            now - optimized, descriptor.Value());
     }
 
     IR::Block ir_block = {LocationDescriptor(0, FP::FPCR(0), false)};

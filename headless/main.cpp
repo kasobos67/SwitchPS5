@@ -503,6 +503,9 @@ int main(int argc, char** argv) {
                     Eden::Performance::pc_fast = true;
                 } else if (entry == "capture=early") {
                     Eden::Performance::capture_early = true;
+                } else if (entry == "jit_dups=on") {
+                    // Which cores compiled each A64 block, and when (EDEN_PERF_DUPLICATES).
+                    Eden::Performance::jit_duplicate_tracking = true;
                 } else if (entry == "jit_shared=off") {
                     // Every guest core keeps its own compiled blocks (headless/dynarmic/jit_group.h).
                     eden_jit_shared = false;
