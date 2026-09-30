@@ -318,7 +318,10 @@ int main(int argc, char** argv) {
         selected_game = SelectProsperoEdenGame(launch_error);
 #endif
         }
-        if (selected_game.empty()) return 0;
+        if (selected_game.empty()) {
+            Eden::Report("exit", "Launcher closed");
+            return 0;
+        }
         try {
         launch_error.clear();
 #ifdef EDEN_DEV_VULKAN

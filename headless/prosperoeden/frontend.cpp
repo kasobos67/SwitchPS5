@@ -664,6 +664,12 @@ std::string RunApp(const std::string& launch_error) {
                 std::fprintf(stderr, "EDEN_DEV_UI_INPUT sequence=%llu buttons=%x\n",
                     static_cast<unsigned long long>(development_input.sequence), development_input.buttons);
             }
+            // The runner's quit request: leave the launcher and end the process normally, so a run
+            // ends without killing the app (two console losses followed killed runs).
+            if (std::remove(Eden::AppFile("quit-app.txt").c_str()) == 0) {
+                std::fprintf(stderr, "EDEN_DEV_QUIT requested=1\n");
+                running = false;
+            }
         }
         if (!development_input.active) radio_input_poll();
         if (const auto sample = development_input.Sample(now)) {
