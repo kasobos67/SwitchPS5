@@ -43,9 +43,11 @@ struct Game
     std::string language;      // the language the game will use
     std::string language_note; // set when that is not the chosen one
     // Its mods, and how many of them are switched on. The launcher counts them (Services::mods)
-    // when it takes the list and whenever they change.
+    // when it takes the list and whenever they change. With the game's Mods switch off
+    // (Services::mods_enabled) none is on.
     int mods = 0;
     int mods_on = 0;
+    bool mods_enabled = true;
 };
 
 struct Recent
@@ -201,6 +203,16 @@ class Services
         return {};
     }
     virtual bool set_mod_enabled(std::uint64_t, const std::string &, bool)
+    {
+        return false;
+    }
+    // One switch for all of a game's mods (the Library's Mods switch), on unless turned off. The
+    // mods keep their own switches behind it.
+    virtual bool mods_enabled(std::uint64_t)
+    {
+        return true;
+    }
+    virtual bool set_mods_enabled(std::uint64_t, bool)
     {
         return false;
     }

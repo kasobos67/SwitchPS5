@@ -756,10 +756,17 @@ int main(int argc, char** argv) {
             std::snprintf(title_id, sizeof(title_id), "%016llx",
                           static_cast<unsigned long long>(eden_game_title_id(guest)));
             // The game's mods, minus those switched off in the launcher (Library > Game settings >
-            // Mods): Eden's patch manager skips the names in this list.
+            // Mods): Eden's patch manager skips the names in this list. With the Library's Mods
+            // switch off for the game, every one of them is in it.
             const u64 title = eden_game_title_id(guest);
-            const auto mods_off = Eden::LoadDisabledMods(title);
-            const std::string mods = Eden::Mods::Summary(Eden::Mods::List(Eden::AssetsPath("mods"), title), mods_off);
+            const auto all_mods = Eden::Mods::List(Eden::AssetsPath("mods"), title);
+            auto mods_off = Eden::LoadDisabledMods(title);
+            if (!Eden::LoadModsEnabled(title)) {
+                for (const auto& mod : all_mods)
+                    if (std::find(mods_off.begin(), mods_off.end(), mod.name) == mods_off.end())
+                        mods_off.push_back(mod.name);
+            }
+            const std::string mods = Eden::Mods::Summary(all_mods, mods_off);
             Settings::values.disabled_addons[title] = mods_off;
             Eden::Report("launch", ("Mods: " + mods).c_str());
             Eden::Crash::SetSession("game " + std::filesystem::path(guest).filename().string() + " (" + title_id +

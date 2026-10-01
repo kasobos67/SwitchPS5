@@ -122,6 +122,16 @@ class FakeServices final : public ui::Services
     bool has_mods = true;
     std::vector<ui::Mod> mods(std::uint64_t) override;
     bool set_mod_enabled(std::uint64_t, const std::string &name, bool enabled) override;
+    // One Mods switch for every sample game.
+    bool mods_enabled(std::uint64_t) override
+    {
+        return mods_enabled_;
+    }
+    bool set_mods_enabled(std::uint64_t, bool enabled) override
+    {
+        mods_enabled_ = enabled;
+        return true;
+    }
     std::string mods_folder(std::uint64_t) override
     {
         return "mods/0100A00B00003000/";
@@ -143,6 +153,7 @@ class FakeServices final : public ui::Services
     std::string saved_folder_;
     std::vector<std::uint64_t> modded_; // the games that have the sample mods
     std::vector<std::string> mods_off_{"Sharper textures"};
+    bool mods_enabled_ = true;
 };
 
 } // namespace pe::host

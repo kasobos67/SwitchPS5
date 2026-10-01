@@ -180,6 +180,21 @@ void check_settings(const fs::path& base) {
             "all on again");
     require(!Eden::SaveModEnabled(0, "x", false, settings) && !Eden::SaveModEnabled(game, "", false, settings),
             "nothing to save");
+    // The Library's Mods switch: on unless turned off, per game, and the mods' own switches and
+    // the game's other settings stay as they are behind it.
+    require(Eden::LoadModsEnabled(game, settings) && Eden::LoadModsEnabled(other, settings) &&
+            Eden::LoadModsEnabled(0, settings), "the switch is on at first");
+    require(Eden::SaveModEnabled(game, "60 FPS", false, settings) && Eden::SaveModsEnabled(game, false, settings),
+            "the switch turned off");
+    require(!Eden::LoadModsEnabled(game, settings) && Eden::LoadModsEnabled(other, settings), "off for that game only");
+    require(Eden::LoadDisabledMods(game, settings) == std::vector<std::string>({"60 FPS"}), "a mod's own switch stays");
+    require(Eden::LoadGameSettings(game, settings).resolution == 4, "the other settings stay with the switch off");
+    require(Eden::SaveModsEnabled(game, true, settings) && Eden::LoadModsEnabled(game, settings), "the switch back on");
+    std::ifstream written(settings);
+    const std::string text{std::istreambuf_iterator<char>(written), {}};
+    require(text.find("\"mods\"") == std::string::npos && text.find("\"mods_off\"") != std::string::npos,
+            "on is not written; the mod switched off still is");
+    require(!Eden::SaveModsEnabled(0, false, settings), "no game, nothing to save");
 }
 } // namespace
 
@@ -193,5 +208,5 @@ int main() {
     check_settings(base);
     fs::remove_all(base);
     std::puts("Mods: IPS and IPS32 patches, .pchtxt hex, text and long values, the folder listing, "
-              "switching off per game PASS");
+              "switching off per game, the game's Mods switch PASS");
 }

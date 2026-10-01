@@ -24,7 +24,9 @@ constexpr Rect kListPanel{108.0f, 188.0f, 820.0f, 720.0f};
 constexpr Rect kDetailPanel{980.0f, 188.0f, 820.0f, 720.0f};
 constexpr Rect kWindow{138.0f, 250.0f, 760.0f, 606.0f};
 constexpr float kRowHeight = 78.0f;
-constexpr Rect kModeRow{1022.0f, 738.0f, 736.0f, 94.0f};
+// Under the game's details: its console mode, then the switch for its mods.
+constexpr Rect kModeRow{1022.0f, 700.0f, 736.0f, 74.0f};
+constexpr Rect kModsRow{1022.0f, 782.0f, 736.0f, 74.0f};
 constexpr Rect kDialog{550.0f, 180.0f, 820.0f, 720.0f};
 
 // The game settings dialog's rows, and the window that shows five of them (also the Mods list's).
@@ -133,14 +135,19 @@ void Launcher::read_home()
         return;
     const std::vector<Mod> mods = services_.mods(home_.last_title_id);
     home_.last_mods = static_cast<int>(mods.size());
-    home_.last_mods_on = static_cast<int>(
+    // With the game's Mods switch off none of them is on.
+    const bool enabled = mods.empty() || services_.mods_enabled(home_.last_title_id);
+    home_.last_mods_on = !enabled ? 0 : static_cast<int>(
         std::count_if(mods.begin(), mods.end(), [](const Mod &mod) { return mod.enabled; }));
 }
 
 void Launcher::count_mods(Game &game, const std::vector<Mod> &mods)
 {
     game.mods = static_cast<int>(mods.size());
-    game.mods_on = static_cast<int>(
+    // The game's Mods switch (the Library's) comes first: off, none of its mods is used, whatever
+    // their own switches say.
+    game.mods_enabled = mods.empty() || services_.mods_enabled(game.title_id);
+    game.mods_on = !game.mods_enabled ? 0 : static_cast<int>(
         std::count_if(mods.begin(), mods.end(), [](const Mod &mod) { return mod.enabled; }));
     // The home screen says the same of its game.
     if (game.file == home_.last_file && home_.last_title_id != 0)
@@ -198,6 +205,9 @@ void Launcher::refresh_selected_game()
     const std::uint64_t id =
         games_.empty() ? 0 : games_[static_cast<std::size_t>(library_.selected)].title_id;
     selected_docked_ = id == 0 || services_.docked(id);
+    // Its Mods switch shows its state at once; it only animates when changed.
+    mods_switch_.snap(!games_.empty() && games_[static_cast<std::size_t>(library_.selected)].mods_enabled ?
+                          1.0f : 0.0f);
     detail_.value = 0.0f;
     detail_.velocity = 0.0f;
 }
@@ -245,6 +255,26 @@ void Launcher::press_library(Key key)
             selected_docked_ = !selected_docked_;
         say(saved ? tr("Saved for this game. Applies on next launch.") :
                     tr("Could not save console mode. Please try again."),
+            !saved);
+        cue(saved ? Cue::toggle : Cue::error);
+        return;
+    }
+    case Key::square:
+    {
+        // The Mods switch: all of the game's mods on or off at once. Their own switches (Game
+        // settings > Mods) keep their state behind it.
+        if (game == nullptr || game->title_id == 0 || game->mods == 0)
+        {
+            if (game != nullptr)
+                cue(Cue::error);
+            return;
+        }
+        Game &chosen = games_[static_cast<std::size_t>(library_.selected)];
+        const bool saved = services_.set_mods_enabled(chosen.title_id, !chosen.mods_enabled);
+        if (saved)
+            count_mods(chosen, services_.mods(chosen.title_id));
+        say(saved ? tr("Saved for this game. Applies on next launch.") :
+                    tr("Could not save. Please try again."),
             !saved);
         cue(saved ? Cue::toggle : Cue::error);
         return;
@@ -386,9 +416,9 @@ void Launcher::draw_library(Canvas &c)
     if (game != nullptr && !game->language_note.empty())
         notice(c, game->language_note, 1776.0f, baseline(544.0f, 28.0f, 18.0f), 18.0f,
                theme::kWarning, 440.0f, true, Align::right);
-    text(c, tr("FILE"), 1336.0f, baseline(582.0f, 30.0f, theme::kSmall), theme::kSmall, theme::kLabel);
+    text(c, tr("FILE"), 1336.0f, baseline(574.0f, 30.0f, theme::kSmall), theme::kSmall, theme::kLabel);
     text_block(c, game != nullptr ? game->file : "-", 1336.0f,
-               baseline(622.0f, 30.0f, theme::kSmall), theme::kSmall, 30.0f, theme::kValue, 440.0f,
+               baseline(606.0f, 30.0f, theme::kSmall), theme::kSmall, 30.0f, theme::kValue, 440.0f,
                3);
     list.pop_transform();
     list.pop_opacity();
@@ -397,11 +427,11 @@ void Launcher::draw_library(Canvas &c)
     const bool can_configure = game != nullptr && game->title_id != 0;
     plate_rest(c, kRowPlate, kModeRow);
     text_shrink(c, tr("Console mode"), kModeRow.x + 26.0f,
-                baseline(kModeRow.y, 94.0f, theme::kText24), theme::kText24,
+                baseline(kModeRow.y, kModeRow.h, theme::kText24), theme::kText24,
                 can_configure ? theme::kValue : theme::kMeta, 256.0f);
     if (can_configure)
     {
-        const Rect track{1322.0f, 753.0f, 420.0f, 64.0f};
+        const Rect track{1322.0f, kModeRow.y + 8.0f, 420.0f, kModeRow.h - 16.0f};
         const float half = track.w * 0.5f;
         list.rounded_rect(track, 14.0f, Color::rgb(0x0d1814, 0.75f));
         plate_focus(c, kNavPlate, {track.x + half * mode_.value + 3.0f, track.y + 3.0f, half - 6.0f,
@@ -422,16 +452,42 @@ void Launcher::draw_library(Canvas &c)
     else
     {
         text_shrink(c, tr("Unavailable"), kModeRow.x + kModeRow.w - 26.0f,
-                    baseline(kModeRow.y, 94.0f, theme::kText24), theme::kText24, theme::kMeta,
+                    baseline(kModeRow.y, kModeRow.h, theme::kText24), theme::kText24, theme::kMeta,
                     400.0f, Align::right);
     }
-    draw_pad(c, Pad::leftright, 1022.0f, 865.0f, 26.0f);
+
+    // ---- mods: one switch for all of the game's mods (Square) ----
+    const bool has_mods = can_configure && game->mods > 0;
+    plate_rest(c, kRowPlate, kModsRow);
+    text_shrink(c, tr("Mods"), kModsRow.x + 26.0f, baseline(kModsRow.y, kModsRow.h, theme::kText24),
+                theme::kText24, has_mods ? theme::kValue : theme::kMeta, 256.0f);
+    if (has_mods)
+    {
+        // The switch at the right, as wide as the console mode's control is from the edge; what
+        // it means for this game beside it: how many of its mods are on, or that none is.
+        const float right = kModsRow.x + kModsRow.w - 16.0f;
+        const float on = tween::clamp01(mods_switch_.value);
+        toggle(c, right, kModsRow.y + kModsRow.h * 0.5f, on);
+        const std::string state =
+            game->mods_enabled ? fill(tr("{0} of {1} on"),
+                                      {std::to_string(game->mods_on), std::to_string(game->mods)}) :
+                                 std::string{tr("Off")};
+        text_shrink(c, state, right - 64.0f - 22.0f, baseline(kModsRow.y, kModsRow.h, theme::kSmall),
+                    theme::kSmall, gfx::mix(theme::kMeta, theme::kLimePale, on), 330.0f, Align::right);
+    }
+    else
+    {
+        text_shrink(c, can_configure ? tr("No mods") : tr("Unavailable"),
+                    kModsRow.x + kModsRow.w - 26.0f, baseline(kModsRow.y, kModsRow.h, theme::kText24),
+                    theme::kText24, theme::kMeta, 400.0f, Align::right);
+    }
+    draw_pad(c, Pad::leftright, 1022.0f, 876.0f, 26.0f);
     // A message said while Game settings is open belongs to that dialog.
     const bool said = !message_.empty() && modal_shown_ != Modal::game && modal_shown_ != Modal::mods;
     const std::string hint = said ? message_ :
                              can_configure ? tr("Change mode. Saved per game.") :
                                              tr("Select a readable game to configure its mode.");
-    notice(c, hint, 1060.0f, 872.0f, theme::kSmall,
+    notice(c, hint, 1060.0f, 883.0f, theme::kSmall,
            said ? (message_warning_ ? theme::kWarning : theme::kLimePale) : theme::kMeta, 700.0f,
            said && message_warning_);
 
@@ -439,8 +495,9 @@ void Launcher::draw_library(Canvas &c)
                                       {Pad::circle, TR("Back")},
                                       {Pad::updown, TR("Browse games")},
                                       {Pad::leftright, TR("Console mode")},
+                                      {Pad::square, TR("Mods")},
                                       {Pad::triangle, TR("Game settings")}};
-    draw_footer(c, kHints, 5);
+    draw_footer(c, kHints, 6);
 }
 
 // ---------------------------------------------------------------- game settings dialog
@@ -594,7 +651,9 @@ void Launcher::draw_game(Canvas &c, float open)
             fill(tr("Default ({0})"), {pick(filters, prefs_.filter)}),
         game_settings_.refresh >= 0 ? hertz(game_settings_.refresh) :
             fill(tr("Default ({0})"), {hertz(prefs_.refresh)}),
+        // With the game's Mods switch off (the Library's), none of them is on.
         mods_.empty() ? std::string{tr("No mods")} :
+        game != nullptr && !game->mods_enabled ? std::string{tr("Off")} :
             fill(tr("{0} of {1} on"),
                  {std::to_string(std::count_if(mods_.begin(), mods_.end(),
                                                [](const Mod &mod) { return mod.enabled; })),
@@ -627,7 +686,8 @@ void Launcher::draw_game(Canvas &c, float open)
         list.push_opacity(game_rows_.row_alpha(row, kDialogRowHeight));
         // The value first: the row's name takes what it leaves. Mods and Save data say what is
         // there; the others are choices.
-        const bool there = row == row_mods ? !mods_.empty() : import_source_ != SaveSource::none;
+        const bool there = row == row_mods ? !mods_.empty() && (game == nullptr || game->mods_enabled) :
+                                             import_source_ != SaveSource::none;
         const float taken =
             row >= row_mods ?
                 text_shrink(c, values[row], 1292.0f, baseline(top, kDialogRowHeight, theme::kSmall),
@@ -712,12 +772,15 @@ void Launcher::press_mods(Key key)
         if (mods_.empty())
             return;
         Mod &mod = mods_[static_cast<std::size_t>(mod_rows_.selected)];
-        const bool saved = services_.set_mod_enabled(game.title_id, mod.name, !mod.enabled);
+        // With the game's Mods switch off (the Library's), choosing a mod turns the switch on and
+        // that mod with it: nobody switches a mod in a list that is switched off.
+        const bool revive = !game.mods_enabled;
+        const bool enabled = revive || !mod.enabled;
+        const bool saved = (!revive || services_.set_mods_enabled(game.title_id, true)) &&
+                           services_.set_mod_enabled(game.title_id, mod.name, enabled);
         if (saved)
-        {
-            mod.enabled = !mod.enabled;
-            count_mods(game, mods_);
-        }
+            mod.enabled = enabled;
+        count_mods(game, mods_);
         say(saved ? tr("Saved for this game. Applies on next launch.") :
                     tr("Could not save. Please try again."),
             !saved);
@@ -767,6 +830,9 @@ void Launcher::draw_mods(Canvas &c, float open)
                     {592.0f, kDialogRowsTop + mod_rows_.cursor() - mod_rows_.scroll(), 736.0f,
                      kDialogRowHeight},
                     1.0f);
+        // With the game's Mods switch off (the Library's) no mod is used: their own switches keep
+        // their state, drawn faint.
+        const bool live = game == nullptr || game->mods_enabled;
         for (int row = mod_rows_.first_row(); row <= mod_rows_.last_row(); ++row)
         {
             const Mod &mod = mods_[static_cast<std::size_t>(row)];
@@ -774,10 +840,12 @@ void Launcher::draw_mods(Canvas &c, float open)
             list.push_opacity(mod_rows_.row_alpha(row, kDialogRowHeight));
             // Its name as the player's folder has it, what it changes under it, its switch.
             text_fit(c, mod.name, 628.0f, baseline(top + 14.0f, 38.0f, theme::kText24),
-                     theme::kText24, mod.enabled ? theme::kValue : theme::kMeta, 560.0f);
+                     theme::kText24, mod.enabled && live ? theme::kValue : theme::kMeta, 560.0f);
             text_shrink(c, mod.kind, 628.0f, baseline(top + 52.0f, 28.0f, theme::kSmall),
                         theme::kSmall, theme::kMeta, 560.0f);
+            list.push_opacity(live ? 1.0f : 0.4f);
             toggle(c, 1292.0f, top + kDialogRowHeight * 0.5f, mod.enabled ? 1.0f : 0.0f);
+            list.pop_opacity();
             list.pop_opacity();
         }
         list.pop_clip();

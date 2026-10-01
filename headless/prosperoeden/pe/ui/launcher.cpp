@@ -195,6 +195,10 @@ void Launcher::update(float dt)
     mod_rows_.update(dt);
     mode_.target = selected_docked_ ? 0.0f : 1.0f;
     mode_.update(dt, 22.0f);
+    const bool mods_on = library_.selected >= 0 && library_.selected < static_cast<int>(games_.size()) &&
+                         games_[static_cast<std::size_t>(library_.selected)].mods_enabled;
+    mods_switch_.target = mods_on ? 1.0f : 0.0f;
+    mods_switch_.update(dt, 22.0f);
     detail_.target = 1.0f;
     detail_.update(dt, 14.0f);
     section_.target = 1.0f;

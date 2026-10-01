@@ -15,7 +15,7 @@
 //     "library": { "last_game": "Game [id].nsp", "recent": ["Game [id].nsp"] },
 //     "games": { "0100000000010000": { "console_mode": "handheld", "renderer": "opengl",
 //                                      "resolution": "0.75x", "upscaling_filter": "fsr",
-//                                      "refresh_rate": "120",
+//                                      "refresh_rate": "120", "mods": false,
 //                                      "mods_off": ["A mod's folder name"] } }
 //   }
 //
@@ -366,6 +366,26 @@ inline bool SaveModEnabled(uint64_t title_id, std::string_view name, bool enable
     if (!game.is_object()) game = Settings::Json::object();
     if (names.empty()) game.erase("mods_off");
     else game["mods_off"] = names;
+    return Settings::Write(document, file);
+}
+
+// The Library's Mods switch: one switch for all of a game's mods, on unless the player turned it
+// off ("mods": false). The mods' own switches (mods_off) keep their state behind it.
+inline bool LoadModsEnabled(uint64_t title_id, const std::string& file = SettingsFile()) {
+    if (!title_id) return true;
+    using Settings::Json;
+    return Settings::Bool(Settings::Load(file),
+                          Json::json_pointer("/games/" + Settings::TitleKey(title_id) + "/mods"), true);
+}
+
+inline bool SaveModsEnabled(uint64_t title_id, bool enabled, const std::string& file = SettingsFile()) {
+    if (!title_id) return false;
+    Settings::Json document = Settings::Load(file);
+    document["version"] = 1;
+    auto& game = document["games"][Settings::TitleKey(title_id)];
+    if (!game.is_object()) game = Settings::Json::object();
+    if (enabled) game.erase("mods");
+    else game["mods"] = false;
     return Settings::Write(document, file);
 }
 

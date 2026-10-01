@@ -168,6 +168,13 @@ void pictures(Stage &s)
     s.press({Key::right});
     s.wait(0.6f);
     s.shoot("08-library-handheld");
+    // The Library's Mods switch: all of this game's mods off, and on again.
+    s.press({Key::square});
+    s.wait(0.6f);
+    s.shoot("44-library-mods-off");
+    s.press({Key::square});
+    s.wait(0.6f);
+    s.shoot("45-library-mods-on");
     s.press({Key::triangle});
     s.wait(0.8f);
     s.shoot("09-game-settings");

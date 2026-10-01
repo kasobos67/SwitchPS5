@@ -201,6 +201,7 @@ class Launcher
     ListView library_;
     bool selected_docked_ = true;
     tween::Spring mode_;   // 0 docked .. 1 handheld
+    tween::Spring mods_switch_; // the selected game's Mods switch: 0 off .. 1 on
     tween::Spring detail_; // the details fade in after the selection moves
 
     // settings and dialogs

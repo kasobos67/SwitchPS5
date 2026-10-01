@@ -639,6 +639,14 @@ bool EdenServices::set_mod_enabled(std::uint64_t title_id, const std::string& na
     return saved;
 }
 
+bool EdenServices::mods_enabled(std::uint64_t title_id) { return Eden::LoadModsEnabled(title_id); }
+
+bool EdenServices::set_mods_enabled(std::uint64_t title_id, bool enabled) {
+    const bool saved = Eden::SaveModsEnabled(title_id, enabled);
+    if (!saved) Eden::Report("settings", "Could not write the game's mods switch");
+    return saved;
+}
+
 std::string EdenServices::mods_folder(std::uint64_t title_id) {
     return "mods/" + Eden::Mods::TitleName(title_id) + "/";
 }
