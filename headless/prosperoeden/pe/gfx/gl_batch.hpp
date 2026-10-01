@@ -31,6 +31,9 @@ class GlBatch
     void release();
     // Uploads a font atlas as a single-level R8 texture; returns its name.
     std::uint32_t create_font_texture(const Font &font);
+    // Uploads the atlas rows that changed since the last call (glyphs of other scripts are drawn
+    // into the atlas as text needs them). Call it after a frame's text is laid out, before draw().
+    void sync_font_texture(std::uint32_t texture, const Font &font);
     // Uploads RGBA8 pixels as a single-level texture; returns its name.
     std::uint32_t create_texture(int width, int height, const std::uint8_t *rgba);
     void delete_texture(std::uint32_t texture);

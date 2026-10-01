@@ -8,6 +8,9 @@
 # The same screens, shaders and font as on the console, with sample data.
 # PE_LANG=<tag> shows them in that language (ui/lang/<tag>.po).
 # PE_LOOK=large,contrast,calm shows them with those accessibility settings on.
+# PE_SYSTEM_FONTS=<folder> names a folder with copies of the console's fonts
+# (/preinst/common/font): Japanese, Korean, Chinese, Greek, Thai and Arabic text is drawn with
+# them, as on the console. Without it such text shows as question marks.
 
 set -euo pipefail
 root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
@@ -15,6 +18,9 @@ source_dir="$root/headless/prosperoeden"
 build=${PROSPEROEDEN_LAUNCHER_BUILD:-"$HOME/.cache/prosperoeden-launcher"}
 cxx=${HOST_CXX:-c++}
 mkdir -p "$build/obj"
+python3 -B "$root/tools/deps.py" fetch harfbuzz
+harfbuzz=$(python3 -B "$root/tools/deps.py" path harfbuzz)
+harfbuzz=${harfbuzz%/harfbuzz.cc}
 
 sources=("$source_dir"/host/*.cpp "$source_dir"/pe/core/*.cpp "$source_dir"/pe/gfx/*.cpp "$source_dir"/pe/ui/*.cpp)
 objects=()
@@ -26,8 +32,11 @@ for source in "${sources[@]}"; do
     # Rebuild when the source or any launcher header is newer than the object.
     if [[ ! -e $object || $source -nt $object ]] ||
         [[ -n $(find "$source_dir/pe" "$source_dir/host" -name '*.hpp' -newer "$object" -print -quit) ]]; then
-        "$cxx" -std=c++20 -O2 -Wall -Wextra -DGL_GLEXT_PROTOTYPES=1 -I"$source_dir" \
-            -I"$source_dir/host" -I"$root/tools/launcher/stb" -c "$source" -o "$object" &
+        # HarfBuzz is not ours to tidy: its warnings are off.
+        warnings=(-Wall -Wextra)
+        [[ $relative == pe/gfx/harfbuzz.cpp ]] && warnings=(-w)
+        "$cxx" -std=c++20 -O2 "${warnings[@]}" -DGL_GLEXT_PROTOTYPES=1 -I"$source_dir" \
+            -I"$source_dir/host" -I"$root/tools/launcher/stb" -I"$harfbuzz" -c "$source" -o "$object" &
         pids+=($!)
     fi
 done

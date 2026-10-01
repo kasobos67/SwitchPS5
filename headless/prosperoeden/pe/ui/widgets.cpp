@@ -192,7 +192,9 @@ void text_block(Canvas &c, std::string_view value, float x, float first_baseline
     {
         const bool cut = line == count - 1 && static_cast<int>(lines.size()) > max_lines;
         // The last line that fits swallows the next one, so its ellipsis shows more follows.
-        const std::string content = cut ? lines[line] + " " + lines[line + 1] : lines[line];
+        const std::string content =
+            !cut ? lines[line] :
+            lines[line] + (gfx::joins_without_space(lines[line], lines[line + 1]) ? "" : " ") + lines[line + 1];
         draw_text(c, font.fit(content, drawn, max_width), x,
                   first_baseline + line_height * static_cast<float>(line), size, drawn, color,
                   Align::left, 0.0f);

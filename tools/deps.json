@@ -65,6 +65,17 @@
       "creates": ".deps/ps5-opengl-sdk-0.6.0/sdk/lib/libps5_opengl_core33.a"
     },
     {
+      "name": "harfbuzz",
+      "about": "HarfBuzz 12.3.2 source (MIT): shapes the launcher's Arabic, Thai and other non-Latin text. Only src/ and the licence are kept",
+      "kind": "archive",
+      "url": "https://github.com/harfbuzz/harfbuzz/releases/download/12.3.2/harfbuzz-12.3.2.tar.xz",
+      "sha256": "6f6db164359a2da5a84ef826615b448b33e6306067ad829d85d5b0bf936f1bb8",
+      "extract": ".deps/harfbuzz-12.3.2",
+      "strip": 1,
+      "only": ["src", "COPYING"],
+      "creates": ".deps/harfbuzz-12.3.2/src/harfbuzz.cc"
+    },
+    {
       "name": "boilerplate",
       "about": "PS5 Native App Boilerplate: Payload SDK v0.42, runtime libc.prx and the native packaging tool",
       "kind": "git",

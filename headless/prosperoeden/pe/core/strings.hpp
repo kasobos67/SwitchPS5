@@ -36,6 +36,14 @@ class Catalog
     {
         return entries_.size();
     }
+    // Whether check(translation) holds for every entry.
+    template <typename Check> bool every(Check &&check) const
+    {
+        for (const auto &entry : entries_)
+            if (!check(std::string_view{entry.second}))
+                return false;
+        return true;
+    }
 
   private:
     struct Hash

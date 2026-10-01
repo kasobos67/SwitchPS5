@@ -12,6 +12,7 @@
 #include "pe/core/file.hpp"
 #include "pe/core/strings.hpp"
 #include "pe/gfx/gl_batch.hpp"
+#include "pe/gfx/system_fonts.hpp"
 #include "pe/platform/audio_out.hpp"
 #include "pe/platform/display_egl.hpp"
 #include "pe/ui/launcher.hpp"
@@ -64,17 +65,37 @@ float MenuGain(int volume) {
 // The launcher speaks the console's language when the app has a catalog for it
 // (ui/lang/<tag>.po, tags as in third_party/ps5_system_language.hpp), and English otherwise.
 // language.txt in the app's folder, holding a tag, chooses another one ("en-US": English).
-void LoadLanguage() {
+//
+// Montserrat has Latin and Cyrillic letters. The other scripts (Japanese, Korean, Chinese, Greek,
+// Thai, Arabic: in the launcher's own text, a game's title or a file name) are drawn with the
+// console's own fonts, which the font is told of here every time the launcher opens. A catalog
+// those fonts cannot draw in full is not used: English is better than missing letters.
+void LoadLanguage(pe::gfx::Font& font) {
     static bool loaded = false;
-    if (std::exchange(loaded, true)) return;
+    static std::string tag;
+    const bool first = !std::exchange(loaded, true);
     int system_language = -1;
-    const int rc = sceSystemServiceParamGetInt(ps5::i18n::kSystemLanguageParameter, &system_language);
-    std::string tag{rc == 0 ? ps5::i18n::language_tag(system_language) : ps5::i18n::kFallbackLanguage};
-    std::string chosen;
-    if (pe::read_file(Eden::AppFile("language.txt"), &chosen, 64)) {
-        while (!chosen.empty() && static_cast<unsigned char>(chosen.back()) <= ' ') chosen.pop_back();
-        if (!chosen.empty()) tag = chosen;
+    int rc = 0;
+    if (first) {
+        rc = sceSystemServiceParamGetInt(ps5::i18n::kSystemLanguageParameter, &system_language);
+        tag = rc == 0 ? ps5::i18n::language_tag(system_language) : ps5::i18n::kFallbackLanguage;
+        std::string chosen;
+        if (pe::read_file(Eden::AppFile("language.txt"), &chosen, 64)) {
+            while (!chosen.empty() && static_cast<unsigned char>(chosen.back()) <= ' ') chosen.pop_back();
+            if (!chosen.empty()) tag = chosen;
+        }
     }
+    std::string folder = "none";
+    std::size_t files = 0;
+    for (const std::string& candidate : pe::gfx::system_font_folders()) {
+        std::vector<std::string> found = pe::gfx::system_font_files(candidate, tag);
+        if (found.empty()) continue;
+        folder = candidate;
+        files = found.size();
+        font.use_system_fonts(std::move(found), tag);
+        break;
+    }
+    if (!first) return;
     std::string catalog = "none";
     std::size_t texts = 0;
     for (const std::string& candidate : pe::catalog_candidates(tag)) {
@@ -84,8 +105,15 @@ void LoadLanguage() {
         catalog = candidate;
         break;
     }
+    if (texts != 0 && !pe::catalog().every([&font](std::string_view text) { return font.can_draw(text); })) {
+        pe::catalog().clear();
+        catalog += " (not used: no font for it)";
+        texts = 0;
+    }
     std::fprintf(stderr, "EDEN_LANGUAGE system=%d rc=0x%x tag=%s catalog=%s texts=%zu\n", system_language,
                  static_cast<unsigned>(rc), tag.c_str(), catalog.c_str(), texts);
+    std::fprintf(stderr, "EDEN_FONTS folder=%s files=%zu read=%s\n", folder.c_str(), files,
+                 font.system_fonts_read().c_str());
 }
 
 #ifdef EDEN_DEV_ROM_ID
@@ -154,10 +182,10 @@ std::string RunApp(const std::string& launch_error, bool first_start) {
             display.close();
             return {};
         }
+        LoadLanguage(font);
         std::uint32_t font_texture = batch.create_font_texture(font);
         const pe::ui::Fonts fonts{&font, font_texture};
 
-        LoadLanguage();
         Eden::Report("setup", "Checking supplied keys and firmware");
         EdenServices services(launch_error);
         pe::ui::Textures textures(batch, services);
@@ -249,6 +277,7 @@ std::string RunApp(const std::string& launch_error, bool first_start) {
 
             list.clear();
             launcher.draw(list);
+            batch.sync_font_texture(font_texture, font);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             batch.draw(list, viewport, display.width(), display.height());

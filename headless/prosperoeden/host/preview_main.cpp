@@ -11,6 +11,7 @@
 #include "pe/core/file.hpp"
 #include "pe/gfx/gl_batch.hpp"
 #include "pe/gfx/gl_program.hpp"
+#include "pe/gfx/system_fonts.hpp"
 #include "pe/ui/launcher.hpp"
 
 #include <EGL/egl.h>
@@ -105,6 +106,7 @@ struct Stage
     {
         list.clear();
         launcher->draw(list);
+        batch.sync_font_texture(fonts.texture, *fonts.font);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         batch.draw(list, pe::gfx::fit_viewport(width, height), width, height);
@@ -412,6 +414,27 @@ int main(int argc, char **argv)
         std::fprintf(stderr, "cannot load the font: %s\n", font.error().c_str());
         return 1;
     }
+    // The console's fonts for the scripts the baked one lacks (PE_SYSTEM_FONTS: copies of them).
+    {
+        const char *language = std::getenv("PE_LANG");
+        const std::string tag = language != nullptr && language[0] != 0 ? language : "en-US";
+        for (const std::string &folder : pe::gfx::system_font_folders())
+        {
+            std::vector<std::string> files = pe::gfx::system_font_files(folder, tag);
+            if (files.empty())
+                continue;
+            std::fprintf(stderr, "system fonts: %zu files in %s\n", files.size(), folder.c_str());
+            font.use_system_fonts(std::move(files), tag);
+            break;
+        }
+        if (!pe::catalog().every([&font](std::string_view text) { return font.can_draw(text); }))
+        {
+            std::fprintf(stderr, "error: the catalog has characters no font here has; on the console the "
+                                 "launcher would stay English (PE_SYSTEM_FONTS names a folder with the "
+                                 "console's fonts)\n");
+            return 1;
+        }
+    }
     pe::gfx::GlBatch batch;
     if (!batch.init())
         return 1;
@@ -443,6 +466,78 @@ int main(int argc, char **argv)
         std::fprintf(stderr, "warning: launcher art is incomplete\n");
     textures.set_output_scale(static_cast<float>(width) / 1920.0f);
 
+    // PE_SPECIMEN=<file>: instead of the screens, one picture of the file's lines of text (a line
+    // starting with "W " is wrapped to a column), to look at a script or a translation closely.
+    if (const char *specimen = std::getenv("PE_SPECIMEN"); specimen != nullptr && specimen[0] != 0)
+    {
+        std::string lines;
+        if (!pe::read_file(specimen, &lines))
+        {
+            std::fprintf(stderr, "cannot read %s\n", specimen);
+            return 1;
+        }
+        const std::uint32_t texture = batch.create_font_texture(font);
+        pe::gfx::DrawList list;
+        list.rounded_rect({0.0f, 0.0f, 1920.0f, 1080.0f}, 0.0f, pe::ui::theme::kPanel);
+        float x = 40.0f;
+        float y = 60.0f;
+        const float size = 30.0f;
+        const float pitch = 44.0f;
+        const float column = 900.0f;
+        const auto advance = [&]
+        {
+            y += pitch;
+            if (y > 1060.0f)
+            {
+                y = 60.0f;
+                x += column + 40.0f;
+            }
+        };
+        for (std::size_t start = 0; start < lines.size();)
+        {
+            std::size_t end = lines.find('\n', start);
+            if (end == std::string::npos)
+                end = lines.size();
+            std::string_view line{lines.data() + start, end - start};
+            start = end + 1;
+            if (!line.empty() && line.back() == '\r')
+                line.remove_suffix(1);
+            if (line.substr(0, 2) == "W ")
+            {
+                for (const std::string &part : font.wrap(line.substr(2), size, column))
+                {
+                    list.rounded_rect({x, y - size, column, pitch - 6.0f}, 4.0f, pe::ui::theme::kRow);
+                    list.text(font, texture, part, x, y, size, pe::ui::theme::kText);
+                    advance();
+                }
+                continue;
+            }
+            if (line.substr(0, 2) == "F ")
+            {
+                // Cut to a narrow place, as a long title is.
+                list.rounded_rect({x, y - size, 420.0f, pitch - 6.0f}, 4.0f, pe::ui::theme::kRow);
+                list.text(font, texture, font.fit(line.substr(2), size, 420.0f), x, y, size, pe::ui::theme::kText);
+                advance();
+                continue;
+            }
+            list.text(font, texture, line, x, y, size, pe::ui::theme::kText);
+            list.text(font, texture, line, x + column, y, 20.0f, pe::ui::theme::kLime, pe::gfx::Align::right);
+            advance();
+        }
+        batch.sync_font_texture(texture, font);
+        std::vector<unsigned char> pixels(static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 4);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        batch.draw(list, pe::gfx::fit_viewport(width, height), width, height);
+        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+        stbi_flip_vertically_on_write(1);
+        const std::string path = output + "/specimen.png";
+        const bool written = stbi_write_png(path.c_str(), width, height, 4, pixels.data(), width * 4) != 0;
+        std::fprintf(stderr, "specimen: %zu instances, GL error 0x%x, system fonts read: %s\n", list.instances().size(),
+                     glGetError(), font.system_fonts_read().c_str());
+        return written ? 0 : 1;
+    }
+
     Stage stage{services, textures, {&font, batch.create_font_texture(font)}, batch, width, height,
                 output, nullptr, {}, {}, make_tour, true, {}};
     stage.pixels.resize(static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 4);
@@ -452,6 +547,7 @@ int main(int argc, char **argv)
     else
         pictures(stage);
     std::fprintf(stderr, "cues heard: %zu\n", stage.heard.size());
+    std::fprintf(stderr, "system fonts read: %s\n", font.system_fonts_read().c_str());
     for (const auto &[text, fit] : fits)
         std::fprintf(stderr, "%s %.2f: %s\n", fit.second ? "cut" : "shrunk", fit.first, text.c_str());
     return stage.ok ? 0 : 1;

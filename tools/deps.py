@@ -96,8 +96,10 @@ def download(url, algorithm, expected, name):
     return target
 
 
-def extract(archive, destination, strip):
-    """Extracts into destination through a temporary folder beside it (no partial trees)."""
+def extract(archive, destination, strip, only=()):
+    """Extracts into destination through a temporary folder beside it (no partial trees).
+    `only` keeps the members whose path (after strip) is one of these files or lies in one of
+    these folders."""
     destination.parent.mkdir(parents=True, exist_ok=True)
     staging = pathlib.Path(tempfile.mkdtemp(prefix='.deps-', dir=destination.parent))
     try:
@@ -108,6 +110,9 @@ def extract(archive, destination, strip):
                 if not parts:
                     continue
                 member.name = str(pathlib.PurePosixPath(*parts))
+                if only and not any(member.name == keep or member.name.startswith(keep.rstrip('/') + '/')
+                                    for keep in only):
+                    continue
                 members.append(member)
             tar.extractall(staging, members=members, filter='data')
         destination.mkdir(parents=True, exist_ok=True)
@@ -159,7 +164,7 @@ def fetch(item):
             if not saved.exists():
                 saved.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(archive, saved)
-        extract(archive, ROOT / item['extract'], item.get('strip', 0))
+        extract(archive, ROOT / item['extract'], item.get('strip', 0), item.get('only', ()))
     elif kind == 'files':
         destination = ROOT / item['dest']
         destination.mkdir(parents=True, exist_ok=True)

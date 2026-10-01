@@ -2035,11 +2035,14 @@ endif()
                 "${launcher_dir}/pe/audio/sounds.cpp"
                 "${launcher_dir}/pe/audio/wav.cpp"
                 "${launcher_dir}/pe/core/strings.cpp"
+                "${launcher_dir}/pe/gfx/bidi.cpp"
                 "${launcher_dir}/pe/gfx/draw_list.cpp"
                 "${launcher_dir}/pe/gfx/font.cpp"
                 "${launcher_dir}/pe/gfx/gl_batch.cpp"
                 "${launcher_dir}/pe/gfx/gl_program.cpp"
+                "${launcher_dir}/pe/gfx/harfbuzz.cpp"
                 "${launcher_dir}/pe/gfx/image.cpp"
+                "${launcher_dir}/pe/gfx/system_fonts.cpp"
                 "${launcher_dir}/pe/platform/audio_out.cpp"
                 "${launcher_dir}/pe/platform/display_egl.cpp"
                 "${launcher_dir}/pe/ui/browse.cpp"
@@ -2057,6 +2060,17 @@ endif()
             endif()
             set_source_files_properties(${launcher_sources}
                 PROPERTIES COMPILE_DEFINITIONS "${launcher_definitions}")
+            # Text in the scripts the baked font lacks: the console's own fonts, shaped by HarfBuzz
+            # (a pinned source release, tools/deps.json) and drawn through stb_truetype.
+            set(harfbuzz_dir "${PORT_ROOT}/.deps/harfbuzz-12.3.2/src")
+            if(NOT EXISTS "${harfbuzz_dir}/harfbuzz.cc")
+                message(FATAL_ERROR "HarfBuzz is missing (${harfbuzz_dir}): run make deps")
+            endif()
+            set_source_files_properties(
+                "${launcher_dir}/pe/gfx/system_fonts.cpp" "${launcher_dir}/pe/gfx/harfbuzz.cpp"
+                PROPERTIES INCLUDE_DIRECTORIES "${harfbuzz_dir};${PORT_ROOT}/tools/launcher/stb")
+            # HarfBuzz is not ours to tidy: its warnings are off.
+            set_source_files_properties("${launcher_dir}/pe/gfx/harfbuzz.cpp" PROPERTIES COMPILE_OPTIONS "-w")
         else()
             target_sources(eden-headless PRIVATE "${launcher_dir}/frontend_stub.cpp")
         endif()

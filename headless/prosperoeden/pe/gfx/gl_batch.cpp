@@ -219,6 +219,18 @@ std::uint32_t GlBatch::create_font_texture(const Font &font)
     return texture;
 }
 
+void GlBatch::sync_font_texture(std::uint32_t texture, const Font &font)
+{
+    int first = 0;
+    int last = 0;
+    if (texture == 0 || !font.take_changed_rows(&first, &last))
+        return;
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, first, font.atlas_width(), last - first, GL_RED, GL_UNSIGNED_BYTE,
+                    font.atlas().data() + static_cast<std::size_t>(first) * font.atlas_width());
+}
+
 std::uint32_t GlBatch::create_texture(int width, int height, const std::uint8_t *rgba)
 {
     GLuint texture = 0;

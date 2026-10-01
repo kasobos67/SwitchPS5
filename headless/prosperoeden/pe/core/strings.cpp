@@ -130,8 +130,42 @@ std::string tr(const std::string &english)
     return std::string{catalog().find(english)};
 }
 
+namespace
+{
+
+// Whether text holds a letter written right to left (Hebrew, Arabic).
+bool right_to_left(std::string_view text)
+{
+    for (std::size_t i = 0; i + 1 < text.size(); ++i)
+    {
+        const unsigned char lead = static_cast<unsigned char>(text[i]);
+        const unsigned char next = static_cast<unsigned char>(text[i + 1]);
+        // U+0590-U+08FF are the two-byte sequences D6 90 to DF BF and the three-byte E0 A0-A3;
+        // the Arabic presentation forms U+FB1D-U+FEFC start with EF AC-BB.
+        if ((lead == 0xd6 && next >= 0x90) || (lead >= 0xd7 && lead <= 0xdf) ||
+            (lead == 0xe0 && next >= 0xa0 && next <= 0xa3) || (lead == 0xef && next >= 0xac && next <= 0xbb))
+            return true;
+    }
+    return false;
+}
+
+bool has_latin_letter(std::string_view text)
+{
+    for (const char c : text)
+        if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
+            return true;
+    return false;
+}
+
+} // namespace
+
 std::string fill(std::string_view pattern, std::initializer_list<std::string_view> values)
 {
+    // In a right-to-left sentence a left-to-right value (a path, a name, an English sentence)
+    // keeps its own punctuation on its own side when it stands between left-to-right marks
+    // (U+200E): "/data/logs" would otherwise show its first slash at the wrong end.
+    static constexpr std::string_view kMark = "\xE2\x80\x8E";
+    const bool mark = right_to_left(pattern);
     std::string out;
     out.reserve(pattern.size() + 16);
     for (std::size_t i = 0; i < pattern.size(); ++i)
@@ -141,7 +175,15 @@ std::string fill(std::string_view pattern, std::initializer_list<std::string_vie
         {
             const std::size_t index = static_cast<std::size_t>(pattern[i + 1] - '0');
             if (index < values.size())
-                out.append(values.begin()[index]);
+            {
+                const std::string_view value = values.begin()[index];
+                const bool wrap = mark && has_latin_letter(value) && !right_to_left(value);
+                if (wrap)
+                    out.append(kMark);
+                out.append(value);
+                if (wrap)
+                    out.append(kMark);
+            }
             i += 2;
             continue;
         }
