@@ -12,7 +12,8 @@ assert 'Settings::values.use_asynchronous_shaders = false;' in main
 assert 'strict_context_required = true;' in (root / 'headless/graphics.cpp').read_text()
 assert 'Level::Debug' not in main
 assert 'std::setvbuf(stderr, nullptr, _IONBF, 0);' in main
-buffering = main[main.index('        static char stdout_buffer'):main.index('        std::set_new_handler')]
+# The stdout buffer alone: the log pipes that follow it need the app (headless/log_pipe.h).
+buffering = main[main.index('        static char stdout_buffer'):main.index('        // Console storage writes take')]
 with tempfile.TemporaryDirectory(prefix='eden-batch-') as work:
     work = Path(work)
     source = work / 'buffer.cpp'
@@ -39,23 +40,36 @@ int main(int argc,char **argv) {
 #include <stdio.h>
 #include <string.h>
 static jmp_buf done;
-static char marker[96];
+static char marker[96], refused[96];
+static int exit_requests;
 int sceKernelDebugOutText(int channel,const char *text) {
-    assert(channel==0); strcpy(marker,text); return 0;
+    assert(channel==0);
+    strcpy(strncmp(text,"EDEN_PPSA99121_EXIT_REFUSED",27) ? marker : refused,text); return 0;
+}
+/* The system's own exit request comes after the return marker; here it is refused, so the
+   wait to be closed must follow. */
+int sceSystemServiceLoadExec(const char *path,const char **args) {
+    assert(!strcmp(path,"exit") && args==NULL && marker[0] && !refused[0]);
+    ++exit_requests; return 0x80aa0001;
 }
 int sceKernelUsleep(uint32_t delay) {
-    assert(delay==100000 && marker[0]); longjmp(done,1);
+    assert(delay==100000 && marker[0] && refused[0]); longjmp(done,1);
 }
 void catchReturnFromMain(int);
 int main(void) {
     if(!setjmp(done)) catchReturnFromMain(0);
     assert(!strcmp(marker,"EDEN_PPSA99121_MAIN_RETURN status=0\\n"));
-    marker[0]=0;
+    assert(exit_requests==1 && !strcmp(refused,"EDEN_PPSA99121_EXIT_REFUSED rc=80aa0001\\n"));
+    marker[0]=0; refused[0]=0;
     if(!setjmp(done)) catchReturnFromMain(7);
     assert(!strcmp(marker,"EDEN_PPSA99121_MAIN_RETURN status=7\\n"));
+    assert(exit_requests==2 && refused[0]);
 }
 ''')
     exe = work / 'return'
     subprocess.run(['cc',str(source),str(root/'src/lifecycle.c'),'-o',str(exe)],check=True)
     subprocess.run([str(exe)],check=True,timeout=5)
-print('Buffered output/explicit flush, success/failure completion markers and serial shader-cache ordering PASS')
+main_text = main
+assert '_Exit(' not in main_text, 'a native title must not end itself with _Exit(): the kernel answers it with signal 12'
+print('Buffered output/explicit flush, return markers, the system exit request with its fallback wait, '
+      'and serial shader-cache ordering PASS')
