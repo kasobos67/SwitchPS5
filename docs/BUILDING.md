@@ -85,6 +85,11 @@ The tools that made them are in `tools/launcher`:
   (`headless/loading_wordmark.glsl`).
 - `preview.sh` draws every launcher screen on a PC (Mesa's software renderer, sample games) to
   PNG files or a video, with the same code, shaders and font as on the console.
+- `strings.py` keeps the translations: `extract` writes the template (`launcher.pot`) from the
+  text in the code, `new <tag>` starts a catalog in `headless/prosperoeden/ui/lang`, and `check`
+  fails on missing or stale text, changed placeholders and characters the font does not have.
+- `text-check.sh` compares the launcher's right-to-left text code with ICU on generated lines
+  and on every translation (needs `libicu-dev`).
 
 ## Host tools
 
