@@ -59,6 +59,8 @@ struct GameInfo {
     std::string cover;
     uint64_t title_id = 0;
     std::string addons;  // game details, ADD-ONS: "Update 1.2.0, 2 DLC", or "None"
+    std::string language;       // game details, LANGUAGE: the language the game will use
+    std::string language_note;  // set when that is not the chosen one: "Polish not available"
 };
 
 std::vector<GameInfo> games;
@@ -70,6 +72,24 @@ std::string AddOnSummary(uint64_t title_id) {
     std::string text = update[0] ? std::string("Update ") + update : std::string{};
     if (dlc) text += (text.empty() ? "" : ", ") + std::to_string(dlc) + " DLC";
     return text.empty() ? "None" : text;
+}
+
+// The language a game will use for the chosen one (Settings > Language), and a note when the game
+// does not offer the choice and falls back to another language.
+struct GameLanguage {
+    std::string label;
+    std::string note;
+};
+GameLanguage LanguageFor(const std::string& path, uint64_t title_id, int choice) {
+    const int chosen = Eden::kLanguageSettings[choice];
+    const int used = eden_game_language(path.c_str(), Eden::AssetsPath("keys").c_str(), title_id, chosen);
+    GameLanguage result{Eden::kLanguageLabels[choice], {}};
+    if (used == chosen) return result;
+    result.label = "Another language";
+    for (std::size_t i = 0; i < std::size(Eden::kLanguageSettings); ++i)
+        if (Eden::kLanguageSettings[i] == used) result.label = Eden::kLanguageLabels[i];
+    result.note = std::string(Eden::kLanguageLabels[choice]) + " not available";
+    return result;
 }
 
 // Names of the subfolders (folders = true) or regular files in path, sorted without regard
@@ -209,6 +229,7 @@ void LoadGames() {
     const auto entries = Eden::ReadNativeDirectory(Eden::AssetsPath("roms"), directory_error);
     if (directory_error) return;
     eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str());
+    const int language_choice = Eden::LoadPreferences().language;
     for (const auto& entry : entries) {
         const std::string file = entry.path().filename().string();
         const std::size_t dot = file.find_last_of('.');
@@ -229,9 +250,10 @@ void LoadGames() {
         const int metadata = eden_extract_game_metadata(path.c_str(), Eden::AssetsPath("keys").c_str(), cover,
                                                         title, sizeof(title));
         const uint64_t title_id = eden_game_title_id(path.c_str());
+        const GameLanguage language = LanguageFor(path, title_id, language_choice);
         games.push_back({metadata & EDEN_METADATA_TITLE ? title : file.substr(0, dot), format,
                          size, file, metadata & EDEN_METADATA_COVER ? cover : "",
-                         title_id, AddOnSummary(title_id)});
+                         title_id, AddOnSummary(title_id), language.label, language.note});
     }
     std::sort(games.begin(), games.end(), [](const GameInfo& a, const GameInfo& b) { return a.name < b.name; });
 }
@@ -288,6 +310,8 @@ bool EdenApp::Initialize(Rml::ElementDocument* document, const std::string& laun
         SetText(document_, "last-played-caption", caption.c_str());
         if (has_cover) document_->GetElementById("last-played-cover")->SetAttribute("src", cover.c_str());
     }
+    if (continue_ready_) eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str());
+    UpdateLastPlayedInfo();
     SetClass(document_, "continue-game", "disabled", !setup_ready_);
     SetClass(document_, "hero-options", "disabled", !last_exists || !setup_ready_);
     SetText(document_, "continue-copy", continue_ready_ ? "Launch game" : "Open library");
@@ -546,6 +570,9 @@ void EdenApp::UpdateDialog() {
             SetText(document_, "game-detail-size", "-");
             SetText(document_, "game-detail-addons", "-");
             SetClass(document_, "game-detail-addons", "ready", false);
+            SetText(document_, "game-detail-language", "-");
+            SetClass(document_, "game-detail-language", "warning", false);
+            SetText(document_, "game-detail-language-note", "");
             SetText(document_, "game-detail-path", "-");
             if (Rml::Element* cover = document_->GetElementById("game-cover"))
                 cover->SetAttribute("src", "icons/prosperoeden.tga");
@@ -557,6 +584,9 @@ void EdenApp::UpdateDialog() {
             SetText(document_, "game-detail-size", game.size.c_str());
             SetText(document_, "game-detail-addons", game.addons.c_str());
             SetClass(document_, "game-detail-addons", "ready", game.addons != "None");
+            SetText(document_, "game-detail-language", game.language.c_str());
+            SetClass(document_, "game-detail-language", "warning", !game.language_note.empty());
+            SetText(document_, "game-detail-language-note", game.language_note.c_str());
             SetText(document_, "game-detail-path", game.path.c_str());
             if (Rml::Element* cover = document_->GetElementById("game-cover"))
                 cover->SetAttribute("src", game.cover.empty() ? "icons/prosperoeden.tga" : game.cover);
@@ -691,6 +721,22 @@ void EdenApp::UpdateGameSettings(const char* message) {
     SetText(document_, "game-settings-hint", message ? message : "UP / DOWN Select / LEFT / RIGHT Change / O Back");
 }
 
+// Continue playing: the last game's update and DLC, and the language it will use (a warning when
+// it does not offer the chosen one).
+void EdenApp::UpdateLastPlayedInfo() {
+    if (!continue_ready_) {
+        SetText(document_, "last-played-info", "");
+        return;
+    }
+    const std::string path = Eden::AssetsPath("roms/" + last_game_);
+    const uint64_t title_id = eden_game_title_id(path.c_str());
+    const GameLanguage language = LanguageFor(path, title_id, preferences_.language);
+    const std::string info = "Add-ons: " + AddOnSummary(title_id) + "  /  Language: " + language.label +
+        (language.note.empty() ? "" : " (" + language.note + " in this game)");
+    SetText(document_, "last-played-info", info.c_str());
+    SetClass(document_, "last-played-info", "warning", !language.note.empty());
+}
+
 void EdenApp::OpenLanguage() {
     language_selected_ = preferences_.language;
     SetClass(document_, "language-screen", "open", true);
@@ -704,6 +750,7 @@ void EdenApp::HandleLanguageInput(const radio_input_event_t& event) {
         SetClass(document_, "language-screen", "open", false);
         dialog_ = 2;
         UpdateDialog();
+        UpdateLastPlayedInfo();
         return;
     }
     if (event.key == RADIO_INPUT_UP) {

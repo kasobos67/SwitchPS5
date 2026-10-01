@@ -32,6 +32,7 @@ private:
     void OpenLanguage();
     void HandleLanguageInput(const radio_input_event_t& event);
     void UpdateLanguage(const char* message = nullptr);
+    void UpdateLastPlayedInfo();
     // Library > Game settings for the selected game.
     void OpenGameSettings();
     void HandleGameSettingsInput(const radio_input_event_t& event);

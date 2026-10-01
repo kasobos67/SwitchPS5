@@ -30,6 +30,8 @@ button { margin: 0; padding: 0; border: 0px transparent; border-radius: 0px; bac
 .hero-kicker { position: absolute; left: 440px; top: 64px; width: 640px; height: 32px; color: #a9db63; font-size: 20px; line-height: 30px; letter-spacing: 3px; }
 #last-played-title { position: absolute; left: 440px; top: 112px; width: 1120px; height: 112px; overflow: hidden; color: #f0f5f2; font-size: 48px; line-height: 56px; }
 #last-played-caption { position: absolute; left: 440px; top: 224px; width: 1040px; height: 36px; color: #abb8ae; font-size: 24px; line-height: 36px; }
+#last-played-info { position: absolute; left: 440px; top: 262px; width: 1160px; height: 32px; overflow: hidden; white-space: nowrap; color: #abb8ae; font-size: 20px; line-height: 30px; }
+#last-played-info.warning { color: #e8b39a; }
 .hero-button { position: absolute; top: 304px; width: 272px; height: 72px; }
 #continue-game { left: 440px; } #hero-options { left: 728px; }
 .hero-button-chrome { position: absolute; left: 0px; top: 0px; width: 272px; height: 72px; }
@@ -91,8 +93,10 @@ button { margin: 0; padding: 0; border: 0px transparent; border-radius: 0px; bac
 #cover-caption { position: absolute; left: 36px; top: 488px; width: 288px; height: 34px; color: #b7c6b5; font-size: 20px; line-height: 30px; text-align: center; }
 .game-detail-label { position: absolute; left: 356px; width: 150px; height: 34px; color: #aebdaa; font-size: 20px; line-height: 30px; }
 .game-detail-value { position: absolute; left: 510px; width: 286px; height: 34px; color: #f2f4e9; font-size: 20px; line-height: 30px; text-align: right; }
-.game-detail-line-0 { top: 202px; } .game-detail-line-1 { top: 260px; } .game-detail-line-2 { top: 318px; }
+.game-detail-line-0 { top: 196px; } .game-detail-line-1 { top: 238px; } .game-detail-line-2 { top: 280px; } .game-detail-line-3 { top: 322px; }
 .game-detail-value.ready { color: #dfe8a6; }
+.game-detail-value.warning { color: #e8b39a; }
+#game-detail-language-note { position: absolute; left: 356px; top: 356px; width: 440px; height: 30px; color: #e8b39a; font-size: 18px; line-height: 28px; text-align: right; }
 .game-path-label { position: absolute; left: 356px; top: 394px; width: 150px; height: 34px; color: #aebdaa; font-size: 20px; line-height: 30px; }
 .game-path { position: absolute; left: 356px; top: 434px; width: 440px; height: 96px; overflow: hidden; color: #f2f4e9; font-size: 20px; line-height: 30px; }
 #game-mode-setting { position: absolute; left: 42px; top: 550px; width: 736px; height: 94px; }

@@ -28,6 +28,8 @@
 #include "core/file_sys/romfs.h"
 #include "core/file_sys/submission_package.h"
 #include "core/file_sys/vfs/vfs_real.h"
+#include "core/hle/service/ns/language.h"
+#include "core/hle/service/set/settings_types.h"
 #include "core/loader/loader.h"
 
 namespace {
@@ -67,6 +69,22 @@ std::string ReadTitle(const FileSys::VirtualDir& romfs) {
         if (name.front()) return name.data();
     }
     return {};
+}
+
+// The supported-language flags of a control RomFS's NACP (bit n is NS ApplicationLanguage n); 0
+// when they cannot be read.
+uint32_t ReadLanguages(const FileSys::VirtualDir& romfs) {
+    auto nacp = romfs->GetFile("control.nacp");
+    if (!nacp) nacp = romfs->GetFile("Control.nacp");
+    FileSys::RawNACP raw{};
+    if (!nacp || nacp->ReadObject(&raw) != sizeof(raw)) return 0;
+    return static_cast<uint32_t>(raw.supported_languages);
+}
+
+// Game file -> its language flags, kept from the Library's metadata pass over the same data.
+std::map<std::string, uint32_t>& GameLanguages() {
+    static std::map<std::string, uint32_t> languages;
+    return languages;
 }
 
 FileSys::VirtualFile FindIcon(const FileSys::VirtualDir& romfs) {
@@ -153,6 +171,7 @@ int eden_extract_game_metadata(const char* rom_path, const char* keys_dir,
     const bool xci = path.size() >= 4 && path.substr(path.size() - 4) == ".xci";
     const auto romfs = OpenControlRomFs(file, xci);
     if (!romfs) return 0;
+    GameLanguages()[rom_path] = ReadLanguages(romfs);
 
     int result = 0;
     const auto extracted_title = ReadTitle(romfs);
@@ -167,6 +186,7 @@ int eden_extract_game_metadata(const char* rom_path, const char* keys_dir,
 
 uint32_t eden_game_supported_languages(const char* rom_path, const char* keys_dir) {
     if (!rom_path || !keys_dir) return 0;
+    if (const auto known = GameLanguages().find(rom_path); known != GameLanguages().end()) return known->second;
     try {
         Common::FS::SetEdenPath(Common::FS::EdenPath::KeysDir, keys_dir);
         FileSys::RealVfsFilesystem vfs;
@@ -177,11 +197,7 @@ uint32_t eden_game_supported_languages(const char* rom_path, const char* keys_di
                        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
         const auto romfs = OpenControlRomFs(file, path.ends_with(".xci"));
         if (!romfs) return 0;
-        auto nacp = romfs->GetFile("control.nacp");
-        if (!nacp) nacp = romfs->GetFile("Control.nacp");
-        FileSys::RawNACP raw{};
-        if (!nacp || nacp->ReadObject(&raw) != sizeof(raw)) return 0;
-        return static_cast<uint32_t>(raw.supported_languages);
+        return GameLanguages()[rom_path] = ReadLanguages(romfs);
     } catch (const std::exception& error) {
         std::fprintf(stderr, "[ProsperoEden] languages: %s\n", error.what());
         return 0;
@@ -192,6 +208,7 @@ namespace {
 struct AddOns {
     std::string update;
     unsigned dlc = 0;
+    uint32_t languages = 0;  // the update's own language flags (its control data replaces the game's)
 };
 // Base title ID -> its update and DLC files, from the last eden_scan_addons.
 std::map<uint64_t, AddOns>& ScannedAddOns() {
@@ -220,6 +237,10 @@ void eden_scan_addons(const char* updates_dir, const char* keys_dir) {
             } else if (const auto version = provider.GetEntryVersion(entry.title_id)) {
                 addons.update = "v" + std::to_string(*version);
             }
+            if (const auto control = provider.GetEntry(entry.title_id, FileSys::ContentRecordType::Control);
+                control && control->GetStatus() == Loader::ResultStatus::Success)
+                if (const auto romfs = control->GetRomFS())
+                    if (const auto files = FileSys::ExtractRomFS(romfs)) addons.languages = ReadLanguages(files);
         }
         std::set<uint64_t> dlc;
         for (const auto& entry : provider.ListEntriesFilter(FileSys::TitleType::AOC, std::nullopt, std::nullopt))
@@ -228,6 +249,28 @@ void eden_scan_addons(const char* updates_dir, const char* keys_dir) {
         std::fprintf(stderr, "[ProsperoEden] updates: %s\n", error.what());
         scanned.clear();
     }
+}
+
+int eden_game_language(const char* rom_path, const char* keys_dir, uint64_t title_id, int chosen) {
+    const auto& codes = Service::Set::available_language_codes;
+    if (chosen < 0 || chosen >= static_cast<int>(codes.size())) return chosen;
+    uint32_t supported = 0;
+    const auto& scanned = ScannedAddOns();
+    if (const auto found = scanned.find(FileSys::GetBaseTitleID(title_id));
+        title_id && found != scanned.end() && !found->second.update.empty())
+        supported = found->second.languages;
+    if (!supported) supported = eden_game_supported_languages(rom_path, keys_dir);
+    namespace NS = Service::NS;
+    const auto application = NS::ConvertToApplicationLanguage(codes[static_cast<std::size_t>(chosen)]);
+    const auto* priorities = application ? NS::GetApplicationLanguagePriorityList(*application) : nullptr;
+    if (!supported || !priorities) return chosen;
+    for (const auto language : *priorities) {
+        if ((supported & NS::GetSupportedLanguageFlag(language)) == 0) continue;
+        const auto match = NS::ConvertToLanguageCode(language);
+        for (std::size_t i = 0; match && i < codes.size(); ++i)
+            if (codes[i] == *match) return static_cast<int>(i);
+    }
+    return chosen;
 }
 
 int eden_game_addons(uint64_t title_id, char* update_version, size_t capacity, unsigned* dlc_count) {

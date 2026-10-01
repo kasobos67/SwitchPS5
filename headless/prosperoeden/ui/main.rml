@@ -26,6 +26,7 @@
         <span class="hero-kicker">CONTINUE PLAYING</span>
         <span id="last-played-title">Your next adventure</span>
         <span id="last-played-caption">Choose a game from your library.</span>
+        <span id="last-played-info"></span>
         <button id="continue-game" class="hero-button"><img class="hero-button-chrome base-chrome" src="chrome/hero-button.tga" width="272" height="72" alt=""/><img class="hero-button-chrome focused-chrome" src="chrome/hero-button-focused.tga" width="272" height="72" alt=""/><span id="continue-copy">Resume game</span></button>
         <button id="hero-options" class="hero-button"><img class="hero-button-chrome base-chrome" src="chrome/hero-button.tga" width="272" height="72" alt=""/><img class="hero-button-chrome focused-chrome" src="chrome/hero-button-focused.tga" width="272" height="72" alt=""/><span>Game details</span></button>
         <span class="hero-footnote">Eden emulator for PlayStation 5</span>
@@ -78,6 +79,8 @@
           <span class="game-detail-label game-detail-line-0">FORMAT</span><span id="game-detail-format" class="game-detail-value game-detail-line-0">-</span>
           <span class="game-detail-label game-detail-line-1">SIZE</span><span id="game-detail-size" class="game-detail-value game-detail-line-1">-</span>
           <span class="game-detail-label game-detail-line-2">ADD-ONS</span><span id="game-detail-addons" class="game-detail-value game-detail-line-2">-</span>
+          <span class="game-detail-label game-detail-line-3">LANGUAGE</span><span id="game-detail-language" class="game-detail-value game-detail-line-3">-</span>
+          <span id="game-detail-language-note"></span>
           <span class="game-path-label">FILE</span><span id="game-detail-path" class="game-path">-</span>
           <span id="game-mode-setting"><img src="chrome/dialog-row-normal.tga" width="736" height="94" alt=""/><span class="game-mode-label">Console mode</span><span id="game-mode-value"><span id="mode-docked" class="mode-option"><img src="icons/mode-docked.tga" width="48" height="32" alt=""/><span>Docked</span></span><span id="mode-handheld" class="mode-option"><img src="icons/mode-handheld.tga" width="48" height="32" alt=""/><span>Handheld</span></span><span id="mode-unavailable">Unavailable</span></span></span>
           <span id="game-mode-hint"><img src="icons/leftright-mono.tga" width="26" height="26" alt=""/><span id="game-mode-hint-text">Change mode. Saved per game.</span></span>
