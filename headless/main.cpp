@@ -740,6 +740,8 @@ int main(int argc, char** argv) {
             Eden::Display::requested_hz.store(Eden::kRefreshHz[refresh]);
             Eden::Display::output_millihertz.store(0);
             setenv(Eden::Display::kVulkanSwitch, refresh ? "1" : "0", 1);
+            Eden::Display::game_millihertz.store(60000);
+            Eden::Display::skipped_frames.store(0);
             Eden::Report("launch", (std::string("Resolution ") + Eden::kResolutionKeys[resolution] + ", " +
                                     Eden::kUpscalingFilterLabels[filter] + ", " + Eden::kRefreshKeys[refresh] +
                                     " Hz").c_str());
@@ -1203,7 +1205,13 @@ int main(int argc, char** argv) {
 #ifdef PS5_NATIVE
                     if (game) {
 #ifdef EDEN_DEV_PROFILE
-                        for (unsigned segment = 0; segment < 12; ++segment) {
+#ifdef EDEN_DEV_VULKAN
+                        // A picture can be asked for (capture-once.txt) for as long as the game runs.
+                        constexpr unsigned segments = ~0u;
+#else
+                        constexpr unsigned segments = 12;
+#endif
+                        for (unsigned segment = 0; segment < segments; ++segment) {
                             bool finished = false;
                             for (unsigned poll = 0; poll < 600; ++poll) {
                                 if (completion->wake.wait_for(lock, std::chrono::milliseconds(50), completed)) {
@@ -1232,7 +1240,7 @@ int main(int argc, char** argv) {
 #endif
                             }
                             if (finished) break;
-                            if (segment == 11) {
+                            if (segment == segments - 1) {
                                 completion->wake.wait(lock, completed);
                                 break;
                             }

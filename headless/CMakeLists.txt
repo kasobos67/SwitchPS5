@@ -1082,6 +1082,20 @@ list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
 list(APPEND core_sources "${PORT_BUILD_DIR}/ips_layer.cpp" "${PORT_BUILD_DIR}/patch_manager.cpp")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
+# The rate of the vsync clock a game runs on (60 Hz, or what an FPS patch asks for: 120, 240) is
+# published for the renderer: frames a display has no refresh for are not presented
+# (headless/display_refresh.h).
+file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/service/vi/conductor.cpp" conductor_source)
+string(PREPEND conductor_source "#include \"${EDEN_PORT_DIR}/display_refresh.h\"\n")
+eden_patch(conductor_source
+    "    const f32 effective_fps = 60.f / static_cast<f32>(m_swap_interval);\n    return static_cast<s64>(speed_scale * (1000000000.f / effective_fps));"
+    "    const f32 effective_fps = 60.f / static_cast<f32>(m_swap_interval);\n    ::Eden::Display::game_millihertz.store(static_cast<int>(effective_fps * 1000.f / speed_scale),\n                                           std::memory_order_relaxed);\n    return static_cast<s64>(speed_scale * (1000000000.f / effective_fps));")
+write_derived("${PORT_BUILD_DIR}/vi_conductor.cpp" "${conductor_source}")
+get_target_property(core_sources core SOURCES)
+list(REMOVE_ITEM core_sources hle/service/vi/conductor.cpp)
+list(APPEND core_sources "${PORT_BUILD_DIR}/vi_conductor.cpp")
+set_property(TARGET core PROPERTY SOURCES "${core_sources}")
+
 # Nvdrv sessions borrow process memory until their final handles are unmapped.
 # Retain the process across that interval, including service shutdown ordering.
 file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/service/nvdrv/core/container.cpp" nvcontainer)

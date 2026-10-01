@@ -619,10 +619,13 @@ void GraphicsWindow::OnFrameDisplayed() {
 #endif
             frame_sample_last = now;
             if (now - frame_sample_start >= 5.0) {
-                std::printf("EDEN_VULKAN_FRAME frames=%u seconds=%.6f fps=%.3f worst_ms=%.3f total=%u\n",
+                // The game's frames; the ones a slower display did not show are counted apart.
+                std::printf("EDEN_VULKAN_FRAME frames=%u seconds=%.6f fps=%.3f worst_ms=%.3f total=%u "
+                            "not_shown=%u clock_hz=%.1f\n",
                     frame_sample_count, now - frame_sample_start,
                     frame_sample_count / (now - frame_sample_start),
-                    frame_sample_worst * 1000.0, frame_total);
+                    frame_sample_worst * 1000.0, frame_total, Display::skipped_frames.load(),
+                    Display::game_millihertz.load() / 1000.0);
 #ifdef EDEN_DEV_PROFILE
                 std::printf("EDEN_VULKAN_INTERVALS v1=%u v2=%u v3=%u v4plus=%u half=%u\n", interval_hist[0],
                             interval_hist[1], interval_hist[2], interval_hist[3], interval_hist[4]);

@@ -537,6 +537,19 @@ adapt('src/video_core/renderer_vulkan/renderer_vulkan.h',
     ('    void Composite(', '    void PresentLoading();\n    void Composite('),
 ])
 adapt('src/video_core/renderer_vulkan/renderer_vulkan.cpp', 'vulkan_renderer.cpp', [
+    ('#include "video_core/renderer_vulkan/renderer_vulkan.h"',
+     '#include "video_core/renderer_vulkan/renderer_vulkan.h"\n#include "display_refresh.h"'),
+    # A frame the display has no refresh for is not presented: a game patched for more frames
+    # than the output shows keeps its pace instead of waiting for a refresh per frame
+    # (headless/display_refresh.h). The frame still ends as any other.
+    ('    RenderScreenshot(framebuffers);\n    Frame* frame = present_manager.GetRenderFrame();',
+     '    RenderScreenshot(framebuffers);\n'
+     '    if (::Eden::Display::SkipFrame()) {\n'
+     '        gpu.RendererFrameEndNotify();\n'
+     '        rasterizer.TickFrame();\n'
+     '        return;\n'
+     '    }\n'
+     '    Frame* frame = present_manager.GetRenderFrame();'),
     ('    Report();', '    PresentLoading();\n    Report();'),
     ('swapchain.GetImageViewFormat());', 'swapchain.GetImageViewFormat(), true);'),
     ('layout, 1, format);', 'layout, 1, format, true);'),

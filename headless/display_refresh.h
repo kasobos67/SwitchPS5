@@ -5,6 +5,7 @@
 // setting; otherwise the session presents at 60 Hz. The launcher always runs at 60 Hz.
 #pragma once
 #include <atomic>
+#include <chrono>
 
 namespace Eden::Display {
 // 60 or 120, set before a session's renderer starts.
@@ -18,4 +19,34 @@ inline constexpr const char* kVulkanSwitch = "EDEN_VIDEOOUT_120HZ";
 // 120 Hz sessions (its docs/lifecycle-reopen.md). Set by the Vulkan surface that took 120 Hz.
 inline std::atomic<bool> settle{false};
 inline constexpr int kSettleSeconds = 5;
+
+// The rate the emulator's vsync clock gives the game, in millihertz: 60000 for a game that swaps
+// every vsync, 30000 for every second one, and what an FPS patch asks for (120000, 240000: a swap
+// interval of 0, or a percentage of 60 Hz). Kept by the clock itself (Eden's vi/conductor.cpp,
+// derived in CMakeLists.txt).
+inline std::atomic<int> game_millihertz{60000};
+// Frames left out since the session began (SkipFrame).
+inline std::atomic<unsigned> skipped_frames{0};
+
+// Whether the frame the game just made is left out. True only when the game's clock runs faster
+// than the output refreshes (240 FPS on a 120 Hz output, 120 FPS on a 60 Hz one) and the last
+// frame shown is less than three quarters of a refresh old. The display then shows every second
+// or fourth frame, and the game keeps its pace instead of waiting for a refresh per frame. A game
+// that is slower than its clock loses nothing: its frames are further apart than that.
+// The renderer's thread calls it, once per frame.
+inline bool SkipFrame() {
+    const int output = output_millihertz.load(std::memory_order_relaxed);
+    const int game = game_millihertz.load(std::memory_order_relaxed);
+    if (output <= 0 || game <= output + output / 20) return false;
+    static long long last_shown_ns = 0;
+    const long long now_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+    const long long refresh_ns = 1'000'000'000'000LL / output;
+    if (now_ns - last_shown_ns < refresh_ns * 3 / 4) {
+        skipped_frames.fetch_add(1, std::memory_order_relaxed);
+        return true;
+    }
+    last_shown_ns = now_ns;
+    return false;
+}
 } // namespace Eden::Display
