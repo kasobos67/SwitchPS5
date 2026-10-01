@@ -91,7 +91,16 @@ void check_pchtxt() {
         "00000040 01 // one byte\n"
         "@disabled\n"
         "00000030 FFFFFFFF\n"
-        "@enabled\n";
+        "@enabled\n"
+        // What patch files carry besides records: their authors' names and links. None of it is a
+        // record or a flag (read as such, it wrote over the start of the code and the build ID).
+        "@somebody\r\n"
+        "@nobody-here\r\n"
+        "@blender\r\n"
+        "https://example.invalid/somebody\r\n"
+        "Special thanks to the team!\r\n"
+        "Contributors (thank you)\r\n"
+        "Somebody#1234, Another One#5678\r\n";
     // A value longer than the pinned code's 248-byte record.
     std::string wide = "00000200 ";
     for (int i = 0; i < 300; ++i) wide += "5A";
@@ -113,6 +122,7 @@ void check_pchtxt() {
             bytes[0x124] == original[0x124], "text values");
     require(bytes[0x140] == 0x01 && bytes[0x141] == original[0x141], "a value before a comment");
     require(bytes[0x130] == original[0x130], "a disabled patch is skipped");
+    for (std::size_t i = 0x100; i < 0x110; ++i) require(bytes[i] == original[i], "credits are not records");
     for (std::size_t i = 0x300; i < 0x300 + 300; ++i) require(bytes[i] == 0x5A, "a long value");
     require(bytes[0x300 + 300] == original[0x300 + 300], "a long value ends where it should");
     require(bytes[0x150] == original[0x150], "nothing after @stop");
