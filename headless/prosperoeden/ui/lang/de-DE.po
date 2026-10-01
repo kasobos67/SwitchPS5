@@ -23,6 +23,14 @@ msgstr "1x (nativ)"
 msgid "2x (sharpest)"
 msgstr "2x (am schärfsten)"
 
+#: settings_store.h
+msgid "3x (slower)"
+msgstr "3x (langsamer)"
+
+#: settings_store.h
+msgid "4x (slowest)"
+msgstr "4x (am langsamsten)"
+
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "Eine Firmware-NCA ist nicht lesbar. Installiere den Firmware-Dump neu."

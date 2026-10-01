@@ -23,6 +23,14 @@ msgstr "1x（原生）"
 msgid "2x (sharpest)"
 msgstr "2x（最清晰）"
 
+#: settings_store.h
+msgid "3x (slower)"
+msgstr "3x（更慢）"
+
+#: settings_store.h
+msgid "4x (slowest)"
+msgstr "4x（最慢）"
+
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "无法读取固件 NCA。请重新安装固件。"

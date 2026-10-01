@@ -72,8 +72,14 @@ int main() {
     assert(video.resolution == 1 && video.upscaling_filter == 1 && video.volume == 40);
     assert(Read(file).find("\"resolution\": \"0.75x\"") != std::string::npos);
     assert(Read(file).find("\"upscaling_filter\": \"fsr\"") != std::string::npos);
-    video.resolution = 5;
+    // The largest scale is 4x; nothing beyond the list is saved.
+    video.resolution = 6;
+    assert(Eden::SavePreferences(video, file) && Eden::LoadPreferences(file).resolution == 6);
+    assert(Read(file).find("\"resolution\": \"4x\"") != std::string::npos);
+    video.resolution = int(std::size(Eden::kResolutionKeys));
     assert(!Eden::SavePreferences(video, file));
+    video.resolution = 1;
+    assert(Eden::SavePreferences(video, file));
 
     // Refresh rate (Settings > Video): 60 Hz unless 120 Hz is chosen; other values are refused or
     // read as 60 Hz.

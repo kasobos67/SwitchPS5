@@ -724,7 +724,9 @@ int main(int argc, char** argv) {
             // Settings > Video: internal resolution and the filter scaling it to the output.
             static constexpr Settings::ResolutionSetup resolutions[] = {
                 Settings::ResolutionSetup::Res1_2X, Settings::ResolutionSetup::Res3_4X, Settings::ResolutionSetup::Res1X,
-                Settings::ResolutionSetup::Res3_2X, Settings::ResolutionSetup::Res2X};
+                Settings::ResolutionSetup::Res3_2X, Settings::ResolutionSetup::Res2X, Settings::ResolutionSetup::Res3X,
+                Settings::ResolutionSetup::Res4X};
+            static_assert(std::size(resolutions) == std::size(Eden::kResolutionKeys));
             static constexpr Settings::ScalingFilter filters[] = {
                 Settings::ScalingFilter::Bilinear, Settings::ScalingFilter::Fsr, Settings::ScalingFilter::Bicubic,
                 Settings::ScalingFilter::NearestNeighbor};

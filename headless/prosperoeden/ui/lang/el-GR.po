@@ -23,6 +23,14 @@ msgstr "1x (εγγενές)"
 msgid "2x (sharpest)"
 msgstr "2x (το πιο ευκρινές)"
 
+#: settings_store.h
+msgid "3x (slower)"
+msgstr "3x (πιο αργό)"
+
+#: settings_store.h
+msgid "4x (slowest)"
+msgstr "4x (το πιο αργό)"
+
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "Δεν είναι δυνατή η ανάγνωση ενός NCA του firmware. Εγκαταστήστε ξανά το firmware."

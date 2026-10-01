@@ -23,6 +23,14 @@ msgstr "1x (рідна)"
 msgid "2x (sharpest)"
 msgstr "2x (найчіткіше)"
 
+#: settings_store.h
+msgid "3x (slower)"
+msgstr "3x (повільніше)"
+
+#: settings_store.h
+msgid "4x (slowest)"
+msgstr "4x (найповільніше)"
+
 #: eden_services.cpp
 msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
 msgstr "Не вдалося прочитати один із файлів NCA прошивки. Установіть дамп прошивки заново."
