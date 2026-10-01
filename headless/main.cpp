@@ -60,6 +60,7 @@ extern "C" std::int64_t sceKernelGetDirectMemorySize();
 #include "core/frontend/graphics_context.h"
 #include "core/hle/service/am/applet_manager.h"
 #include "core/hle/service/am/frontend/applets.h"
+#include "core/file_sys/registered_cache.h"
 #include "core/hle/service/filesystem/filesystem.h"
 #include "core/hle/service/set/settings_types.h"
 #include "hid_core/frontend/emulated_controller.h"
@@ -757,6 +758,16 @@ int main(int argc, char** argv) {
                 // base game: Eden's ExternalContentProvider, which the patch manager checks first.
                 Settings::values.external_content_dirs = {Eden::AssetsPath("updates")};
                 system.GetFileSystemController().CreateFactories(*system.GetFilesystem());
+                // The game's own contents, registered as Eden's desktop frontends do before booting a
+                // game (ConfigureFilesystemProvider). An update's data is a patch on the base game's:
+                // the patch manager looks the base up here, and without it applied only the update's
+                // code, which then ran against the old data. It also gives Eden the game's control data.
+                static FileSys::ManualContentProvider game_contents;
+                game_contents.ClearAllEntries();
+                if (game && guest && !game_contents.AddEntriesFromContainer(
+                        system.GetFilesystem()->OpenFile(guest, FileSys::OpenMode::Read)))
+                    Eden::Report("loader", "Game contents not registered; an update's data will not apply");
+                system.RegisterContentProvider(FileSys::ContentProviderUnionSlot::FrontendManual, &game_contents);
                 if (pad) {
                     // A game's "connect controllers" screen: one player per PS5 controller in use.
                     Service::AM::Frontend::FrontendAppletSet applets;
