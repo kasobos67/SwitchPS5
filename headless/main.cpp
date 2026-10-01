@@ -32,6 +32,7 @@
 #include "diagnostics.h"
 #include "log_pipe.h"
 #include "controller_applet.h"
+#include "error_applet.h"
 #include "preferences.h"
 #include "metadata_bridge.h"
 #ifdef EDEN_PS5_OPENGL
@@ -545,9 +546,12 @@ int main(int argc, char** argv) {
                 } else if (entry == "jit_dups=on") {
                     // Which cores compiled each A64 block, and when (EDEN_PERF_DUPLICATES).
                     Eden::Performance::jit_duplicate_tracking = true;
-                } else if (entry == "jit_list=on") {
-                    // Save the blocks this session compiles and compile the saved ones ahead (jit_list.h).
-                    Eden::JitList::enabled = true;
+                } else if (entry == "applets=firmware") {
+                    // Eden's default library applets: several run from the firmware as guest programs.
+                    Eden::Performance::firmware_applets = true;
+                } else if (entry == "jit_list=on" || entry == "jit_list=off") {
+                    // The saved block list (jit_list.h): off unless asked for.
+                    Eden::JitList::enabled = entry.ends_with("on");
                 } else if (entry == "jit_shared=off") {
                     // Every guest core keeps its own compiled blocks (headless/dynarmic/jit_group.h).
                     eden_jit_shared = false;
@@ -694,10 +698,27 @@ int main(int argc, char** argv) {
 #endif
         Settings::values.sink_id = Settings::AudioEngine::Null;
         Settings::values.use_multi_core = true;
+        // A game's library applets (its error dialog, profile picker, amiibo screen, Mii editor,
+        // manual, album...) are Eden's built-in ones. Eden's defaults start several of them from
+        // the firmware as a second guest program. Nothing can operate those here, and the error
+        // applet started that way ran a game's session out of graphics memory on the console
+        // (CreateBuffer: VK_ERROR_OUT_OF_DEVICE_MEMORY as the applet started). The built-in ones
+        // answer at once: the error is logged (error_applet.h), the first profile is chosen, the
+        // others close.
+        // (dev-settings applets=firmware keeps Eden's defaults.)
 #ifdef EDEN_DEV_PROFILE
-        // Use Eden's existing Mii creation frontend for unattended first-run setup.
-        Settings::values.mii_edit_applet_mode = Settings::AppletMode::HLE;
+        if (!Eden::Performance::firmware_applets)
 #endif
+        {
+            Settings::values.cabinet_applet_mode = Settings::AppletMode::HLE;
+            Settings::values.error_applet_mode = Settings::AppletMode::HLE;
+            Settings::values.net_connect_applet_mode = Settings::AppletMode::HLE;
+            Settings::values.player_select_applet_mode = Settings::AppletMode::HLE;
+            Settings::values.mii_edit_applet_mode = Settings::AppletMode::HLE;
+            Settings::values.photo_viewer_applet_mode = Settings::AppletMode::HLE;
+            Settings::values.offline_web_applet_mode = Settings::AppletMode::HLE;
+            Settings::values.my_page_applet_mode = Settings::AppletMode::HLE;
+        }
         // The PS5 build bounds Eden's GPU command queue below, so the CPU and renderer can run in
         // parallel without accumulating the multi-frame controller lag of the upstream queue.
         Settings::values.use_asynchronous_gpu_emulation = true;
@@ -813,10 +834,12 @@ int main(int argc, char** argv) {
                         system.GetFilesystem()->OpenFile(guest, FileSys::OpenMode::Read)))
                     Eden::Report("loader", "Game contents not registered; an update's data will not apply");
                 system.RegisterContentProvider(FileSys::ContentProviderUnionSlot::FrontendManual, &game_contents);
-                if (pad) {
-                    // A game's "connect controllers" screen: one player per PS5 controller in use.
+                {
                     Service::AM::Frontend::FrontendAppletSet applets;
-                    applets.controller = std::make_unique<Eden::PadControllerApplet>(system.HIDCore(), *pad);
+                    // A game's "connect controllers" screen: one player per PS5 controller in use.
+                    if (pad) applets.controller = std::make_unique<Eden::PadControllerApplet>(system.HIDCore(), *pad);
+                    // A game's error dialog: logged and closed, so the game carries on.
+                    applets.error = std::make_unique<Eden::LoggedErrorApplet>();
                     system.GetFrontendAppletHolder().SetFrontendAppletSet(std::move(applets));
                 }
                 Service::AM::FrontendAppletParameters params{

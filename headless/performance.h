@@ -37,6 +37,9 @@ inline std::atomic<bool> pc_fast{false};
 // Development: honour capture-once.txt from a session's first 30 s segment instead of its fifth
 // (dev-settings capture=early; the runner's lifecycle returns need a capture within ~80 s).
 inline std::atomic<bool> capture_early{false};
+// Development: keep Eden's default library applets, which start some from the firmware
+// (dev-settings applets=firmware). The port otherwise uses the built-in ones (main.cpp).
+inline std::atomic<bool> firmware_applets{false};
 #endif
 // One writer per guest core. JIT state is read only by its owning worker after Run.
 enum class CpuPhase : unsigned { Kernel, Guest, Idle };
