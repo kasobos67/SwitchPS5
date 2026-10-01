@@ -192,9 +192,19 @@ int main(int argc, char** argv) {
             if (Eden::FilesystemAccess() && Eden::AssetsDir() == Eden::kDefaultAssetsDir)
                 for (const char* folder : {"/keys", "/firmware", "/roms", "/updates", "/ryujinx"})
                     (void)mkdir((std::string{Eden::kDefaultAssetsDir} + folder).c_str(), 0777);
-            // RADV keeps its shader cache in the app folder (radv_ps5_platform.c's default is /app0).
-            if (Eden::FilesystemAccess())
-                setenv("MESA_SHADER_CACHE_DIR", Eden::AppFile("radv-shader-cache").c_str(), 1);
+            // RADV's shader cache is kept with the app's data (its own default is /app0), so it also
+            // works when the app is installed as a read-only package image. The cache an earlier
+            // version kept in the app folder moves over.
+            if (Eden::FilesystemAccess()) {
+                const std::string cache = std::string{Eden::kDataDir} + "/cache/radv";
+                const std::string before = Eden::AppFile("radv-shader-cache");
+                (void)mkdir((std::string{Eden::kDataDir} + "/cache").c_str(), 0777);
+                if (!Eden::DirectoryExists(cache) && Eden::DirectoryExists(before) &&
+                    std::rename(before.c_str(), cache.c_str()) != 0)
+                    Eden::Report("cache", "The driver's shader cache could not move to the data folder; it starts empty");
+                (void)mkdir(cache.c_str(), 0777);
+                setenv("MESA_SHADER_CACHE_DIR", cache.c_str(), 1);
+            }
         }
         report = std::fopen(Eden::LogFile("result.tsv").c_str(), "w");
         if (!report) { report = stdout; return 2; }
