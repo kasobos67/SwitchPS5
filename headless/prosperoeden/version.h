@@ -4,5 +4,5 @@
 #pragma once
 
 namespace Eden {
-inline constexpr const char* kAppVersion = "01.000.040";
+inline constexpr const char* kAppVersion = "01.000.030";
 }

@@ -105,7 +105,7 @@ class Services
     // ---- home ----
     virtual Home home() = 0;
     virtual std::string clock() = 0;   // "14:05"
-    virtual std::string version() = 0; // "v1.000.040"
+    virtual std::string version() = 0; // "v1.000.030"
 
     // ---- library ----
     virtual std::vector<Game> games() = 0; // reads every game file: slow
