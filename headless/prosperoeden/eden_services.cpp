@@ -463,6 +463,7 @@ pe::ui::Preferences EdenServices::preferences() {
     result.resolution = saved.resolution;
     result.filter = saved.upscaling_filter;
     result.refresh = saved.refresh;
+    result.output = saved.output;
     result.vibration = saved.vibration;
     result.language = saved.language;
     result.menu_volume = saved.menu_volume;
@@ -482,6 +483,7 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.resolution = preferences.resolution;
     value.upscaling_filter = preferences.filter;
     value.refresh = preferences.refresh;
+    value.output = preferences.output;
     value.vibration = preferences.vibration;
     value.language = preferences.language;
     value.menu_volume = preferences.menu_volume;

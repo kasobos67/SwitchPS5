@@ -190,6 +190,7 @@ void Launcher::update(float dt)
     settings_.update(dt);
     files_.update(dt);
     language_.update(dt);
+    video_rows_.update(dt);
     game_rows_.update(dt);
     mod_rows_.update(dt);
     mode_.target = selected_docked_ ? 0.0f : 1.0f;

@@ -3,11 +3,18 @@
 // settings) asks for, and what the display took. 120 Hz needs the package to declare it
 // (tools/package-headless-native.sh), a display that shows it and the console's own 120 Hz output
 // setting; otherwise the session presents at 60 Hz. The launcher always runs at 60 Hz.
+// Also the size of the picture a session puts out.
 #pragma once
 #include <atomic>
 #include <chrono>
 
 namespace Eden::Display {
+// Settings > Video > Output resolution: 1920x1080, 2560x1440 or 3840x2160, set before a session's
+// renderer starts. It is the size of the game's frame after its upscaling filter. The OpenGL
+// renderer's surface has that size and the console scales it to the TV; the Vulkan renderer's
+// frame has that size and is copied to the driver's 3840x2160 output (scaled when it is smaller).
+inline std::atomic<int> output_width{1920};
+inline std::atomic<int> output_height{1080};
 // 60 or 120, set before a session's renderer starts.
 inline std::atomic<int> requested_hz{60};
 // What the renderer's output runs at, in millihertz (59940, 119880); 0 before it opened.

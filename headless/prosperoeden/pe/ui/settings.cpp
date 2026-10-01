@@ -40,6 +40,32 @@ constexpr const char *kHeadings[kCategoryCount] = {
     TR("VIDEO"), TR("AUDIO"), TR("CONTROLS"), TR("ACCESSIBILITY"), TR("DIAGNOSTICS"), TR("GAME FILES"),
     TR("LANGUAGE")};
 
+// The Video dialog's rows, and the window that shows five of them (placed as a game's settings
+// are).
+enum VideoRow : int
+{
+    video_renderer,
+    video_output,
+    video_resolution,
+    video_filter,
+    video_refresh,
+    video_overlay,
+    kVideoRows,
+};
+constexpr float kVideoRowsTop = 334.0f;
+constexpr float kVideoRowPitch = 96.0f;
+constexpr float kVideoRowHeight = 94.0f;
+constexpr int kVideoRowsShown = 5;
+constexpr Rect kVideoWindow{592.0f, kVideoRowsTop, 736.0f,
+                            kVideoRowPitch * (kVideoRowsShown - 1) + kVideoRowHeight};
+// The sizes of Preferences::output, as every language writes them.
+constexpr const char *kOutputs[] = {"1080p", "1440p", "2160p"};
+
+const char *output_name(int output)
+{
+    return kOutputs[std::clamp(output, 0, 2)];
+}
+
 const char *on_off(bool value)
 {
     return value ? tr("On") : tr("Off");
@@ -94,6 +120,9 @@ void Launcher::press_settings(Key key)
             break;
         case kVideo:
             open_modal(Modal::video);
+            video_rows_.visible = kVideoRowsShown;
+            video_rows_.pitch = kVideoRowPitch;
+            video_rows_.reset(kVideoRows, 0);
             break;
         case kAudio:
             open_modal(Modal::audio);
@@ -179,6 +208,7 @@ void Launcher::draw_settings(Canvas &c)
     case kVideo:
         about = tr("Graphics backend and how games are scaled to your TV.");
         lines = {{tr("RENDERER"), prefs_.renderer != 0 ? tr("Vulkan (recommended)") : "OpenGL"},
+                 {tr("OUTPUT RESOLUTION"), output_name(prefs_.output)},
                  {tr("RESOLUTION"), pick(services_.resolution_labels(), prefs_.resolution)},
                  {tr("UPSCALING FILTER"), pick(services_.filter_labels(), prefs_.filter)},
                  {tr("REFRESH RATE"), hertz(prefs_.refresh)},
@@ -225,9 +255,11 @@ void Launcher::draw_settings(Canvas &c)
     text(c, tr(kHeadings[settings_.selected]), 1016.0f, baseline(458.0f, 30.0f, theme::kSmall),
          theme::kSmall, theme::kLime, Align::left, 3.0f);
     text_shrink(c, about, 1016.0f, baseline(494.0f, 32.0f, 22.0f), 22.0f, theme::kCopy, 748.0f);
+    // Five lines sit 62 apart; Video's six move closer to stay inside the panel.
+    const float pitch = lines.size() > 5 ? 52.0f : 62.0f;
     for (std::size_t i = 0; i < lines.size(); ++i)
     {
-        const float top = 562.0f + 62.0f * static_cast<float>(i);
+        const float top = 562.0f + pitch * static_cast<float>(i);
         const float value =
             text_shrink(c, lines[i].value, 1764.0f, baseline(top, 36.0f, theme::kText24),
                         theme::kText24, theme::kValue, 470.0f, Align::right);
@@ -250,7 +282,7 @@ int Launcher::dialog_rows(Modal modal) const
     switch (modal)
     {
     case Modal::video:
-        return 5;
+        return kVideoRows;
     case Modal::audio:
     case Modal::accessibility:
         return 3;
@@ -270,7 +302,8 @@ float Launcher::dialog_row_top(Modal modal, int row) const
     case Modal::audio:
     case Modal::accessibility:
         return 370.0f + 102.0f * static_cast<float>(row);
-    case Modal::video: // five rows, placed as the game's settings are
+    case Modal::video: // five of its rows show; the list scrolls to the others
+        return kVideoRowsTop + kVideoRowPitch * static_cast<float>(row) - video_rows_.scroll();
     case Modal::game:
         return 334.0f + 96.0f * static_cast<float>(row);
     default:
@@ -289,6 +322,16 @@ void Launcher::press_dialog(Key key)
         close_modal();
         return;
     }
+    if ((key == Key::up || key == Key::down) && modal_ == Modal::video)
+    {
+        if (video_rows_.move(key == Key::down ? 1 : -1))
+        {
+            option_ = video_rows_.selected;
+            message_.clear();
+            cue(Cue::focus);
+        }
+        return;
+    }
     if ((key == Key::up || key == Key::down) && rows > 1)
     {
         option_ = (option_ + (key == Key::down ? 1 : rows - 1)) % rows;
@@ -304,19 +347,25 @@ void Launcher::press_dialog(Key key)
     switch (modal_)
     {
     case Modal::video:
-        if (option_ == 0)
+        if (option_ == video_renderer)
             prefs_.renderer = prefs_.renderer != 0 ? 0 : 1;
-        else if (option_ == 1)
+        else if (option_ == video_output)
+        {
+            // The menu follows at once (the frontend opens its display again at this size).
+            const int count = static_cast<int>(std::size(kOutputs));
+            prefs_.output = (std::clamp(prefs_.output, 0, count - 1) + step + count) % count;
+        }
+        else if (option_ == video_resolution)
         {
             const int count = static_cast<int>(services_.resolution_labels().size());
             prefs_.resolution = (prefs_.resolution + step + count) % count;
         }
-        else if (option_ == 2)
+        else if (option_ == video_filter)
         {
             const int count = static_cast<int>(services_.filter_labels().size());
             prefs_.filter = (prefs_.filter + step + count) % count;
         }
-        else if (option_ == 3)
+        else if (option_ == video_refresh)
             prefs_.refresh = prefs_.refresh != 0 ? 0 : 1;
         else
             prefs_.hud = !prefs_.hud;
@@ -362,7 +411,7 @@ void Launcher::press_dialog(Key key)
         prefs_ = before;
         sound = Cue::error;
     }
-    else if (modal_ == Modal::video && option_ == 3 && prefs_.refresh == 1)
+    else if (modal_ == Modal::video && option_ == video_refresh && prefs_.refresh == 1)
     {
         // 120 Hz is a request: the display has the last word.
         say(tr("Saved. A display that cannot show 120 Hz stays at 60 Hz."));
@@ -411,9 +460,25 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
                 Color::rgb(0xbecbb9), 736.0f);
 
     const int rows = dialog_rows(modal);
-    for (int row = 0; row < rows; ++row)
+    // Video's rows scroll in a window of five; the other dialogs show all of theirs.
+    const bool scrolls = modal == Modal::video;
+    const int first = scrolls ? video_rows_.first_row() : 0;
+    const int last = scrolls ? video_rows_.last_row() : rows - 1;
+    if (scrolls)
+        list.push_clip({kVideoWindow.x - 24.0f, kVideoWindow.y - 6.0f, kVideoWindow.w + 48.0f,
+                        kVideoWindow.h + 12.0f});
+    for (int row = first; row <= last; ++row)
+    {
+        list.push_opacity(scrolls ? video_rows_.row_alpha(row, kVideoRowHeight) : 1.0f);
         plate_rest(c, kRowPlate, {592.0f, dialog_row_top(modal, row), 736.0f, 94.0f});
-    plate_focus(c, kRowPlate, {592.0f, option_cursor_.value, 736.0f, 94.0f}, 1.0f);
+        list.pop_opacity();
+    }
+    plate_focus(c, kRowPlate,
+                {592.0f,
+                 scrolls ? kVideoRowsTop + video_rows_.cursor() - video_rows_.scroll() :
+                           option_cursor_.value,
+                 736.0f, 94.0f},
+                1.0f);
 
     // A row's name takes what its control (`taken` wide, at the right) leaves of the row.
     const auto label = [&](int row, const char *value, float taken)
@@ -434,14 +499,33 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     switch (modal)
     {
     case Modal::video:
-        label(0, tr("Renderer"),
-              choice(0, prefs_.renderer != 0 ? tr("Vulkan (recommended)") : "OpenGL"));
-        label(1, tr("Resolution"), choice(1, pick(services_.resolution_labels(), prefs_.resolution)));
-        label(2, tr("Upscaling filter"), choice(2, pick(services_.filter_labels(), prefs_.filter)));
-        label(3, tr("Refresh rate"), choice(3, hertz(prefs_.refresh)));
-        label(4, tr("FPS overlay"), kToggle);
-        toggle(c, 1292.0f, row_centre(4), knob);
+    {
+        const std::string values[] = {
+            prefs_.renderer != 0 ? tr("Vulkan (recommended)") : "OpenGL",
+            output_name(prefs_.output),
+            pick(services_.resolution_labels(), prefs_.resolution),
+            pick(services_.filter_labels(), prefs_.filter),
+            hertz(prefs_.refresh),
+        };
+        static constexpr const char *kNames[kVideoRows] = {
+            TR("Renderer"),         TR("Output resolution"), TR("Resolution"),
+            TR("Upscaling filter"), TR("Refresh rate"),      TR("FPS overlay")};
+        for (int row = first; row <= last; ++row)
+        {
+            list.push_opacity(video_rows_.row_alpha(row, kVideoRowHeight));
+            if (row == video_overlay)
+            {
+                label(row, tr(kNames[row]), kToggle);
+                toggle(c, 1292.0f, row_centre(row), knob);
+            }
+            else
+            {
+                label(row, tr(kNames[row]), choice(row, values[row]));
+            }
+            list.pop_opacity();
+        }
         break;
+    }
     case Modal::audio:
     {
         // A level row: its value at the right, the bar ending 20 before it (or where "100%"
@@ -517,6 +601,12 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         label(0, tr("Detailed logging"), kToggle);
         toggle(c, 1292.0f, row_centre(0), knob);
         break;
+    }
+
+    if (scrolls)
+    {
+        list.pop_clip();
+        scrollbar(c, video_rows_, 1340.0f, kVideoWindow.y, kVideoWindow.h);
     }
 
     // Under the rows: Video's five end lower than the other dialogs' three.

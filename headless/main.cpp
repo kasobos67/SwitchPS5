@@ -744,8 +744,12 @@ int main(int argc, char** argv) {
             setenv(Eden::Display::kVulkanSwitch, refresh ? "1" : "0", 1);
             Eden::Display::game_millihertz.store(60000);
             Eden::Display::skipped_frames.store(0);
+            // The size of the picture the session puts out (Settings > Video > Output resolution).
+            Eden::Display::output_width.store(Eden::kOutputWidth[video.output]);
+            Eden::Display::output_height.store(Eden::kOutputHeight[video.output]);
             Eden::Report("launch", (std::string("Resolution ") + Eden::kResolutionKeys[resolution] + ", " +
-                                    Eden::kUpscalingFilterLabels[filter] + ", " + Eden::kRefreshKeys[refresh] +
+                                    Eden::kUpscalingFilterLabels[filter] + ", output " +
+                                    Eden::kOutputKeys[video.output] + ", " + Eden::kRefreshKeys[refresh] +
                                     " Hz").c_str());
             // What a crash report says was running.
             char title_id[20];
@@ -761,7 +765,8 @@ int main(int argc, char** argv) {
             Eden::Crash::SetSession("game " + std::filesystem::path(guest).filename().string() + " (" + title_id +
                                     "), " + Eden::BackendName(backend) + ", resolution " +
                                     Eden::kResolutionKeys[resolution] + ", " + Eden::kUpscalingFilterLabels[filter] +
-                                    ", " + Eden::kRefreshKeys[refresh] + " Hz, mods: " + mods,
+                                    ", output " + Eden::kOutputKeys[video.output] + ", " +
+                                    Eden::kRefreshKeys[refresh] + " Hz, mods: " + mods,
                                     true);
         }
 #endif

@@ -14,7 +14,10 @@ void main() {
                                    float(text.loading - 1u) * 0.001), 1.0);
         return;
     }
+    // The overlay: x and y are where its text starts, width the picture's height. The text is
+    // laid out for a picture 1080 rows high (a glyph's cell is 4 pixels there).
     ivec2 p = ivec2(gl_FragCoord.xy) - ivec2(text.x, text.y);
+    float cell_size = 4.0 * float(text.width) / 1080.0;
     // Vulkan push-constant arrays require dynamically uniform indices. Load
     // each word at a constant index before the per-pixel local-array lookup.
     uint glyphs[24] = uint[24](
@@ -26,7 +29,7 @@ void main() {
         text.glyphs[20], text.glyphs[21], text.glyphs[22], text.glyphs[23]);
     bool ink = false;
     if (p.x >= 0 && p.y >= 0) {
-        ivec2 cell = p / 4;
+        ivec2 cell = ivec2(vec2(p) / cell_size);
         int i = cell.x / 4;
         int x = cell.x % 4;
         if (i < 24 && x < 3 && cell.y < 5)

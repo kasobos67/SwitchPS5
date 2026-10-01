@@ -38,6 +38,16 @@ class Launcher
     {
         return prefs_.menu_volume;
     }
+    // The size the picture is put out at, as set in Settings > Video (Preferences::output). The
+    // frontend opens its display again when it changes, and then names its new font texture.
+    int output() const
+    {
+        return prefs_.output;
+    }
+    void set_font_texture(std::uint32_t texture)
+    {
+        fonts_.texture = texture;
+    }
     bool done() const
     {
         return done_;
@@ -200,6 +210,7 @@ class Launcher
     int option_ = 0;
     tween::Spring option_cursor_; // highlight position in pixels
     std::array<tween::Spring, 4> switches_{};
+    ListView video_rows_; // the Video dialog's rows (more than it shows)
     GameSettings game_settings_;
     bool game_docked_ = true;
     SaveSource import_source_ = SaveSource::none; // what Save data could import for the game

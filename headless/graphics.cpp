@@ -7,6 +7,7 @@
 #if __has_include(<ps5_opengl_display_modes.h>)
 #include <ps5_opengl_display_modes.h>  // the output's refresh rate (display_refresh.h)
 #endif
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <stdexcept>
@@ -402,9 +403,10 @@ private:
             const char* sources[]{
                 "#version 330 core\nvoid main(){vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);"
                 "gl_Position=vec4(p*2.0-1.0,0.0,1.0);}",
-                "#version 330 core\nuniform uint glyphs[24]; uniform ivec2 origin; uniform int startup; out vec4 color;"
+                "#version 330 core\nuniform uint glyphs[24]; uniform ivec2 origin; uniform int startup;"
+                "uniform float cell; out vec4 color;"
                 "void main(){ivec2 p=ivec2(gl_FragCoord.xy)-origin; bool ink=false;"
-                "if(p.x>=0&&p.y>=0){ivec2 c=p/4;int i=c.x/4;int x=c.x%4;"
+                "if(p.x>=0&&p.y>=0){ivec2 c=ivec2(vec2(p)/cell);int i=c.x/4;int x=c.x%4;"
                 "if(i<24&&x<3&&c.y<5) ink=((glyphs[i]>>uint(c.y*3+2-x))&1u)!=0u;}"
                 "color=startup!=0?(ink?vec4(0.7216,0.9490,0.0471,1.0):vec4(0.0196,0.0392,0.0039,1.0))"
                 ":(ink?vec4(0.9,0.95,1.0,1.0):vec4(0.025,0.04,0.075,0.5));}"};
@@ -430,14 +432,20 @@ private:
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glUseProgram(hud_program);
         glBindVertexArray(hud_vao);
-        glViewport(startup ? 0 : 16, startup ? 0 : height - 64,
-                   startup ? width : int(std::strlen(text)) * 16 + 24, startup ? height : 48);
+        // Laid out for a picture 1080 rows high (a glyph's cell is 4 pixels there) and scaled to
+        // the surface's.
+        const float scale = static_cast<float>(height) / 1080.0f;
+        const auto units = [scale](int value) { return static_cast<int>(std::lround(value * scale)); };
+        const int text_width = int(std::strlen(text)) * 16;
+        glViewport(startup ? 0 : units(16), startup ? 0 : height - units(64),
+                   startup ? width : units(text_width + 24), startup ? height : units(48));
         const auto glyphs = HudText(text);
         glUniform1uiv(glGetUniformLocation(hud_program, "glyphs[0]"), glyphs.size(), glyphs.data());
         glUniform2i(glGetUniformLocation(hud_program, "origin"),
-                    startup ? (width - int(std::strlen(text)) * 16) / 2 : 28,
-                    startup ? (height - 20) / 2 : height - 50);
+                    startup ? (width - units(text_width)) / 2 : units(28),
+                    startup ? (height - units(20)) / 2 : height - units(50));
         glUniform1i(glGetUniformLocation(hud_program, "startup"), startup);
+        glUniform1f(glGetUniformLocation(hud_program, "cell"), 4.0f * scale);
         if (!startup) {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -510,7 +518,11 @@ GraphicsWindow::GraphicsWindow(bool use_vulkan) : vulkan(use_vulkan) {
         vulkan_hud_stats_time = vulkan_hud_speed = 0;
         window_info.type = Core::Frontend::WindowSystemType::PS5;
         window_info.render_surface = this;
-        UpdateCurrentFramebufferLayout(1920, 1080);
+        // The frame the filter scales the game to (Settings > Video > Output resolution); the
+        // renderer copies it to the driver's output.
+        UpdateCurrentFramebufferLayout(static_cast<u32>(Display::output_width.load()),
+                                       static_cast<u32>(Display::output_height.load()));
+        std::printf("EDEN_VULKAN_FRAME_SIZE %dx%d\n", Display::output_width.load(), Display::output_height.load());
         return;
     }
 #else
@@ -521,8 +533,13 @@ GraphicsWindow::GraphicsWindow(bool use_vulkan) : vulkan(use_vulkan) {
     try {
         display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 #ifdef PS5_OPENGL_DYNAMIC_DISPLAY
-        // Settings > Video: the output's refresh rate. It is a setting of the process, so every
-        // session sets it; a display that cannot show 120 Hz presents at 60 Hz.
+        // Settings > Video: the output's size and refresh rate. They are settings of the process, so
+        // every session sets them; a display that cannot show 120 Hz presents at 60 Hz, and a size
+        // that is refused leaves the one the launcher opened with.
+        if (display != EGL_NO_DISPLAY &&
+            !eglSetDisplayModePS5(display, Display::output_width.load(), Display::output_height.load()))
+            std::fprintf(stderr, "[ProsperoEden] OpenGL display: the output size was not set (0x%x)\n",
+                         static_cast<unsigned>(eglGetError()));
         if (display != EGL_NO_DISPLAY && !eglSetDisplayRefreshPS5(display, Display::requested_hz.load()))
             std::fprintf(stderr, "[ProsperoEden] OpenGL display: the refresh rate was not set (0x%x)\n",
                          static_cast<unsigned>(eglGetError()));

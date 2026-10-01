@@ -44,9 +44,15 @@ namespace {
 
 using Clock = std::chrono::steady_clock;
 
-// The launcher draws at this size; the console scales it to the TV.
-constexpr int kDisplayWidth = 1920;
-constexpr int kDisplayHeight = 1080;
+// The launcher draws at the size of Settings > Video > Output resolution (settings_store.h,
+// kOutputKeys); the console scales it to the TV. *output names the size that opened: 1080p when
+// the chosen one did not.
+bool OpenDisplay(pe::ps5::Display& display, int* output) {
+    if (display.open(Eden::kOutputWidth[*output], Eden::kOutputHeight[*output])) return true;
+    if (*output == 0) return false;
+    *output = 0;
+    return display.open(Eden::kOutputWidth[0], Eden::kOutputHeight[0]);
+}
 
 // The controller's keys arrive in the launcher's order.
 static_assert(static_cast<int>(pe::ui::Key::cross) == RADIO_INPUT_CROSS &&
@@ -155,8 +161,11 @@ int SaveCapture(const std::string& path, int width, int height) {
 
 std::string RunApp(const std::string& launch_error, bool first_start) {
     const auto opened = Clock::now();
+    // What Settings > Video asks for, and what opened.
+    int output = std::clamp(Eden::LoadPreferences().output, 0, static_cast<int>(std::size(Eden::kOutputKeys)) - 1);
+    int output_open = output;
     pe::ps5::Display display;
-    if (!display.open(kDisplayWidth, kDisplayHeight)) {
+    if (!OpenDisplay(display, &output_open)) {
         Eden::Report("menu video failure", pe::ps5::egl_error_name(display.last_error()));
         return {};
     }
@@ -221,7 +230,7 @@ std::string RunApp(const std::string& launch_error, bool first_start) {
         std::fprintf(stderr, "EDEN_DEV_LAUNCHER_READY ready=%d\n", running);
 #endif
         pe::gfx::DrawList list;
-        const pe::gfx::Viewport viewport = pe::gfx::fit_viewport(display.width(), display.height());
+        pe::gfx::Viewport viewport = pe::gfx::fit_viewport(display.width(), display.height());
         auto previous = Clock::now();
         bool first_frame = true;
         while (running && !launcher.done()) {
@@ -271,6 +280,30 @@ std::string RunApp(const std::string& launch_error, bool first_start) {
                                                 std::to_string(ms) + " ms").c_str());
             }
             launcher.update(dt);
+            if (launcher.output() != output) {
+                // Output resolution changed in Settings > Video: the display opens again at the new
+                // size, and with it everything that lives in its GL context. The launcher stays as
+                // it is, on the row that was changed.
+                const auto reopen = Clock::now();
+                output = output_open = std::clamp(launcher.output(), 0, static_cast<int>(std::size(Eden::kOutputKeys)) - 1);
+                textures.release();
+                batch.delete_texture(font_texture);
+                font_texture = 0;
+                batch.release();
+                display.close();
+                if (!OpenDisplay(display, &output_open) || !batch.init()) {
+                    Eden::Report("menu video failure", pe::ps5::egl_error_name(display.last_error()));
+                    break;
+                }
+                font_texture = batch.create_font_texture(font);
+                launcher.set_font_texture(font_texture);
+                if (!textures.load_art(Eden::AppFile("ui")))
+                    Eden::Report("menu", "Launcher art is incomplete; check the app's ui/art folder");
+                textures.set_output_scale(static_cast<float>(display.width()) / 1920.0f);
+                viewport = pe::gfx::fit_viewport(display.width(), display.height());
+                std::fprintf(stderr, "EDEN_LAUNCHER display=%dx%d reopened_ms=%lld\n", display.width(),
+                             display.height(), Milliseconds(Clock::now() - reopen));
+            }
             for (const pe::audio::Cue cue : launcher.take_cues()) sounds.play(*mixer, cue);
             if (launcher.menu_volume() != menu_volume) {
                 menu_volume = launcher.menu_volume();

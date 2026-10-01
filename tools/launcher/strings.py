@@ -119,6 +119,9 @@ NOTES = {
     "REFRESH RATE": "Label: see 'Refresh rate'.",
     "{0} Hz": "{0} is 60 or 120 (hertz).",
     "Saved. A display that cannot show 120 Hz stays at 60 Hz.": "Shown after choosing 120 Hz.",
+    "Output resolution": "Setting: the size of the picture sent to the TV (1080p, 1440p or 2160p). Not the "
+                         "same as 'Resolution', which scales the game's own picture (1x, 2x...).",
+    "OUTPUT RESOLUTION": "Label: see 'Output resolution'.",
     "ADD-ONS": "Label: a game's updates, DLC and mods.",
     "Add-ons: {0}  /  Language: {1}": "{0}: updates, DLC and mods of the game; {1}: the language it will use.",
     "Ryujinx save": "A save file of the Ryujinx emulator. Ryujinx is a name (unchanged).",

@@ -225,9 +225,13 @@ void pictures(Stage &s)
     s.press({Key::down, Key::right});
     s.wait(0.6f);
     s.shoot("15-video-saved");
-    s.press({Key::down, Key::down, Key::right});
+    s.press({Key::down, Key::down, Key::down, Key::right});
     s.wait(0.6f);
     s.shoot("41-video-refresh");
+    // The sixth row: the list scrolls to it.
+    s.press({Key::down});
+    s.wait(0.6f);
+    s.shoot("43-video-overlay");
     s.press({Key::circle, Key::down, Key::cross});
     s.wait(0.8f);
     s.shoot("16-audio");

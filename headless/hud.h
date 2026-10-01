@@ -81,6 +81,9 @@ inline std::array<uint32_t, 24> HudText(std::string_view text) {
         glyphs[i] = HudGlyph(text[i]);
     return glyphs;
 }
+// The overlay's width and where its text starts, in a picture 1080 rows high. Where it is drawn
+// they are scaled to the picture, and `width` then carries the picture's height to the shader
+// (vulkan_hud_draw.inc).
 struct HudSnapshot {
     std::array<uint32_t, 24> glyphs{};
     uint32_t width{};

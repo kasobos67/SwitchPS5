@@ -88,6 +88,7 @@ struct Preferences
     int resolution = 2;
     int filter = 0;
     int refresh = 0; // the output while a game runs: 0 60 Hz, 1 120 Hz
+    int output = 0;  // the size of the picture, menu and games: 0 1080p, 1 1440p, 2 2160p
     bool vibration = true;
     int language = 0;
     int menu_volume = 70; // launcher sounds, 0-100

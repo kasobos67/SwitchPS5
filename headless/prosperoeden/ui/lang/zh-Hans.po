@@ -704,6 +704,16 @@ msgstr "打开"
 msgid "Open library"
 msgstr "打开游戏库"
 
+#. Label: see 'Output resolution'.
+#: pe/ui/settings.cpp
+msgid "OUTPUT RESOLUTION"
+msgstr "输出分辨率"
+
+#. Setting: the size of the picture sent to the TV (1080p, 1440p or 2160p). Not the same as 'Resolution', which scales the game's own picture (1x, 2x...).
+#: pe/ui/settings.cpp
+msgid "Output resolution"
+msgstr "输出分辨率"
+
 #. Button hint: jump a page of the list (L1 / R1).
 #: pe/ui/browse.cpp
 msgid "Page"

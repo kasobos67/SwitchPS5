@@ -704,6 +704,16 @@ msgstr "Megnyitás"
 msgid "Open library"
 msgstr "Játéktár megnyitása"
 
+#. Label: see 'Output resolution'.
+#: pe/ui/settings.cpp
+msgid "OUTPUT RESOLUTION"
+msgstr "KIMENETI FELBONTÁS"
+
+#. Setting: the size of the picture sent to the TV (1080p, 1440p or 2160p). Not the same as 'Resolution', which scales the game's own picture (1x, 2x...).
+#: pe/ui/settings.cpp
+msgid "Output resolution"
+msgstr "Kimeneti felbontás"
+
 #. Button hint: jump a page of the list (L1 / R1).
 #: pe/ui/browse.cpp
 msgid "Page"
