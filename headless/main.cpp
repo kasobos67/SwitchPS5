@@ -19,7 +19,9 @@
 #include <filesystem>
 #include <condition_variable>
 #include <chrono>
+#include <cstdlib>
 #include <mutex>
+#include <thread>
 #include <new>
 #include <string_view>
 #include <stdexcept>
@@ -326,6 +328,14 @@ int main(int argc, char** argv) {
         }
         if (selected_game.empty()) {
             Eden::Report("exit", "Launcher closed");
+#ifdef EDEN_DEV_ROM_ID
+            // Development runs end here (EDEN_DEV_QUIT). After a game session the process did not
+            // exit once main returned, so the runner had to kill it; everything is stopped by now.
+            // Flush the logs, let the log pipes copy them out, and skip the static destructors.
+            std::fflush(nullptr);
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
+            std::_Exit(0);
+#endif
             return 0;
         }
         try {
