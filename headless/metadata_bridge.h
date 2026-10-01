@@ -36,6 +36,13 @@ void eden_scan_addons(const char* updates_dir, const char* keys_dir);
 // Returns nonzero when either exists.
 int eden_game_addons(uint64_t title_id, char* update_version, size_t capacity, unsigned* dlc_count);
 
+// Ryujinx save import (ryujinx_saves.h): a Ryujinx data folder copied into ryujinx/ next to roms/.
+// Whether it holds a save for the game; text says what was found or why not. Returns nonzero if so.
+int eden_ryujinx_save_status(uint64_t title_id, char* text, size_t capacity);
+// Copies the game's Ryujinx saves into ProsperoEden's, after moving the current ones to
+// /data/prosperoeden/backup/ryujinx-import. Returns nonzero on success; message says what happened.
+int eden_ryujinx_import_save(uint64_t title_id, char* message, size_t capacity);
+
 #ifdef __cplusplus
 }
 #endif

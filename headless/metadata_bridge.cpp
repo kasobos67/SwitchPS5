@@ -1,5 +1,7 @@
 #include "metadata_bridge.h"
 #include "assets_dir.h"
+#include "diagnostics.h"
+#include "ryujinx_saves.h"
 #if defined(__PROSPERO__)
 #include "native_directory.h"
 #endif
@@ -9,6 +11,7 @@
 #include <cctype>
 #include <cstdio>
 #include <cstring>
+#include <ctime>
 #include <filesystem>
 #include <map>
 #include <memory>
@@ -282,6 +285,70 @@ int eden_game_addons(uint64_t title_id, char* update_version, size_t capacity, u
     if (update_version && capacity) std::snprintf(update_version, capacity, "%s", found->second.update.c_str());
     if (dlc_count) *dlc_count = found->second.dlc;
     return !found->second.update.empty() || found->second.dlc != 0;
+}
+
+namespace {
+// The save folder name of the profile games use: Eden's user 0, the first valid entry of
+// profiles.dat (0x10-byte header, then 0xC8-byte entries starting with the 16-byte UUID), written
+// as Eden's save paths spell it (upper 64 bits, then lower). Eden creates the file on the first
+// game boot; without it the one existing user save folder is used.
+std::string EdenUserFolder(const std::filesystem::path& saves, std::string& error) {
+    std::vector<char> data;
+    const std::string profiles = Eden::UserDir() + "/nand/system/save/8000000000000010/su/avators/profiles.dat";
+    if (Eden::RyujinxSaves::ReadFile(profiles, data) && data.size() >= 0x650) {
+        for (std::size_t offset = 0x10; offset + 0xC8 <= 0x650; offset += 0xC8) {
+            uint64_t low = 0, high = 0;
+            std::memcpy(&low, data.data() + offset, sizeof(low));
+            std::memcpy(&high, data.data() + offset + 8, sizeof(high));
+            if (!low && !high) continue;
+            char name[33];
+            std::snprintf(name, sizeof(name), "%016llX%016llX", static_cast<unsigned long long>(high),
+                          static_cast<unsigned long long>(low));
+            return name;
+        }
+    }
+    std::error_code list_error;
+    std::vector<std::string> users;
+    for (const auto& entry : Eden::RyujinxSaves::ListFolder(saves, list_error)) {
+        const std::string name = entry.path().filename().string();
+        if (name.size() == 32 && name != std::string(32, '0')) users.push_back(name);
+    }
+    if (users.size() == 1) return users.front();
+    error = "start any game once first, so ProsperoEden creates its user";
+    return {};
+}
+} // namespace
+
+int eden_ryujinx_save_status(uint64_t title_id, char* text, size_t capacity) {
+    std::string error;
+    const auto saves = Eden::RyujinxSaves::FindSaves(Eden::AssetsPath("ryujinx"), title_id, error);
+    if (text && capacity) std::snprintf(text, capacity, "%s", saves.empty() ? error.c_str() : "found");
+    return !saves.empty();
+}
+
+int eden_ryujinx_import_save(uint64_t title_id, char* message, size_t capacity) {
+    namespace fs = std::filesystem;
+    std::string error;
+    const auto say = [&](const std::string& text, int result) {
+        if (message && capacity) std::snprintf(message, capacity, "%s", text.c_str());
+        Eden::Report("ryujinx import", text.c_str());
+        return result;
+    };
+    const auto saves = Eden::RyujinxSaves::FindSaves(Eden::AssetsPath("ryujinx"), title_id, error);
+    if (saves.empty()) return say("No Ryujinx save to import: " + error + ".", 0);
+    const fs::path root = fs::path{Eden::UserDir()} / "nand" / "user" / "save" / "0000000000000000";
+    const std::string user = EdenUserFolder(root, error);
+    if (user.empty()) return say("Cannot import yet: " + error + ".", 0);
+    char title[17];
+    std::snprintf(title, sizeof(title), "%016llX", static_cast<unsigned long long>(title_id));
+    char stamp[32] = "now";
+    const std::time_t now = std::time(nullptr);
+    if (const std::tm* local = std::localtime(&now)) std::strftime(stamp, sizeof(stamp), "%Y%m%d-%H%M%S", local);
+    const fs::path backups = fs::path{Eden::kDataDir} / "backup" / "ryujinx-import";
+    if (!Eden::RyujinxSaves::Import(saves, root / user / title, root / std::string(32, '0') / title, backups,
+                                    std::string(title) + "-" + stamp, error))
+        return say("Import failed (" + error + "); the current save is unchanged.", 0);
+    return say("Imported. A replaced save is kept in /data/prosperoeden/backup/ryujinx-import.", 1);
 }
 
 const char* eden_startup_error() {
