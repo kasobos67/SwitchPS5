@@ -43,6 +43,7 @@ The complete ProsperoEden source is in this repository: the PS5 frontend and lau
 - **Game files anywhere** - keys, firmware, and games can live in any folder the PS5 can read: internal storage, an M.2 or external drive, or a USB device.
 - **Folder browser** - pick the game files folder in **Settings > Game files**. It shows how many keys, firmware files, and games each folder holds. Hold L1/R1 to page quickly.
 - **Library** - game covers, **Continue Playing**, and **Recently Played**, which keep working after you move your files.
+- **Launcher** - an animated interface drawn with OpenGL, with sound effects (their level is in **Settings > Audio**) and a loading screen while a game starts.
 - **Per-game settings** - renderer, resolution, upscaling filter and Handheld / Docked mode for each game (Triangle in the Library).
 - **Game updates and DLC** - put update and DLC files (NSP or XCI) in the `updates` folder next to `roms`. They apply when the game starts, and each game's details show the update version and DLC count.
 - **Shader cache** - shaders compiled in earlier sessions are loaded when a game starts, so an effect stutters only the first time it appears.
@@ -134,6 +135,10 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 
 ## Changes in v1.000.040
 
+- **New launcher.** Every screen is redrawn with OpenGL: smooth transitions between screens, text that stays sharp, panels that blur the artwork behind them, and sound effects for moving, selecting and going back. **Settings > Audio > Menu sounds** sets their level.
+- **Loading screen.** An animated scene shows while a game starts, on both renderers.
+- **The Library opens at once.** The game list is read in the background, and the home screen shows each game's own name instead of its file name.
+- **New music** on the PS5 home screen.
 - **Smoother first-time gameplay.** The emulated CPU cores now share the code they compile, so each part of a game is compiled once instead of once per core. In large open-world games this halves the compile work and removes most of the stutter when gameplay starts or a new area loads.
 - **Faster compiling.** Compiling a game's code now takes about 40% less CPU time, which shortens the remaining stutter when gameplay starts or a new area loads.
 - **Startup hang fixed.** A game could stop for good right after starting, because the emulator's memory allocator could leave high-priority threads waiting on each other forever. Development builds also report where a slow start is stuck.

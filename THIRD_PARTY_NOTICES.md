@@ -34,17 +34,20 @@ builds on the following projects, each under its own license.
 
 - **[PS5 Payload SDK](https://github.com/ps5-payload-dev/sdk)** by John
   Törnblom (ps5-payload-dev).
-- **[SDL2 PS5 port](https://github.com/ps5-payload-dev/SDL)** by John Törnblom,
-  zlib license.
 - **[PS5 Native App Boilerplate](https://github.com/blackbearreloaded/ps5-native-app-boilerplate)**,
   GPL-3.0-or-later. The native app runtime, packaging tool and sandbox
   elevation helper (`headless/elevation`). Its packaging tool translates parts
   of SvenGDK's [SharpProspero](https://github.com/SvenGDK/SharpProspero).
-- **[RmlUi](https://github.com/mikke89/RmlUi)**, MIT, and
-  **[FreeType](https://freetype.org)**, FreeType License. Both come from the
-  prebuilt libraries in ProsperoRadio.
+- **[ProsperoPuzzles](https://github.com/blackbearreloaded/ProsperoPuzzles)**,
+  GPL-3.0-or-later. The launcher's drawing, text, animation and sound code
+  (`headless/prosperoeden/pe`) started there.
 - **Montserrat** by Julieta Ulanovsky and contributors, SIL Open Font License
-  1.1. The bitmap font sizes were converted with LVGL's font tools.
+  1.1 (`third_party/fonts`). The launcher's font is baked from Montserrat Medium.
+- **[stb](https://github.com/nothings/stb)** by Sean Barrett, MIT or public
+  domain. `stb_truetype` bakes the font and `stb_image_write` saves the PC
+  previews (`tools/launcher/stb`); neither is part of the app.
+- The launcher's sound effects were generated with
+  [ElevenLabs](https://elevenlabs.io) and edited for this project.
 - `third_party/ps5_pad.hpp` comes from
   [ps5-native-gamepad-input-research](https://github.com/blackbearreloaded/ps5-native-gamepad-input-research),
   and `third_party/native_audio.hpp` from
