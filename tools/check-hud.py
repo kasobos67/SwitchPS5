@@ -16,7 +16,10 @@ draw_loading = graphics.split('    bool DrawLoading(', 1)[1].split('    void Dra
 assert 'eglSwapBuffers' not in draw_loading and 'loading_failed = true' in draw_loading
 assert 'vec4(0.025,0.04,0.075,0.5)' in graphics
 assert 'glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)' in graphics
-assert 'int(std::strlen(text)) * 16 + 24' in graphics
+# As wide as its text, laid out for a picture 1080 rows high and scaled to the surface's.
+assert 'const int text_width = int(std::strlen(text)) * 16;' in draw_hud
+assert 'units(text_width + 24)' in draw_hud
+assert 'static_cast<float>(height) / 1080.0f' in draw_hud
 
 with tempfile.TemporaryDirectory() as directory:
     source = Path(directory) / 'hud.cpp'
