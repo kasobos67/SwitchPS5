@@ -1870,12 +1870,11 @@ void Initialize() {
     if(NOT heap_hash STREQUAL "df61acb51502c3b75c4fda62859c42eac6d19a6690f9b68c0e2dfbf20ae72c0f")
         message(FATAL_ERROR "The shared heap changed since G6; qualify it before using it here.")
     endif()
-    # The owner prioritizes performance over memory conservation. Budget a
-    # 3GiB heap for JIT metadata: with guest cores 1/2 at 192 MiB of code, a large
-    # game's blocks (~0.5 KiB of metadata each) exhausted 2GiB.
-    # Code mappings are separate. Known guest/table/heap/A64-code reservations
-    # total 8.625GiB of the 12GiB direct memory, before the GPU; allocation
-    # success still needs qualification.
+    # The heap may grow to 3 GiB: with guest cores 1/2 at 192 MiB of code, a large game's
+    # blocks (~0.5 KiB of metadata each) once exhausted 2 GiB. That is its address range, not its
+    # memory: the heap commits 128 MiB pieces as allocations need them (heap_arenas.inc), because
+    # everything the CPU holds comes out of the 12 GiB it shares with the GPU. Taken whole at
+    # start, guest RAM, a dense page table, this heap and the A64 code caches were 8.6 GiB of it.
     file(READ "${heap_source}" heap)
     string(REPLACE "128 MiB" "3072 MiB" heap "${heap}")
     string(REPLACE "(128u * 1024u * 1024u)" "(3072u * 1024u * 1024u)" heap "${heap}")

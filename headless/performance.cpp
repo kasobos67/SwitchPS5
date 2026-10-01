@@ -371,7 +371,19 @@ void RecordHle(const char* service, unsigned command, long long ns) {
 void ReportGpuThread(unsigned frame) {
     // Heap growth and arena use over the run (allocation failures abort the title).
     ps5_opengl_heap_snapshot("vulkan_report", frame);
-    std::printf("EDEN_PERF_HEAP arenas=%u\n", eden_heap_arenas_created ? eden_heap_arenas_created() : 1u);
+    {
+        // What the heap and Eden's large tables hold of the memory the CPU shares with the GPU:
+        // the heap's pieces (they only grow), its large blocks alive now, and the tables' own
+        // slots out of the address range they span.
+        unsigned large_blocks = 0;
+        const std::size_t large = eden_heap_large_held ? eden_heap_large_held(&large_blocks) : 0;
+        std::size_t table_span = 0, table_held = 0;
+        ::Common::SparseUsage(&table_span, &table_held);
+        std::printf("EDEN_PERF_HEAP arenas=%u pieces=%zu large=%zu large_blocks=%u tables=%zu table_span=%zu\n",
+                    eden_heap_arenas_created ? eden_heap_arenas_created() : 1u,
+                    eden_heap_committed ? eden_heap_committed() : std::size_t{0}, large, large_blocks, table_held,
+                    table_span);
+    }
     {
         // Cumulative HLE handling time of every service command that has cost at least 1 ms.
         std::lock_guard lock(hle_mutex);
