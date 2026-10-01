@@ -22,7 +22,7 @@ REQUIRED = set(BASE_REQUIRED)
 REQUIRED.update(p.relative_to(APP).as_posix() for p in (APP / 'ui').rglob('*') if p.is_file())
 RECEIPT = ROOT / 'HEADLESS_CANDIDATE.json'
 # The pinned OpenGL SDK release (tools/deps.json): digest of its manifest.sha256.
-GL_SDK_MANIFEST_SHA256 = 'b01e47d85771c93305879f20c0ea4358a7bbe8be8e35ce03f6391548ea246aad'
+GL_SDK_MANIFEST_SHA256 = 'f4b91f672be037fbac3f82494f1225deaf4c227a03f37ac3ffa56abb213b943f'
 
 
 def digest(path):
@@ -89,7 +89,7 @@ if __name__ == '__main__':
             if not p.startswith('../') or (ROOT / p).exists()]  # console tooling of a development layout
         frontend = json.loads((OUT / 'frontend.json').read_text())
         if frontend['renderer'] == 'opengl-4.6-compatibility':
-            sdk = ROOT / '.deps/ps5-opengl-sdk-0.6.0/sdk'
+            sdk = ROOT / '.deps/ps5-opengl-sdk-1.0.0/sdk'
             manifest = sdk / 'manifest.sha256'
             assert digest(manifest) == GL_SDK_MANIFEST_SHA256
             paths.append(manifest)
