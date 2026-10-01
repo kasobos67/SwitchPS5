@@ -132,7 +132,8 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 - **Touchpad as Select in games.** A tap of the touchpad presses the game's Select (Minus) button, and a longer press holds it. The Select + L1 and Select + R1 shortcuts never reach the game as a press.
 - **A crash a few seconds into some games is fixed.** The motion sensors' updates could reach a part of the controller service that was not set up yet.
 - **Games' own system screens.** A game's error dialog, profile picker and similar screens use Eden's built-in versions, and its error dialog now answers the game instead of leaving it waiting. The firmware's versions could end a session with an out-of-memory error.
-- **A clearer message when a game runs out of graphics memory.** A large game can need more than there is above 1x. Give such a game its own 1x resolution: Triangle on it in the Library, then **Resolution**.
+- **More graphics memory.** The PS5 gives an app one pool of memory that the CPU and the GPU share, and ProsperoEden held about 3 GiB of it without using it: its heap took 3 GiB at start and the emulated console's page table 1 GiB. Both now take memory as they need it, which gives graphics about 2.6 GiB more in the largest game tested. That game ran out of graphics memory while loading at 2x; it now runs at 2x with the AMD FSR filter at a steady 30 FPS, with about 2 GiB to spare. The texture cache also measures its memory use from what is really left of the pool, instead of a driver figure that counted every allocation twice.
+- **A clearer message when a game runs out of graphics memory.** If a game still needs more than there is at a high resolution, give it its own lower one: Triangle on it in the Library, then **Resolution**.
 - **Games that accept only single Joy-Cons** now get one, and L1 and R1 are its SL and SR buttons, which those games ask for on their controller screen.
 - The graphics driver's shader cache moved to `/data/prosperoeden/cache`, so a read-only package install keeps it.
 - **Experimental: block list.** With an empty file named `block-list.txt` in `/data/homebrew/PPSA99008`, ProsperoEden saves which code a 64-bit game compiled and compiles it again on a spare CPU when the game next starts. In a repeat session of a large open-world game, the emulated cores then compiled 426 blocks during play instead of 138,262, and gameplay started at 30 FPS instead of 22. It is off by default until more games have run with it.
@@ -180,7 +181,7 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 ## Roadmap
 
 - **FPKG support** - install ProsperoEden as a fake package, alongside the current homebrew folder install. Each release includes a ShadowMountPlus package image (`.ffpfsc`); installing it still needs testing.
-- **More performance** - CPU and GPU work to keep demanding games at their target frame rate: the short stutter when a game reaches new areas (the block list, once it is on by default), heavy cutscenes, games that run slower in Docked mode than in Handheld, and more graphics memory for large games above 1x.
+- **More performance** - CPU and GPU work to keep demanding games at their target frame rate: the short stutter when a game reaches new areas (the block list, once it is on by default), heavy cutscenes, and games that run slower in Docked mode than in Handheld.
 - **More reliable game loading** - fix the remaining hangs on the loading screen.
 - **Faster exit in every game** - a few games still take up to several minutes to close.
 - **Controller selection screen** - some games wait forever on the screen that asks you to choose a controller. Games that take single Joy-Cons should now get past it; other cases still need a log from a game that does it.
