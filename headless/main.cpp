@@ -509,6 +509,9 @@ int main(int argc, char** argv) {
                     Eden::Performance::SetSecondaryPlacement(false);
                 } else if (entry == "fastmem=off" || entry == "fastmem=on") {
                     Eden::Fastmem::Request(entry.ends_with("on"));
+                } else if (entry.starts_with("cache_spin=")) {
+                    // try_lock retries before a guest core sleeps on a GPU cache lock (0 = upstream).
+                    Eden::Performance::cache_lock_spins = static_cast<unsigned>(std::strtoul(entry.c_str() + 11, nullptr, 10));
                 } else if (entry.starts_with("dispatch_draws=")) {
                     // Draws between Vulkan worker hand-offs: a power of two from 8 (upstream) to 512.
                     const unsigned long draws = std::strtoul(entry.c_str() + 15, nullptr, 10);

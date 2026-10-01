@@ -80,6 +80,16 @@ void RasterizerVulkan::DispatchCompute() {"""),
      'bool RasterizerVulkan::OnCPUWrite(DAddr addr, u64 size) {\n    ::Eden::Performance::Timer guest_write_timer(::Eden::Performance::guest_cpu_write);'),
     ('VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {',
      'VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {\n    ::Eden::Performance::Timer guest_read_timer(::Eden::Performance::guest_cpu_read);'),
+    # ... and wait for those locks spinning briefly before sleeping (performance.h GuestCacheLock).
+    ('        std::scoped_lock lock{texture_cache.mutex};\n        auto area = texture_cache.GetFlushArea(addr, size);',
+     '        ::Eden::Performance::GuestCacheLock(texture_cache.mutex);\n'
+     '        std::lock_guard lock{texture_cache.mutex, std::adopt_lock};\n        auto area = texture_cache.GetFlushArea(addr, size);'),
+    ('        std::scoped_lock lock{buffer_cache.mutex};\n        if (buffer_cache.OnCPUWrite(addr, size)) {',
+     '        ::Eden::Performance::GuestCacheLock(buffer_cache.mutex);\n'
+     '        std::lock_guard lock{buffer_cache.mutex, std::adopt_lock};\n        if (buffer_cache.OnCPUWrite(addr, size)) {'),
+    ('        std::scoped_lock lock{texture_cache.mutex};\n        texture_cache.WriteMemory(addr, size);\n    }\n    pipeline_cache.InvalidateRegion(addr, size);',
+     '        ::Eden::Performance::GuestCacheLock(texture_cache.mutex);\n'
+     '        std::lock_guard lock{texture_cache.mutex, std::adopt_lock};\n        texture_cache.WriteMemory(addr, size);\n    }\n    pipeline_cache.InvalidateRegion(addr, size);'),
     # Hand recorded work to the worker every 64 draws rather than every 8: each hand-off wakes the
     # worker with a system call (about 16.7k per second and ~7 us each in heavy scenes). A 32 KiB
     # chunk still dispatches whenever it fills (about 15-25 draws of records); the 4,096-draw flush

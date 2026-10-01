@@ -55,6 +55,24 @@ inline Totals gpu_queue_wait, gpu_dispatch;
 inline Totals gpu_fence_drain, gpu_present_wait, gpu_queue_full;
 // Guest threads entering the GPU caches: CPU writes to tracked pages and flush-area lookups.
 inline Totals guest_cpu_write, guest_cpu_read;
+// Those entries take the buffer and texture cache locks, which the GPU thread holds for one draw at
+// a time. A guest core that sleeps in the kernel for each wait loses more than most holds last
+// (a large open-world game: 1.5-3.2 ms per frame at 8-12 us per write), so it first retries try_lock for a bounded
+// ~25 us (dev-settings cache_spin=N retries; 0 blocks at once, as upstream). Guest cores are
+// pinned alone, so the spin takes no CPU from the lock holder.
+inline std::atomic<unsigned> cache_lock_spins{256};
+inline std::atomic<unsigned long long> cache_lock_contended{0}, cache_lock_blocked{0};
+template <typename Mutex>
+inline void GuestCacheLock(Mutex& mutex) {
+    if (mutex.try_lock()) return;
+    cache_lock_contended.fetch_add(1, std::memory_order_relaxed);
+    for (unsigned tries = cache_lock_spins.load(std::memory_order_relaxed); tries != 0; --tries) {
+        for (int pause = 0; pause < 4; ++pause) __builtin_ia32_pause();
+        if (mutex.try_lock()) return;
+    }
+    cache_lock_blocked.fetch_add(1, std::memory_order_relaxed);
+    mutex.lock();
+}
 // Guest waits: nvhost_ctrl syncpoint event registration -> signal, and
 // BufferQueueProducer::DequeueBuffer waiting for a free buffer slot.
 inline Totals guest_sync_wait, guest_dequeue_wait;

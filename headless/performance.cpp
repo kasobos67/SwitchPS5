@@ -368,6 +368,8 @@ void ReportGpuThread(unsigned frame) {
                 load(guest_sync_wait, true), load(guest_sync_wait, false),
                 load(guest_dequeue_wait, true), load(guest_dequeue_wait, false));
     std::printf(" ipc_calls=%llu ipc_ns=%llu", load(guest_ipc_wait, true), load(guest_ipc_wait, false));
+    std::printf(" cache_lock_contended=%llu cache_lock_blocked=%llu",
+                cache_lock_contended.load(std::memory_order_relaxed), cache_lock_blocked.load(std::memory_order_relaxed));
     std::printf(" fs_file_calls=%llu fs_file_ns=%llu fs_file_bytes=%llu fs_storage_calls=%llu fs_storage_ns=%llu "
                 "fs_storage_bytes=%llu",
                 load(guest_fs_file, true), load(guest_fs_file, false),
