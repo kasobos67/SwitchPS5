@@ -133,7 +133,7 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 - **A crash a few seconds into some games is fixed.** The motion sensors' updates could reach a part of the controller service that was not set up yet.
 - **Games' own system screens.** A game's error dialog, profile picker and similar screens use Eden's built-in versions, and its error dialog now answers the game instead of leaving it waiting. The firmware's versions could end a session with an out-of-memory error.
 - **A clearer message when a game runs out of graphics memory.** A large game can need more than there is above 1x. Give such a game its own 1x resolution: Triangle on it in the Library, then **Resolution**.
-- **Games that accept only one kind of Joy-Con** now get a controller.
+- **Games that accept only single Joy-Cons** now get one, and L1 and R1 are its SL and SR buttons, which those games ask for on their controller screen.
 - The graphics driver's shader cache moved to `/data/prosperoeden/cache`, so a read-only package install keeps it.
 - **Experimental: block list.** With an empty file named `block-list.txt` in `/data/homebrew/PPSA99008`, ProsperoEden saves which code a 64-bit game compiled and compiles it again on a spare CPU when the game next starts. In a repeat session of a large open-world game, the emulated cores then compiled 426 blocks during play instead of 138,262, and gameplay started at 30 FPS instead of 22. It is off by default until more games have run with it.
 
@@ -183,7 +183,7 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 - **More performance** - CPU and GPU work to keep demanding games at their target frame rate: the short stutter when a game reaches new areas (the block list, once it is on by default), heavy cutscenes, games that run slower in Docked mode than in Handheld, and more graphics memory for large games above 1x.
 - **More reliable game loading** - fix the remaining hangs on the loading screen.
 - **Faster exit in every game** - a few games still take up to several minutes to close.
-- **Controller selection screen** - some games wait forever on the screen that asks you to choose a controller.
+- **Controller selection screen** - some games wait forever on the screen that asks you to choose a controller. Games that take single Joy-Cons should now get past it; other cases still need a log from a game that does it.
 - **More languages** - Japanese, Korean, Chinese, Greek, Thai and Arabic need letters the launcher's font does not have.
 - **More game compatibility** - validate more games on the PS5, and fix what keeps them from running well, such as games that crash at launch.
 
