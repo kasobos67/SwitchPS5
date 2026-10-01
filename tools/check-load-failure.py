@@ -57,3 +57,34 @@ int main() { assert(load()==SystemResultStatus::Error); assert(!live); }
  subprocess.run(['g++','-std=c++20',str(src),'-o',str(exe)],check=True)
  subprocess.run([str(exe)],check=True)
 print('Failed-load process released before kernel shutdown PASS')
+
+# The game's content provider holds files of the system's file system. It is declared before the
+# system (which keeps its address) and emptied before the system is destroyed; a provider that
+# outlived a session released those files after their file system and crashed the next launch.
+provider=m.index('            FileSys::ManualContentProvider game_contents;\n')
+system=m.index('            Core::System system;\n')
+clear=m.index('            SCOPE_EXIT { game_contents.ClearAllEntries(); };\n')
+assert provider<system<clear and 'static FileSys::ManualContentProvider' not in m
+with tempfile.TemporaryDirectory(prefix='eden-contents-order-') as tmp:
+ p=Path(tmp);src=p/'test.cpp';exe=p/'test'
+ src.write_text('''#include <cassert>
+#include <memory>
+#include <vector>
+bool filesystem_alive=false;
+struct File { ~File() { assert(filesystem_alive); } };
+namespace FileSys { struct ManualContentProvider {
+ std::vector<std::unique_ptr<File>> files;
+ void ClearAllEntries() { files.clear(); }
+}; }
+namespace Core { struct System { System() { filesystem_alive=true; } ~System() { filesystem_alive=false; } }; }
+template <class F> struct Exit { F f; ~Exit() { f(); } };
+struct MakeExit { template <class F> Exit<F> operator+(F f) { return {f}; } };
+#define SCOPE_EXIT auto scope_exit = MakeExit{} + [&]()
+int main() { for (int session=0; session<2; ++session) {
+'''+m[provider:clear]+'''            SCOPE_EXIT { game_contents.ClearAllEntries(); };
+            game_contents.files.push_back(std::make_unique<File>());
+ } }
+''')
+ subprocess.run(['g++','-std=c++20',str(src),'-o',str(exe)],check=True)
+ subprocess.run([str(exe)],check=True)
+print('Game contents released before the core and its file system PASS')

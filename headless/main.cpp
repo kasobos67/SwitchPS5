@@ -727,7 +727,13 @@ int main(int argc, char** argv) {
 #else
             HeadlessWindow window;
 #endif
+            // The running game's own contents, filled for each session below. The system keeps this
+            // object's address, so it is declared first; its files belong to the system's file
+            // system, so it is emptied before the system goes (a second launch crashed when it
+            // released the first session's files after their file system).
+            FileSys::ManualContentProvider game_contents;
             Core::System system;
+            SCOPE_EXIT { game_contents.ClearAllEntries(); };
             passed("core_constructed");
 #ifdef EDEN_PS5_OPENGL
             window.SetSystem(system);
@@ -766,7 +772,6 @@ int main(int argc, char** argv) {
                 // game (ConfigureFilesystemProvider). An update's data is a patch on the base game's:
                 // the patch manager looks the base up here, and without it applied only the update's
                 // code, which then ran against the old data. It also gives Eden the game's control data.
-                static FileSys::ManualContentProvider game_contents;
                 game_contents.ClearAllEntries();
                 if (game && guest && !game_contents.AddEntriesFromContainer(
                         system.GetFilesystem()->OpenFile(guest, FileSys::OpenMode::Read)))
