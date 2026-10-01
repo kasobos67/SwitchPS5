@@ -626,6 +626,7 @@ for old, new in [
     ('    const auto Cleanup = [this, &num_iterations, &high_priority_mode, &aggressive_mode]',
      gc_setup + '\n    const auto Cleanup = [&, this]'),
     ('        if (must_download) {', '        if (must_download && !UsePrefetched(image_id, image)) {'),
+    ('(!high_priority_mode && must_download)) {', '(!DirtyEvictions() && must_download)) {'),
     ('    Configure(false);', '    Configure(false);\n    PrefetchDownloads();'),
     ('        Configure(true);', '        Configure(true);\n        PrefetchDownloads();'),
 ]:
@@ -646,12 +647,18 @@ for signature, index in (
     }}
 '''
     if index == 13:
-        scope += '''    if (cost_timer && frame_tick % 300 == 0)
-        std::printf("EDEN_VULKAN_TEXTURE_BUDGET frame=%llu usage=%llu expected=%llu critical=%llu\\n",
-                    static_cast<unsigned long long>(frame_tick),
-                    static_cast<unsigned long long>(total_used_memory),
-                    static_cast<unsigned long long>(expected_memory),
-                    static_cast<unsigned long long>(critical_memory));
+        scope += '''    if constexpr (std::is_same_v<Runtime, Vulkan::TextureCacheRuntime>) {
+        if ((cost_timer || Eden::Performance::texture_budget_log.load(std::memory_order_relaxed)) &&
+            frame_tick % 300 == 0)
+            std::printf("EDEN_VULKAN_TEXTURE_BUDGET frame=%llu usage=%llu expected=%llu critical=%llu "
+                        "keep_dirty=%d memory_short=%d\\n",
+                        static_cast<unsigned long long>(frame_tick),
+                        static_cast<unsigned long long>(total_used_memory),
+                        static_cast<unsigned long long>(expected_memory),
+                        static_cast<unsigned long long>(critical_memory),
+                        int(Eden::Performance::gc_keep_dirty.load(std::memory_order_relaxed)),
+                        int(Eden::Performance::graphics_memory_short.load(std::memory_order_relaxed)));
+    }
 '''
     texture_costs.append((anchor, anchor + scope))
 adapt('src/video_core/texture_cache/texture_cache.h',

@@ -126,6 +126,10 @@ void SwizzleImage(std::vector<int>& events, int address, Info, int,
     map->source->written=true;
     events.push_back(address);
 }
+namespace Eden::Performance {
+inline bool keep_dirty_textures = false;  // false: Eden's rule, which the comparisons need
+inline bool KeepDirtyTextures() { return keep_dirty_textures; }
+}
 struct Traits { using ObjectType=ImageId; using TickType=u64; };
 template<class Runtime> struct Case {
     Runtime runtime;
@@ -258,6 +262,22 @@ int main() {
     other.total_used_memory=240_MiB;
     for(int i=0;i<20;++i) other.Add({},0);
     other.Batched(); assert(other.runtime.waits==20 && other.runtime.peak_pinned==0);
+    // Kept until memory is short: between the two marks a run evicts clean images only and
+    // never waits for the GPU; past the critical mark it is Eden's collector again.
+    Eden::Performance::keep_dirty_textures = true;
+    Case<Vulkan::TextureCacheRuntime> kept;
+    kept.total_used_memory=200_MiB;
+    for(int i=0;i<20;++i) { Image image; image.dirty=i%2==0; kept.Add(image,0); }
+    kept.Batched();
+    assert(kept.runtime.waits==0);
+    for(size_t i=0;i<20;++i) assert(kept.slot_images[i].life->alive == (i%2==0));
+    Case<Vulkan::TextureCacheRuntime> eden, pressed;
+    eden.total_used_memory=pressed.total_used_memory=600_MiB;
+    eden.critical_memory=pressed.critical_memory=1_MiB;
+    for(int i=0;i<40;++i) { Image image; image.dirty=i%3!=0; eden.Add(image,0); pressed.Add(image,0); }
+    eden.Original(); pressed.Batched();
+    assert(eden.events == pressed.events && pressed.runtime.waits>0 && pressed.runtime.Unpinned());
+    Eden::Performance::keep_dirty_textures = false;
 }
 '''
 original = (source / 'src' / relative).read_text()
@@ -277,4 +297,5 @@ with tempfile.TemporaryDirectory() as directory:
                     str(path / 'check.cpp'), '-o', str(path / 'check')], check=True)
     subprocess.run([str(path / 'check')], check=True)
 print('GC PASS: exact original eviction/write order across 1000 pressure/alias cases; '
-      '20 dirty waits -> 5; lifetime, bounds, failure, age, budget headroom and other-backend checks')
+      '20 dirty waits -> 5; lifetime, bounds, failure, age, budget headroom and other-backend checks; '
+      'GPU-written images kept until memory is short')

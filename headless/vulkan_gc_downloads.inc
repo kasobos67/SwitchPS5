@@ -1,3 +1,10 @@
+    // Images the GPU wrote are copied back to guest memory before they go, behind a wait for the
+    // GPU. Eden evicts them from its "expected" mark on; here they stay, as they do below that
+    // mark, until memory is really short (performance.h, KeepDirtyTextures).
+    const auto DirtyEvictions = [&] {
+        return high_priority_mode &&
+               (total_used_memory >= critical_memory || !::Eden::Performance::KeepDirtyTextures());
+    };
     using DownloadMap = decltype(runtime.DownloadStagingBuffer(size_t{}));
     boost::container::small_vector<std::pair<ImageId, DownloadMap>, 16> gc_downloads;
     const auto ReleaseDownloads = [&] {
@@ -23,7 +30,7 @@
                 if (True(image.flags & ImageFlagBits::IsDecoding)) return false;
                 const bool dirty = IsDownloadable(image) && False(image.flags & ImageFlagBits::BadOverlap);
                 if ((!aggressive_mode && True(image.flags & ImageFlagBits::CostlyLoad)) ||
-                    (!high_priority_mode && dirty)) return false;
+                    (!DirtyEvictions() && dirty)) return false;
                 if (!dirty || !image.aliased_images.empty() || !image.overlapping_images.empty() ||
                     image.HasScaled() || image.info.num_samples != 1 || gc_downloads.size() == 16 ||
                     image.unswizzled_size_bytes > 32_MiB - bytes) return true;
@@ -36,7 +43,8 @@
                 usage -= ReclaimedBytes(image);
                 // The original policy changes at these thresholds. Stop looking
                 // ahead here so we never copy a texture that it would retain.
-                return usage < (aggressive_mode ? critical_memory : expected_memory);
+                return usage < (aggressive_mode || ::Eden::Performance::KeepDirtyTextures() ? critical_memory
+                                                                                           : expected_memory);
             });
             if (!gc_downloads.empty()) runtime.Finish();
         }

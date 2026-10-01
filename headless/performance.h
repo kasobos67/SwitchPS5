@@ -3,6 +3,8 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <optional>
 #include "common/cpu_features.h"
@@ -84,6 +86,43 @@ inline std::atomic<unsigned long long> guest_fs_file_bytes{}, guest_fs_storage_b
 inline Totals guest_ipc_wait;
 void RecordHle(const char* service, unsigned command, long long ns);
 inline long long NowNs() { return Common::g_wall_clock.GetTimeNS().count(); }
+// Texture cache garbage collection (tools/prepare-vulkan-port.py, vulkan_gc_downloads.inc).
+// Past its "expected" memory use Eden's collector also evicts images the GPU wrote, and each of
+// those is first copied back to guest memory behind a wait for the GPU. On the console a large
+// open-world game sat just past that mark (4.8 GiB against 4.5 with the FSR filter's images):
+// entering gameplay took ten seconds at 3-9 FPS (15 collector runs took 4.6 s of one 5 s window)
+// and frames of 70-115 ms kept coming. Those images are now kept, as they are below the mark,
+// until memory is really short: use reaches the "critical" mark, or the largest free block of
+// direct memory (what the next allocation needs) is under kShortMemory.
+// dev-settings gc_dirty=upstream restores Eden's rule.
+inline std::atomic<bool> gc_keep_dirty{true};
+inline std::atomic<bool> graphics_memory_short{false};
+inline constexpr std::size_t kShortMemory = std::size_t{384} << 20;
+// Development: the texture cache reports its memory use and marks every 300 frames.
+inline std::atomic<bool> texture_budget_log{false};
+#ifdef PS5_NATIVE
+extern "C" std::int64_t sceKernelGetDirectMemorySize();
+extern "C" std::int32_t sceKernelAvailableDirectMemorySize(std::int64_t, std::int64_t, std::size_t, std::int64_t*,
+                                                           std::size_t*);
+#endif
+// GPU thread only (the collector). Looks at the free memory again every 100 ms.
+inline bool KeepDirtyTextures() {
+    if (!gc_keep_dirty.load(std::memory_order_relaxed)) return false;
+#ifdef PS5_NATIVE
+    static long long checked_ns = 0;
+    if (const long long now = NowNs(); checked_ns == 0 || now - checked_ns >= 100'000'000) {
+        checked_ns = now;
+        std::int64_t start = 0;
+        std::size_t largest = 0;
+        const std::int64_t total = sceKernelGetDirectMemorySize();
+        const bool known = total > 0 && sceKernelAvailableDirectMemorySize(0, total, 0x4000, &start, &largest) == 0;
+        graphics_memory_short.store(!known || largest < kShortMemory, std::memory_order_relaxed);
+    }
+    return !graphics_memory_short.load(std::memory_order_relaxed);
+#else
+    return true;
+#endif
+}
 // Development boot trace (dev-settings boot_trace=START:END, milliseconds after the settings
 // are read): guest GPU submissions and GPU-thread dispatches inside it are logged one by one.
 inline std::atomic<long long> boot_trace_begin{0}, boot_trace_end{0};

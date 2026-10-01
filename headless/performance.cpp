@@ -346,7 +346,8 @@ void ReportGpuThread(unsigned frame) {
         std::int64_t start = 0;
         std::size_t largest = 0;
         if (sceKernelAvailableDirectMemorySize(0, total, 0x4000, &start, &largest) == 0)
-            std::printf("EDEN_PERF_DIRECT total=%lld largest_free=%zu\n", static_cast<long long>(total), largest);
+            std::printf("EDEN_PERF_DIRECT total=%lld largest_free=%zu short=%d\n", static_cast<long long>(total),
+                        largest, int(graphics_memory_short.load(std::memory_order_relaxed)));
     }
 #endif
     const auto load = [](const Totals& totals, bool calls) {
