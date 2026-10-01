@@ -26,6 +26,14 @@ int main(){
  auto e=p.Sample(3500);assert(e->left_stick.y==128&&e->right_stick.x==128);assert(!p.Sample(3501));
  std::istringstream bad("4 0 100 256 0 0 0");assert(!p.Read(bad,4000));
  std::istringstream plain("4 8192 100");assert(p.Read(plain,4000));assert(p.Sample(4000)->left_stick.x==128);
+ // A command fires once in the process: the next reader (a new game session) does not replay it.
+ Eden::DevelopmentInput next;std::istringstream again("4 8192 100");assert(!next.Read(again,5000));assert(!next.Sample(5000));
+ std::istringstream fresh("5 8192 100");assert(next.Read(fresh,5000));assert(next.Sample(5000)->buttons==8192);
+ // What a run left in the file counts as taken when the process starts.
+ std::istringstream left_behind("900 1049600 600");Eden::DevelopmentInput::IgnoreExisting(left_behind);
+ Eden::DevelopmentInput later;std::istringstream stale("900 1049600 600");assert(!later.Read(stale,6000));
+ std::istringstream missing("");Eden::DevelopmentInput::IgnoreExisting(missing);assert(Eden::DevelopmentInput::taken==900);
+ std::istringstream newer("901 8192 100");assert(later.Read(newer,6000));
 }
 '''
 with tempfile.TemporaryDirectory() as tmp:
@@ -33,4 +41,4 @@ with tempfile.TemporaryDirectory() as tmp:
  subprocess.run(['gcc','-DEDEN_DEV_ROM_ID=1','-ffunction-sections','-fsanitize=address,undefined','-c',str(r/'headless/prosperoeden/radio_input.c'),'-o',str(p/'radio.o')],check=True)
  subprocess.run(['g++','-std=c++20','-DEDEN_DEV_ROM_ID=1','-Wl,--gc-sections','-fsanitize=address,undefined','-I'+str(r/'headless/prosperoeden'),str(p/'radio.o'),'-I'+str(r/'headless'),'-I'+str(r.parent/'ps5-native-gamepad-input-research/include'),str(p/'test.cpp'),'-o',str(p/'test')],check=True)
  subprocess.run([str(p/'test')],check=True)
-print('Development pulses: expiry/release, monotonic commands, invalid masks/durations, sticks and actual menu chord PASS')
+print('Development pulses: expiry/release, monotonic commands, once per process, leftover file ignored, invalid masks/durations, sticks and actual menu chord PASS')

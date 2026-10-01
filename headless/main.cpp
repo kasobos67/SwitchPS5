@@ -286,6 +286,13 @@ int main(int argc, char** argv) {
                 if (entry == "launcher=first") autoboot_pending = false;
             }
         }
+#ifdef EDEN_DEV_ROM_ID
+        {
+            // A scripted input left by an earlier run is not for this process.
+            std::ifstream left_behind(Eden::AppFile("compat-input.txt"));
+            Eden::DevelopmentInput::IgnoreExisting(left_behind);
+        }
+#endif
 #endif
         for (;;) {
 #ifdef EDEN_PS5_OPENGL
