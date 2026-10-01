@@ -77,9 +77,8 @@ char logs[200];
 char version[40];
 char sessions[2][400];
 std::atomic<unsigned> session_now{0};
-int wake_pipe[2] = {-1, -1};   // the handler wakes the thread that starts the app again
-int flush_pipe[2] = {-1, -1};  // ... and the one that flushes the log streams
-int probe_pipe[2] = {-1, -1};  // memory is read through it (Copy)
+std::atomic<bool> reported{false};  // the report is written: the helper threads act
+int probe_pipe[2] = {-1, -1};       // memory is read through it (Copy)
 
 std::uintptr_t CodeStart() noexcept { return reinterpret_cast<std::uintptr_t>(__eden_text_start); }
 std::uintptr_t CodeEnd() noexcept { return reinterpret_cast<std::uintptr_t>(__eden_text_end); }
@@ -483,8 +482,7 @@ void WriteReport(const Kind* kind, int code, std::uint64_t address, const Regist
     summary.Put(restart ? " restart=1\n" : " restart=0\n");
     Note(summary.data);
 
-    (void)!write(flush_pipe[1], "f", 1);
-    (void)!write(wake_pipe[1], "w", 1);
+    reported.store(true, std::memory_order_release);
     // The restart ends this process. Six seconds without it: the system's own handling takes over.
     for (int i = 0; i < 60 && !helper_failed.load(std::memory_order_acquire); ++i) Sleep(100000);
     Note("EDEN_CRASH the app did not start again; the system handles the crash\n");
@@ -501,19 +499,16 @@ void Handle(int signal, siginfo_t* info, void* context) {
     GiveUp();
 }
 
-bool WaitByte(int descriptor) noexcept {
-    char byte = 0;
-    for (;;) {
-        const ssize_t count = read(descriptor, &byte, 1);
-        if (count == 1) return true;
-        if (count == 0 || errno != EINTR) return false;
-    }
+// The helper threads exist from startup on: the heap or a lock may be unusable when they are
+// needed. They look at a flag four times a second, which nothing can keep the handler from
+// setting (a pipe's first write can fail on the console when memory is short).
+void WaitForReport() noexcept {
+    while (!reported.load(std::memory_order_acquire)) Sleep(250000);
 }
 
-// Waits from startup on: the heap or a lock may be unusable when it is needed, so it exists
-// beforehand and calls only the system.
+// Starts the app again (or closes it), calling only the system.
 void Restarter() {
-    if (!WaitByte(wake_pipe[0])) return;
+    WaitForReport();
     Sleep(300000);  // what was printed reaches the log files (log_pipe.h)
     if (!leave.load(std::memory_order_acquire)) eden_restart_app();
     eden_exit_app();
@@ -523,7 +518,7 @@ void Restarter() {
 // The buffered log stream: flushing it can wait forever on a lock the crashed thread holds,
 // which is why the thread above does not do it.
 void Flusher() {
-    if (!WaitByte(flush_pipe[0])) return;
+    WaitForReport();
     std::fflush(stderr);
     std::fflush(stdout);
 }
@@ -555,12 +550,15 @@ void Install(const std::string& logs_folder, const char* app_version, bool resta
         utc_offset = static_cast<long>(seconds - static_cast<long long>(started_at));
     }
     NameThread("main");
-    if (pipe(wake_pipe) != 0 || pipe(flush_pipe) != 0 || pipe(probe_pipe) != 0) {
-        std::fprintf(stderr, "EDEN_CRASH_REPORT installed=0 pipes=%d\n", errno);
-        return;
+    // The pipe memory is read through, used once now: its buffer exists before it is needed.
+    // Without it the report has no calls list.
+    bool probe = pipe(probe_pipe) == 0;
+    if (probe) {
+        fcntl(probe_pipe[0], F_SETFL, O_NONBLOCK);
+        fcntl(probe_pipe[1], F_SETFL, O_NONBLOCK);
+        probe = Readable(&started_at, sizeof(started_at));
     }
-    fcntl(probe_pipe[0], F_SETFL, O_NONBLOCK);
-    fcntl(probe_pipe[1], F_SETFL, O_NONBLOCK);
+    if (!probe) probe_pipe[0] = probe_pipe[1] = -1;
     std::thread(Restarter).detach();
     std::thread(Flusher).detach();
     struct sigaction action {};
@@ -570,8 +568,8 @@ void Install(const std::string& logs_folder, const char* app_version, bool resta
     unsigned handled = 0;
     for (const Kind& kind : kKinds) handled += sigaction(kind.signal, &action, nullptr) == 0;
     installed = true;
-    std::fprintf(stderr, "EDEN_CRASH_REPORT installed=1 signals=%u folder=%s after_crash=%d\n", handled, logs,
-                 restarted ? 1 : 0);
+    std::fprintf(stderr, "EDEN_CRASH_REPORT installed=1 signals=%u stack_reads=%d folder=%s after_crash=%d\n", handled,
+                 probe ? 1 : 0, logs, restarted ? 1 : 0);
 }
 
 void SetSession(const std::string& text, bool game) noexcept {
