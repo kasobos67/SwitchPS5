@@ -2015,6 +2015,7 @@ endif()
                 "${launcher_dir}/pe/audio/mixer.cpp"
                 "${launcher_dir}/pe/audio/sounds.cpp"
                 "${launcher_dir}/pe/audio/wav.cpp"
+                "${launcher_dir}/pe/core/strings.cpp"
                 "${launcher_dir}/pe/gfx/draw_list.cpp"
                 "${launcher_dir}/pe/gfx/font.cpp"
                 "${launcher_dir}/pe/gfx/gl_batch.cpp"

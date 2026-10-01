@@ -6,6 +6,7 @@
 # usage: tools/launcher/preview.sh [output dir] [width height]
 #        tools/launcher/preview.sh --tour <video.mp4> [width height]   (needs ffmpeg)
 # The same screens, shaders and font as on the console, with sample data.
+# PE_LANG=<code> shows them in that language (ui/lang/<code>.po).
 
 set -euo pipefail
 root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
@@ -14,7 +15,7 @@ build=${PROSPEROEDEN_LAUNCHER_BUILD:-"$HOME/.cache/prosperoeden-launcher"}
 cxx=${HOST_CXX:-c++}
 mkdir -p "$build/obj"
 
-sources=("$source_dir"/host/*.cpp "$source_dir"/pe/gfx/*.cpp "$source_dir"/pe/ui/*.cpp)
+sources=("$source_dir"/host/*.cpp "$source_dir"/pe/core/*.cpp "$source_dir"/pe/gfx/*.cpp "$source_dir"/pe/ui/*.cpp)
 objects=()
 pids=()
 for source in "${sources[@]}"; do

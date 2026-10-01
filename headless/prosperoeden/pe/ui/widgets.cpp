@@ -414,7 +414,7 @@ float draw_hints(Canvas &c, const Hint *hints, int count, float x, float cy, Col
             cursor += pad_width(hint.second, kSize);
         }
         cursor += kIconGap;
-        cursor += text(c, hint.label, cursor, cy + theme::kSmall * 0.35f, theme::kSmall, color);
+        cursor += text(c, tr(hint.label), cursor, cy + theme::kSmall * 0.35f, theme::kSmall, color);
         if (i + 1 < count)
             cursor += kItemGap;
     }
@@ -422,6 +422,11 @@ float draw_hints(Canvas &c, const Hint *hints, int count, float x, float cy, Col
 }
 
 // ---------------------------------------------------------------- lists
+
+std::string list_position(int selected, int count)
+{
+    return fill(tr("{0} OF {1}"), {std::to_string(selected), std::to_string(count)});
+}
 
 void ListView::follow()
 {

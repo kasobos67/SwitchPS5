@@ -4,6 +4,8 @@
 
 #include "fake_services.hpp"
 
+#include "pe/core/strings.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -19,9 +21,10 @@ struct Sample
     const char *name;
     const char *format;
     const char *size;
-    const char *addons;
-    const char *language;
-    const char *note;
+    const char *update;   // its version, or "" without one
+    int dlc;
+    const char *language; // the language the game will use
+    const char *missing;  // the chosen language when the game lacks it, else ""
     std::uint32_t sky;  // cover colours
     std::uint32_t land;
     std::uint32_t mark;
@@ -29,19 +32,19 @@ struct Sample
 
 // Invented titles: nothing here names a real game.
 constexpr Sample kSamples[] = {
-    {"Starfall Odyssey", "NSP", "6.4 GB", "Update 1.2.0, 2 DLC", "English (US)", "", 0x1b2a6b, 0x40b3c8, 0xffd166},
-    {"Moss & Lantern", "XCI", "2.1 GB", "None", "English (US)", "", 0x16402f, 0x7bc86c, 0xf4e285},
-    {"Kart Carnival Deluxe", "NSP", "7.8 GB", "Update 3.0.1, 48 DLC", "English (US)", "", 0xb3261e, 0xffb238, 0xffffff},
-    {"Tiny Harbor", "NSP", "512.0 MB", "None", "English (US)", "", 0x256d8f, 0x9bd8e6, 0xfff3d6},
-    {"Echoes of the Valley", "XCI", "14.2 GB", "Update 1.1.0", "Spanish",
-     "Portuguese (Brazil) not available", 0x3b1f5e, 0xc77dff, 0xffe0f5},
-    {"Pocket Rally Turbo", "NSP", "1.9 GB", "None", "English (US)", "", 0x202020, 0xe85d04, 0xf8f9fa},
-    {"Cloudline", "NSP", "3.3 GB", "1 DLC", "English (US)", "", 0x5fa8d3, 0xcae9ff, 0x1b4965},
-    {"Ember Knights II", "XCI", "9.6 GB", "Update 2.4.0, 5 DLC", "English (US)", "", 0x3d0c02, 0xd62828, 0xfcbf49},
-    {"Paper Garden", "NSP", "840.5 MB", "None", "English (US)", "", 0xf1e3c6, 0x90be6d, 0x386641},
-    {"Neon Drifters", "NSP", "5.2 GB", "Update 1.0.3", "English (US)", "", 0x10002b, 0x7b2cbf, 0x5ef2ff},
-    {"Caf\xC3\xA9 Nocturne", "NSP", "2.7 GB", "None", "French", "", 0x2b1d0e, 0xa9713c, 0xf6e7cb},
-    {"Sky Shepherds", "XCI", "4.4 GB", "3 DLC", "English (US)", "", 0x457b9d, 0xa8dadc, 0xf1faee},
+    {"Starfall Odyssey", "NSP", "6.4 GB", "1.2.0", 2, "English (US)", "", 0x1b2a6b, 0x40b3c8, 0xffd166},
+    {"Moss & Lantern", "XCI", "2.1 GB", "", 0, "English (US)", "", 0x16402f, 0x7bc86c, 0xf4e285},
+    {"Kart Carnival Deluxe", "NSP", "7.8 GB", "3.0.1", 48, "English (US)", "", 0xb3261e, 0xffb238, 0xffffff},
+    {"Tiny Harbor", "NSP", "512.0 MB", "", 0, "English (US)", "", 0x256d8f, 0x9bd8e6, 0xfff3d6},
+    {"Echoes of the Valley", "XCI", "14.2 GB", "1.1.0", 0, "Spanish",
+     "Portuguese (Brazil)", 0x3b1f5e, 0xc77dff, 0xffe0f5},
+    {"Pocket Rally Turbo", "NSP", "1.9 GB", "", 0, "English (US)", "", 0x202020, 0xe85d04, 0xf8f9fa},
+    {"Cloudline", "NSP", "3.3 GB", "", 1, "English (US)", "", 0x5fa8d3, 0xcae9ff, 0x1b4965},
+    {"Ember Knights II", "XCI", "9.6 GB", "2.4.0", 5, "English (US)", "", 0x3d0c02, 0xd62828, 0xfcbf49},
+    {"Paper Garden", "NSP", "840.5 MB", "", 0, "English (US)", "", 0xf1e3c6, 0x90be6d, 0x386641},
+    {"Neon Drifters", "NSP", "5.2 GB", "1.0.3", 0, "English (US)", "", 0x10002b, 0x7b2cbf, 0x5ef2ff},
+    {"Caf\xC3\xA9 Nocturne", "NSP", "2.7 GB", "", 0, "French", "", 0x2b1d0e, 0xa9713c, 0xf6e7cb},
+    {"Sky Shepherds", "XCI", "4.4 GB", "", 3, "English (US)", "", 0x457b9d, 0xa8dadc, 0xf1faee},
 };
 
 void put_pixel(std::vector<std::uint8_t> &pixels, int size, int x, int y, float r, float g, float b)
@@ -104,15 +107,23 @@ bool write_cover(const std::string &path, const Sample &sample, int index)
     return ok;
 }
 
-const std::vector<std::string> kResolutionLabels = {"0.5x (faster, softer)", "0.75x (faster)",
-                                                    "1x (native)", "1.5x (sharper)",
-                                                    "2x (sharpest)"};
+// The same labels as the console's settings (headless/settings_store.h), translated like them.
+constexpr const char *kResolutionLabels[] = {"0.5x (faster, softer)", "0.75x (faster)",
+                                             "1x (native)", "1.5x (sharper)", "2x (sharpest)"};
 const std::vector<std::string> kResolutionKeys = {"0.5x", "0.75x", "1x", "1.5x", "2x"};
-const std::vector<std::string> kFilterLabels = {"Bilinear", "AMD FSR", "Bicubic", "Nearest"};
-const std::vector<std::string> kLanguageLabels = {
+constexpr const char *kFilterLabels[] = {"Bilinear", "AMD FSR", "Bicubic", "Nearest"};
+constexpr const char *kLanguageLabels[] = {
     "English (US)", "English (UK)", "French", "French (Canada)", "German", "Italian", "Spanish",
     "Spanish (Latin America)", "Portuguese", "Portuguese (Brazil)", "Dutch", "Russian", "Polish",
     "Japanese", "Korean", "Chinese (Simplified)", "Chinese (Traditional)", "Thai"};
+
+template <std::size_t N> std::vector<std::string> translated(const char *const (&labels)[N])
+{
+    std::vector<std::string> out;
+    for (const char *label : labels)
+        out.emplace_back(tr(label));
+    return out;
+}
 constexpr int kLanguageRegions[] = {1, 2, 2, 1, 2, 2, 2, 1, 2, 1, 2, 2, 2, 0, 5, 4, 6, 1};
 
 } // namespace
@@ -131,9 +142,16 @@ FakeServices::FakeServices(const std::string &covers_directory)
         game.file = std::string(sample.name) + " [" + id + "]." +
                     (std::string(sample.format) == "NSP" ? "nsp" : "xci");
         game.title_id = 0x0100A00000001000ull + static_cast<std::uint64_t>(index) * 0x10000;
-        game.addons = sample.addons;
-        game.language = sample.language;
-        game.language_note = sample.note;
+        if (sample.update[0] != 0)
+            game.addons = fill(tr("Update {0}"), {sample.update});
+        if (sample.dlc > 0)
+            game.addons += (game.addons.empty() ? "" : ", ") +
+                           fill(tr("{0} DLC"), {std::to_string(sample.dlc)});
+        if (game.addons.empty())
+            game.addons = tr("None");
+        game.language = tr(sample.language);
+        if (sample.missing[0] != 0)
+            game.language_note = fill(tr("{0} not available"), {tr(sample.missing)});
         // One game has no cover art, to show the placeholder.
         if (index != 8)
         {
@@ -153,13 +171,15 @@ ui::Home FakeServices::home()
     ui::Home home;
     home.setup_ready = setup_ready;
     if (!setup_ready)
-        home.status = "Setup required: prod.keys is missing. Open Settings, Game files to choose the "
-                      "folder that holds your keys, firmware and roms folders (or add the files to "
-                      "/data/prosperoeden), then reopen ProsperoEden.";
+        home.status = fill(tr("Setup required: {0} Open Settings, Game files to choose the folder that "
+                              "holds your keys, firmware and roms folders (or add the files to {1}), "
+                              "then reopen ProsperoEden."),
+                           {fill(tr("Missing or empty keys/prod.keys in {0}."), {"/data/prosperoeden"}),
+                            "/data/prosperoeden"});
     else if (!launch_error.empty())
     {
-        home.status = "Game could not start: " + launch_error +
-                      " Details: /data/prosperoeden/logs/stderr.log";
+        home.status = fill(tr("Game could not start: {0} Details: {1}"),
+                           {launch_error, "/data/prosperoeden/logs/stderr.log"});
         home.launch_failed = true;
     }
     if (has_history && setup_ready)
@@ -175,10 +195,10 @@ ui::Home FakeServices::home()
         home.last_file = last.file;
         home.last_exists = true;
         home.last_title = last.name;
-        home.last_caption = "Last launched Sep 30 at 20:14";
+        home.last_caption = tr("Last game opened");
         home.last_cover = last.cover;
-        home.last_info = "Add-ons: " + last.addons + "  /  Language: " + last.language + " (" +
-                         last.language_note + " in this game)";
+        home.last_info = fill(tr("Add-ons: {0}  /  Language: {1} ({2} in this game)"),
+                              {last.addons, last.language, last.language_note});
         home.last_info_warning = true;
         for (const char *name : {"Echoes of the Valley", "Kart Carnival Deluxe", "Starfall Odyssey",
                                  "Caf\xC3\xA9 Nocturne"})
@@ -187,8 +207,8 @@ ui::Home FakeServices::home()
             home.recents.push_back({game.file, game.name, game.cover});
         }
     }
-    home.system_status = std::to_string(games_.size()) + " games installed  /  " +
-                         (setup_ready ? "Firmware ready" : "Setup required");
+    home.system_status = fill(tr("{0} games installed"), {std::to_string(games_.size())}) + "  /  " +
+                         (setup_ready ? tr("Firmware ready") : tr("Setup required"));
     return home;
 }
 
@@ -207,7 +227,8 @@ bool FakeServices::set_docked(std::uint64_t title_id, bool docked)
 
 const std::vector<std::string> &FakeServices::resolution_labels()
 {
-    return kResolutionLabels;
+    static const std::vector<std::string> labels = translated(kResolutionLabels);
+    return labels;
 }
 const std::vector<std::string> &FakeServices::resolution_keys()
 {
@@ -215,25 +236,28 @@ const std::vector<std::string> &FakeServices::resolution_keys()
 }
 const std::vector<std::string> &FakeServices::filter_labels()
 {
-    return kFilterLabels;
+    static const std::vector<std::string> labels = translated(kFilterLabels);
+    return labels;
 }
 const std::vector<std::string> &FakeServices::language_labels()
 {
-    return kLanguageLabels;
+    static const std::vector<std::string> labels = translated(kLanguageLabels);
+    return labels;
 }
 
 std::string FakeServices::language_region(int language)
 {
     static constexpr const char *kRegions[] = {"Japan", "USA", "Europe", "Australia",
                                                "China", "Korea", "Taiwan"};
-    return language >= 0 && language < 18 ? kRegions[kLanguageRegions[language]] : "";
+    return language >= 0 && language < 18 ? tr(kRegions[kLanguageRegions[language]]) : "";
 }
 
 std::string FakeServices::setup_details()
 {
-    return setup_ready ? "Keys and firmware: startup checks passed. Game-specific compatibility is "
-                         "checked at launch." :
-                         "prod.keys is missing.";
+    return setup_ready ?
+               tr("Keys and firmware: startup checks passed. Game-specific compatibility is checked at "
+                  "launch.") :
+               fill(tr("Missing or empty keys/prod.keys in {0}."), {"/data/prosperoeden"});
 }
 
 bool FakeServices::folders(const std::string &directory, std::vector<std::string> *names)

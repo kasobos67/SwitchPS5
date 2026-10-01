@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "pe/core/strings.hpp"
 #include "pe/core/tween.hpp"
 #include "pe/ui/textures.hpp"
 #include "pe/ui/theme.hpp"
@@ -117,13 +118,16 @@ enum class Pad : std::uint8_t
 struct Hint
 {
     Pad button = Pad::none;
-    const char *label = "";
+    const char *label = ""; // English, marked with TR(): draw_hints translates it
     Pad second = Pad::none; // a pair such as L1 R1
 };
 float pad_width(Pad button, float size);
 void draw_pad(Canvas &c, Pad button, float x, float cy, float size, float alpha = 1.0f);
 // Hints left to right from x with their icons centred on cy; returns the width used.
 float draw_hints(Canvas &c, const Hint *hints, int count, float x, float cy, Color color);
+
+// "3 OF 12" under a list.
+std::string list_position(int selected, int count);
 
 // ---- lists ----
 // A scrolling list of equal rows: the selection keeps inside the window, the

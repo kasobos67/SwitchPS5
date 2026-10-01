@@ -316,6 +316,21 @@ int main(int argc, char **argv)
                  reinterpret_cast<const char *>(glGetString(GL_RENDERER)));
     pe::gfx::set_glsl_prefix("#version 450 core\n");
 
+    // PE_LANG=<code>: the launcher in that language, as on a console set to it.
+    if (const char *language = std::getenv("PE_LANG"); language != nullptr && language[0] != 0)
+    {
+        std::string catalog;
+        const std::string path = assets + "/lang/" + language + ".po";
+        if (!pe::read_file(path, &catalog) || pe::catalog().load(catalog) == 0)
+        {
+            std::fprintf(stderr, "cannot load the catalog %s
+", path.c_str());
+            return 1;
+        }
+        std::fprintf(stderr, "language %s: %zu texts
+", language, pe::catalog().size());
+    }
+
     pe::gfx::Font font;
     std::string font_data;
     if (!pe::read_file(assets + "/fonts/montserrat-medium.pefont", &font_data) ||

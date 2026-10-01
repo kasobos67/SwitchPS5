@@ -5,6 +5,7 @@
 #include "diagnostics.h"
 #include "metadata_bridge.h"
 #include "native_directory.h"
+#include "pe/core/strings.hpp"
 #include "radio_input.h"
 #include "version.h"
 
@@ -24,6 +25,9 @@
 
 namespace {
 
+using pe::fill;
+using pe::tr;
+
 bool IsFile(const std::string& path) {
     struct stat info {};
     return stat(path.c_str(), &info) == 0 && S_ISREG(info.st_mode);
@@ -33,9 +37,9 @@ std::string AddOnSummary(uint64_t title_id) {
     char update[64]{};
     unsigned dlc = 0;
     eden_game_addons(title_id, update, sizeof(update), &dlc);
-    std::string text = update[0] ? std::string("Update ") + update : std::string{};
-    if (dlc) text += (text.empty() ? "" : ", ") + std::to_string(dlc) + " DLC";
-    return text.empty() ? "None" : text;
+    std::string text = update[0] ? fill(tr("Update {0}"), {update}) : std::string{};
+    if (dlc) text += (text.empty() ? "" : ", ") + fill(tr("{0} DLC"), {std::to_string(dlc)});
+    return text.empty() ? tr("None") : text;
 }
 
 // The language a game will use for the chosen one (Settings > Language), and a note when the game
@@ -47,12 +51,12 @@ struct GameLanguage {
 GameLanguage LanguageFor(const std::string& path, uint64_t title_id, int choice) {
     const int chosen = Eden::kLanguageSettings[choice];
     const int used = eden_game_language(path.c_str(), Eden::AssetsPath("keys").c_str(), title_id, chosen);
-    GameLanguage result{Eden::kLanguageLabels[choice], {}};
+    GameLanguage result{tr(Eden::kLanguageLabels[choice]), {}};
     if (used == chosen) return result;
-    result.label = "Another language";
+    result.label = tr("Another language");
     for (std::size_t i = 0; i < std::size(Eden::kLanguageSettings); ++i)
-        if (Eden::kLanguageSettings[i] == used) result.label = Eden::kLanguageLabels[i];
-    result.note = std::string(Eden::kLanguageLabels[choice]) + " not available";
+        if (Eden::kLanguageSettings[i] == used) result.label = tr(Eden::kLanguageLabels[i]);
+    result.note = fill(tr("{0} not available"), {tr(Eden::kLanguageLabels[choice])});
     return result;
 }
 
@@ -207,9 +211,42 @@ int CountInstalledGames() {
     return count;
 }
 
+// The labels of a setting, in the player's language (tools/launcher/strings.py lists them).
 template <std::size_t N>
 std::vector<std::string> Labels(const char* const (&values)[N]) {
-    return std::vector<std::string>(std::begin(values), std::end(values));
+    std::vector<std::string> labels;
+    for (const char* value : values) labels.emplace_back(tr(value));
+    return labels;
+}
+
+// What is missing from the setup, as metadata_bridge.cpp words it, in the player's language. Each
+// message is one of these texts, with a folder or a code where it says {0}.
+std::string SetupMessage(const std::string& english) {
+    static constexpr const char* kMessages[] = {
+        TR("Missing or empty keys/prod.keys in {0}."),
+        TR("prod.keys could not supply an NCA header key. Replace it with a valid key dump."),
+        TR("Cannot read firmware/ in {0}. Install extracted firmware NCAs."),
+        TR("A firmware NCA cannot be read. Reinstall the firmware dump."),
+        TR("Firmware NCA validation failed (code {0}). Check that firmware and prod.keys are compatible."),
+        TR("No firmware NCAs found in {0}."),
+        TR("Firmware SystemVersion data is missing or unreadable. Install a complete firmware dump."),
+        TR("Setup validation failed. Check that firmware and key files are readable and valid."),
+    };
+    for (const std::string_view pattern : kMessages) {
+        const std::size_t hole = pattern.find("{0}");
+        if (hole == std::string_view::npos) {
+            if (english == pattern) return tr(english);
+            continue;
+        }
+        const std::string_view before = pattern.substr(0, hole);
+        const std::string_view after = pattern.substr(hole + 3);
+        if (english.size() >= before.size() + after.size() && english.starts_with(before) &&
+            english.ends_with(after))
+            return fill(tr(std::string(pattern)),
+                        {std::string_view{english}.substr(before.size(),
+                                                           english.size() - before.size() - after.size())});
+    }
+    return english;
 }
 
 } // namespace
@@ -225,11 +262,11 @@ pe::ui::Home EdenServices::home() {
     pe::ui::Home home;
     home.setup_ready = setup_.empty();
     if (!home.setup_ready) {
-        home.status = "Setup required: " + setup_ +
-            " Open Settings, Game files to choose the folder that holds your keys, firmware and roms folders"
-            " (or add the files to " + Eden::AssetsDir() + "), then reopen ProsperoEden.";
+        home.status = fill(tr("Setup required: {0} Open Settings, Game files to choose the folder that holds your "
+                              "keys, firmware and roms folders (or add the files to {1}), then reopen ProsperoEden."),
+                           {SetupMessage(setup_), Eden::AssetsDir()});
     } else if (!launch_error_.empty()) {
-        home.status = "Game could not start: " + launch_error_ + " Details: " + Eden::LogFile("stderr.log");
+        home.status = fill(tr("Game could not start: {0} Details: {1}"), {launch_error_, Eden::LogFile("stderr.log")});
         home.launch_failed = true;
     }
 
@@ -245,17 +282,8 @@ pe::ui::Home EdenServices::home() {
             has_cover = !cover.empty();
         }
         home.last_title = title;
-        home.last_caption = "ROM missing from the game files folder";
-        if (home.last_exists) {
-            home.last_caption = "Last game opened";
-            struct stat history_info {};
-            if (stat(Eden::ConfigFile("last-game.txt").c_str(), &history_info) == 0) {
-                char when[64]{};
-                if (const std::tm* local = std::localtime(&history_info.st_mtime))
-                    if (std::strftime(when, sizeof(when), "Last launched %b %d at %H:%M", local))
-                        home.last_caption = when;
-            }
-        }
+        home.last_caption = home.last_exists ? tr("Last game opened") :
+                                               tr("ROM missing from the game files folder");
         if (has_cover) home.last_cover = cover;
     }
     // The last game's update and DLC, and the language it will use (a warning when it does not
@@ -264,8 +292,10 @@ pe::ui::Home EdenServices::home() {
         eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str());
         const uint64_t title_id = eden_game_title_id(last_path.c_str());
         const GameLanguage language = LanguageFor(last_path, title_id, Eden::LoadPreferences().language);
-        home.last_info = "Add-ons: " + AddOnSummary(title_id) + "  /  Language: " + language.label +
-            (language.note.empty() ? "" : " (" + language.note + " in this game)");
+        home.last_info = language.note.empty() ?
+            fill(tr("Add-ons: {0}  /  Language: {1}"), {AddOnSummary(title_id), language.label}) :
+            fill(tr("Add-ons: {0}  /  Language: {1} ({2} in this game)"),
+                 {AddOnSummary(title_id), language.label, language.note});
         home.last_info_warning = !language.note.empty();
     }
 
@@ -280,8 +310,9 @@ pe::ui::Home EdenServices::home() {
         home.recents.push_back({name, GameTitle(name), EnsureCover(name)});
     }
     const int installed = CountInstalledGames();
-    home.system_status = std::to_string(installed) + (installed == 1 ? " game" : " games") +
-        " installed  /  " + (home.setup_ready ? "Firmware ready" : "Setup required");
+    home.system_status = fill(installed == 1 ? tr("{0} game installed") : tr("{0} games installed"),
+                              {std::to_string(installed)}) +
+        "  /  " + (home.setup_ready ? tr("Firmware ready") : tr("Setup required"));
     return home;
 }
 
@@ -438,14 +469,16 @@ const std::vector<std::string>& EdenServices::language_labels() {
 }
 
 std::string EdenServices::language_region(int language) {
-    static constexpr const char* kRegions[] = {"Japan", "USA", "Europe", "Australia", "China", "Korea", "Taiwan"};
+    static constexpr const char* kRegions[] = {TR("Japan"), TR("USA"), TR("Europe"), TR("Australia"), TR("China"),
+                                               TR("Korea"), TR("Taiwan")};
     if (language < 0 || language >= int(std::size(Eden::kLanguageRegions))) return {};
-    return kRegions[Eden::kLanguageRegions[language]];
+    return tr(kRegions[Eden::kLanguageRegions[language]]);
 }
 
 std::string EdenServices::setup_details() {
     return setup_.empty() ?
-        "Keys and firmware: startup checks passed. Game-specific compatibility is checked at launch." : setup_;
+        tr("Keys and firmware: startup checks passed. Game-specific compatibility is checked at launch.") :
+        SetupMessage(setup_);
 }
 
 bool EdenServices::folders(const std::string& directory, std::vector<std::string>* names) {

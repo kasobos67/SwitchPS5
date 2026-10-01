@@ -20,12 +20,12 @@ constexpr Rect kListPanel{108.0f, 188.0f, 820.0f, 720.0f};
 constexpr Rect kDetailPanel{980.0f, 188.0f, 820.0f, 720.0f};
 constexpr Rect kDialog{550.0f, 180.0f, 820.0f, 720.0f};
 constexpr float kRowsTop = 264.0f;
-constexpr const char *kCategories[] = {"Video", "Audio", "Controls", "Diagnostics", "Game files",
-                                       "Language"};
+constexpr const char *kCategories[] = {TR("Video"), TR("Audio"), TR("Controls"), TR("Diagnostics"), TR("Game files"),
+                                       TR("Language")};
 
 const char *on_off(bool value)
 {
-    return value ? "On" : "Off";
+    return value ? tr("On") : tr("Off");
 }
 
 std::string percent(int value)
@@ -90,11 +90,11 @@ void Launcher::press_settings(Key key)
 void Launcher::draw_settings(Canvas &c)
 {
     gfx::DrawList &list = c.list;
-    draw_frame(c, "Settings", "Fine-tune your experience");
+    draw_frame(c, tr("Settings"), tr("Fine-tune your experience"));
 
     // ---- categories ----
     glass(c, kListPanel, 26.0f, theme::kPanel.with_alpha(0.80f), theme::kPanelEdge.with_alpha(0.55f));
-    text(c, "PREFERENCES", 138.0f, baseline(208.0f, 28.0f, theme::kSmall), theme::kSmall,
+    text(c, tr("PREFERENCES"), 138.0f, baseline(208.0f, 28.0f, theme::kSmall), theme::kSmall,
          theme::kLimePale, Align::left, 3.0f);
     const auto row_rect = [&](int row) -> Rect
     { return {150.0f, kRowsTop + settings_.pitch * static_cast<float>(row), 736.0f, 94.0f}; };
@@ -103,16 +103,16 @@ void Launcher::draw_settings(Canvas &c)
     plate_focus(c, kRowPlate, {150.0f, kRowsTop + settings_.cursor(), 736.0f, 94.0f}, 1.0f);
     const std::string summaries[] = {
         prefs_.renderer != 0 ? "Vulkan" : "OpenGL",
-        prefs_.mute ? "Muted" : percent(prefs_.volume),
-        std::string("Vibration ") + (prefs_.vibration ? "on" : "off"),
-        prefs_.detailed_logging ? "Detailed logs on" : "",
+        prefs_.mute ? tr("Muted") : percent(prefs_.volume),
+        prefs_.vibration ? tr("Vibration on") : tr("Vibration off"),
+        prefs_.detailed_logging ? tr("Detailed logs on") : "",
         "",
         pick(services_.language_labels(), prefs_.language),
     };
     for (int row = 0; row < 6; ++row)
     {
         const Rect r = row_rect(row);
-        text(c, kCategories[row], r.x + 36.0f, baseline(r.y, 94.0f, theme::kText24), theme::kText24,
+        text(c, tr(kCategories[row]), r.x + 36.0f, baseline(r.y, 94.0f, theme::kText24), theme::kText24,
              theme::kValue);
         // What the category is set to, then a chevron: there is more behind the row.
         text_fit(c, summaries[row], r.x + r.w - 62.0f, baseline(r.y, 94.0f, theme::kSmall),
@@ -127,11 +127,11 @@ void Launcher::draw_settings(Canvas &c)
     // ---- what the focused category holds ----
     glass(c, kDetailPanel, 26.0f, theme::kPanel.with_alpha(0.80f),
           theme::kPanelEdge.with_alpha(0.55f));
-    text(c, "ON THIS CONSOLE", 1016.0f, baseline(210.0f, 28.0f, theme::kSmall), theme::kSmall,
+    text(c, tr("ON THIS CONSOLE"), 1016.0f, baseline(210.0f, 28.0f, theme::kSmall), theme::kSmall,
          theme::kLimePale, Align::left, 3.0f);
-    text(c, "Make it yours.", 1016.0f, baseline(258.0f, 54.0f, theme::kLead), theme::kLead,
+    text(c, tr("Make it yours."), 1016.0f, baseline(258.0f, 54.0f, theme::kLead), theme::kLead,
          theme::kTitle);
-    text_block(c, "Adjust the essentials without leaving your library behind.", 1016.0f,
+    text_block(c, tr("Adjust the essentials without leaving your library behind."), 1016.0f,
                baseline(332.0f, 36.0f, theme::kText24), theme::kText24, 36.0f, theme::kCopy, 748.0f,
                2);
     list.rounded_rect({1016.0f, 432.0f, 748.0f, 1.0f}, 0.0f, theme::kRule);
@@ -148,45 +148,45 @@ void Launcher::draw_settings(Canvas &c)
     switch (settings_.selected)
     {
     case 0:
-        about = "Graphics backend and how games are scaled to your TV.";
-        lines = {{"RENDERER", prefs_.renderer != 0 ? "Vulkan (recommended)" : "OpenGL"},
-                 {"RESOLUTION", pick(services_.resolution_labels(), prefs_.resolution)},
-                 {"UPSCALING FILTER", pick(services_.filter_labels(), prefs_.filter)},
-                 {"FPS OVERLAY", on_off(prefs_.hud)}};
+        about = tr("Graphics backend and how games are scaled to your TV.");
+        lines = {{tr("RENDERER"), prefs_.renderer != 0 ? tr("Vulkan (recommended)") : "OpenGL"},
+                 {tr("RESOLUTION"), pick(services_.resolution_labels(), prefs_.resolution)},
+                 {tr("UPSCALING FILTER"), pick(services_.filter_labels(), prefs_.filter)},
+                 {tr("FPS OVERLAY"), on_off(prefs_.hud)}};
         break;
     case 1:
-        about = "Game volume, and the sounds of this menu.";
-        lines = {{"GAME VOLUME", percent(prefs_.volume)},
-                 {"MUTE", on_off(prefs_.mute)},
-                 {"MENU SOUNDS", prefs_.menu_volume > 0 ? percent(prefs_.menu_volume) : "Off"}};
+        about = tr("Game volume, and the sounds of this menu.");
+        lines = {{tr("GAME VOLUME"), percent(prefs_.volume)},
+                 {tr("MUTE"), on_off(prefs_.mute)},
+                 {tr("MENU SOUNDS"), prefs_.menu_volume > 0 ? percent(prefs_.menu_volume) : tr("Off")}};
         break;
     case 2:
-        about = "Shortcuts during a game, and vibration.";
-        lines = {{"VIBRATION", on_off(prefs_.vibration)},
-                 {"END GAME", "Select + L1"},
-                 {"FPS OVERLAY", "Select + R1"}};
+        about = tr("Shortcuts during a game, and vibration.");
+        lines = {{tr("VIBRATION"), on_off(prefs_.vibration)},
+                 {tr("END GAME"), "Select + L1"},
+                 {tr("FPS OVERLAY"), "Select + R1"}};
         break;
     case 3:
-        about = "Setup status and detailed logs.";
-        lines = {{"SETUP", home_.setup_ready ? "Ready" : "Needs attention"},
-                 {"DETAILED LOGS", on_off(prefs_.detailed_logging)}};
+        about = tr("Setup status and detailed logs.");
+        lines = {{tr("SETUP"), home_.setup_ready ? tr("Ready") : tr("Needs attention")},
+                 {tr("DETAILED LOGS"), on_off(prefs_.detailed_logging)}};
         break;
     case 4:
-        about = "The folder that holds your keys, firmware and games.";
-        lines = {{"IN USE", short_path(folder, 34)}};
+        about = tr("The folder that holds your keys, firmware and games.");
+        lines = {{tr("IN USE"), short_path(folder, 34)}};
         if (!saved_folder.empty() && saved_folder != folder)
-            lines.push_back({"NEXT START", short_path(saved_folder, 34)});
+            lines.push_back({tr("NEXT START"), short_path(saved_folder, 34)});
         break;
     default:
-        about = "The language games use when they offer it.";
-        lines = {{"LANGUAGE", pick(services_.language_labels(), prefs_.language)},
-                 {"REGION", services_.language_region(prefs_.language)}};
+        about = tr("The language games use when they offer it.");
+        lines = {{tr("LANGUAGE"), pick(services_.language_labels(), prefs_.language)},
+                 {tr("REGION"), services_.language_region(prefs_.language)}};
         break;
     }
     const float shown = tween::clamp01(section_.value);
     list.push_opacity(shown);
     list.push_transform(1.0f, 0.0f, 0.0f, 0.0f, (1.0f - shown) * 10.0f);
-    std::string heading = kCategories[settings_.selected];
+    std::string heading = tr(kCategories[settings_.selected]);
     for (char &letter : heading)
         if (letter >= 'a' && letter <= 'z')
             letter = static_cast<char>(letter - 'a' + 'A');
@@ -206,7 +206,7 @@ void Launcher::draw_settings(Canvas &c)
     list.pop_opacity();
 
     static constexpr Hint kHints[] = {
-        {Pad::cross, "Select"}, {Pad::circle, "Back"}, {Pad::updown, "Browse settings"}};
+        {Pad::cross, TR("Select")}, {Pad::circle, TR("Back")}, {Pad::updown, TR("Browse settings")}};
     draw_footer(c, kHints, 3);
 }
 
@@ -330,20 +330,20 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     switch (modal)
     {
     case Modal::video:
-        title = "Video";
-        copy = "How games are drawn and scaled to your TV.";
+        title = tr("Video");
+        copy = tr("How games are drawn and scaled to your TV.");
         break;
     case Modal::audio:
-        title = "Audio";
-        copy = "Game audio; PS5 system-menu music is unchanged.";
+        title = tr("Audio");
+        copy = tr("Game audio; PS5 system-menu music is unchanged.");
         break;
     case Modal::controls:
-        title = "Controls";
-        copy = "Controller shortcuts and supported features.";
+        title = tr("Controls");
+        copy = tr("Controller shortcuts and supported features.");
         break;
     default:
-        title = "Diagnostics";
-        copy = "Detailed logs apply to the next game launch.";
+        title = tr("Diagnostics");
+        copy = tr("Detailed logs apply to the next game launch.");
         break;
     }
     text(c, title, 592.0f, baseline(218.0f, 62.0f, theme::kDisplay), theme::kDisplay, theme::kTitle);
@@ -371,26 +371,26 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     switch (modal)
     {
     case Modal::video:
-        label(0, "Renderer");
-        choice(0, prefs_.renderer != 0 ? "Vulkan (recommended)" : "OpenGL");
-        label(1, "Resolution");
+        label(0, tr("Renderer"));
+        choice(0, prefs_.renderer != 0 ? tr("Vulkan (recommended)") : "OpenGL");
+        label(1, tr("Resolution"));
         choice(1, pick(services_.resolution_labels(), prefs_.resolution));
-        label(2, "Upscaling filter");
+        label(2, tr("Upscaling filter"));
         choice(2, pick(services_.filter_labels(), prefs_.filter));
-        label(3, "FPS overlay");
+        label(3, tr("FPS overlay"));
         toggle(c, 1292.0f, row_centre(3), knob);
         break;
     case Modal::audio:
-        label(0, "Game volume");
+        label(0, tr("Game volume"));
         text(c, percent(prefs_.volume), 1292.0f,
              baseline(dialog_row_top(modal, 0), 94.0f, theme::kText24), theme::kText24,
              theme::kLimePale, Align::right);
         level_bar(c, 1196.0f, row_centre(0), 260.0f, static_cast<float>(prefs_.volume) / 100.0f,
                   option_ == 0 ? 1.0f : 0.0f);
-        label(1, "Mute");
+        label(1, tr("Mute"));
         toggle(c, 1292.0f, row_centre(1), knob);
-        label(2, "Menu sounds");
-        text(c, prefs_.menu_volume > 0 ? percent(prefs_.menu_volume) : "Off", 1292.0f,
+        label(2, tr("Menu sounds"));
+        text(c, prefs_.menu_volume > 0 ? percent(prefs_.menu_volume) : tr("Off"), 1292.0f,
              baseline(dialog_row_top(modal, 2), 94.0f, theme::kText24), theme::kText24,
              theme::kLimePale, Align::right);
         level_bar(c, 1196.0f, row_centre(2), 260.0f,
@@ -405,8 +405,8 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
             const char *action;
         };
         static constexpr Shortcut kShortcuts[] = {
-            {"Select + L1", "End the game and return to this menu"},
-            {"Select + R1", "Show or hide the FPS overlay"}};
+            {"Select + L1", TR("End the game and return to this menu")},
+            {"Select + R1", TR("Show or hide the FPS overlay")}};
         for (int i = 0; i < 2; ++i)
         {
             const float top = 366.0f + 78.0f * static_cast<float>(i);
@@ -414,18 +414,18 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
                                1.0f, theme::kRowEdge.with_alpha(0.6f));
             text(c, kShortcuts[i].keys, 685.0f, baseline(top, 54.0f, theme::kSmall), theme::kSmall,
                  theme::kLimePale, Align::center);
-            text(c, kShortcuts[i].action, 802.0f, baseline(top, 54.0f, 22.0f), 22.0f, theme::kBody);
+            text(c, tr(kShortcuts[i].action), 802.0f, baseline(top, 54.0f, 22.0f), 22.0f, theme::kBody);
         }
-        text(c, "Select is the touchpad button on PS5.", 592.0f,
+        text(c, tr("Select is the touchpad button on PS5."), 592.0f,
              baseline(540.0f, 36.0f, theme::kSmall), theme::kSmall, theme::kMeta);
-        label(0, "Vibration");
+        label(0, tr("Vibration"));
         toggle(c, 1292.0f, row_centre(0), knob);
         break;
     }
     default:
         text_block(c, services_.setup_details(), 592.0f, baseline(364.0f, 40.0f, theme::kText24),
                    theme::kText24, 40.0f, theme::kBody, 736.0f, 7);
-        label(0, "Detailed logging");
+        label(0, tr("Detailed logging"));
         toggle(c, 1292.0f, row_centre(0), knob);
         break;
     }
@@ -438,12 +438,12 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     else if (rows > 1)
     {
         static constexpr Hint kHints[] = {
-            {Pad::updown, "Select"}, {Pad::leftright, "Change"}, {Pad::circle, "Back"}};
+            {Pad::updown, TR("Select")}, {Pad::leftright, TR("Change")}, {Pad::circle, TR("Back")}};
         draw_hints(c, kHints, 3, 592.0f, 811.0f, theme::kCopy);
     }
     else
     {
-        static constexpr Hint kHints[] = {{Pad::cross, "Change"}, {Pad::circle, "Back"}};
+        static constexpr Hint kHints[] = {{Pad::cross, TR("Change")}, {Pad::circle, TR("Back")}};
         draw_hints(c, kHints, 2, 592.0f, 811.0f, theme::kCopy);
     }
     list.pop_transform();

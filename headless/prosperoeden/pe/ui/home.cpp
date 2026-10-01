@@ -190,7 +190,7 @@ void Launcher::draw_controllers(Canvas &c)
 {
     if (textures_.controller() == 0)
         return;
-    text(c, "CONTROLLERS", kPadsRight, baseline(462.0f, 30.0f, theme::kSmall), theme::kSmall,
+    text(c, tr("CONTROLLERS"), kPadsRight, baseline(462.0f, 30.0f, theme::kSmall), theme::kSmall,
          Color::rgb(0xc6d2c7), Align::right, 3.0f);
     for (int player = 0; player < 4; ++player)
     {
@@ -244,16 +244,16 @@ void Launcher::draw_home(Canvas &c)
                            {0.0f, 0.0f, 1.0f, 1.0f}, 16.0f, kWhite);
     text(c, "PROSPEROEDEN", 216.0f, baseline(72.0f, 44.0f, theme::kBrand), theme::kBrand,
          theme::kText, Align::left, 3.0f);
-    text(c, "PS5 EDITION  /  " + version_, 216.0f, baseline(120.0f, 28.0f, theme::kSmall),
+    text(c, fill(tr("PS5 EDITION  /  {0}"), {version_}), 216.0f, baseline(120.0f, 28.0f, theme::kSmall),
          theme::kSmall, Color::rgb(0x9fac9e), Align::left, 1.0f);
-    static constexpr const char *kNav[] = {"Library", "Settings", "About"};
+    static constexpr const char *kNav[] = {TR("Library"), TR("Settings"), TR("About")};
     for (int i = 0; i < 3; ++i)
     {
         const Rect r = nav_rect(i);
         const float f = focus(1 + i);
         list.push_opacity(i == 0 && !ready ? 0.4f : 1.0f);
         plate(c, kNavPlate, r, f);
-        text(c, kNav[i], r.x + r.w * 0.5f, baseline(r.y, 60.0f, theme::kText24), theme::kText24,
+        text(c, tr(kNav[i]), r.x + r.w * 0.5f, baseline(r.y, 60.0f, theme::kText24), theme::kText24,
              gfx::mix(theme::kMuted, theme::kText, f), Align::center);
         list.pop_opacity();
     }
@@ -266,12 +266,12 @@ void Launcher::draw_home(Canvas &c)
     begin_band(1, 28.0f);
     glass(c, kHero, 14.0f, theme::kGlass.with_alpha(0.60f), kWhite.with_alpha(0.125f));
     cover(c, home_.last_cover, {168.0f, 272.0f, 336.0f, 336.0f}, 16.0f, 1.0f);
-    text(c, "CONTINUE PLAYING", 560.0f, baseline(264.0f, 30.0f, theme::kSmall), theme::kSmall,
+    text(c, tr("CONTINUE PLAYING"), 560.0f, baseline(264.0f, 30.0f, theme::kSmall), theme::kSmall,
          theme::kLime, Align::left, 3.0f);
-    text_block(c, home_.last_file.empty() ? "Your next adventure" : home_.last_title, 560.0f,
+    text_block(c, home_.last_file.empty() ? tr("Your next adventure") : home_.last_title, 560.0f,
                baseline(312.0f, 56.0f, theme::kDisplay), theme::kDisplay, 56.0f, theme::kText,
                1120.0f, 2);
-    text_fit(c, home_.last_file.empty() ? "Choose a game from your library." : home_.last_caption,
+    text_fit(c, home_.last_file.empty() ? tr("Choose a game from your library.") : home_.last_caption,
              560.0f, baseline(424.0f, 36.0f, theme::kText24), theme::kText24, Color::rgb(0xabb8ae),
              1040.0f);
     text_fit(c, home_.last_info, 560.0f, baseline(462.0f, 30.0f, theme::kSmall), theme::kSmall,
@@ -281,7 +281,7 @@ void Launcher::draw_home(Canvas &c)
         list.push_opacity(ready ? 1.0f : 0.4f);
         begin_lift(kContinue, f, 0.035f);
         plate(c, kButtonPlate, kContinue, f);
-        text(c, continue_ready ? "Launch game" : "Open library", kContinue.x + kContinue.w * 0.5f,
+        text(c, continue_ready ? tr("Launch game") : tr("Open library"), kContinue.x + kContinue.w * 0.5f,
              baseline(kContinue.y, 70.0f, theme::kText24), theme::kText24, theme::kText,
              Align::center);
         list.pop_transform();
@@ -292,13 +292,13 @@ void Launcher::draw_home(Canvas &c)
         list.push_opacity(continue_ready ? 1.0f : 0.4f);
         begin_lift(kDetails, f, 0.035f);
         plate(c, kButtonPlate, kDetails, f);
-        text(c, "Game details", kDetails.x + kDetails.w * 0.5f,
+        text(c, tr("Game details"), kDetails.x + kDetails.w * 0.5f,
              baseline(kDetails.y, 70.0f, theme::kText24), theme::kText24, theme::kText,
              Align::center);
         list.pop_transform();
         list.pop_opacity();
     }
-    text(c, "Eden emulator for PlayStation 5", 560.0f, baseline(616.0f, 30.0f, theme::kSmall),
+    text(c, tr("Eden emulator for PlayStation 5"), 560.0f, baseline(616.0f, 30.0f, theme::kSmall),
          theme::kSmall, theme::kFaint);
     draw_controllers(c);
     end_band();
@@ -316,17 +316,17 @@ void Launcher::draw_home(Canvas &c)
     }
     else
     {
-        text(c, "RECENTLY PLAYED", 120.0f, baseline(712.0f, 30.0f, theme::kSmall), theme::kSmall,
+        text(c, tr("RECENTLY PLAYED"), 120.0f, baseline(712.0f, 30.0f, theme::kSmall), theme::kSmall,
              Color::rgb(0xc6d2c7), Align::left, 3.0f);
         {
             const float f = focus(9);
             plate(c, kNavPlate, kViewAll, f);
-            text(c, "VIEW ALL GAMES", kViewAll.x + 280.0f,
+            text(c, tr("VIEW ALL GAMES"), kViewAll.x + 280.0f,
                  baseline(kViewAll.y, 40.0f, theme::kSmall), theme::kSmall,
                  gfx::mix(Color::rgb(0xafbbaf), theme::kLime, f), Align::right);
         }
         if (home_.recents.empty())
-            text(c, "Games you launch will appear here.", 120.0f,
+            text(c, tr("Games you launch will appear here."), 120.0f,
                  baseline(784.0f, 36.0f, theme::kText24), theme::kText24, theme::kMuted);
         for (int i = 0; i < static_cast<int>(home_.recents.size()) && i < 4; ++i)
         {
@@ -348,7 +348,7 @@ void Launcher::draw_home(Canvas &c)
     begin_band(3, 0.0f);
     list.rounded_rect({120.0f, 952.0f, 1680.0f, 1.0f}, 0.0f, theme::kText.with_alpha(0.10f));
     static constexpr Hint kHints[] = {
-        {Pad::cross, "Select"}, {Pad::triangle, "Details"}, {Pad::dpad, "Navigate"}};
+        {Pad::cross, TR("Select")}, {Pad::triangle, TR("Details")}, {Pad::dpad, TR("Navigate")}};
     draw_hints(c, kHints, 3, 120.0f, 982.0f, theme::kMuted);
     text(c, home_.system_status, 1800.0f, 989.0f, theme::kSmall, Color::rgb(0x9eac9f),
          Align::right);

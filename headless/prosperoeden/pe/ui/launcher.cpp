@@ -92,7 +92,7 @@ void Launcher::close_modal()
 bool Launcher::save_preferences()
 {
     const bool saved = services_.set_preferences(prefs_);
-    say(saved ? "Saved. Applies when a game starts." : "Could not save settings. Please try again.",
+    say(saved ? tr("Saved. Applies when a game starts.") : tr("Could not save settings. Please try again."),
         !saved);
     return saved;
 }
@@ -239,7 +239,7 @@ void Launcher::draw_launch(Canvas &c)
     c.list.shadow({art.x - 10.0f, art.y - 4.0f, art.w + 20.0f, art.h + 20.0f}, 30.0f, 70.0f,
                   theme::kLime.with_alpha(0.22f));
     cover(c, launch_cover_, art, 20.0f, 1.0f);
-    text(c, "STARTING", 960.0f, 668.0f, theme::kSmall, theme::kLime, Align::center, 4.0f);
+    text(c, tr("STARTING"), 960.0f, 668.0f, theme::kSmall, theme::kLime, Align::center, 4.0f);
     text_fit(c, launch_title_, 960.0f, 716.0f, theme::kHeading, theme::kTitle, 1300.0f,
              Align::center);
     c.list.pop_transform();
