@@ -76,6 +76,36 @@ list(REMOVE_ITEM common_sources host_memory.cpp sparse_large_vector.cpp)
 set_property(TARGET common PROPERTY SOURCES "${common_sources}")
 target_sources(common PRIVATE "${PORT_ROOT}/src/host_memory.cpp" "${PORT_ROOT}/src/memory_pages.cpp")
 
+# Eden's large tables (the guest page table, the GPU's address tables) stay sparse on the PS5:
+# their vector reserves its range with AllocateSparsePages and announces a first write to
+# CommitSparsePage (src/memory_pages.cpp) where upstream maps anonymous memory and calls
+# mprotect. A dense 39-bit page table alone was 1 GiB of the 12 GiB the CPU shares with the GPU.
+file(READ "${PROJECT_SOURCE_DIR}/src/common/sparse_large_vector.h" sparse_header)
+function(eden_sparse_replace old new count)
+    string(REPLACE "${old}" "" without "${sparse_header}")
+    string(LENGTH "${sparse_header}" before)
+    string(LENGTH "${without}" after)
+    string(LENGTH "${old}" each)
+    math(EXPR found "(${before} - ${after}) / ${each}")
+    if(NOT found EQUAL count)
+        message(FATAL_ERROR "Pinned sparse_large_vector.h changed: ${found} of '${old}', expected ${count}")
+    endif()
+    string(REPLACE "${old}" "${new}" changed "${sparse_header}")
+    set(sparse_header "${changed}" PARENT_SCOPE)
+endfunction()
+eden_sparse_replace("AllocateMemoryPages(alloc_size)" "AllocateSparsePages(alloc_size)" 2)
+eden_sparse_replace("FreeMemoryPages(base_ptr, alloc_size)" "FreeSparsePages(base_ptr, alloc_size)" 2)
+eden_sparse_replace("mprotect(reinterpret_cast<void*>(page), HostPageSize, PROT_READ | PROT_WRITE)"
+    "CommitSparsePage(page)" 1)
+# ZeroRegion (an unmap) asks whether the page of entry `start / sizeof(T)` was committed where it
+# means the page of entry `start`. A wrong "yes" writes zeroes into a part of the table nothing
+# was ever written to: harmless in a dense table, a fault in a read-only one. A wrong "no" leaves
+# the first entries of the unmapped range as they were.
+eden_sparse_replace("if (IsCommittedPage(start / sizeof(T))) {" "if (IsCommittedPage(start)) {" 1)
+eden_sparse_replace("void FreeMemoryPages(void* base, std::size_t size) noexcept;"
+    "void FreeMemoryPages(void* base, std::size_t size) noexcept;\nvoid* AllocateSparsePages(std::size_t size) noexcept;\nvoid FreeSparsePages(void* base, std::size_t size) noexcept;\nvoid CommitSparsePage(std::uintptr_t page) noexcept;" 1)
+write_derived("${PORT_BUILD_DIR}/sparse/common/sparse_large_vector.h" "${sparse_header}")
+
 # An abandoned fiber stack is not unwound. Empty the by-value weak reference
 # before switching; jump_fcontext returns the live destination supplied by the
 # resumer, under that fiber's guard, just as the initial entry trampoline does.

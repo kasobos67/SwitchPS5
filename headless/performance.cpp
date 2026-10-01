@@ -33,6 +33,10 @@
 
 // dynarmic A64 dispatch-path counters (headless/dynarmic/jit_group_support.inc).
 extern "C" void eden_jit_path_counters(unsigned core, unsigned long long* out) __attribute__((weak));
+namespace Common {
+// Address space Eden's sparse tables span and the memory they hold (src/memory_pages.cpp).
+void SparseUsage(std::size_t* reserved, std::size_t* committed) noexcept;
+} // namespace Common
 
 namespace Eden::Performance {
 namespace {

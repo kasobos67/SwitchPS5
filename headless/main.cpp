@@ -83,6 +83,9 @@ extern "C" std::int64_t sceKernelGetDirectMemorySize();
 extern "C" bool eden_jit_shared;  // headless/dynarmic/jit_group_support.inc
 #endif
 #include "video_core/gpu.h"
+namespace Common {
+bool SparseTablesAvailable() noexcept; // src/memory_pages.cpp
+}
 
 class HeadlessWindow final : public Core::Frontend::EmuWindow {
 public:
@@ -208,6 +211,9 @@ int main(int argc, char** argv) {
                 setenv("MESA_SHADER_CACHE_DIR", cache.c_str(), 1);
             }
         }
+        // Whether Eden's large tables can be sparse on this console (src/memory_pages.cpp),
+        // decided now: every session's log says it, with or without a game.
+        (void)Common::SparseTablesAvailable();
         report = std::fopen(Eden::LogFile("result.tsv").c_str(), "w");
         if (!report) { report = stdout; return 2; }
         std::puts("[headless-startup] directories_ready");

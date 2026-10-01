@@ -18,7 +18,13 @@
 #include "dynarmic/interface/A64/a64.h"
 #include "dynarmic/interface/exclusive_monitor.h"
 #include "common/host_memory.h"
+#include "common/sparse_large_vector.h"
 #include "../src/fastmem.h"
+#include <csignal>
+#include <sys/wait.h>
+namespace Common {
+void SparseUsage(std::size_t* reserved, std::size_t* committed) noexcept;
+}
 #define EDEN_JIT_LIST_FORMAT_ONLY
 #include "jit_list.h"
 #include <unistd.h>
@@ -1250,7 +1256,89 @@ static void CheckLinks() {
     std::puts("Linked loops PASS: block link, call/return and indirect branch without per-iteration lookups");
 }
 
+// Eden's large tables (src/memory_pages.cpp): zero wherever nothing was written, memory only for
+// the 2 MiB slots that were, and a fault for a write that was not announced.
+static void CheckSparseTables() {
+    constexpr std::size_t slot = std::size_t{2} << 20;
+    std::size_t span0 = 0, held0 = 0, span = 0, held = 0;
+    Common::SparseUsage(&span0, &held0);
+    {
+        // A 39-bit address space in 4 KiB pages: 1 GiB of 8-byte entries.
+        constexpr std::size_t entries = std::size_t{1} << 27;
+        Common::SparseLargeVector<std::uint64_t> table(entries);
+        Common::SparseUsage(&span, &held);
+        require(span - span0 == entries * 8 && held == held0);
+        // Reads anywhere see zero and take nothing: the JIT reads the table for any guest address.
+        std::uint64_t seen = 0;
+        for (std::size_t index = 0; index < entries; index += 509) seen |= table.data()[index];
+        require(seen == 0 && table[0] == 0 && table[entries - 1] == 0);
+        Common::SparseUsage(&span, &held);
+        require(held == held0);
+        // A write that was not announced must fault, as it would on the console.
+        const pid_t child = fork();
+        require(child >= 0);
+        if (child == 0) {
+            table.GetUnchecked(entries / 4) = 1;
+            _exit(0);
+        }
+        int status = 0;
+        require(waitpid(child, &status, 0) == child && WIFSIGNALED(status) && WTERMSIG(status) == SIGSEGV);
+        // A written entry reads back, its slot is the only memory taken, its neighbours stay zero.
+        table.Set(entries / 2 + 5, 0x1122334455667788ull);
+        require(table[entries / 2 + 5] == 0x1122334455667788ull && table[entries / 2 + 4] == 0 &&
+                table[entries / 2 - 1] == 0);
+        Common::SparseUsage(&span, &held);
+        require(held - held0 == slot);
+        // A region across a slot boundary takes both slots; announcing it again takes nothing.
+        const std::size_t boundary = slot / 8 * 7;
+        for (int pass = 0; pass < 2; ++pass) {
+            table.CommitRegion(boundary - 10, boundary + 10);
+            for (std::size_t index = boundary - 10; index < boundary + 10; ++index) table.GetUnchecked(index) = index;
+        }
+        Common::SparseUsage(&span, &held);
+        require(held - held0 == 3 * slot);
+        for (std::size_t index = boundary - 10; index < boundary + 10; ++index) require(table[index] == index);
+        // Threads announcing and writing pages of the same few slots at once.
+        std::vector<std::thread> threads;
+        const std::size_t shared = slot / 8 * 20;
+        for (unsigned thread = 0; thread < 6; ++thread)
+            threads.emplace_back([&table, shared, thread] {
+                for (std::size_t i = 0; i < 40000; ++i) {
+                    const std::size_t index = shared + i * 13 + thread;
+                    if (index % 6 == thread) table.GetAndFault(index) = index * 3 + 1;
+                }
+            });
+        for (auto& thread : threads) thread.join();
+        for (unsigned thread = 0; thread < 6; ++thread)
+            for (std::size_t i = 0; i < 40000; ++i) {
+                const std::size_t index = shared + i * 13 + thread;
+                if (index % 6 == thread) require(table[index] == index * 3 + 1);
+            }
+        Common::SparseUsage(&span, &held);
+        require(held - held0 == 5 * slot); // entries [shared, shared + 520006): two more slots
+        // An unmap zeroes what was written and nothing else. Upstream decides by the page of entry
+        // start / 8: here that page is written and the range itself never was (it must not be
+        // touched), then the other way round (it must be zeroed from its first entry).
+        table.ZeroRegion(boundary * 8 + 3, boundary * 8 + 100);
+        Common::SparseUsage(&span, &held);
+        require(held - held0 == 5 * slot && table[boundary * 8 + 3] == 0);
+        table.ZeroRegion(boundary - 7, boundary + 5);
+        require(table[boundary - 8] == boundary - 8 && table[boundary + 5] == boundary + 5);
+        for (std::size_t index = boundary - 7; index < boundary + 5; ++index) require(table[index] == 0);
+        // The same vector emptied and taken again starts from zero.
+        table.ResizeAndClear(entries / 2);
+        require(table[boundary] == 0 && table[shared + 13] == 0);
+        Common::SparseUsage(&span, &held);
+        require(span - span0 == entries * 4 && held == held0);
+    }
+    Common::SparseUsage(&span, &held);
+    require(span == span0 && held == held0);
+    std::puts("Sparse tables PASS: zero until written, 2 MiB per slot written, a fault for an unannounced write, "
+              "six threads on shared slots, an unmap that touches only what was written");
+}
+
 int main(int argc, char** argv) {
+    CheckSparseTables();
     if (argc == 2 && std::strcmp(argv[1], "--link-check") == 0) {
         CheckLinks();
         return 0;
