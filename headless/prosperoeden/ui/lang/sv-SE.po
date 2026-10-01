@@ -1,0 +1,1089 @@
+# ProsperoEden launcher - Svenska
+# English text is the key (msgid); msgstr is the translation. Keep {0} {1} as they are,
+# keep UPPERCASE labels uppercase, and keep names (ProsperoEden, Eden, PS5, Vulkan, OpenGL,
+# AMD FSR, DLC, NSP, XCI, prod.keys, Ryujinx) unchanged.
+
+#: settings_store.h
+msgid "0.5x (faster, softer)"
+msgstr "0,5x (snabbare, mjukare)"
+
+#: settings_store.h
+msgid "0.75x (faster)"
+msgstr "0,75x (snabbare)"
+
+#: settings_store.h
+msgid "1.5x (sharper)"
+msgstr "1,5x (skarpare)"
+
+#: settings_store.h
+msgid "1x (native)"
+msgstr "1x (ursprunglig)"
+
+#: settings_store.h
+msgid "2x (sharpest)"
+msgstr "2x (skarpast)"
+
+#: eden_services.cpp
+msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
+msgstr "En firmware-NCA kan inte läsas. Installera om firmware-dumpen."
+
+#: pe/ui/home.cpp
+msgid "About"
+msgstr "Om"
+
+#: pe/ui/browse.cpp
+msgid "About ProsperoEden"
+msgstr "Om ProsperoEden"
+
+#. Label: which folders the app can read.
+#: pe/ui/browse.cpp
+msgid "ACCESS"
+msgstr "ÅTKOMST"
+
+#. A settings category: options that make the menu easier to see and follow.
+#: pe/ui/settings.cpp
+msgid "Accessibility"
+msgstr "Hjälpmedel"
+
+#: pe/ui/settings.cpp
+msgid "ACCESSIBILITY"
+msgstr "HJÄLPMEDEL"
+
+#. Label: a game's updates and DLC.
+#: pe/ui/library.cpp
+msgid "ADD-ONS"
+msgstr "TILLÄGG"
+
+#. {0}: updates and DLC of the game; {1}: the language it will use.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Add-ons: {0}  /  Language: {1}"
+msgstr "Tillägg: {0}  /  Språk: {1}"
+
+#: pe/ui/settings.cpp
+msgid "Adjust the essentials without leaving your library behind."
+msgstr "Justera det viktigaste utan att lämna ditt bibliotek."
+
+#: pe/ui/browse.cpp
+msgid "All credit for the Eden emulator goes to its developers and contributors."
+msgstr "All ära för Eden-emulatorn går till dess utvecklare och bidragsgivare."
+
+#: settings_store.h
+msgid "AMD FSR"
+msgstr "AMD FSR"
+
+#: eden_services.cpp
+msgid "Another language"
+msgstr "Annat språk"
+
+#: pe/ui/settings.cpp
+msgid "Audio"
+msgstr "Ljud"
+
+#: pe/ui/settings.cpp
+msgid "AUDIO"
+msgstr "LJUD"
+
+#: eden_services.cpp
+msgid "Australia"
+msgstr "Australien"
+
+#. Button hint: go back one screen.
+#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Back"
+msgstr "Tillbaka"
+
+#. An upscaling filter.
+#: settings_store.h
+msgid "Bicubic"
+msgstr "Bikubisk"
+
+#. An upscaling filter.
+#: settings_store.h
+msgid "Bilinear"
+msgstr "Bilinjär"
+
+#. Button hint: move through the list.
+#: pe/ui/browse.cpp
+msgid "Browse"
+msgstr "Bläddra"
+
+#: pe/ui/library.cpp
+msgid "Browse games"
+msgstr "Bläddra bland spel"
+
+#: pe/ui/settings.cpp
+msgid "Browse settings"
+msgstr "Bläddra bland inställningar"
+
+#: eden_services.cpp
+msgid "Cannot read firmware/ in {0}. Install extracted firmware NCAs."
+msgstr "Kan inte läsa firmware/ i {0}. Installera extraherade firmware-NCA-filer."
+
+#. Button hint: change the highlighted setting.
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Change"
+msgstr "Ändra"
+
+#: pe/ui/library.cpp
+msgid "Change mode. Saved per game."
+msgstr "Byt läge. Sparas per spel."
+
+#: eden_services.cpp
+msgid "China"
+msgstr "Kina"
+
+#: settings_store.h
+msgid "Chinese (Simplified)"
+msgstr "Kinesiska (förenklad)"
+
+#: settings_store.h
+msgid "Chinese (Traditional)"
+msgstr "Kinesiska (traditionell)"
+
+#. Button hint: choose the highlighted language.
+#: pe/ui/browse.cpp
+msgid "Choose"
+msgstr "Välj"
+
+#: pe/ui/home.cpp
+msgid "Choose a game from your library."
+msgstr "Välj ett spel från ditt bibliotek."
+
+#: pe/ui/browse.cpp
+msgid "Choose the folder that holds your keys, firmware and games"
+msgstr "Välj mappen med dina nycklar, firmware och spel"
+
+#: pe/ui/browse.cpp
+msgid "Choose the language games use"
+msgstr "Välj språket som spelen använder"
+
+#: pe/ui/library.cpp
+msgid "Console mode"
+msgstr "Konsolläge"
+
+#: pe/ui/home.cpp
+msgid "CONTINUE PLAYING"
+msgstr "FORTSÄTT SPELA"
+
+#: pe/ui/settings.cpp
+msgid "Controller shortcuts and supported features."
+msgstr "Handkontrollens genvägar och funktioner som stöds."
+
+#: pe/ui/home.cpp
+msgid "CONTROLLERS"
+msgstr "HANDKONTROLLER"
+
+#: pe/ui/settings.cpp
+msgid "Controls"
+msgstr "Kontroller"
+
+#: pe/ui/settings.cpp
+msgid "CONTROLS"
+msgstr "KONTROLLER"
+
+#: pe/ui/library.cpp
+msgid "Could not save console mode. Please try again."
+msgstr "Kunde inte spara konsolläget. Försök igen."
+
+#: pe/ui/launcher.cpp
+msgid "Could not save settings. Please try again."
+msgstr "Kunde inte spara inställningarna. Försök igen."
+
+#: pe/ui/browse.cpp
+msgid "Could not save the folder. Please try again."
+msgstr "Kunde inte spara mappen. Försök igen."
+
+#: pe/ui/browse.cpp, pe/ui/library.cpp
+msgid "Could not save. Please try again."
+msgstr "Kunde inte spara. Försök igen."
+
+#: pe/ui/browse.cpp
+msgid "Credits and setup"
+msgstr "Medverkande och konfiguration"
+
+#. A per-game setting that follows the general setting; {0} is its value.
+#: pe/ui/library.cpp
+msgid "Default ({0})"
+msgstr "Standard ({0})"
+
+#: pe/ui/browse.cpp
+msgid "Default folder"
+msgstr "Standardmapp"
+
+#: pe/ui/browse.cpp
+msgid "Default folder saved. Reopen ProsperoEden to use it."
+msgstr "Standardmappen sparad. Starta om ProsperoEden för att använda den."
+
+#: pe/ui/settings.cpp
+msgid "Detailed logging"
+msgstr "Detaljerad loggning"
+
+#: pe/ui/settings.cpp
+msgid "DETAILED LOGS"
+msgstr "DETALJERADE LOGGAR"
+
+#: pe/ui/settings.cpp
+msgid "Detailed logs apply to the next game launch."
+msgstr "Detaljerade loggar gäller från nästa spelstart."
+
+#: pe/ui/settings.cpp
+msgid "Detailed logs on"
+msgstr "Detaljerade loggar på"
+
+#. Button hint: show the game's details.
+#: pe/ui/home.cpp
+msgid "Details"
+msgstr "Detaljer"
+
+#: pe/ui/settings.cpp
+msgid "Diagnostics"
+msgstr "Diagnostik"
+
+#: pe/ui/settings.cpp
+msgid "DIAGNOSTICS"
+msgstr "DIAGNOSTIK"
+
+#. Console mode: the console as if connected to a TV. Keep it short (about 9 letters).
+#: pe/ui/library.cpp
+msgid "Docked"
+msgstr "Dockat"
+
+#: pe/ui/settings.cpp
+msgid "Draws the menu's small text larger."
+msgstr "Gör menyns små texter större."
+
+#: settings_store.h
+msgid "Dutch"
+msgstr "Nederländska"
+
+#: pe/ui/home.cpp
+msgid "Eden emulator for PlayStation 5"
+msgstr "Eden-emulatorn för PlayStation 5"
+
+#. Label of the shortcut that ends the running game.
+#: pe/ui/settings.cpp
+msgid "END GAME"
+msgstr "AVSLUTA SPEL"
+
+#: pe/ui/settings.cpp
+msgid "End the game and return to this menu"
+msgstr "Avsluta spelet och återgå till den här menyn"
+
+#: settings_store.h
+msgid "English (UK)"
+msgstr "Engelska (UK)"
+
+#: settings_store.h
+msgid "English (US)"
+msgstr "Engelska (USA)"
+
+#: eden_services.cpp
+msgid "Europe"
+msgstr "Europa"
+
+#. Button hint: copy the game's save out to a folder.
+#: pe/ui/library.cpp
+msgid "Export a copy"
+msgstr "Exportera en kopia"
+
+#: eden_services.cpp
+msgid "Export failed. Check that the game files folder can be written."
+msgstr "Exporten misslyckades. Kontrollera att det går att skriva till mappen med spelfiler."
+
+#. {0} is a folder.
+#: eden_services.cpp, host/fake_services.hpp
+msgid "Exported to {0}."
+msgstr "Exporterat till {0}."
+
+#: pe/ui/library.cpp
+msgid "FILE"
+msgstr "FIL"
+
+#: pe/ui/settings.cpp
+msgid "Fine-tune your experience"
+msgstr "Finjustera din upplevelse"
+
+#: pe/ui/browse.cpp
+msgid "FIRMWARE"
+msgstr "FIRMWARE"
+
+#: eden_services.cpp
+msgid "Firmware NCA validation failed (code {0}). Check that firmware and prod.keys are compatible."
+msgstr "Valideringen av firmware-NCA misslyckades (kod {0}). Kontrollera att firmware och prod.keys är kompatibla."
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Firmware ready"
+msgstr "Firmware redo"
+
+#: eden_services.cpp
+msgid "Firmware SystemVersion data is missing or unreadable. Install a complete firmware dump."
+msgstr "Firmwarens SystemVersion-data saknas eller går inte att läsa. Installera en komplett firmware-dump."
+
+#: pe/ui/browse.cpp
+msgid "FOLDERS"
+msgstr "MAPPAR"
+
+#: pe/ui/library.cpp
+msgid "FORMAT"
+msgstr "FORMAT"
+
+#. Label: the frames-per-second counter drawn over a game.
+#: pe/ui/settings.cpp
+msgid "FPS OVERLAY"
+msgstr "FPS-RÄKNARE"
+
+#: pe/ui/settings.cpp
+msgid "FPS overlay"
+msgstr "FPS-räknare"
+
+#: settings_store.h
+msgid "French"
+msgstr "Franska"
+
+#: settings_store.h
+msgid "French (Canada)"
+msgstr "Franska (Kanada)"
+
+#. The app can read every folder of the console.
+#: pe/ui/browse.cpp
+msgid "Full filesystem"
+msgstr "Hela filsystemet"
+
+#: pe/ui/settings.cpp
+msgid "Game audio; PS5 system-menu music is unchanged."
+msgstr "Spelljud; musiken i PS5:s systemmeny påverkas inte."
+
+#. {0} is the reason, a sentence in English; {1} is a file.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Game could not start: {0} Details: {1}"
+msgstr "Spelet kunde inte startas: {0} Detaljer: {1}"
+
+#: pe/ui/home.cpp
+msgid "Game details"
+msgstr "Speldetaljer"
+
+#: pe/ui/library.cpp
+msgid "GAME DETAILS"
+msgstr "SPELDETALJER"
+
+#: pe/ui/browse.cpp, pe/ui/settings.cpp
+msgid "Game files"
+msgstr "Spelfiler"
+
+#: pe/ui/settings.cpp
+msgid "GAME FILES"
+msgstr "SPELFILER"
+
+#: pe/ui/library.cpp
+msgid "Game settings"
+msgstr "Spelinställningar"
+
+#: pe/ui/settings.cpp
+msgid "GAME VOLUME"
+msgstr "SPELVOLYM"
+
+#: pe/ui/settings.cpp
+msgid "Game volume"
+msgstr "Spelvolym"
+
+#: pe/ui/settings.cpp
+msgid "Game volume, and the sounds of this menu."
+msgstr "Spelvolym och ljuden i den här menyn."
+
+#: pe/ui/browse.cpp
+msgid "GAMES"
+msgstr "SPEL"
+
+#: pe/ui/browse.cpp
+msgid "Games use this language when they offer it, and their own default otherwise. It applies when a game starts."
+msgstr "Spel använder det här språket när de har stöd för det, annars sitt eget standardspråk. Ändringen gäller när ett spel startar."
+
+#: pe/ui/home.cpp
+msgid "Games you launch will appear here."
+msgstr "Spel du startar visas här."
+
+#: settings_store.h
+msgid "German"
+msgstr "Tyska"
+
+#: pe/ui/browse.cpp
+msgid "GETTING STARTED"
+msgstr "KOM IGÅNG"
+
+#: pe/ui/settings.cpp
+msgid "Graphics backend and how games are scaled to your TV."
+msgstr "Renderare och hur spel skalas till din tv."
+
+#: eden_services.cpp
+msgid "Graphics backend initialization failed. Try another backend in Settings; see stderr.log and eden_log.txt for driver details."
+msgstr "Renderaren kunde inte initieras. Prova en annan i Inställningar; drivrutinsdetaljer finns i stderr.log och eden_log.txt."
+
+#. Console mode: the console as if held in the hands. Keep it short (about 9 letters).
+#: pe/ui/library.cpp
+msgid "Handheld"
+msgstr "Bärbart"
+
+#: pe/ui/settings.cpp
+msgid "HIGH CONTRAST"
+msgstr "HÖG KONTRAST"
+
+#. A switch: solid dark panels, brighter text.
+#: pe/ui/settings.cpp
+msgid "High contrast"
+msgstr "Hög kontrast"
+
+#: pe/ui/settings.cpp
+msgid "How games are drawn and scaled to your TV."
+msgstr "Hur spel ritas och skalas till din tv."
+
+#. Button hint: copy a save in.
+#: pe/ui/library.cpp
+msgid "Import"
+msgstr "Importera"
+
+#: eden_services.cpp
+msgid "Import failed. The current save is unchanged."
+msgstr "Importen misslyckades. Nuvarande sparade data är oförändrade."
+
+#: eden_services.cpp
+msgid "Imported."
+msgstr "Importerat."
+
+#: eden_services.cpp, host/fake_services.hpp
+msgid "Imported. The save it replaced was backed up."
+msgstr "Importerat. Tidigare sparade data har säkerhetskopierats."
+
+#. Tag on the language or folder that is in use now.
+#: pe/ui/browse.cpp, pe/ui/settings.cpp
+msgid "IN USE"
+msgstr "ANVÄNDS"
+
+#: settings_store.h
+msgid "Italian"
+msgstr "Italienska"
+
+#: eden_services.cpp
+msgid "Japan"
+msgstr "Japan"
+
+#: settings_store.h
+msgid "Japanese"
+msgstr "Japanska"
+
+#. keys, firmware and roms are folder names (unchanged). TRIANGLE is the controller's triangle button, in capitals.
+#: pe/ui/browse.cpp
+msgid "Keep keys, firmware and roms folders together. TRIANGLE uses the folder shown."
+msgstr "Håll mapparna keys, firmware och roms samlade. TRIANGEL använder mappen som visas."
+
+#. Label: the encryption keys file (prod.keys).
+#: pe/ui/browse.cpp
+msgid "KEYS"
+msgstr "NYCKLAR"
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Keys and firmware: startup checks passed. Game-specific compatibility is checked at launch."
+msgstr "Nycklar och firmware: startkontrollerna godkända. Spelspecifik kompatibilitet kontrolleras när spelet startas."
+
+#: eden_services.cpp
+msgid "Korea"
+msgstr "Korea"
+
+#: settings_store.h
+msgid "Korean"
+msgstr "Koreanska"
+
+#: pe/ui/browse.cpp, pe/ui/settings.cpp
+msgid "Language"
+msgstr "Språk"
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "LANGUAGE"
+msgstr "SPRÅK"
+
+#: pe/ui/browse.cpp
+msgid "LANGUAGES"
+msgstr "SPRÅK"
+
+#: pe/ui/settings.cpp
+msgid "LARGER TEXT"
+msgstr "STÖRRE TEXT"
+
+#. A switch: the menu's small text is drawn larger.
+#: pe/ui/settings.cpp
+msgid "Larger text"
+msgstr "Större text"
+
+#. Caption under the title of the game played last.
+#: eden_services.cpp
+msgid "Last game opened"
+msgstr "Senast öppnade spel"
+
+#: pe/ui/home.cpp
+msgid "Launch game"
+msgstr "Starta spelet"
+
+#: pe/ui/home.cpp
+msgid "Library"
+msgstr "Bibliotek"
+
+#: pe/ui/library.cpp
+msgid "LIBRARY"
+msgstr "BIBLIOTEK"
+
+#. Headline of the Settings screen.
+#: pe/ui/settings.cpp
+msgid "Make it yours."
+msgstr "Gör det till ditt eget."
+
+#: pe/ui/settings.cpp
+msgid "Make the menu easier to see and follow."
+msgstr "Gör menyn lättare att se och följa."
+
+#: pe/ui/browse.cpp
+msgid "Menu sound effects made with ElevenLabs."
+msgstr "Menyns ljudeffekter är skapade med ElevenLabs."
+
+#: pe/ui/settings.cpp
+msgid "MENU SOUNDS"
+msgstr "MENYLJUD"
+
+#: pe/ui/settings.cpp
+msgid "Menu sounds"
+msgstr "Menyljud"
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Missing or empty keys/prod.keys in {0}."
+msgstr "Filen keys/prod.keys saknas eller är tom i {0}."
+
+#: pe/ui/settings.cpp
+msgid "MUTE"
+msgstr "TYST LÄGE"
+
+#: pe/ui/settings.cpp
+msgid "Mute"
+msgstr "Tyst läge"
+
+#: pe/ui/settings.cpp
+msgid "Muted"
+msgstr "Ljud av"
+
+#. Button hint: move the highlight.
+#: pe/ui/home.cpp
+msgid "Navigate"
+msgstr "Navigera"
+
+#. An upscaling filter (nearest neighbour). Keep it short.
+#: settings_store.h
+msgid "Nearest"
+msgstr "Närmaste"
+
+#: pe/ui/settings.cpp
+msgid "Needs attention"
+msgstr "Kräver åtgärd"
+
+#. {0} is the folder used the next time the app starts.
+#: pe/ui/browse.cpp
+msgid "Next launch: {0}"
+msgstr "Nästa start: {0}"
+
+#. Label: the folder used the next time the app starts.
+#: pe/ui/settings.cpp
+msgid "NEXT START"
+msgstr "NÄSTA START"
+
+#: pe/ui/library.cpp
+msgid "No cover art"
+msgstr "Omslag saknas"
+
+#: pe/ui/browse.cpp
+msgid "No firmware folder"
+msgstr "Ingen firmware-mapp"
+
+#: eden_services.cpp
+msgid "No firmware NCAs found in {0}."
+msgstr "Inga firmware-NCA-filer hittades i {0}."
+
+#: pe/ui/browse.cpp
+msgid "No folders here."
+msgstr "Inga mappar här."
+
+#: pe/ui/library.cpp
+msgid "No ROM files found."
+msgstr "Inga ROM-filer hittades."
+
+#: pe/ui/library.cpp
+msgid "No ROM selected"
+msgstr "Ingen ROM vald"
+
+#: pe/ui/browse.cpp
+msgid "No roms folder"
+msgstr "Ingen roms-mapp"
+
+#. No add-ons (updates or DLC).
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/library.cpp
+msgid "None"
+msgstr "Inga"
+
+#. Short status at the right of the Save data row.
+#: pe/ui/library.cpp
+msgid "Nothing to import"
+msgstr "Inget att importera"
+
+#. A setting that is switched off.
+#: pe/ui/settings.cpp
+msgid "Off"
+msgstr "Av"
+
+#. A setting that is switched on.
+#: pe/ui/settings.cpp
+msgid "On"
+msgstr "På"
+
+#: pe/ui/settings.cpp
+msgid "ON THIS CONSOLE"
+msgstr "PÅ DEN HÄR KONSOLEN"
+
+#. Short tag on a folder row.
+#: pe/ui/browse.cpp
+msgid "OPEN"
+msgstr "ÖPPNA"
+
+#. Button hint: open the highlighted folder.
+#: pe/ui/browse.cpp
+msgid "Open"
+msgstr "Öppna"
+
+#: pe/ui/home.cpp
+msgid "Open library"
+msgstr "Öppna biblioteket"
+
+#. Button hint: jump a page of the list (L1 / R1).
+#: pe/ui/browse.cpp
+msgid "Page"
+msgstr "Sida"
+
+#: pe/ui/browse.cpp
+msgid "Parent folder"
+msgstr "Överordnad mapp"
+
+#: settings_store.h
+msgid "Polish"
+msgstr "Polska"
+
+#: settings_store.h
+msgid "Portuguese"
+msgstr "Portugisiska"
+
+#: settings_store.h
+msgid "Portuguese (Brazil)"
+msgstr "Portugisiska (Brasilien)"
+
+#. Eden is the emulator's name (unchanged).
+#: pe/ui/browse.cpp
+msgid "Powered by Eden"
+msgstr "Drivs av Eden"
+
+#: pe/ui/settings.cpp
+msgid "PREFERENCES"
+msgstr "ALTERNATIV"
+
+#. Asked before a save is imported over the one in use.
+#: pe/ui/library.cpp
+msgid "Press again to replace this game's save. The current one is backed up."
+msgstr "Tryck igen för att ersätta spelets sparade data. De nuvarande säkerhetskopieras."
+
+#: eden_services.cpp
+msgid "prod.keys could not supply an NCA header key. Replace it with a valid key dump."
+msgstr "Filen prod.keys innehåller ingen nyckel för NCA-headern. Ersätt den med en giltig nyckeldump."
+
+#: pe/ui/browse.cpp
+msgid "prod.keys found"
+msgstr "prod.keys hittades"
+
+#: pe/ui/browse.cpp
+msgid "prod.keys missing"
+msgstr "prod.keys saknas"
+
+#: pe/ui/browse.cpp
+msgid "PROJECT CREDITS"
+msgstr "MEDVERKANDE"
+
+#: pe/ui/browse.cpp
+msgid "ProsperoEden is an unofficial PS5 port brought to you by BlackBearReloaded."
+msgstr "ProsperoEden är en inofficiell PS5-portning från BlackBearReloaded."
+
+#. Why a game did not start.
+#: eden_services.cpp
+msgid "PS5 controller initialization failed"
+msgstr "PS5-handkontrollen kunde inte initieras"
+
+#: pe/ui/browse.cpp
+msgid "PS5 EDITION"
+msgstr "PS5-UTGÅVA"
+
+#. {0} is the version, for example v1.000.030.
+#: pe/ui/home.cpp
+msgid "PS5 EDITION  /  {0}"
+msgstr "PS5-UTGÅVA  /  {0}"
+
+#: pe/ui/settings.cpp
+msgid "Ready"
+msgstr "Klar"
+
+#: pe/ui/home.cpp
+msgid "RECENTLY PLAYED"
+msgstr "SENAST SPELADE"
+
+#: pe/ui/settings.cpp
+msgid "REDUCE MOTION"
+msgstr "MINSKA RÖRELSER"
+
+#. A switch: no drifting, sliding or zooming on screen.
+#: pe/ui/settings.cpp
+msgid "Reduce motion"
+msgstr "Minska rörelser"
+
+#: pe/ui/browse.cpp, pe/ui/settings.cpp
+msgid "REGION"
+msgstr "REGION"
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Renderer"
+msgstr "Renderare"
+
+#: pe/ui/settings.cpp
+msgid "RENDERER"
+msgstr "RENDERARE"
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Resolution"
+msgstr "Upplösning"
+
+#: pe/ui/settings.cpp
+msgid "RESOLUTION"
+msgstr "UPPLÖSNING"
+
+#: eden_services.cpp
+msgid "ROM missing from the game files folder"
+msgstr "ROM saknas i mappen med spelfiler"
+
+#: settings_store.h
+msgid "Russian"
+msgstr "Ryska"
+
+#. Short status at the right of the Save data row. Ryujinx is a name (unchanged).
+#: pe/ui/library.cpp
+msgid "Ryujinx save found"
+msgstr "Ryujinx-data hittades"
+
+#. The app can read only its own folder; {0} is a number.
+#: pe/ui/browse.cpp
+msgid "Sandboxed (code {0}): app folder only"
+msgstr "Begränsad (kod {0}): endast appmappen"
+
+#. A row of a game's settings: the game's saved progress, which can be copied in or out.
+#: pe/ui/library.cpp
+msgid "Save data"
+msgstr "Sparade data"
+
+#. Short status at the right of the Save data row: a folder with a save to import.
+#: pe/ui/library.cpp
+msgid "Save folder found"
+msgstr "Sparmapp hittades"
+
+#: pe/ui/library.cpp
+msgid "Saved for this game. Applies on next launch."
+msgstr "Sparat för det här spelet. Gäller från nästa start."
+
+#: pe/ui/browse.cpp, pe/ui/launcher.cpp
+msgid "Saved. Applies when a game starts."
+msgstr "Sparat. Gäller när ett spel startar."
+
+#: pe/ui/browse.cpp
+msgid "Saved. Reopen ProsperoEden to use this folder."
+msgstr "Sparat. Starta om ProsperoEden för att använda mappen."
+
+#. Button hint: choose the highlighted item (not the Select button).
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Select"
+msgstr "Välj"
+
+#: pe/ui/library.cpp
+msgid "Select a game"
+msgstr "Välj ett spel"
+
+#: pe/ui/library.cpp
+msgid "Select a game to begin"
+msgstr "Välj ett spel för att börja"
+
+#: pe/ui/library.cpp
+msgid "Select a readable game to configure its mode."
+msgstr "Välj ett spel som kan läsas för att byta läge."
+
+#. Select is a button's name (unchanged).
+#: pe/ui/settings.cpp
+msgid "Select is the touchpad button on PS5."
+msgstr "Select är styrplattsknappen på PS5."
+
+#. Heading: the language highlighted in the list.
+#: pe/ui/browse.cpp
+msgid "SELECTED"
+msgstr "MARKERAT"
+
+#. Why a game did not start (the file is gone).
+#: eden_services.cpp
+msgid "Selected ROM is no longer available"
+msgstr "Vald ROM är inte längre tillgänglig"
+
+#: pe/ui/home.cpp, pe/ui/settings.cpp
+msgid "Settings"
+msgstr "Inställningar"
+
+#. Label: whether keys and firmware are in place.
+#: pe/ui/settings.cpp
+msgid "SETUP"
+msgstr "KONFIGURATION"
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Setup required"
+msgstr "Konfiguration krävs"
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Setup required: {0} Open Settings, Game files to choose the folder that holds your keys, firmware and roms folders (or add the files to {1}), then reopen ProsperoEden."
+msgstr "Konfiguration krävs: {0} Öppna Inställningar, Spelfiler för att välja mappen som innehåller mapparna keys, firmware och roms (eller lägg filerna i {1}). Starta sedan om ProsperoEden."
+
+#: pe/ui/settings.cpp
+msgid "Setup status and detailed logs."
+msgstr "Konfigurationsstatus och detaljerade loggar."
+
+#: eden_services.cpp
+msgid "Setup validation failed. Check that firmware and key files are readable and valid."
+msgstr "Valideringen av konfigurationen misslyckades. Kontrollera att firmware och nyckelfiler kan läsas och är giltiga."
+
+#: pe/ui/settings.cpp
+msgid "Shortcuts during a game, and vibration."
+msgstr "Vibration och genvägar under spel."
+
+#: pe/ui/settings.cpp
+msgid "Show or hide the FPS overlay"
+msgstr "Visa eller dölj FPS-räknaren"
+
+#: pe/ui/library.cpp
+msgid "SIZE"
+msgstr "STORLEK"
+
+#: pe/ui/settings.cpp
+msgid "Solid panels, brighter text and an outlined highlight."
+msgstr "Ogenomskinliga paneler, ljusare text och markering med kontur."
+
+#: settings_store.h
+msgid "Spanish"
+msgstr "Spanska"
+
+#: settings_store.h
+msgid "Spanish (Latin America)"
+msgstr "Spanska (Latinamerika)"
+
+#. The app creates its user the first time a game runs.
+#: eden_services.cpp
+msgid "Start any game once before importing a save."
+msgstr "Starta valfritt spel en gång innan du importerar sparade data."
+
+#. Shown over a game's cover while it starts.
+#: pe/ui/launcher.cpp
+msgid "STARTING"
+msgstr "STARTAR"
+
+#: pe/ui/settings.cpp
+msgid "Stops the background drifting and the screens sliding, here and on the loading screen."
+msgstr "Bakgrunden står still och skärmarna glider inte, här och på laddningsskärmen."
+
+#: pe/ui/browse.cpp
+msgid "Supply your own files"
+msgstr "Använd dina egna filer"
+
+#: eden_services.cpp
+msgid "Taiwan"
+msgstr "Taiwan"
+
+#: settings_store.h
+msgid "Thai"
+msgstr "Thailändska"
+
+#. Heading of the acknowledgements.
+#: pe/ui/browse.cpp
+msgid "THANKS"
+msgstr "TACK"
+
+#: pe/ui/browse.cpp
+msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make ProsperoEden possible."
+msgstr "Tack till hela homebrew-gemenskapen för PS5 och till alla utvecklare vars drivrutiner, verktyg och bibliotek gör ProsperoEden möjligt."
+
+#: pe/ui/settings.cpp
+msgid "The folder that holds your keys, firmware and games."
+msgstr "Mappen med dina nycklar, firmware och spel."
+
+#. Why a game stopped. 'Settings, Video' is the menu path; 'the game's own settings' is the Game settings dialog of the Library.
+#: eden_services.cpp
+msgid "The game ran out of graphics memory. Lower the resolution in Settings, Video (or in the game's own settings) and start it again."
+msgstr "Spelet fick slut på grafikminne. Sänk upplösningen i Inställningar, Video (eller i Spelinställningar för spelet) och starta det igen."
+
+#: pe/ui/settings.cpp
+msgid "The language games use when they offer it."
+msgstr "Språket som spelen använder när de har stöd för det."
+
+#: pe/ui/browse.cpp
+msgid "THIS FOLDER"
+msgstr "DEN HÄR MAPPEN"
+
+#: pe/ui/browse.cpp
+msgid "This folder cannot be opened."
+msgstr "Den här mappen kan inte öppnas."
+
+#: eden_services.cpp
+msgid "This game has no save to export yet."
+msgstr "Det här spelet har inga sparade data att exportera ännu."
+
+#: pe/ui/library.cpp
+msgid "This game's settings cannot be saved (no title ID)."
+msgstr "Inställningarna för det här spelet kan inte sparas (titel-ID saknas)."
+
+#. ryujinx/, save-import/ and roms/ are folder names (unchanged); {0} is the game's ID.
+#: eden_services.cpp
+msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
+msgstr "För att importera kopierar du en Ryujinx-mapp till ryujinx/ eller sparade data till save-import/{0}/, bredvid roms/."
+
+#: pe/ui/library.cpp
+msgid "Unavailable"
+msgstr "Inte tillgängligt"
+
+#. Short tag on the 'Parent folder' row.
+#: pe/ui/browse.cpp
+msgid "UP"
+msgstr "UPP"
+
+#. A game update; {0} is its version, for example 1.2.0.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Update {0}"
+msgstr "Uppdatering {0}"
+
+#: pe/ui/browse.cpp
+msgid "UPDATES, DLC"
+msgstr "UPPDATERINGAR, DLC"
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Upscaling filter"
+msgstr "Uppskalningsfilter"
+
+#: pe/ui/settings.cpp
+msgid "UPSCALING FILTER"
+msgstr "UPPSKALNINGSFILTER"
+
+#: eden_services.cpp
+msgid "USA"
+msgstr "USA"
+
+#: pe/ui/browse.cpp
+msgid "Use extracted firmware NCA files. Choose the folder in Settings, Game files; restart the app after changing it."
+msgstr "Använd extraherade firmware-NCA-filer. Välj mappen i Inställningar, Spelfiler; starta om appen efter ändringen."
+
+#: pe/ui/browse.cpp
+msgid "Use this folder"
+msgstr "Använd mappen"
+
+#: pe/ui/settings.cpp
+msgid "VIBRATION"
+msgstr "VIBRATION"
+
+#: pe/ui/settings.cpp
+msgid "Vibration"
+msgstr "Vibration"
+
+#: pe/ui/settings.cpp
+msgid "Vibration off"
+msgstr "Vibration av"
+
+#: pe/ui/settings.cpp
+msgid "Vibration on"
+msgstr "Vibration på"
+
+#: pe/ui/settings.cpp
+msgid "Video"
+msgstr "Video"
+
+#: pe/ui/settings.cpp
+msgid "VIDEO"
+msgstr "VIDEO"
+
+#: pe/ui/home.cpp
+msgid "VIEW ALL GAMES"
+msgstr "VISA ALLA SPEL"
+
+#. Vulkan is a name (unchanged).
+#: pe/ui/settings.cpp
+msgid "Vulkan (recommended)"
+msgstr "Vulkan (rekommenderas)"
+
+#: pe/ui/library.cpp
+msgid "Your games"
+msgstr "Dina spel"
+
+#. Headline when no game has been played yet.
+#: pe/ui/home.cpp
+msgid "Your next adventure"
+msgstr "Ditt nästa äventyr"
+
+#. {0} is how many DLC (add-on content) a game has installed.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "{0} DLC"
+msgstr "{0} DLC"
+
+#. Exactly one game. In a language with more than two plural forms, word it so that it reads well with any number (Games: {0}).
+#: pe/ui/browse.cpp
+msgid "{0} game"
+msgstr "{0} spel"
+
+#. Exactly one game. See '{0} game'.
+#: eden_services.cpp
+msgid "{0} game installed"
+msgstr "{0} spel installerat"
+
+#. Any number of games other than one (also 0). See '{0} game'.
+#: pe/ui/browse.cpp
+msgid "{0} games"
+msgstr "{0} spel"
+
+#. Any number of games other than one. See '{0} game'.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "{0} games installed"
+msgstr "{0} spel installerade"
+
+#. Exactly one file. See '{0} game'.
+#: pe/ui/browse.cpp
+msgid "{0} NCA file"
+msgstr "{0} NCA-fil"
+
+#. Any number of files other than one. See '{0} game'.
+#: pe/ui/browse.cpp
+msgid "{0} NCA files"
+msgstr "{0} NCA-filer"
+
+#. {0} is a language name. Shown beside a game that lacks that language.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "{0} not available"
+msgstr "{0} saknas"
+
+#. Position in a list: 3 OF 12.
+#: pe/ui/widgets.cpp
+msgid "{0} OF {1}"
+msgstr "{0} AV {1}"
+
+#. A percentage (a volume): write it as the language does, for example with a space before the sign.
+#: pe/ui/settings.cpp
+msgid "{0}%"
+msgstr "{0} %"
+
+#. {0} is a folder; NSP and XCI are file types.
+#: pe/ui/browse.cpp
+msgid "{0}/ (NSP or XCI)"
+msgstr "{0}/ (NSP eller XCI)"

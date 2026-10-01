@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Host check for the Ryujinx save import (ryujinx_saves.h) on a generated Ryujinx data folder.
+// Host check for save transfer (ryujinx_saves.h): import from a generated Ryujinx data folder and
+// from hand-copied save folders, and export.
 #include "ryujinx_saves.h"
 
 #include <cstdint>
@@ -89,7 +90,8 @@ int main() {
     const fs::path device = users / "00000000000000000000000000000000" / "0100AAAA00000000";
     const fs::path backups = base / "backup";
     write_text(account / "old.bin", "previous");
-    require(Import(saves, account, device, backups, "0100AAAA00000000-1", error), "import");
+    bool replaced = false;
+    require(Import(saves, account, device, backups, "0100AAAA00000000-1", error, &replaced) && replaced, "import");
     require(read_text(account / "save.bin") == "account-first-user", "account save copied");
     require(read_text(account / "sub" / "x.dat") == "nested", "nested file copied");
     require(!fs::exists(account / "old.bin"), "old save replaced");
@@ -109,7 +111,53 @@ int main() {
     std::ofstream(IndexPath(root), std::ios::binary) << "IMKV--------";
     require(FindSaves(ryujinx, game, error).empty() && error == "none for this game", "empty index");
 
+    // A save folder copied by hand: its files are the account save; the title ID in either case.
+    const fs::path by_hand = base / "save-import";
+    write_text(by_hand / "0100aaaa00000000" / "save.bin", "hand-copied");
+    auto folder_saves = FindFolderSaves(by_hand, game, error);
+    require(folder_saves.size() == 1 && folder_saves[0].kind == Kind::Account &&
+                folder_saves[0].folder == by_hand / "0100aaaa00000000", "hand-copied account save");
+    require(FindFolderSaves(by_hand, other_game, error).empty() && error == "none for this game",
+            "no folder for another game");
+    fs::create_directories(by_hand / "0100BBBB00000000");
+    require(FindFolderSaves(by_hand, other_game, error).empty(), "an empty folder is not a save");
+    require(Import(folder_saves, account, device, backups, "0100AAAA00000000-3", error), "import by hand");
+    require(Import(folder_saves, base / "fresh-account", base / "fresh-device", backups, "fresh", error, &replaced) &&
+                !replaced && read_text(base / "fresh-account" / "save.bin") == "hand-copied",
+            "import where there was no save");
+    require(read_text(account / "save.bin") == "hand-copied", "hand-copied save in place");
+    require(read_text(backups / "0100AAAA00000000-3-account" / "save.bin") == "account-first-user",
+            "the save it replaced is kept");
+    require(read_text(device / "device.bin") == "device", "device save untouched by an account import");
+
+    // Export writes account/ and device/; what it wrote imports again as both saves.
+    const fs::path exported = base / "save-export" / "0100AAAA00000000-1";
+    require(Export(account, device, exported, error), "export");
+    require(read_text(exported / "account" / "save.bin") == "hand-copied", "account save exported");
+    require(read_text(exported / "device" / "device.bin") == "device", "device save exported");
+    fs::create_directories(by_hand / "0100BBBB00000000");
+    fs::rename(exported, by_hand / "0100AAAA00000000");
+    fs::remove_all(by_hand / "0100aaaa00000000");
+    folder_saves = FindFolderSaves(by_hand, game, error);
+    require(folder_saves.size() == 2 && folder_saves[0].kind == Kind::Account &&
+                folder_saves[1].kind == Kind::Device, "an exported folder holds both saves");
+    write_text(account / "newer.bin", "played since");
+    require(Import(folder_saves, account, device, backups, "0100AAAA00000000-4", error), "import an export");
+    require(!fs::exists(account / "newer.bin") && read_text(account / "save.bin") == "hand-copied",
+            "the export replaced the save");
+    require(read_text(backups / "0100AAAA00000000-4-account" / "newer.bin") == "played since" &&
+                read_text(backups / "0100AAAA00000000-4-device" / "device.bin") == "device",
+            "both replaced saves are kept");
+
+    // Nothing to export: no folders, or empty ones; a failed export leaves nothing behind.
+    const fs::path none = base / "save-export" / "none";
+    fs::create_directories(base / "empty-account");
+    require(!Export(base / "empty-account", base / "absent-device", none, error) && error == "no save yet",
+            "nothing to export");
+    require(!fs::exists(none), "no folder for an empty export");
+
     fs::remove_all(base);
-    std::printf("Ryujinx save import PASS: portable folder, account/device choice, backup, restore on failure\n");
+    std::printf("Save transfer PASS: Ryujinx folder, hand-copied folder, account/device choice, backup, restore on "
+                "failure, export and re-import\n");
     return 0;
 }

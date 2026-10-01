@@ -24,13 +24,14 @@ Launcher::Launcher(Services &services, Textures &textures, const Fonts &fonts, b
     version_ = services_.version();
     clock_ = services_.clock();
     prefs_ = services_.preferences();
+    apply_look();
     home_ = services_.home();
     const bool continue_ready = home_.setup_ready && home_.last_exists;
     home_focus_ = continue_ready ? 0 : home_.setup_ready ? 1 : 2;
     home_springs_[static_cast<std::size_t>(home_focus_)].snap(1.0f);
-    settings_.visible = 6;
-    settings_.pitch = 102.0f;
-    settings_.reset(6, 0);
+    settings_.visible = 7;
+    settings_.pitch = 88.0f;
+    settings_.reset(7, 0);
     section_.snap(1.0f);
     detail_.snap(1.0f);
     cue(home_.launch_failed ? Cue::notify : first_start ? Cue::welcome : Cue::resume);
@@ -75,11 +76,27 @@ void Launcher::open_modal(Modal modal)
     option_cursor_.snap(dialog_row_top(modal, 0));
     message_.clear();
     // Switches show their state at once; they only animate when changed.
-    const bool states[] = {modal == Modal::video ? prefs_.hud :
-                           modal == Modal::audio ? prefs_.mute :
-                           modal == Modal::controls ? prefs_.vibration : prefs_.detailed_logging};
-    switches_[0].snap(states[0] ? 1.0f : 0.0f);
+    const std::array<bool, 3> states = switch_states(modal);
+    for (std::size_t i = 0; i < states.size(); ++i)
+        switches_[i].snap(states[i] ? 1.0f : 0.0f);
     cue(Cue::modal_open);
+}
+
+std::array<bool, 3> Launcher::switch_states(Modal modal) const
+{
+    switch (modal)
+    {
+    case Modal::video:
+        return {prefs_.hud, false, false};
+    case Modal::audio:
+        return {prefs_.mute, false, false};
+    case Modal::controls:
+        return {prefs_.vibration, false, false};
+    case Modal::accessibility:
+        return {prefs_.large_text, prefs_.high_contrast, prefs_.reduce_motion};
+    default:
+        return {prefs_.detailed_logging, false, false};
+    }
 }
 
 void Launcher::close_modal()
@@ -89,11 +106,20 @@ void Launcher::close_modal()
     cue(Cue::modal_close);
 }
 
-bool Launcher::save_preferences()
+void Launcher::apply_look()
+{
+    look() = {prefs_.large_text, prefs_.high_contrast, prefs_.reduce_motion};
+}
+
+bool Launcher::save_preferences(bool quiet)
 {
     const bool saved = services_.set_preferences(prefs_);
-    say(saved ? tr("Saved. Applies when a game starts.") : tr("Could not save settings. Please try again."),
-        !saved);
+    if (!saved)
+        say(tr("Could not save settings. Please try again."), true);
+    else if (quiet)
+        message_.clear();
+    else
+        say(tr("Saved. Applies when a game starts."));
     return saved;
 }
 
@@ -171,11 +197,12 @@ void Launcher::update(float dt)
     if (modal_ != Modal::none)
         option_cursor_.target = dialog_row_top(modal_, option_);
     option_cursor_.update(dt, theme::kCursorSpring);
-    switches_[0].target = modal_shown_ == Modal::video ? (prefs_.hud ? 1.0f : 0.0f) :
-                          modal_shown_ == Modal::audio ? (prefs_.mute ? 1.0f : 0.0f) :
-                          modal_shown_ == Modal::controls ? (prefs_.vibration ? 1.0f : 0.0f) :
-                          (prefs_.detailed_logging ? 1.0f : 0.0f);
-    switches_[0].update(dt, 22.0f);
+    const std::array<bool, 3> states = switch_states(modal_shown_);
+    for (std::size_t i = 0; i < states.size(); ++i)
+    {
+        switches_[i].target = states[i] ? 1.0f : 0.0f;
+        switches_[i].update(dt, 22.0f);
+    }
 
     clock_wait_ += dt;
     if (clock_wait_ >= 1.0f)
@@ -236,7 +263,7 @@ void Launcher::draw_launch(Canvas &c)
     const float appear = tween::back_out(t / 0.38f);
     const float leave = 1.0f - tween::cubic_in_out((t - 0.60f) / 0.40f);
     c.list.push_opacity(tween::clamp01(t / 0.18f) * leave);
-    c.list.push_transform(0.86f + 0.14f * appear, 960.0f, 470.0f, 0.0f, 0.0f);
+    c.list.push_transform(1.0f - 0.14f * (1.0f - appear) * motion(), 960.0f, 470.0f, 0.0f, 0.0f);
     const Rect art{810.0f, 300.0f, 300.0f, 300.0f};
     c.list.shadow({art.x - 10.0f, art.y - 4.0f, art.w + 20.0f, art.h + 20.0f}, 30.0f, 70.0f,
                   theme::kLime.with_alpha(0.22f));
@@ -255,7 +282,7 @@ void Launcher::draw(gfx::DrawList &list)
 
     const bool launching = !selected_game_.empty();
     const float zoom =
-        launching ? 1.0f + 0.045f * tween::cubic_in_out(launch_.progress()) : 1.0f;
+        launching ? 1.0f + 0.045f * tween::cubic_in_out(launch_.progress()) * motion() : 1.0f;
     list.push_transform(zoom, 960.0f, 540.0f, 0.0f, 0.0f);
     if (transition_.running)
     {
@@ -264,12 +291,12 @@ void Launcher::draw(gfx::DrawList &list)
         const float e = tween::cubic_in_out(t);
         const float direction = forward_ ? 1.0f : -1.0f;
         list.push_opacity(1.0f - tween::cubic_out(t / 0.55f));
-        list.push_transform(1.0f, 0.0f, 0.0f, -direction * 56.0f * e, 0.0f);
+        list.push_transform(1.0f, 0.0f, 0.0f, -direction * 56.0f * e * motion(), 0.0f);
         draw_screen(c, leaving_);
         list.pop_transform();
         list.pop_opacity();
         list.push_opacity(tween::cubic_out((t - 0.2f) / 0.8f));
-        list.push_transform(1.0f, 0.0f, 0.0f, direction * 56.0f * (1.0f - e), 0.0f);
+        list.push_transform(1.0f, 0.0f, 0.0f, direction * 56.0f * (1.0f - e) * motion(), 0.0f);
         draw_screen(c, screen_);
         list.pop_transform();
         list.pop_opacity();

@@ -35,6 +35,12 @@ namespace Eden {
 void PresentVulkanLoading(VideoCore::RendererBase& renderer);
 #endif
 namespace {
+// What the loading screen's time carries for reduced motion (loading_scene.glsl): 1000 when the
+// player turned it on in Settings > Accessibility, read once.
+double LoadingCalm() {
+    static const double calm = LoadPreferences().reduce_motion ? 1000.0 : 0.0;
+    return calm;
+}
 std::atomic<bool> hud_enabled{true};
 HudClock vulkan_hud_clock;
 HudSnapshot vulkan_hud;
@@ -304,7 +310,7 @@ public:
     void PresentLoading() {
         const double now = Now();
         if (loading_start < 0) loading_start = now;
-        if (!DrawLoading(now - loading_start)) {
+        if (!DrawLoading(now - loading_start + LoadingCalm())) {
             // The scene's shader did not build on this driver: plain text instead.
             const unsigned dots = static_cast<unsigned>(now * 4) % 4;
             char text[16] = "LOADING";
@@ -477,7 +483,7 @@ bool LoadingTick(VideoCore::RendererBase& renderer, bool idle) {
         const bool first = vulkan_loading_start < 0;
         if (first) vulkan_loading_start = now;
         if (vulkan_loading_pace.Due(now, idle)) {
-            vulkan_hud = MakeLoadingSnapshot(now - vulkan_loading_start);
+            vulkan_hud = MakeLoadingSnapshot(now - vulkan_loading_start + LoadingCalm());
             PresentVulkanLoading(renderer);
             ++vulkan_loading_frames;
             if (first) sceSystemServiceHideSplashScreen();

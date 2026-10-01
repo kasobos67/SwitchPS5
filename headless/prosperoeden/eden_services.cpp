@@ -60,6 +60,26 @@ GameLanguage LanguageFor(const std::string& path, uint64_t title_id, int choice)
     return result;
 }
 
+// Why a game did not start, as headless/main.cpp reports it. The reasons that are whole sentences
+// are shown in the player's language; the others carry codes and file names and stay as they are.
+// (tools/launcher/strings.py checks that main.cpp still says these.)
+constexpr const char* kLaunchErrors[] = {
+    TR("Selected ROM is no longer available"),
+    TR("PS5 controller initialization failed"),
+    TR("Graphics backend initialization failed. Try another backend in Settings; see stderr.log and eden_log.txt for "
+       "driver details."),
+    TR("The game ran out of graphics memory. Lower the resolution in Settings, Video (or in the game's own settings) "
+       "and start it again."),
+};
+std::string LaunchError(const std::string& reason) {
+    std::string text = reason;
+    for (const char* known : kLaunchErrors)
+        if (reason == known) text = tr(known);
+    // "Details:" follows it: a reason without its own full stop gets one.
+    if (!text.empty() && text.back() != '.' && text.back() != '!' && text.back() != '?') text += '.';
+    return text;
+}
+
 // Names of the subfolders (folders = true) or regular files in path, sorted without regard
 // to case. Unlike ReadNativeDirectory, an odd entry is skipped rather than failing the
 // folder: the Game files browser walks the whole console filesystem.
@@ -266,7 +286,8 @@ pe::ui::Home EdenServices::home() {
                               "keys, firmware and roms folders (or add the files to {1}), then reopen ProsperoEden."),
                            {SetupMessage(setup_), Eden::AssetsDir()});
     } else if (!launch_error_.empty()) {
-        home.status = fill(tr("Game could not start: {0} Details: {1}"), {launch_error_, Eden::LogFile("stderr.log")});
+        home.status = fill(tr("Game could not start: {0} Details: {1}"),
+                           {LaunchError(launch_error_), Eden::LogFile("stderr.log")});
         home.launch_failed = true;
     }
 
@@ -284,19 +305,20 @@ pe::ui::Home EdenServices::home() {
         home.last_title = title;
         home.last_caption = home.last_exists ? tr("Last game opened") :
                                                tr("ROM missing from the game files folder");
+        home.last_caption_warning = !home.last_exists;
         if (has_cover) home.last_cover = cover;
     }
-    // The last game's update and DLC, and the language it will use (a warning when it does not
-    // offer the chosen one).
+    // The last game's update and DLC and the language it will use; when it does not offer the
+    // chosen one, the caption says so.
     if (home.setup_ready && home.last_exists) {
         eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str());
         const uint64_t title_id = eden_game_title_id(last_path.c_str());
         const GameLanguage language = LanguageFor(last_path, title_id, Eden::LoadPreferences().language);
-        home.last_info = language.note.empty() ?
-            fill(tr("Add-ons: {0}  /  Language: {1}"), {AddOnSummary(title_id), language.label}) :
-            fill(tr("Add-ons: {0}  /  Language: {1} ({2} in this game)"),
-                 {AddOnSummary(title_id), language.label, language.note});
-        home.last_info_warning = !language.note.empty();
+        home.last_info = fill(tr("Add-ons: {0}  /  Language: {1}"), {AddOnSummary(title_id), language.label});
+        if (!language.note.empty()) {
+            home.last_caption = language.note;
+            home.last_caption_warning = true;
+        }
     }
 
     auto history = Eden::LoadRecentGames();
@@ -428,6 +450,9 @@ pe::ui::Preferences EdenServices::preferences() {
     result.vibration = saved.vibration;
     result.language = saved.language;
     result.menu_volume = saved.menu_volume;
+    result.large_text = saved.large_text;
+    result.high_contrast = saved.high_contrast;
+    result.reduce_motion = saved.reduce_motion;
     return result;
 }
 
@@ -443,6 +468,9 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.vibration = preferences.vibration;
     value.language = preferences.language;
     value.menu_volume = preferences.menu_volume;
+    value.large_text = preferences.large_text;
+    value.high_contrast = preferences.high_contrast;
+    value.reduce_motion = preferences.reduce_motion;
     const bool saved = Eden::SavePreferences(value);
     if (!saved) Eden::Report("settings", "Could not write preferences");
     return saved;
@@ -508,26 +536,63 @@ bool EdenServices::set_files_folder(const std::string& directory) {
 int EdenServices::filesystem_access() { return Eden::FilesystemAccessStatus(); }
 
 #ifdef EDEN_SAVE_IMPORT
-// Ryujinx save import (ryujinx_saves.h): a Ryujinx data folder copied into ryujinx/ next to roms/.
-bool EdenServices::save_import_available() { return true; }
+// Save transfer (ryujinx_saves.h): a save comes in from save-import/<title ID>/ or a Ryujinx data
+// folder in ryujinx/, and goes out to save-export/, all next to roms/.
+bool EdenServices::save_transfer_available() { return true; }
 
-bool EdenServices::save_import_status(std::uint64_t title_id, std::string* text) {
-    char status[96]{};
-    const bool found = eden_ryujinx_save_status(title_id, status, sizeof(status)) != 0;
-    *text = status;
-    return found;
+pe::ui::SaveSource EdenServices::save_import_source(std::uint64_t title_id) {
+    switch (eden_save_import_source(title_id)) {
+    case EDEN_SAVE_FOLDER: return pe::ui::SaveSource::folder;
+    case EDEN_SAVE_RYUJINX: return pe::ui::SaveSource::ryujinx;
+    default: return pe::ui::SaveSource::none;
+    }
 }
 
 bool EdenServices::save_import(std::uint64_t title_id, std::string* message) {
-    char text[192]{};
-    const bool imported = eden_ryujinx_import_save(title_id, text, sizeof(text)) != 0;
-    *message = text;
-    return imported;
+    char backup[256]{};
+    switch (eden_save_import(title_id, backup, sizeof(backup))) {
+    case EDEN_SAVE_DONE:
+        *message = backup[0] ? tr("Imported. The save it replaced was backed up.") : tr("Imported.");
+        return true;
+    case EDEN_SAVE_NOTHING: {
+        char title[17]{};
+        std::snprintf(title, sizeof(title), "%016llX", static_cast<unsigned long long>(title_id));
+        *message = fill(tr("To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."),
+                        {title});
+        return false;
+    }
+    case EDEN_SAVE_NO_USER:
+        *message = tr("Start any game once before importing a save.");
+        return false;
+    default:
+        *message = tr("Import failed. The current save is unchanged.");
+        return false;
+    }
+}
+
+bool EdenServices::save_export(std::uint64_t title_id, std::string* message) {
+    char folder[256]{};
+    switch (eden_save_export(title_id, folder, sizeof(folder))) {
+    case EDEN_SAVE_DONE: {
+        // The end of the path tells it apart: save-export/<title ID>-<date>-<time>.
+        const std::string path = folder;
+        const std::size_t name = path.rfind("save-export/");
+        *message = fill(tr("Exported to {0}."), {name == std::string::npos ? path : path.substr(name)});
+        return true;
+    }
+    case EDEN_SAVE_NOTHING:
+        *message = tr("This game has no save to export yet.");
+        return false;
+    default:
+        *message = tr("Export failed. Check that the game files folder can be written.");
+        return false;
+    }
 }
 #else
-bool EdenServices::save_import_available() { return false; }
-bool EdenServices::save_import_status(std::uint64_t, std::string*) { return false; }
+bool EdenServices::save_transfer_available() { return false; }
+pe::ui::SaveSource EdenServices::save_import_source(std::uint64_t) { return pe::ui::SaveSource::none; }
 bool EdenServices::save_import(std::uint64_t, std::string*) { return false; }
+bool EdenServices::save_export(std::uint64_t, std::string*) { return false; }
 #endif
 
 bool EdenServices::load_image(const std::string& path, pe::gfx::Image* image) {

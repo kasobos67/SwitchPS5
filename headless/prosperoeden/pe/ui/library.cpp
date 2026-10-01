@@ -192,8 +192,9 @@ void Launcher::press_library(Key key)
         }
         game_settings_ = services_.game_settings(game->title_id);
         game_docked_ = selected_docked_;
-        import_found_ = services_.save_import_available() &&
-                        services_.save_import_status(game->title_id, &import_status_);
+        import_source_ = services_.save_transfer_available() ?
+                             services_.save_import_source(game->title_id) : SaveSource::none;
+        import_armed_ = false;
         open_modal(Modal::game);
         return;
     case Key::cross:
@@ -270,7 +271,7 @@ void Launcher::draw_library(Canvas &c)
     const Game *game = count > 0 ? &games_[static_cast<std::size_t>(library_.selected)] : nullptr;
     const float shown = tween::clamp01(detail_.value);
     list.push_opacity(shown);
-    list.push_transform(1.0f, 0.0f, 0.0f, 0.0f, (1.0f - shown) * 10.0f);
+    list.push_transform(1.0f, 0.0f, 0.0f, 0.0f, (1.0f - shown) * 10.0f * motion());
     text_block(c, game != nullptr ? game->name : tr("No ROM selected"), 1016.0f,
                baseline(250.0f, 42.0f, theme::kHeading), theme::kHeading, 42.0f, theme::kTitle,
                760.0f, 2);
@@ -304,8 +305,8 @@ void Launcher::draw_library(Canvas &c)
                     440.0f - label - 16.0f, Align::right);
     }
     if (game != nullptr && !game->language_note.empty())
-        text_shrink(c, game->language_note, 1776.0f, baseline(544.0f, 28.0f, 18.0f), 18.0f,
-                    theme::kWarning, 440.0f, Align::right);
+        notice(c, game->language_note, 1776.0f, baseline(544.0f, 28.0f, 18.0f), 18.0f,
+               theme::kWarning, 440.0f, true, Align::right);
     text(c, tr("FILE"), 1336.0f, baseline(582.0f, 30.0f, theme::kSmall), theme::kSmall, theme::kLabel);
     text_block(c, game != nullptr ? game->file : "-", 1336.0f,
                baseline(622.0f, 30.0f, theme::kSmall), theme::kSmall, 30.0f, theme::kValue, 440.0f,
@@ -346,13 +347,14 @@ void Launcher::draw_library(Canvas &c)
                     400.0f, Align::right);
     }
     draw_pad(c, Pad::leftright, 1022.0f, 865.0f, 26.0f);
-    const std::string hint = !message_.empty() ? message_ :
+    // A message said while Game settings is open belongs to that dialog.
+    const bool said = !message_.empty() && modal_shown_ != Modal::game;
+    const std::string hint = said ? message_ :
                              can_configure ? tr("Change mode. Saved per game.") :
                                              tr("Select a readable game to configure its mode.");
-    text_shrink(c, hint, 1060.0f, 872.0f, theme::kSmall,
-                !message_.empty() ? (message_warning_ ? theme::kWarning : theme::kLimePale) :
-                                    theme::kMeta,
-                700.0f);
+    notice(c, hint, 1060.0f, 872.0f, theme::kSmall,
+           said ? (message_warning_ ? theme::kWarning : theme::kLimePale) : theme::kMeta, 700.0f,
+           said && message_warning_);
 
     static constexpr Hint kHints[] = {{Pad::cross, TR("Select")},
                                       {Pad::circle, TR("Back")},
@@ -378,8 +380,13 @@ void Launcher::press_game(Key key)
     case Key::down:
         option_ = (option_ + (key == Key::down ? 1 : rows - 1)) % rows;
         message_.clear();
+        import_armed_ = false;
         cue(Cue::focus);
         return;
+    case Key::square:
+        if (option_ != 4)
+            return;
+        break;
     case Key::left:
     case Key::right:
     case Key::cross:
@@ -389,16 +396,34 @@ void Launcher::press_game(Key key)
     }
     if (option_ == 4)
     {
-        // Copy the game's save from another emulator's data folder.
-        if (key != Key::cross || !import_found_)
+        // Save data: Square copies the game's save out, Cross (twice) copies one in.
+        std::string result;
+        if (key == Key::square)
+        {
+            import_armed_ = false;
+            const bool exported = services_.save_export(game.title_id, &result);
+            say(result, !exported);
+            cue(exported ? Cue::saved : Cue::error);
+        }
+        else if (key != Key::cross)
         {
             cue(Cue::error);
-            return;
         }
-        std::string result;
-        const bool imported = services_.save_import(game.title_id, &result);
-        say(result, !imported);
-        cue(imported ? Cue::saved : Cue::error);
+        else if (import_source_ != SaveSource::none && !import_armed_)
+        {
+            // Importing replaces the save in use, so it asks first.
+            import_armed_ = true;
+            say(tr("Press again to replace this game's save. The current one is backed up."), true);
+            cue(Cue::notify);
+        }
+        else
+        {
+            // With nothing to import the answer says where a save has to be put.
+            import_armed_ = false;
+            const bool imported = services_.save_import(game.title_id, &result);
+            say(result, !imported && import_source_ != SaveSource::none);
+            cue(imported ? Cue::saved : import_source_ != SaveSource::none ? Cue::error : Cue::notify);
+        }
         return;
     }
     const int step = key == Key::left ? -1 : 1;
@@ -435,7 +460,8 @@ void Launcher::draw_game(Canvas &c, float open)
 {
     gfx::DrawList &list = c.list;
     list.push_opacity(open);
-    list.push_transform(0.97f + 0.03f * open, 960.0f, 540.0f, 0.0f, (1.0f - open) * 26.0f);
+    list.push_transform(1.0f - 0.03f * (1.0f - open) * motion(), 960.0f, 540.0f, 0.0f,
+                        (1.0f - open) * 26.0f * motion());
     glass(c, kDialog, 26.0f, theme::kPanel.with_alpha(0.97f), theme::kPanelEdge.with_alpha(0.66f),
           1.6f);
     text_shrink(c, tr("Game settings"), 592.0f, baseline(218.0f, 62.0f, theme::kDisplay),
@@ -446,7 +472,9 @@ void Launcher::draw_game(Canvas &c, float open)
 
     static constexpr const char *kRenderers[] = {"OpenGL", "Vulkan"};
     const auto &resolutions = services_.resolution_labels();
-    const auto &resolution_keys = services_.resolution_keys();
+    // A resolution's short name is how its label starts: "0.5x (faster, softer)" is "0.5x".
+    const auto short_resolution = [](const std::string &label)
+    { return label.substr(0, label.find(' ')); };
     const auto &filters = services_.filter_labels();
     const auto pick = [](const std::vector<std::string> &values, int index) -> std::string
     {
@@ -458,13 +486,14 @@ void Launcher::draw_game(Canvas &c, float open)
         game_settings_.renderer >= 0 ? kRenderers[game_settings_.renderer] :
             fill(tr("Default ({0})"), {kRenderers[prefs_.renderer != 0 ? 1 : 0]}),
         game_settings_.resolution >= 0 ? pick(resolutions, game_settings_.resolution) :
-            fill(tr("Default ({0})"), {pick(resolution_keys, prefs_.resolution)}),
+            fill(tr("Default ({0})"), {short_resolution(pick(resolutions, prefs_.resolution))}),
         game_settings_.filter >= 0 ? pick(filters, game_settings_.filter) :
             fill(tr("Default ({0})"), {pick(filters, prefs_.filter)}),
-        import_status_,
+        import_source_ == SaveSource::ryujinx ? tr("Ryujinx save found") :
+        import_source_ == SaveSource::folder ? tr("Save folder found") : tr("Nothing to import"),
     };
     static constexpr const char *kLabels[] = {TR("Console mode"), TR("Renderer"), TR("Resolution"),
-                                              TR("Upscaling filter"), TR("Ryujinx save")};
+                                              TR("Upscaling filter"), TR("Save data")};
     const int rows = dialog_rows(Modal::game);
     for (int row = 0; row < rows; ++row)
         plate_rest(c, kRowPlate, {592.0f, dialog_row_top(Modal::game, row), 736.0f, 94.0f});
@@ -476,8 +505,9 @@ void Launcher::draw_game(Canvas &c, float open)
         // The value first: the row's name takes what it leaves.
         const float taken =
             row == 4 ? text_shrink(c, values[row], 1292.0f, baseline(top, 94.0f, theme::kSmall),
-                                   theme::kSmall, import_found_ ? theme::kLimePale : theme::kMeta,
-                                   400.0f, Align::right) :
+                                   theme::kSmall,
+                                   import_source_ != SaveSource::none ? theme::kLimePale : theme::kMeta,
+                                   320.0f, Align::right) :
                        chooser(c, values[row], 1296.0f, baseline(top, 94.0f, theme::kText24), focus,
                                theme::kLimePale);
         text_shrink(c, tr(kLabels[row]), 628.0f, baseline(top, 94.0f, theme::kText24),
@@ -487,22 +517,17 @@ void Launcher::draw_game(Canvas &c, float open)
     const float hint_y = rows > 4 ? 848.0f : 811.0f;
     if (!message_.empty())
     {
-        text_shrink(c, message_, 592.0f, hint_y + 7.0f, theme::kSmall,
-                    message_warning_ ? theme::kWarning : theme::kLimePale, 736.0f);
+        // Up to two lines: what Save data answers is longer than a "Saved".
+        notice_block(c, message_, 592.0f, hint_y - (rows > 4 ? 6.0f : -7.0f), theme::kSmall, 26.0f,
+                     message_warning_ ? theme::kWarning : theme::kLimePale, 736.0f, 2,
+                     message_warning_);
     }
     else if (option_ == 4)
     {
-        if (import_found_)
-        {
-            static constexpr Hint kImport[] = {{Pad::cross, TR("Import it (the current save is backed up)")},
-                                               {Pad::circle, TR("Back")}};
-            draw_hints(c, kImport, 2, 592.0f, hint_y, theme::kCopy, 736.0f);
-        }
-        else
-        {
-            text_shrink(c, tr("Copy a Ryujinx data folder into ryujinx/ next to roms/."), 592.0f,
-                        hint_y + 7.0f, theme::kSmall, theme::kCopy, 736.0f);
-        }
+        static constexpr Hint kTransfer[] = {{Pad::cross, TR("Import")},
+                                             {Pad::square, TR("Export a copy")},
+                                             {Pad::circle, TR("Back")}};
+        draw_hints(c, kTransfer, 3, 592.0f, hint_y, theme::kCopy, 736.0f);
     }
     else
     {

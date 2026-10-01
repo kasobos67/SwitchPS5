@@ -98,6 +98,28 @@ NOTES = {
     "SELECTED": "Heading: the language highlighted in the list.",
     "NEXT START": "Label: the folder used the next time the app starts.",
     "Next launch: {0}": "{0} is the folder used the next time the app starts.",
+    "Accessibility": "A settings category: options that make the menu easier to see and follow.",
+    "Larger text": "A switch: the menu's small text is drawn larger.",
+    "High contrast": "A switch: solid dark panels, brighter text.",
+    "Reduce motion": "A switch: no drifting, sliding or zooming on screen.",
+    "Save data": "A row of a game's settings: the game's saved progress, which can be copied in or out.",
+    "Ryujinx save found": "Short status at the right of the Save data row. Ryujinx is a name (unchanged).",
+    "Save folder found": "Short status at the right of the Save data row: a folder with a save to import.",
+    "Nothing to import": "Short status at the right of the Save data row.",
+    "Import": "Button hint: copy a save in.",
+    "Export a copy": "Button hint: copy the game's save out to a folder.",
+    "Press again to replace this game's save. The current one is backed up.":
+        "Asked before a save is imported over the one in use.",
+    "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/.":
+        "ryujinx/, save-import/ and roms/ are folder names (unchanged); {0} is the game's ID.",
+    "Exported to {0}.": "{0} is a folder.",
+    "Start any game once before importing a save.": "The app creates its user the first time a game runs.",
+    "Selected ROM is no longer available": "Why a game did not start (the file is gone).",
+    "PS5 controller initialization failed": "Why a game did not start.",
+    "{0}%": "A percentage (a volume): write it as the language does, for example with a space before the sign.",
+    "The game ran out of graphics memory. Lower the resolution in Settings, Video (or in the game's own settings) "
+    "and start it again.": "Why a game stopped. 'Settings, Video' is the menu path; 'the game's own settings' is the "
+                           "Game settings dialog of the Library.",
 }
 
 
@@ -179,10 +201,26 @@ def font_characters():
     return {struct.unpack_from("<I", data, 40 + 24 * index)[0] for index in range(glyphs)}
 
 
+def launch_error_problems():
+    """The launch errors the launcher translates must still be what headless/main.cpp reports."""
+    services = (LAUNCHER / "eden_services.cpp").read_text(encoding="utf-8")
+    table = re.search(r"kLaunchErrors\[\] = \{(.*?)\};", services, re.S)
+    if not table:
+        return ["eden_services.cpp has no kLaunchErrors table"]
+    reported = (ROOT / "headless/main.cpp").read_text(encoding="utf-8")
+    reported = re.sub(r'"\s*\n\s*"', "", reported)  # a sentence written as adjacent literals
+    return [f"main.cpp no longer reports: {joined(literal)!r}"
+            for literal in re.findall(r"TR\(\s*" + LITERALS, table.group(1))
+            if '"' + escape(joined(literal)) + '"' not in reported]
+
+
 def check():
     texts = marked_text()
     characters = font_characters()
     failed = False
+    for problem in launch_error_problems():
+        print(problem)
+        failed = True
     catalogs = sorted(CATALOGS.glob("*.po"))
     if not catalogs:
         print("no catalogs in", CATALOGS)
@@ -216,6 +254,8 @@ def check():
 
 
 def main():
+    # Translations are printed as they are, whatever the console's own encoding.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     command = sys.argv[1] if len(sys.argv) > 1 else ""
     if command == "extract":
         texts = marked_text()

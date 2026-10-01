@@ -60,9 +60,9 @@ struct Home
     bool last_exists = false;
     std::string last_title;
     std::string last_caption;
+    bool last_caption_warning = false; // the caption says what is wrong with the game
     std::string last_cover;
     std::string last_info; // add-ons and language
-    bool last_info_warning = false;
     std::vector<Recent> recents; // at most four
     std::string system_status;
 };
@@ -79,6 +79,10 @@ struct Preferences
     bool vibration = true;
     int language = 0;
     int menu_volume = 70; // launcher sounds, 0-100
+    // Accessibility: how the launcher itself is shown (theme.hpp, Look).
+    bool large_text = false;
+    bool high_contrast = false;
+    bool reduce_motion = false;
 };
 
 // One game's overrides; -1 uses Settings > Video.
@@ -87,6 +91,14 @@ struct GameSettings
     int renderer = -1;
     int resolution = -1;
     int filter = -1;
+};
+
+// Where a save to import was found, in the game files folder.
+enum class SaveSource : std::uint8_t
+{
+    none,
+    folder,  // save-import/<title ID>/, copied by hand
+    ryujinx, // ryujinx/, a Ryujinx data folder
 };
 
 // What a folder holds, for Settings > Game files. Counts are -1 without the subfolder.
@@ -141,16 +153,22 @@ class Services
     virtual bool set_files_folder(const std::string &directory) = 0;
     virtual int filesystem_access() = 0; // 0: the whole filesystem
 
-    // ---- save import from another emulator's data folder (not in every build) ----
-    virtual bool save_import_available()
+    // ---- save transfer: a game's save in from, or out to, a folder (not in every build) ----
+    virtual bool save_transfer_available()
     {
         return false;
     }
-    virtual bool save_import_status(std::uint64_t, std::string *)
+    // What there is to import for the game.
+    virtual SaveSource save_import_source(std::uint64_t)
     {
-        return false;
+        return SaveSource::none;
     }
+    // Each returns whether it was done, with what to tell the player in message.
     virtual bool save_import(std::uint64_t, std::string *)
+    {
+        return false;
+    }
+    virtual bool save_export(std::uint64_t, std::string *)
     {
         return false;
     }

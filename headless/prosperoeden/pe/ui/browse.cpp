@@ -229,12 +229,13 @@ void Launcher::draw_files(Canvas &c)
     const float column = value_column(
         c, {tr("KEYS"), tr("FIRMWARE"), tr("GAMES"), tr("IN USE"), tr("ACCESS")}, 1016.0f, 1216.0f,
         theme::kSmall, 2.0f);
+    // A line whose value is in the warning colour carries the warning mark too.
     const auto line = [&](float top, const char *label, const std::string &value, Color color)
     {
         text(c, label, 1016.0f, baseline(top, 30.0f, theme::kSmall), theme::kSmall, theme::kLabel,
              Align::left, 2.0f);
-        text_shrink(c, value, column, baseline(top, 30.0f, theme::kSmall), theme::kSmall, color,
-                    1764.0f - column);
+        notice(c, value, column, baseline(top, 30.0f, theme::kSmall), theme::kSmall, color,
+               1764.0f - column, color.r == theme::kWarning.r && color.g == theme::kWarning.g);
     };
     const auto state = [](bool ready) { return ready ? theme::kLimePale : theme::kWarning; };
     line(378.0f, tr("KEYS"), folder_info_.keys ? tr("prod.keys found") : tr("prod.keys missing"),
@@ -259,14 +260,14 @@ void Launcher::draw_files(Canvas &c)
                        fill(tr("Sandboxed (code {0}): app folder only"), {std::to_string(access)}),
          state(access == 0));
     list.rounded_rect({1016.0f, 698.0f, 748.0f, 1.0f}, 0.0f, theme::kRule);
-    text_block(c,
-               message_.empty() ?
-                   tr("Keep keys, firmware and roms folders together. TRIANGLE uses the folder shown.") :
-                   message_,
-               1016.0f, baseline(722.0f, 36.0f, theme::kText24), theme::kText24, 36.0f,
-               message_.empty() ? theme::kCopy :
-               message_warning_ ? theme::kWarning : theme::kLimePale,
-               748.0f, 3, kShrink);
+    notice_block(c,
+                 message_.empty() ?
+                     tr("Keep keys, firmware and roms folders together. TRIANGLE uses the folder shown.") :
+                     message_,
+                 1016.0f, baseline(722.0f, 36.0f, theme::kText24), theme::kText24, 36.0f,
+                 message_.empty() ? theme::kCopy :
+                 message_warning_ ? theme::kWarning : theme::kLimePale,
+                 748.0f, 3, !message_.empty() && message_warning_);
 
     static constexpr Hint kHints[] = {{Pad::cross, TR("Open")},
                                       {Pad::circle, TR("Back")},
@@ -362,17 +363,19 @@ void Launcher::draw_language(Canvas &c)
     {
         const Rect r = row_rect(row);
         list.push_opacity(language_.row_alpha(row, kRowHeight));
-        // The language in use carries a lime tag.
-        const float width = c.fonts.font->measure(tr("IN USE"), 18.0f, 2.0f) + 28.0f;
-        text_fit(c, labels[static_cast<std::size_t>(row)], r.x + 26.0f,
-                 baseline(r.y, kRowHeight, theme::kText24), theme::kText24, Color::rgb(0xf3f5e9),
-                 734.0f - 26.0f - width - 24.0f);
+        // The language in use carries a lime tag; its name has the room the tag leaves.
+        const float width = text_width(c, tr("IN USE"), 18.0f, 2.0f) + 28.0f;
+        text_shrink(c, labels[static_cast<std::size_t>(row)], r.x + 26.0f,
+                    baseline(r.y, kRowHeight, theme::kText24), theme::kText24, Color::rgb(0xf3f5e9),
+                    row == prefs_.language ? 734.0f - 26.0f - width - 24.0f : 708.0f);
         if (row == prefs_.language)
         {
-            const Rect tag{r.x + 734.0f - width, r.y + 24.0f, width, 30.0f};
-            list.bordered_rect(tag, 15.0f, theme::kLime.with_alpha(0.16f), 1.0f,
+            // The tag is as tall as its letters need.
+            const float tall = std::max(30.0f, text_size(18.0f) + 10.0f);
+            const Rect tag{r.x + 734.0f - width, r.y + (kRowHeight - tall) * 0.5f, width, tall};
+            list.bordered_rect(tag, tall * 0.5f, theme::kLime.with_alpha(0.16f), 1.0f,
                                theme::kLime.with_alpha(0.55f));
-            text(c, tr("IN USE"), tag.x + tag.w * 0.5f, baseline(tag.y, 30.0f, 18.0f), 18.0f,
+            text(c, tr("IN USE"), tag.x + tag.w * 0.5f, baseline(tag.y, tall, 18.0f), 18.0f,
                  theme::kLimePale, Align::center, 2.0f);
         }
         list.pop_opacity();
@@ -390,8 +393,8 @@ void Launcher::draw_language(Canvas &c)
     {
         return index >= 0 && index < count ? labels[static_cast<std::size_t>(index)] : std::string{};
     };
-    text_fit(c, label_at(language_.selected), 1016.0f, baseline(250.0f, 42.0f, theme::kHeading),
-             theme::kHeading, theme::kTitle, 748.0f);
+    text_shrink(c, label_at(language_.selected), 1016.0f, baseline(250.0f, 42.0f, theme::kHeading),
+                theme::kHeading, theme::kTitle, 748.0f);
     const float column =
         value_column(c, {tr("REGION"), tr("IN USE")}, 1016.0f, 1216.0f, theme::kSmall, 2.0f);
     const auto line = [&](float top, const char *label, const std::string &value, Color color)
@@ -410,8 +413,9 @@ void Launcher::draw_language(Canvas &c)
                1016.0f, baseline(578.0f, 34.0f, 22.0f), 22.0f, 34.0f, theme::kCopy, 748.0f, 3,
                kShrink);
     if (!message_.empty())
-        text_block(c, message_, 1016.0f, baseline(722.0f, 34.0f, 22.0f), 22.0f, 34.0f,
-                   message_warning_ ? theme::kWarning : theme::kLimePale, 748.0f, 2, kShrink);
+        notice_block(c, message_, 1016.0f, baseline(722.0f, 34.0f, 22.0f), 22.0f, 34.0f,
+                     message_warning_ ? theme::kWarning : theme::kLimePale, 748.0f, 2,
+                     message_warning_);
 
     static constexpr Hint kHints[] = {{Pad::cross, TR("Choose")},
                                       {Pad::circle, TR("Back")},

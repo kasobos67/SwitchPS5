@@ -143,11 +143,15 @@ int main(int argc, char **argv)
     }
     stbi_flip_vertically_on_write(1);
     bool ok = true;
-    for (float seconds : {0.35f, 2.0f, 5.5f})
+    // The last two are the screen with reduced motion (1000 added): the same scenery, the ring moved.
+    for (float seconds : {0.35f, 2.0f, 5.5f, 1002.0f, 1005.5f})
     {
         render(seconds);
         char name[64];
-        std::snprintf(name, sizeof(name), "/loading-%04.1fs.png", seconds);
+        if (seconds >= 1000.0f)
+            std::snprintf(name, sizeof(name), "/loading-calm-%04.1fs.png", seconds - 1000.0f);
+        else
+            std::snprintf(name, sizeof(name), "/loading-%04.1fs.png", seconds);
         ok = stbi_write_png((output + name).c_str(), width, height, 4, pixels.data(), width * 4) != 0 && ok;
         std::fprintf(stderr, "%s GL error 0x%x\n", name, glGetError());
     }

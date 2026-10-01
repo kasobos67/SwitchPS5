@@ -8,6 +8,7 @@
 //     "audio": { "volume": 100, "mute": false, "menu_volume": 70 },
 //     "controls": { "vibration": true },
 //     "system": { "language": "en-US" },
+//     "accessibility": { "large_text": false, "high_contrast": false, "reduce_motion": false },
 //     "diagnostics": { "detailed_logging": false },
 //     "game_files": "/mnt/ext1/eden",
 //     "library": { "last_game": "Game [id].nsp", "recent": ["Game [id].nsp"] },
@@ -71,6 +72,9 @@ struct Preferences {
     bool vibration = true;
     int language = 0;                    // index into kLanguageKeys (English (US), Eden's default)
     int menu_volume = 70;                // the launcher's own sounds, 0 (off) to 100
+    bool large_text = false;             // Settings > Accessibility: the launcher's look
+    bool high_contrast = false;
+    bool reduce_motion = false;
 };
 
 inline int KeyIndex(const std::string& value, const char* const* keys, int count, int fallback) {
@@ -213,6 +217,9 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     result.vibration = Settings::Bool(document, Json::json_pointer("/controls/vibration"), result.vibration);
     result.language = KeyIndex(Settings::String(document, Json::json_pointer("/system/language")),
                                kLanguageKeys, int(std::size(kLanguageKeys)), result.language);
+    result.large_text = Settings::Bool(document, Json::json_pointer("/accessibility/large_text"), false);
+    result.high_contrast = Settings::Bool(document, Json::json_pointer("/accessibility/high_contrast"), false);
+    result.reduce_motion = Settings::Bool(document, Json::json_pointer("/accessibility/reduce_motion"), false);
     return result;
 }
 
@@ -234,6 +241,9 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     document["controls"]["vibration"] = value.vibration;
     document["system"]["language"] = kLanguageKeys[value.language];
     document["diagnostics"]["detailed_logging"] = value.detailed_logging;
+    document["accessibility"]["large_text"] = value.large_text;
+    document["accessibility"]["high_contrast"] = value.high_contrast;
+    document["accessibility"]["reduce_motion"] = value.reduce_motion;
     return Settings::Write(document, file);
 }
 

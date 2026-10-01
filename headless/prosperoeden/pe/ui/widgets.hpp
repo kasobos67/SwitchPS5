@@ -52,8 +52,11 @@ struct Canvas
 };
 
 // ---- text ----
+// Sizes are the design's: text is drawn at text_size(size), staying centred on its line.
 float text(Canvas &c, std::string_view value, float x, float baseline, float size, Color color,
            Align align = Align::left, float tracking = 0.0f);
+// How wide text() draws value.
+float text_width(Canvas &c, std::string_view value, float size, float tracking = 0.0f);
 // One line, ending in an ellipsis when it would pass max_width.
 float text_fit(Canvas &c, std::string_view value, float x, float baseline, float size, Color color,
                float max_width, Align align = Align::left);
@@ -72,6 +75,14 @@ void text_block(Canvas &c, std::string_view value, float x, float first_baseline
 // the labels (drawn from `left`) is longer than the English one.
 float value_column(Canvas &c, std::initializer_list<std::string_view> labels, float left,
                    float column, float size, float tracking = 0.0f);
+
+// A warning is marked, not only coloured: a "!" in a ring before the text.
+// One line that may be a warning; fitted like text_shrink (the mark's room comes out of max_width).
+float notice(Canvas &c, std::string_view value, float x, float baseline, float size, Color color,
+             float max_width, bool warning, Align align = Align::left);
+// The same for wrapped text (see text_block).
+void notice_block(Canvas &c, std::string_view value, float x, float first_baseline, float size,
+                  float line_height, Color color, float max_width, int max_lines, bool warning);
 
 // For the PC preview: told of every line of the launcher's own text that had to shrink (scale
 // under 1) or was cut short, so a translation that does not fit its place shows up.

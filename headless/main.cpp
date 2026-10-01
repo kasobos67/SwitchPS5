@@ -1186,7 +1186,15 @@ int main(int argc, char** argv) {
                 if (completion->failure) {
                     try { std::rethrow_exception(completion->failure); }
                     catch (const std::exception& error) {
-                        throw std::runtime_error(std::string("Rendering failed: ") + error.what() +
+                        // Out of graphics memory: seen with the resolution above 1x in a game that
+                        // runs at 1x. The launcher shows this sentence in the player's language
+                        // (prosperoeden/eden_services.cpp, kLaunchErrors).
+                        const std::string what = error.what();
+                        if (what.find("OUT_OF_DEVICE_MEMORY") != std::string::npos ||
+                            what.find("OUT_OF_HOST_MEMORY") != std::string::npos)
+                            throw std::runtime_error("The game ran out of graphics memory. Lower the resolution in "
+                                                     "Settings, Video (or in the game's own settings) and start it again.");
+                        throw std::runtime_error("Rendering failed: " + what +
                             ". Try another graphics backend in Settings, then reopen the game.");
                     }
                 }

@@ -6,6 +6,8 @@
 
 #include "pe/gfx/draw_list.hpp"
 
+#include <algorithm>
+
 namespace pe::ui
 {
 
@@ -62,6 +64,30 @@ constexpr float kScreenSeconds = 0.30f;
 constexpr float kLaunchSeconds = 0.95f;
 
 } // namespace theme
+
+// How the launcher is shown: Settings > Accessibility.
+struct Look
+{
+    bool large_text = false;    // small text is drawn larger
+    bool high_contrast = false; // solid panels, brighter text, an outlined highlight
+    bool reduce_motion = false; // nothing drifts, slides or zooms: screens fade
+};
+inline Look &look()
+{
+    static Look value;
+    return value;
+}
+// 1 normally, 0 with reduced motion: every slide, zoom and drift is multiplied by it.
+inline float motion()
+{
+    return look().reduce_motion ? 0.0f : 1.0f;
+}
+// The size text of `size` is drawn at. "Larger text" raises everything under 30 to between 26
+// and 30 (26 is the least the console accessibility guidelines ask of text on a 1080p TV).
+inline float text_size(float size)
+{
+    return look().large_text && size < 30.0f ? std::clamp(size * 1.3f, 26.0f, 30.0f) : size;
+}
 
 // The baseline that centres text of `size` in a line box of height `line` starting at `top`.
 inline float baseline(float top, float line, float size)

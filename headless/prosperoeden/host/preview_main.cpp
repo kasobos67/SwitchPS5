@@ -172,6 +172,15 @@ void pictures(Stage &s)
     s.press({Key::down, Key::right});
     s.wait(0.6f);
     s.shoot("10-game-settings-changed");
+    s.press({Key::down, Key::down, Key::down});
+    s.wait(0.6f);
+    s.shoot("32-game-save-data");
+    s.press({Key::cross});
+    s.wait(0.4f);
+    s.shoot("33-game-save-asked");
+    s.press({Key::square});
+    s.wait(0.4f);
+    s.shoot("34-game-save-exported");
     s.press({Key::circle});
     s.wait(0.3f);
     s.press({Key::cross});
@@ -198,6 +207,12 @@ void pictures(Stage &s)
     s.press({Key::circle, Key::down, Key::cross});
     s.wait(0.8f);
     s.shoot("17-controls");
+    s.press({Key::circle, Key::down, Key::cross});
+    s.wait(0.8f);
+    s.shoot("30-accessibility");
+    s.press({Key::down, Key::down});
+    s.wait(0.6f);
+    s.shoot("31-accessibility-motion");
     s.press({Key::circle, Key::down, Key::cross});
     s.wait(0.8f);
     s.shoot("18-diagnostics");
@@ -413,6 +428,16 @@ int main(int argc, char **argv)
         return 1;
 
     pe::host::FakeServices services(output);
+    // PE_LOOK=large,contrast,calm: the accessibility settings, in any combination.
+    if (const char *wanted = std::getenv("PE_LOOK"); wanted != nullptr)
+    {
+        const std::string_view names{wanted};
+        pe::ui::Preferences preferences = services.preferences();
+        preferences.large_text = names.find("large") != std::string_view::npos;
+        preferences.high_contrast = names.find("contrast") != std::string_view::npos;
+        preferences.reduce_motion = names.find("calm") != std::string_view::npos;
+        services.set_preferences(preferences);
+    }
     pe::ui::Textures textures(batch, services);
     if (!textures.load_art(assets))
         std::fprintf(stderr, "warning: launcher art is incomplete\n");

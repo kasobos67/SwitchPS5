@@ -5,7 +5,9 @@
 //
 //   vec3 loading_scene(vec2 pixel, vec2 size, float seconds)
 //
-// pixel has its origin at the bottom left; seconds counts from the start of loading.
+// pixel has its origin at the bottom left; seconds counts from the start of loading. With 1000
+// added to it the scenery holds one moment and only the ring turns (Settings > Accessibility,
+// reduced motion).
 
 const float kHorizon = 0.40;   // height of the horizon, as a fraction of the screen
 const float kSunRadius = 0.085;
@@ -143,6 +145,10 @@ float word_distance(vec2 st)
 
 vec3 loading_scene(vec2 pixel, vec2 size, float seconds)
 {
+    bool calm = seconds >= 1000.0;
+    if (calm)
+        seconds -= 1000.0;
+    float world = calm ? 4.0 : seconds; // the time the scenery lives in
     vec2 uv = pixel / size;
     float aspect = size.x / size.y;
     vec2 q = vec2(uv.x * aspect, uv.y);
@@ -151,7 +157,7 @@ vec3 loading_scene(vec2 pixel, vec2 size, float seconds)
 
     if (uv.y >= kHorizon)
     {
-        color = sky_color(q, sun, seconds);
+        color = sky_color(q, sun, world);
         // Islands and the coast stand dark against the light, hazier towards the sun.
         float land = land_height(q.x, aspect);
         float shore = smoothstep(0.0025, -0.0025, uv.y - kHorizon - land);
@@ -164,14 +170,14 @@ vec3 loading_scene(vec2 pixel, vec2 size, float seconds)
         // Water: the sky upside down, broken by ripples that grow towards the viewer.
         float depth = (kHorizon - uv.y) / kHorizon; // 0 at the horizon, 1 at the bottom
         vec2 wave = vec2((q.x - sun.x) / (0.022 + 0.085 * depth),
-                         48.0 * log(1.0 + 3.0 * depth) + seconds * 0.8);
+                         48.0 * log(1.0 + 3.0 * depth) + world * 0.8);
         float coarse = value_noise(wave);
-        float fine = value_noise(wave * vec2(2.1, 2.6) + vec2(11.0 - seconds * 0.35, 3.0));
+        float fine = value_noise(wave * vec2(2.1, 2.6) + vec2(11.0 - world * 0.35, 3.0));
         float ripple = (coarse - 0.5) + 0.5 * (fine - 0.5);
         vec2 mirrored = vec2(q.x + ripple * 0.030 * (0.2 + depth),
                              2.0 * kHorizon - uv.y + ripple * 0.060 * (0.15 + depth));
         mirrored.y = max(mirrored.y, kHorizon);
-        color = sky_color(mirrored, sun, seconds) * vec3(0.50, 0.70, 0.62) * (0.82 - 0.46 * depth);
+        color = sky_color(mirrored, sun, world) * vec3(0.50, 0.70, 0.62) * (0.82 - 0.46 * depth);
         float land = land_height(mirrored.x, aspect) * 0.85;
         float shore = smoothstep(0.004, -0.004, mirrored.y - kHorizon - land);
         color = mix(color, vec3(0.004, 0.018, 0.013), shore * (0.9 - 0.3 * depth));
@@ -188,12 +194,12 @@ vec3 loading_scene(vec2 pixel, vec2 size, float seconds)
     {
         float n = float(i);
         float speed = 0.010 + 0.016 * hash21(vec2(n, 1.0));
-        float travel = fract(seconds * speed + hash21(vec2(n, 2.0)));
+        float travel = fract(world * speed + hash21(vec2(n, 2.0)));
         vec2 at = vec2((0.08 + 0.84 * hash21(vec2(n, 3.0))) * aspect +
-                           0.018 * sin(seconds * (0.3 + 0.4 * hash21(vec2(n, 4.0))) + n * 1.7),
+                           0.018 * sin(world * (0.3 + 0.4 * hash21(vec2(n, 4.0))) + n * 1.7),
                        0.16 + 0.62 * travel);
         float radius = 0.0022 + 0.0030 * hash21(vec2(n, 5.0));
-        float twinkle = 0.6 + 0.4 * sin(seconds * (1.2 + 1.8 * hash21(vec2(n, 6.0))) + n * 2.3);
+        float twinkle = 0.6 + 0.4 * sin(world * (1.2 + 1.8 * hash21(vec2(n, 6.0))) + n * 2.3);
         float life = sin(3.14159265 * travel);
         float glow = exp(-length(q - at) / radius);
         color += mix(vec3(0.87, 0.91, 0.65), vec3(1.00, 0.84, 0.42), hash21(vec2(n, 7.0))) *
@@ -201,10 +207,10 @@ vec3 loading_scene(vec2 pixel, vec2 size, float seconds)
     }
 
     // Leaves frame the view from the corners, swaying.
-    add_leaf(color, q, vec2(0.99 * aspect, 1.12), vec2(0.60 * aspect, 0.88), 0.070, 0.006, 1.0, seconds, 1.7);
-    add_leaf(color, q, vec2(1.07 * aspect, 1.04), vec2(0.72 * aspect, 0.60), 0.090, 0.004, 1.0, seconds, 0.0);
-    add_leaf(color, q, vec2(1.09 * aspect, 0.66), vec2(0.83 * aspect, 0.25), 0.080, 0.009, 1.0, seconds, 3.1);
-    add_leaf(color, q, vec2(-0.07 * aspect, 0.50), vec2(0.17 * aspect, 0.83), 0.075, 0.013, -1.0, seconds, 4.4);
+    add_leaf(color, q, vec2(0.99 * aspect, 1.12), vec2(0.60 * aspect, 0.88), 0.070, 0.006, 1.0, world, 1.7);
+    add_leaf(color, q, vec2(1.07 * aspect, 1.04), vec2(0.72 * aspect, 0.60), 0.090, 0.004, 1.0, world, 0.0);
+    add_leaf(color, q, vec2(1.09 * aspect, 0.66), vec2(0.83 * aspect, 0.25), 0.080, 0.009, 1.0, world, 3.1);
+    add_leaf(color, q, vec2(-0.07 * aspect, 0.50), vec2(0.17 * aspect, 0.83), 0.075, 0.013, -1.0, world, 4.4);
 
     // Darker towards the edges, and at the bottom where the wordmark sits.
     vec2 centred = uv - vec2(0.5, 0.52);
@@ -243,7 +249,7 @@ vec3 loading_scene(vec2 pixel, vec2 size, float seconds)
     {
         vec2 st = vec2(word_at.x, word_height - word_at.y) / texel;
         float cover = clamp(word_distance(st) * texel + 0.5, 0.0, 1.0);
-        float glimmer = exp(-pow((word_at.x / word_width - fract(seconds * 0.38) * 1.6 + 0.3) * 5.0, 2.0));
+        float glimmer = exp(-pow((word_at.x / word_width - fract(world * 0.38) * 1.6 + 0.3) * 5.0, 2.0));
         color = mix(color, mix(pale, vec3(1.0), glimmer * 0.8), cover * (0.80 + 0.20 * glimmer));
     }
 

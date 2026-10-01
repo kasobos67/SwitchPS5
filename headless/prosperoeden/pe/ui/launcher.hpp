@@ -64,6 +64,7 @@ class Launcher
         video,
         audio,
         controls,
+        accessibility,
         diagnostics,
         game,
     };
@@ -82,7 +83,12 @@ class Launcher
     void draw_frame(Canvas &c, const char *title, const char *copy);
     void draw_footer(Canvas &c, const Hint *hints, int count);
     void draw_launch(Canvas &c);
-    bool save_preferences();
+    // quiet: a change that shows at once needs no "Saved" line.
+    bool save_preferences(bool quiet = false);
+    // The switches of a dialog as the preferences have them, in the order of its rows.
+    std::array<bool, 3> switch_states(Modal modal) const;
+    // Shows the launcher as the preferences' accessibility switches say.
+    void apply_look();
 
     // ---- home (home.cpp) ----
     void press_home(Key key);
@@ -183,8 +189,8 @@ class Launcher
     std::array<tween::Spring, 4> switches_{};
     GameSettings game_settings_;
     bool game_docked_ = true;
-    std::string import_status_;
-    bool import_found_ = false;
+    SaveSource import_source_ = SaveSource::none; // what Save data could import for the game
+    bool import_armed_ = false;                   // Cross was pressed once: the next one imports
 
     // game files
     std::string browse_dir_;

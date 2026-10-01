@@ -195,11 +195,10 @@ ui::Home FakeServices::home()
         home.last_file = last.file;
         home.last_exists = true;
         home.last_title = last.name;
-        home.last_caption = tr("Last game opened");
+        home.last_caption = last.language_note;
+        home.last_caption_warning = true;
         home.last_cover = last.cover;
-        home.last_info = fill(tr("Add-ons: {0}  /  Language: {1} ({2} in this game)"),
-                              {last.addons, last.language, last.language_note});
-        home.last_info_warning = true;
+        home.last_info = fill(tr("Add-ons: {0}  /  Language: {1}"), {last.addons, last.language});
         for (const char *name : {"Echoes of the Valley", "Kart Carnival Deluxe", "Starfall Odyssey",
                                  "Caf\xC3\xA9 Nocturne"})
         {

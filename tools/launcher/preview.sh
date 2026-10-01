@@ -6,7 +6,8 @@
 # usage: tools/launcher/preview.sh [output dir] [width height]
 #        tools/launcher/preview.sh --tour <video.mp4> [width height]   (needs ffmpeg)
 # The same screens, shaders and font as on the console, with sample data.
-# PE_LANG=<code> shows them in that language (ui/lang/<code>.po).
+# PE_LANG=<tag> shows them in that language (ui/lang/<tag>.po).
+# PE_LOOK=large,contrast,calm shows them with those accessibility settings on.
 
 set -euo pipefail
 root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)

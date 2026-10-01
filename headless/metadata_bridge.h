@@ -36,12 +36,27 @@ void eden_scan_addons(const char* updates_dir, const char* keys_dir);
 // Returns nonzero when either exists.
 int eden_game_addons(uint64_t title_id, char* update_version, size_t capacity, unsigned* dlc_count);
 
-// Ryujinx save import (ryujinx_saves.h): a Ryujinx data folder copied into ryujinx/ next to roms/.
-// Whether it holds a save for the game; text says what was found or why not. Returns nonzero if so.
-int eden_ryujinx_save_status(uint64_t title_id, char* text, size_t capacity);
-// Copies the game's Ryujinx saves into ProsperoEden's, after moving the current ones to
-// /data/prosperoeden/backup/ryujinx-import. Returns nonzero on success; message says what happened.
-int eden_ryujinx_import_save(uint64_t title_id, char* message, size_t capacity);
+// Save transfer for one game (ryujinx_saves.h). Sources, in the game files folder next to roms/:
+// save-import/<title ID>/ (a save folder copied by hand) or ryujinx/ (a Ryujinx data folder).
+enum {
+    EDEN_SAVE_NONE = 0,      // nothing to import for the game
+    EDEN_SAVE_FOLDER = 1,    // save-import/<title ID>/
+    EDEN_SAVE_RYUJINX = 2,   // ryujinx/
+};
+int eden_save_import_source(uint64_t title_id);
+enum {
+    EDEN_SAVE_DONE = 0,
+    EDEN_SAVE_NOTHING = 1,   // no source (import), or the game has no save yet (export)
+    EDEN_SAVE_NO_USER = 2,   // ProsperoEden has not created its user: start any game once
+    EDEN_SAVE_FAILED = 3,    // the copy failed; the current save is unchanged
+};
+// Copies the game's saves from the source into ProsperoEden's, after moving the current ones to
+// /data/prosperoeden/backup/save-import (path receives that folder, or stays empty when the game
+// had no save).
+int eden_save_import(uint64_t title_id, char* path, size_t capacity);
+// Copies the game's saves to save-export/<title ID>-<date>-<time>/ (account/ and device/) in the
+// game files folder; path receives that folder.
+int eden_save_export(uint64_t title_id, char* path, size_t capacity);
 
 #ifdef __cplusplus
 }

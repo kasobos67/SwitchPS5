@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "pe/core/strings.hpp"
 #include "pe/ui/services.hpp"
 
 #include <string>
@@ -23,7 +24,8 @@ class FakeServices final : public ui::Services
     bool setup_ready = true;
     std::string launch_error;
     bool has_history = true;
-    bool import_available = false;
+    bool import_available = true;
+    ui::SaveSource import_source = ui::SaveSource::ryujinx;
     unsigned connected_controllers = 0b0011;
 
     ui::Home home() override;
@@ -96,18 +98,22 @@ class FakeServices final : public ui::Services
     {
         return 0;
     }
-    bool save_import_available() override
+    bool save_transfer_available() override
     {
         return import_available;
     }
-    bool save_import_status(std::uint64_t, std::string *text) override
+    ui::SaveSource save_import_source(std::uint64_t) override
     {
-        *text = "Found (2 saves)";
-        return true;
+        return import_source;
     }
     bool save_import(std::uint64_t, std::string *message) override
     {
-        *message = "Imported. The previous save was backed up.";
+        *message = tr("Imported. The save it replaced was backed up.");
+        return true;
+    }
+    bool save_export(std::uint64_t, std::string *message) override
+    {
+        *message = fill(tr("Exported to {0}."), {"save-export/0100A00B00003000-20261001-213000"});
         return true;
     }
     bool load_image(const std::string &path, gfx::Image *image) override

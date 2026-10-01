@@ -319,36 +319,86 @@ std::string EdenUserFolder(const std::filesystem::path& saves, std::string& erro
 }
 } // namespace
 
-int eden_ryujinx_save_status(uint64_t title_id, char* text, size_t capacity) {
+namespace {
+struct SaveSource {
+    int kind = EDEN_SAVE_NONE;
+    std::vector<Eden::RyujinxSaves::Save> saves;
+};
+// A save folder copied by hand comes before a Ryujinx data folder: it names the game itself.
+SaveSource FindSaveSource(uint64_t title_id) {
     std::string error;
-    const auto saves = Eden::RyujinxSaves::FindSaves(Eden::AssetsPath("ryujinx"), title_id, error);
-    if (text && capacity) std::snprintf(text, capacity, "%s", saves.empty() ? error.c_str() : "found");
-    return !saves.empty();
+    SaveSource source;
+    source.saves = Eden::RyujinxSaves::FindFolderSaves(Eden::AssetsPath("save-import"), title_id, error);
+    if (!source.saves.empty()) {
+        source.kind = EDEN_SAVE_FOLDER;
+        return source;
+    }
+    source.saves = Eden::RyujinxSaves::FindSaves(Eden::AssetsPath("ryujinx"), title_id, error);
+    if (!source.saves.empty()) source.kind = EDEN_SAVE_RYUJINX;
+    return source;
 }
-
-int eden_ryujinx_import_save(uint64_t title_id, char* message, size_t capacity) {
-    namespace fs = std::filesystem;
-    std::string error;
-    const auto say = [&](const std::string& text, int result) {
-        if (message && capacity) std::snprintf(message, capacity, "%s", text.c_str());
-        Eden::Report("ryujinx import", text.c_str());
-        return result;
-    };
-    const auto saves = Eden::RyujinxSaves::FindSaves(Eden::AssetsPath("ryujinx"), title_id, error);
-    if (saves.empty()) return say("No Ryujinx save to import: " + error + ".", 0);
-    const fs::path root = fs::path{Eden::UserDir()} / "nand" / "user" / "save" / "0000000000000000";
-    const std::string user = EdenUserFolder(root, error);
-    if (user.empty()) return say("Cannot import yet: " + error + ".", 0);
+std::string TitleName(uint64_t title_id) {
     char title[17];
     std::snprintf(title, sizeof(title), "%016llX", static_cast<unsigned long long>(title_id));
+    return title;
+}
+std::string TimeStamp() {
     char stamp[32] = "now";
     const std::time_t now = std::time(nullptr);
     if (const std::tm* local = std::localtime(&now)) std::strftime(stamp, sizeof(stamp), "%Y%m%d-%H%M%S", local);
-    const fs::path backups = fs::path{Eden::kDataDir} / "backup" / "ryujinx-import";
-    if (!Eden::RyujinxSaves::Import(saves, root / user / title, root / std::string(32, '0') / title, backups,
-                                    std::string(title) + "-" + stamp, error))
-        return say("Import failed (" + error + "); the current save is unchanged.", 0);
-    return say("Imported. A replaced save is kept in /data/prosperoeden/backup/ryujinx-import.", 1);
+    return stamp;
+}
+void PutPath(char* path, size_t capacity, const std::string& value) {
+    if (path && capacity) std::snprintf(path, capacity, "%s", value.c_str());
+}
+} // namespace
+
+int eden_save_import_source(uint64_t title_id) {
+    return title_id ? FindSaveSource(title_id).kind : EDEN_SAVE_NONE;
+}
+
+int eden_save_import(uint64_t title_id, char* path, size_t capacity) {
+    namespace fs = std::filesystem;
+    PutPath(path, capacity, "");
+    const SaveSource source = title_id ? FindSaveSource(title_id) : SaveSource{};
+    if (source.saves.empty()) return EDEN_SAVE_NOTHING;
+    std::string error;
+    const fs::path root = fs::path{Eden::UserDir()} / "nand" / "user" / "save" / "0000000000000000";
+    const std::string user = EdenUserFolder(root, error);
+    if (user.empty()) {
+        Eden::Report("save import", error.c_str());
+        return EDEN_SAVE_NO_USER;
+    }
+    const std::string title = TitleName(title_id);
+    const fs::path backups = fs::path{Eden::kDataDir} / "backup" / "save-import";
+    bool replaced = false;
+    if (!Eden::RyujinxSaves::Import(source.saves, root / user / title, root / std::string(32, '0') / title, backups,
+                                    title + "-" + TimeStamp(), error, &replaced)) {
+        Eden::Report("save import", error.c_str());
+        return EDEN_SAVE_FAILED;
+    }
+    if (replaced) PutPath(path, capacity, backups.string());
+    Eden::Report("save import", (title + (source.kind == EDEN_SAVE_FOLDER ? " from save-import" : " from ryujinx")).c_str());
+    return EDEN_SAVE_DONE;
+}
+
+int eden_save_export(uint64_t title_id, char* path, size_t capacity) {
+    namespace fs = std::filesystem;
+    PutPath(path, capacity, "");
+    if (!title_id) return EDEN_SAVE_NOTHING;
+    std::string error;
+    const fs::path root = fs::path{Eden::UserDir()} / "nand" / "user" / "save" / "0000000000000000";
+    const std::string user = EdenUserFolder(root, error);
+    if (user.empty()) return EDEN_SAVE_NOTHING;
+    const std::string title = TitleName(title_id);
+    const fs::path target = fs::path{Eden::AssetsPath("save-export")} / (title + "-" + TimeStamp());
+    if (!Eden::RyujinxSaves::Export(root / user / title, root / std::string(32, '0') / title, target, error)) {
+        Eden::Report("save export", error.c_str());
+        return error == "no save yet" ? EDEN_SAVE_NOTHING : EDEN_SAVE_FAILED;
+    }
+    PutPath(path, capacity, target.string());
+    Eden::Report("save export", target.string().c_str());
+    return EDEN_SAVE_DONE;
 }
 
 const char* eden_startup_error() {

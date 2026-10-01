@@ -35,22 +35,29 @@ msgstr "Sobre"
 msgid "About ProsperoEden"
 msgstr "Sobre o ProsperoEden"
 
+#. Label: which folders the app can read.
 #: pe/ui/browse.cpp
 msgid "ACCESS"
 msgstr "ACESSO"
 
+#. A settings category: options that make the menu easier to see and follow.
+#: pe/ui/settings.cpp
+msgid "Accessibility"
+msgstr "Acessibilidade"
+
+#: pe/ui/settings.cpp
+msgid "ACCESSIBILITY"
+msgstr "ACESSIBILIDADE"
+
+#. Label: a game's updates and DLC.
 #: pe/ui/library.cpp
 msgid "ADD-ONS"
 msgstr "COMPLEMENTOS"
 
-#: eden_services.cpp
+#. {0}: updates and DLC of the game; {1}: the language it will use.
+#: eden_services.cpp, host/fake_services.cpp
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "Complementos: {0}  /  Idioma: {1}"
-
-#. {2} is the text '{0} not available'.
-#: eden_services.cpp, host/fake_services.cpp
-msgid "Add-ons: {0}  /  Language: {1} ({2} in this game)"
-msgstr "Complementos: {0}  /  Idioma: {1} ({2} neste jogo)"
 
 #: pe/ui/settings.cpp
 msgid "Adjust the essentials without leaving your library behind."
@@ -85,10 +92,12 @@ msgstr "Austrália"
 msgid "Back"
 msgstr "Voltar"
 
+#. An upscaling filter.
 #: settings_store.h
 msgid "Bicubic"
 msgstr "Bicúbico"
 
+#. An upscaling filter.
 #: settings_store.h
 msgid "Bilinear"
 msgstr "Bilinear"
@@ -173,10 +182,6 @@ msgid "CONTROLS"
 msgstr "CONTROLES"
 
 #: pe/ui/library.cpp
-msgid "Copy a Ryujinx data folder into ryujinx/ next to roms/."
-msgstr "Copie uma pasta de dados do Ryujinx para ryujinx/, ao lado de roms/."
-
-#: pe/ui/library.cpp
 msgid "Could not save console mode. Please try again."
 msgstr "Não foi possível salvar o modo do console. Tente novamente."
 
@@ -238,10 +243,14 @@ msgstr "Diagnóstico"
 msgid "DIAGNOSTICS"
 msgstr "DIAGNÓSTICO"
 
-#. Console mode: the console as if connected to a TV.
+#. Console mode: the console as if connected to a TV. Keep it short (about 9 letters).
 #: pe/ui/library.cpp
 msgid "Docked"
 msgstr "TV"
+
+#: pe/ui/settings.cpp
+msgid "Draws the menu's small text larger."
+msgstr "Mostra o texto pequeno do menu em tamanho maior."
 
 #: settings_store.h
 msgid "Dutch"
@@ -251,6 +260,7 @@ msgstr "Holandês"
 msgid "Eden emulator for PlayStation 5"
 msgstr "Emulador Eden para PlayStation 5"
 
+#. Label of the shortcut that ends the running game.
 #: pe/ui/settings.cpp
 msgid "END GAME"
 msgstr "ENCERRAR JOGO"
@@ -270,6 +280,20 @@ msgstr "Inglês (EUA)"
 #: eden_services.cpp
 msgid "Europe"
 msgstr "Europa"
+
+#. Button hint: copy the game's save out to a folder.
+#: pe/ui/library.cpp
+msgid "Export a copy"
+msgstr "Exportar uma cópia"
+
+#: eden_services.cpp
+msgid "Export failed. Check that the game files folder can be written."
+msgstr "Falha ao exportar. Verifique se é possível gravar na pasta de arquivos de jogo."
+
+#. {0} is a folder.
+#: eden_services.cpp, host/fake_services.hpp
+msgid "Exported to {0}."
+msgstr "Exportado para {0}."
 
 #: pe/ui/library.cpp
 msgid "FILE"
@@ -303,6 +327,7 @@ msgstr "PASTAS"
 msgid "FORMAT"
 msgstr "FORMATO"
 
+#. Label: the frames-per-second counter drawn over a game.
 #: pe/ui/settings.cpp
 msgid "FPS OVERLAY"
 msgstr "CONTADOR DE FPS"
@@ -319,6 +344,7 @@ msgstr "Francês"
 msgid "French (Canada)"
 msgstr "Francês (Canadá)"
 
+#. The app can read every folder of the console.
 #: pe/ui/browse.cpp
 msgid "Full filesystem"
 msgstr "Sistema de arquivos completo"
@@ -327,6 +353,7 @@ msgstr "Sistema de arquivos completo"
 msgid "Game audio; PS5 system-menu music is unchanged."
 msgstr "Áudio dos jogos; a música do menu do PS5 não muda."
 
+#. {0} is the reason, a sentence in English; {1} is a file.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Game could not start: {0} Details: {1}"
 msgstr "Não foi possível iniciar o jogo: {0} Detalhes: {1}"
@@ -387,18 +414,44 @@ msgstr "PRIMEIROS PASSOS"
 msgid "Graphics backend and how games are scaled to your TV."
 msgstr "Renderizador e como os jogos são ajustados à sua TV."
 
-#. Console mode: the console as if held in the hands.
+#: eden_services.cpp
+msgid "Graphics backend initialization failed. Try another backend in Settings; see stderr.log and eden_log.txt for driver details."
+msgstr "Falha ao inicializar o renderizador. Tente outro em Configurações; veja stderr.log e eden_log.txt para detalhes do driver."
+
+#. Console mode: the console as if held in the hands. Keep it short (about 9 letters).
 #: pe/ui/library.cpp
 msgid "Handheld"
 msgstr "Portátil"
 
 #: pe/ui/settings.cpp
+msgid "HIGH CONTRAST"
+msgstr "ALTO CONTRASTE"
+
+#. A switch: solid dark panels, brighter text.
+#: pe/ui/settings.cpp
+msgid "High contrast"
+msgstr "Alto contraste"
+
+#: pe/ui/settings.cpp
 msgid "How games are drawn and scaled to your TV."
 msgstr "Como os jogos são desenhados e ajustados à sua TV."
 
+#. Button hint: copy a save in.
 #: pe/ui/library.cpp
-msgid "Import it (the current save is backed up)"
-msgstr "Importar (o save atual ganha uma cópia de segurança)"
+msgid "Import"
+msgstr "Importar"
+
+#: eden_services.cpp
+msgid "Import failed. The current save is unchanged."
+msgstr "Falha ao importar. Os dados salvos atuais não foram alterados."
+
+#: eden_services.cpp
+msgid "Imported."
+msgstr "Importado."
+
+#: eden_services.cpp, host/fake_services.hpp
+msgid "Imported. The save it replaced was backed up."
+msgstr "Importado. Os dados substituídos ficaram em backup."
 
 #. Tag on the language or folder that is in use now.
 #: pe/ui/browse.cpp, pe/ui/settings.cpp
@@ -417,10 +470,12 @@ msgstr "Japão"
 msgid "Japanese"
 msgstr "Japonês"
 
+#. keys, firmware and roms are folder names (unchanged). TRIANGLE is the controller's triangle button, in capitals.
 #: pe/ui/browse.cpp
 msgid "Keep keys, firmware and roms folders together. TRIANGLE uses the folder shown."
 msgstr "Mantenha as pastas keys, firmware e roms juntas. TRIÂNGULO usa a pasta exibida."
 
+#. Label: the encryption keys file (prod.keys).
 #: pe/ui/browse.cpp
 msgid "KEYS"
 msgstr "CHAVES"
@@ -449,7 +504,17 @@ msgstr "IDIOMA"
 msgid "LANGUAGES"
 msgstr "IDIOMAS"
 
-#: eden_services.cpp, host/fake_services.cpp
+#: pe/ui/settings.cpp
+msgid "LARGER TEXT"
+msgstr "TEXTO MAIOR"
+
+#. A switch: the menu's small text is drawn larger.
+#: pe/ui/settings.cpp
+msgid "Larger text"
+msgstr "Texto maior"
+
+#. Caption under the title of the game played last.
+#: eden_services.cpp
 msgid "Last game opened"
 msgstr "Último jogo aberto"
 
@@ -469,6 +534,10 @@ msgstr "BIBLIOTECA"
 #: pe/ui/settings.cpp
 msgid "Make it yours."
 msgstr "Deixe do seu jeito."
+
+#: pe/ui/settings.cpp
+msgid "Make the menu easier to see and follow."
+msgstr "Deixe o menu mais fácil de ver e acompanhar."
 
 #: pe/ui/browse.cpp
 msgid "Menu sound effects made with ElevenLabs."
@@ -503,6 +572,7 @@ msgstr "Sem som"
 msgid "Navigate"
 msgstr "Navegar"
 
+#. An upscaling filter (nearest neighbour). Keep it short.
 #: settings_store.h
 msgid "Nearest"
 msgstr "Vizinho mais próximo"
@@ -511,10 +581,12 @@ msgstr "Vizinho mais próximo"
 msgid "Needs attention"
 msgstr "Requer atenção"
 
+#. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
 msgstr "Na próxima abertura: {0}"
 
+#. Label: the folder used the next time the app starts.
 #: pe/ui/settings.cpp
 msgid "NEXT START"
 msgstr "PRÓXIMA ABERTURA"
@@ -551,6 +623,11 @@ msgstr "Sem pasta roms"
 #: eden_services.cpp, host/fake_services.cpp, pe/ui/library.cpp
 msgid "None"
 msgstr "Nenhum"
+
+#. Short status at the right of the Save data row.
+#: pe/ui/library.cpp
+msgid "Nothing to import"
+msgstr "Nada para importar"
 
 #. A setting that is switched off.
 #: pe/ui/settings.cpp
@@ -601,6 +678,7 @@ msgstr "Português"
 msgid "Portuguese (Brazil)"
 msgstr "Português (Brasil)"
 
+#. Eden is the emulator's name (unchanged).
 #: pe/ui/browse.cpp
 msgid "Powered by Eden"
 msgstr "Com a tecnologia do Eden"
@@ -608,6 +686,11 @@ msgstr "Com a tecnologia do Eden"
 #: pe/ui/settings.cpp
 msgid "PREFERENCES"
 msgstr "PREFERÊNCIAS"
+
+#. Asked before a save is imported over the one in use.
+#: pe/ui/library.cpp
+msgid "Press again to replace this game's save. The current one is backed up."
+msgstr "Pressione de novo para substituir os dados salvos deste jogo. Os atuais ficam em backup."
 
 #: eden_services.cpp
 msgid "prod.keys could not supply an NCA header key. Replace it with a valid key dump."
@@ -629,6 +712,11 @@ msgstr "CRÉDITOS DO PROJETO"
 msgid "ProsperoEden is an unofficial PS5 port brought to you by BlackBearReloaded."
 msgstr "O ProsperoEden é uma versão não oficial para PS5, trazida a você por BlackBearReloaded."
 
+#. Why a game did not start.
+#: eden_services.cpp
+msgid "PS5 controller initialization failed"
+msgstr "Falha ao inicializar o controle do PS5"
+
 #: pe/ui/browse.cpp
 msgid "PS5 EDITION"
 msgstr "EDIÇÃO PS5"
@@ -645,6 +733,15 @@ msgstr "Pronto"
 #: pe/ui/home.cpp
 msgid "RECENTLY PLAYED"
 msgstr "JOGADOS RECENTEMENTE"
+
+#: pe/ui/settings.cpp
+msgid "REDUCE MOTION"
+msgstr "REDUZIR MOVIMENTO"
+
+#. A switch: no drifting, sliding or zooming on screen.
+#: pe/ui/settings.cpp
+msgid "Reduce motion"
+msgstr "Reduzir movimento"
 
 #: pe/ui/browse.cpp, pe/ui/settings.cpp
 msgid "REGION"
@@ -674,13 +771,25 @@ msgstr "ROM ausente da pasta de arquivos de jogo"
 msgid "Russian"
 msgstr "Russo"
 
+#. Short status at the right of the Save data row. Ryujinx is a name (unchanged).
 #: pe/ui/library.cpp
-msgid "Ryujinx save"
-msgstr "Save do Ryujinx"
+msgid "Ryujinx save found"
+msgstr "Dados do Ryujinx encontrados"
 
+#. The app can read only its own folder; {0} is a number.
 #: pe/ui/browse.cpp
 msgid "Sandboxed (code {0}): app folder only"
 msgstr "Restrito (código {0}): apenas a pasta do app"
+
+#. A row of a game's settings: the game's saved progress, which can be copied in or out.
+#: pe/ui/library.cpp
+msgid "Save data"
+msgstr "Dados salvos"
+
+#. Short status at the right of the Save data row: a folder with a save to import.
+#: pe/ui/library.cpp
+msgid "Save folder found"
+msgstr "Pasta de dados encontrada"
 
 #: pe/ui/library.cpp
 msgid "Saved for this game. Applies on next launch."
@@ -711,18 +820,26 @@ msgstr "Selecione um jogo para começar"
 msgid "Select a readable game to configure its mode."
 msgstr "Selecione um jogo legível para configurar o modo."
 
+#. Select is a button's name (unchanged).
 #: pe/ui/settings.cpp
 msgid "Select is the touchpad button on PS5."
 msgstr "Select é o botão do touch pad no PS5."
 
+#. Heading: the language highlighted in the list.
 #: pe/ui/browse.cpp
 msgid "SELECTED"
 msgstr "SELECIONADO"
+
+#. Why a game did not start (the file is gone).
+#: eden_services.cpp
+msgid "Selected ROM is no longer available"
+msgstr "A ROM selecionada não está mais disponível"
 
 #: pe/ui/home.cpp, pe/ui/settings.cpp
 msgid "Settings"
 msgstr "Configurações"
 
+#. Label: whether keys and firmware are in place.
 #: pe/ui/settings.cpp
 msgid "SETUP"
 msgstr "PREPARAÇÃO"
@@ -755,6 +872,10 @@ msgstr "Mostra ou oculta o contador de FPS"
 msgid "SIZE"
 msgstr "TAMANHO"
 
+#: pe/ui/settings.cpp
+msgid "Solid panels, brighter text and an outlined highlight."
+msgstr "Painéis sólidos, texto mais claro e destaque com contorno."
+
 #: settings_store.h
 msgid "Spanish"
 msgstr "Espanhol"
@@ -763,10 +884,19 @@ msgstr "Espanhol"
 msgid "Spanish (Latin America)"
 msgstr "Espanhol (América Latina)"
 
+#. The app creates its user the first time a game runs.
+#: eden_services.cpp
+msgid "Start any game once before importing a save."
+msgstr "Inicie qualquer jogo uma vez antes de importar dados salvos."
+
 #. Shown over a game's cover while it starts.
 #: pe/ui/launcher.cpp
 msgid "STARTING"
 msgstr "INICIANDO"
+
+#: pe/ui/settings.cpp
+msgid "Stops the background drifting and the screens sliding, here and on the loading screen."
+msgstr "Para o movimento do fundo e o deslizar das telas, aqui e na tela de carregamento."
 
 #: pe/ui/browse.cpp
 msgid "Supply your own files"
@@ -780,6 +910,7 @@ msgstr "Taiwan"
 msgid "Thai"
 msgstr "Tailandês"
 
+#. Heading of the acknowledgements.
 #: pe/ui/browse.cpp
 msgid "THANKS"
 msgstr "AGRADECIMENTOS"
@@ -791,6 +922,11 @@ msgstr "Obrigado a toda a comunidade homebrew do PS5 e a cada desenvolvedor cujo
 #: pe/ui/settings.cpp
 msgid "The folder that holds your keys, firmware and games."
 msgstr "A pasta com suas chaves, o firmware e os jogos."
+
+#. Why a game stopped. 'Settings, Video' is the menu path; 'the game's own settings' is the Game settings dialog of the Library.
+#: eden_services.cpp
+msgid "The game ran out of graphics memory. Lower the resolution in Settings, Video (or in the game's own settings) and start it again."
+msgstr "O jogo ficou sem memória gráfica. Diminua a resolução em Configurações, Vídeo (ou nas configurações do jogo) e inicie-o de novo."
 
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
@@ -804,9 +940,18 @@ msgstr "ESTA PASTA"
 msgid "This folder cannot be opened."
 msgstr "Não foi possível abrir esta pasta."
 
+#: eden_services.cpp
+msgid "This game has no save to export yet."
+msgstr "Este jogo ainda não tem dados salvos para exportar."
+
 #: pe/ui/library.cpp
 msgid "This game's settings cannot be saved (no title ID)."
 msgstr "Não é possível salvar as configurações deste jogo (sem ID de título)."
+
+#. ryujinx/, save-import/ and roms/ are folder names (unchanged); {0} is the game's ID.
+#: eden_services.cpp
+msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
+msgstr "Para importar, copie uma pasta do Ryujinx para ryujinx/ ou os dados salvos para save-import/{0}/, ao lado de roms/."
 
 #: pe/ui/library.cpp
 msgid "Unavailable"
@@ -817,6 +962,7 @@ msgstr "Indisponível"
 msgid "UP"
 msgstr "ACIMA"
 
+#. A game update; {0} is its version, for example 1.2.0.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Update {0}"
 msgstr "Atualização {0}"
@@ -873,6 +1019,7 @@ msgstr "VÍDEO"
 msgid "VIEW ALL GAMES"
 msgstr "VER TODOS OS JOGOS"
 
+#. Vulkan is a name (unchanged).
 #: pe/ui/settings.cpp
 msgid "Vulkan (recommended)"
 msgstr "Vulkan (recomendado)"
@@ -886,30 +1033,37 @@ msgstr "Seus jogos"
 msgid "Your next adventure"
 msgstr "Sua próxima aventura"
 
+#. {0} is how many DLC (add-on content) a game has installed.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "{0} DLC"
 msgstr "{0} DLC"
 
+#. Exactly one game. In a language with more than two plural forms, word it so that it reads well with any number (Games: {0}).
 #: pe/ui/browse.cpp
 msgid "{0} game"
 msgstr "{0} jogo"
 
+#. Exactly one game. See '{0} game'.
 #: eden_services.cpp
 msgid "{0} game installed"
 msgstr "{0} jogo instalado"
 
+#. Any number of games other than one (also 0). See '{0} game'.
 #: pe/ui/browse.cpp
 msgid "{0} games"
 msgstr "{0} jogos"
 
+#. Any number of games other than one. See '{0} game'.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "{0} games installed"
 msgstr "{0} jogos instalados"
 
+#. Exactly one file. See '{0} game'.
 #: pe/ui/browse.cpp
 msgid "{0} NCA file"
 msgstr "{0} arquivo NCA"
 
+#. Any number of files other than one. See '{0} game'.
 #: pe/ui/browse.cpp
 msgid "{0} NCA files"
 msgstr "{0} arquivos NCA"
@@ -923,6 +1077,11 @@ msgstr "{0} não disponível"
 #: pe/ui/widgets.cpp
 msgid "{0} OF {1}"
 msgstr "{0} DE {1}"
+
+#. A percentage (a volume): write it as the language does, for example with a space before the sign.
+#: pe/ui/settings.cpp
+msgid "{0}%"
+msgstr "{0}%"
 
 #. {0} is a folder; NSP and XCI are file types.
 #: pe/ui/browse.cpp

@@ -199,7 +199,7 @@ void Launcher::draw_controllers(Canvas &c)
         const float lit = tween::clamp01(controller_lit_[index].value);
         // A controller that joins lands with a small bounce.
         const float pop = controller_pop_[index];
-        const float bounce = std::sin(3.14159265f * (1.0f - pop)) * pop;
+        const float bounce = std::sin(3.14159265f * (1.0f - pop)) * pop * motion();
         c.list.push_transform(1.0f + 0.34f * bounce, r.x + r.w * 0.5f, r.y + r.h * 0.5f, 0.0f,
                               -5.0f * bounce);
         controller_icon(c, r, lit);
@@ -217,7 +217,7 @@ void Launcher::draw_home(Canvas &c)
     const bool continue_ready = ready && home_.last_exists;
     const auto focus = [&](int index) { return home_springs_[static_cast<std::size_t>(index)].value; };
     const auto measure = [&](std::string_view value, float size, float tracking = 0.0f)
-    { return c.fonts.font->measure(value, size, tracking); };
+    { return text_width(c, value, size, tracking); };
     // Each band of the screen arrives a moment after the one above it.
     const auto arrive = [&](int band)
     { return tween::cubic_out((intro_ - 0.12f - 0.08f * static_cast<float>(band)) / 0.55f); };
@@ -225,7 +225,7 @@ void Launcher::draw_home(Canvas &c)
     {
         const float e = arrive(band);
         list.push_opacity(e);
-        list.push_transform(1.0f, 0.0f, 0.0f, 0.0f, (1.0f - e) * rise);
+        list.push_transform(1.0f, 0.0f, 0.0f, 0.0f, (1.0f - e) * rise * motion());
     };
     const auto end_band = [&]
     {
@@ -235,8 +235,9 @@ void Launcher::draw_home(Canvas &c)
     // A focused surface grows a little and dips when pressed.
     const auto begin_lift = [&](const Rect &r, float amount, float grow)
     {
-        const float scale = 1.0f + grow * amount - 0.035f * press_ * amount;
-        list.push_transform(scale, r.x + r.w * 0.5f, r.y + r.h * 0.5f, 0.0f, -3.0f * amount);
+        const float scale = 1.0f + (grow * amount - 0.035f * press_ * amount) * motion();
+        list.push_transform(scale, r.x + r.w * 0.5f, r.y + r.h * 0.5f, 0.0f,
+                            -3.0f * amount * motion());
     };
 
     // ---- header ----
@@ -281,14 +282,15 @@ void Launcher::draw_home(Canvas &c)
     text_block(c, home_.last_file.empty() ? tr("Your next adventure") : home_.last_title, 560.0f,
                baseline(312.0f, 56.0f, theme::kDisplay), theme::kDisplay, 56.0f, theme::kText,
                1120.0f, 2);
-    text_shrink(c, home_.last_file.empty() ? tr("Choose a game from your library.") : home_.last_caption,
-                560.0f, baseline(424.0f, 36.0f, theme::kText24), theme::kText24,
-                Color::rgb(0xabb8ae), 1040.0f);
+    notice(c, home_.last_file.empty() ? tr("Choose a game from your library.") : home_.last_caption,
+           560.0f, baseline(424.0f, 36.0f, theme::kText24), theme::kText24,
+           home_.last_caption_warning ? theme::kWarning : Color::rgb(0xabb8ae), 1040.0f,
+           home_.last_caption_warning);
     // The line under it ends before the controllers' label.
     const float info_width =
         kPadsRight - measure(tr("CONTROLLERS"), theme::kSmall, 3.0f) - 48.0f - 560.0f;
     text_shrink(c, home_.last_info, 560.0f, baseline(462.0f, 30.0f, theme::kSmall), theme::kSmall,
-                home_.last_info_warning ? theme::kWarning : Color::rgb(0xabb8ae), info_width);
+                Color::rgb(0xabb8ae), info_width);
     const char *first = continue_ready ? tr("Launch game") : tr("Open library");
     const char *second = tr("Game details");
     const float button = std::clamp(
@@ -321,8 +323,8 @@ void Launcher::draw_home(Canvas &c)
         const Color accent = home_.launch_failed ? theme::kWarning : theme::kLime;
         glass(c, panel, 10.0f, Color::rgb(0x0a1611, 0.62f), kWhite.with_alpha(0.08f), 0.6f);
         list.rounded_rect({panel.x, panel.y + 10.0f, 4.0f, panel.h - 20.0f}, 2.0f, accent);
-        text_block(c, home_.status, 148.0f, baseline(752.0f, 36.0f, theme::kText24),
-                   theme::kText24, 36.0f, theme::kText, 1624.0f, 3, kShrink);
+        notice_block(c, home_.status, 148.0f, baseline(752.0f, 36.0f, theme::kText24),
+                     theme::kText24, 36.0f, theme::kText, 1624.0f, 3, home_.launch_failed);
     }
     else
     {

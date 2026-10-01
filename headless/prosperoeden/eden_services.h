@@ -43,9 +43,10 @@ public:
     bool set_files_folder(const std::string& directory) override;
     int filesystem_access() override;
 
-    bool save_import_available() override;
-    bool save_import_status(std::uint64_t title_id, std::string* text) override;
+    bool save_transfer_available() override;
+    pe::ui::SaveSource save_import_source(std::uint64_t title_id) override;
     bool save_import(std::uint64_t title_id, std::string* message) override;
+    bool save_export(std::uint64_t title_id, std::string* message) override;
 
     bool load_image(const std::string& path, pe::gfx::Image* image) override;
 

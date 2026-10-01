@@ -1,11 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Ryujinx save import. A Ryujinx data folder (the one holding bis/, or a portable folder around it)
+// Save transfer: a game's save data comes in from, or goes out to, plain folders. Emulators like Eden
+// keep a save as the files the game wrote, so nothing is converted; only the folders differ.
+//
+// Import from Ryujinx. A Ryujinx data folder (the one holding bis/, or a portable folder around it)
 // keeps each save in bis/user/save/<save ID, 16 lowercase hex digits>/0 and lists the saves in its
 // save index, bis/system/save/8000000000000000/0/imkvdb.arc: a 12-byte "IMKV" header, then one
 // 0x8C-byte "IMEN" entry per save, whose key holds the program ID (entry offset 0x0C) and the save
 // type (0x2C: 1 account, 3 device) and whose value starts with the save ID (0x4C). Eden's desktop
 // app links such folders (common/fs/ryujinx_compat.cpp reads the same index but drops the type);
 // the PS5 has no Ryujinx beside ProsperoEden, so the launcher copies a game's saves in instead.
+//
+// Import from a save folder: <folder>/<title ID>/ filled by hand with what an emulator shows as the
+// game's save directory (the account save), or holding account/ and device/ as Export writes them.
+//
+// Export: the game's saves copied to <folder>/account and <folder>/device.
 #pragma once
 #include <cerrno>
 #include <cstdint>
@@ -97,6 +105,39 @@ inline std::vector<Save> FindSaves(const fs::path& folder, uint64_t title_id, st
     return saves;
 }
 
+inline std::vector<fs::directory_entry> ListFolder(const fs::path& folder, std::error_code& error);
+
+// The game's saves in a folder of hand-copied saves: folder/<title ID, 16 hex digits in either
+// case>/. With account/ or device/ inside, those are the two saves; otherwise the folder itself is
+// the account save. Empty folders do not count. Empty with error set when there is none.
+inline std::vector<Save> FindFolderSaves(const fs::path& folder, uint64_t title_id, std::string& error) {
+    std::vector<Save> saves;
+    const auto holds_files = [](const fs::path& path) {
+        std::error_code list_error;
+        return !ListFolder(path, list_error).empty() && !list_error;
+    };
+    for (const char* format : {"%016llX", "%016llx"}) {
+        char name[17];
+        std::snprintf(name, sizeof(name), format, static_cast<unsigned long long>(title_id));
+        const fs::path game = folder / name;
+        std::error_code status_error;
+        if (!fs::is_directory(game, status_error)) continue;
+        const fs::path account = game / "account", device = game / "device";
+        const bool split = fs::is_directory(account, status_error) || fs::is_directory(device, status_error);
+        if (!split) {
+            if (holds_files(game)) saves.push_back({Kind::Account, game});
+        } else {
+            if (fs::is_directory(account, status_error) && holds_files(account))
+                saves.push_back({Kind::Account, account});
+            if (fs::is_directory(device, status_error) && holds_files(device))
+                saves.push_back({Kind::Device, device});
+        }
+        if (!saves.empty()) return saves;
+    }
+    error = "none for this game";
+    return saves;
+}
+
 inline std::vector<fs::directory_entry> ListFolder(const fs::path& folder, std::error_code& error) {
 #if defined(__PROSPERO__)
     // Mounted PS5 drives need larger directory reads than the C library's iterator makes.
@@ -160,8 +201,11 @@ inline bool CopyTree(const fs::path& from, const fs::path& to) {
 // Copies each save into ProsperoEden's folder for its kind (account_folder or device_folder, that is
 // .../save/0000000000000000/<user ID or zeros>/<title ID>). What is already there is first moved
 // to backup_root/<name>-account or -device, so nothing is lost; a failed copy puts it back.
+// replaced, when given, tells whether there was a save to move away.
 inline bool Import(const std::vector<Save>& saves, const fs::path& account_folder, const fs::path& device_folder,
-                   const fs::path& backup_root, const std::string& name, std::string& error) {
+                   const fs::path& backup_root, const std::string& name, std::string& error,
+                   bool* replaced = nullptr) {
+    if (replaced) *replaced = false;
     for (const Save& save : saves) {
         const bool account = save.kind == Kind::Account;
         const fs::path& target = account ? account_folder : device_folder;
@@ -178,6 +222,7 @@ inline bool Import(const std::vector<Save>& saves, const fs::path& account_folde
                 error = "cannot back up " + target.string();
                 return false;
             }
+            if (replaced) *replaced = true;
         }
         if (!CopyTree(save.folder, target)) {
             std::error_code cleanup_error;
@@ -188,5 +233,27 @@ inline bool Import(const std::vector<Save>& saves, const fs::path& account_folde
         }
     }
     return true;
+}
+
+// Copies the game's saves out: account_folder to target/account and device_folder to
+// target/device, each when it exists and holds anything. False with error set when there is
+// nothing to copy or a copy fails (what was copied is removed again).
+inline bool Export(const fs::path& account_folder, const fs::path& device_folder, const fs::path& target,
+                   std::string& error) {
+    bool copied = false;
+    for (const bool account : {true, false}) {
+        const fs::path& source = account ? account_folder : device_folder;
+        std::error_code status_error, list_error;
+        if (!fs::is_directory(source, status_error) || ListFolder(source, list_error).empty() || list_error) continue;
+        if (!CopyTree(source, target / (account ? "account" : "device"))) {
+            std::error_code cleanup_error;
+            fs::remove_all(target, cleanup_error);
+            error = "copy failed from " + source.string();
+            return false;
+        }
+        copied = true;
+    }
+    if (!copied) error = "no save yet";
+    return copied;
 }
 } // namespace Eden::RyujinxSaves

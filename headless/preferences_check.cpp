@@ -83,6 +83,15 @@ int main() {
     assert(!Eden::LoadPreferences(file).vibration);
     assert(Read(file).find("\"vibration\": false") != std::string::npos);
 
+    // The launcher's look (Settings > Accessibility): all off unless turned on.
+    auto look = Eden::LoadPreferences(file);
+    assert(!look.large_text && !look.high_contrast && !look.reduce_motion);
+    look.large_text = look.reduce_motion = true;
+    assert(Eden::SavePreferences(look, file));
+    look = Eden::LoadPreferences(file);
+    assert(look.large_text && !look.high_contrast && look.reduce_motion && !look.vibration);
+    assert(Read(file).find("\"reduce_motion\": true") != std::string::npos);
+
     // Renderer, resolution and filter per title (Library > Game settings); -1 = Settings default.
     auto game = Eden::LoadGameSettings(racer, file);
     assert(game.renderer == -1 && game.resolution == -1 && game.upscaling_filter == -1);

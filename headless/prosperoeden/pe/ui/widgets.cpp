@@ -17,6 +17,32 @@ namespace
 
 constexpr float kTau = 6.28318530718f;
 FitReport fit_report = nullptr;
+
+// A text colour as shown: with high contrast, greys go most of the way to white and accents a
+// little, and faded text is less faded.
+Color text_ink(Color color)
+{
+    if (!look().high_contrast)
+        return color;
+    const float high = std::max({color.r, color.g, color.b});
+    const float low = std::min({color.r, color.g, color.b});
+    const float lift = high - low > 0.24f ? 0.25f : 0.70f;
+    return {color.r + (1.0f - color.r) * lift, color.g + (1.0f - color.g) * lift,
+            color.b + (1.0f - color.b) * lift, 1.0f - (1.0f - color.a) * 0.5f};
+}
+
+// Draws at exactly `drawn` on the line laid out for text of `size`.
+float draw_text(Canvas &c, std::string_view value, float x, float baseline, float size, float drawn,
+                Color color, Align align, float tracking)
+{
+    gfx::TextStyle style;
+    style.size = drawn;
+    style.color = text_ink(color);
+    style.align = align;
+    style.tracking = tracking;
+    return c.list.text(*c.fonts.font, c.fonts.texture, value, x, baseline + (drawn - size) * 0.35f,
+                       style);
+}
 const Color kWhite{1.0f, 1.0f, 1.0f, 1.0f};
 const Color kBlack{0.0f, 0.0f, 0.0f, 1.0f};
 
@@ -39,7 +65,8 @@ float noise(int index, int salt)
 
 void Backdrop::update(float dt)
 {
-    time_ += dt;
+    // With reduced motion the art stands still.
+    time_ += dt * motion();
 }
 
 Rect Backdrop::art() const
@@ -76,7 +103,7 @@ void Backdrop::draw(gfx::DrawList &list, const Textures &textures, float dim) co
     constexpr float kSpan = 640.0f;
     const float near_x = (a.x + 64.0f) * 1.7f;
     const float near_y = (a.y + 36.0f) * 1.7f;
-    for (int i = 0; i < kMotes; ++i)
+    for (int i = 0; i < kMotes && !look().reduce_motion && !look().high_contrast; ++i)
     {
         const float speed = 6.0f + 11.0f * noise(i, 2);
         const float travel = std::fmod(time_ * speed + noise(i, 3) * kSpan, kSpan);
@@ -93,6 +120,9 @@ void Backdrop::draw(gfx::DrawList &list, const Textures &textures, float dim) co
                     color.with_alpha(alpha));
         list.circle(x, y, size * 0.28f, color.with_alpha(std::min(1.0f, alpha * 1.8f)));
     }
+    // High contrast: the art steps back behind everything.
+    if (look().high_contrast)
+        dim = std::max(dim, 0.62f);
     if (dim > 0.0f)
         list.rounded_rect(screen, 0.0f, theme::kScrim.with_alpha(dim));
 }
@@ -102,18 +132,20 @@ void Backdrop::draw(gfx::DrawList &list, const Textures &textures, float dim) co
 float text(Canvas &c, std::string_view value, float x, float baseline, float size, Color color,
            Align align, float tracking)
 {
-    gfx::TextStyle style;
-    style.size = size;
-    style.color = color;
-    style.align = align;
-    style.tracking = tracking;
-    return c.list.text(*c.fonts.font, c.fonts.texture, value, x, baseline, style);
+    return draw_text(c, value, x, baseline, size, text_size(size), color, align, tracking);
+}
+
+float text_width(Canvas &c, std::string_view value, float size, float tracking)
+{
+    return c.fonts.font->measure(value, text_size(size), tracking);
 }
 
 float text_fit(Canvas &c, std::string_view value, float x, float baseline, float size, Color color,
                float max_width, Align align)
 {
-    return text(c, c.fonts.font->fit(value, size, max_width), x, baseline, size, color, align);
+    const float drawn = text_size(size);
+    return draw_text(c, c.fonts.font->fit(value, drawn, max_width), x, baseline, size, drawn, color,
+                     align, 0.0f);
 }
 
 void set_fit_report(FitReport report)
@@ -125,40 +157,93 @@ float text_shrink(Canvas &c, std::string_view value, float x, float baseline, fl
                   Color color, float max_width, Align align, float tracking, float least)
 {
     const gfx::Font &font = *c.fonts.font;
-    const float width = font.measure(value, size, tracking);
+    const float drawn = text_size(size);
+    const float width = font.measure(value, drawn, tracking);
     if (width <= max_width)
-        return text(c, value, x, baseline, size, color, align, tracking);
-    const float scale = std::max(least, max_width / width);
+        return draw_text(c, value, x, baseline, size, drawn, color, align, tracking);
+    // Larger text gives its extra size back before anything is cut.
+    const float scale = std::max(least * size / drawn, max_width / width);
     if (fit_report != nullptr)
         fit_report(value, scale, width * scale > max_width + 0.5f);
-    return text(c, font.fit(value, size * scale, max_width + 0.5f, tracking * scale), x, baseline,
-                size * scale, color, align, tracking * scale);
+    return draw_text(c, font.fit(value, drawn * scale, max_width + 0.5f, tracking * scale), x,
+                     baseline, size, drawn * scale, color, align, tracking * scale);
 }
 
 void text_block(Canvas &c, std::string_view value, float x, float first_baseline, float size,
                 float line_height, Color color, float max_width, int max_lines, float least)
 {
     const gfx::Font &font = *c.fonts.font;
-    std::vector<std::string> lines = font.wrap(value, size, max_width);
+    const float full = text_size(size);
+    float drawn = full;
+    std::vector<std::string> lines = font.wrap(value, drawn, max_width);
     // A step smaller at a time, until the text fits its lines or the letters are as small as
     // allowed.
+    // (Larger text gives its extra size back before anything is cut.)
     const float smallest = size * least;
-    while (static_cast<int>(lines.size()) > max_lines && size > smallest + 0.01f)
+    while (static_cast<int>(lines.size()) > max_lines && drawn > smallest + 0.01f)
     {
-        size = std::max(smallest, size * 0.94f);
-        lines = font.wrap(value, size, max_width);
-        if (fit_report != nullptr)
-            fit_report(value, size / (smallest / least), static_cast<int>(lines.size()) > max_lines);
+        drawn = std::max(smallest, drawn * 0.94f);
+        lines = font.wrap(value, drawn, max_width);
     }
+    if (fit_report != nullptr && drawn < full)
+        fit_report(value, drawn / full, static_cast<int>(lines.size()) > max_lines);
     const int count = std::min(static_cast<int>(lines.size()), max_lines);
     for (int line = 0; line < count; ++line)
     {
         const bool cut = line == count - 1 && static_cast<int>(lines.size()) > max_lines;
         // The last line that fits swallows the next one, so its ellipsis shows more follows.
         const std::string content = cut ? lines[line] + " " + lines[line + 1] : lines[line];
-        text_fit(c, content, x, first_baseline + line_height * static_cast<float>(line), size,
-                 color, max_width);
+        draw_text(c, font.fit(content, drawn, max_width), x,
+                  first_baseline + line_height * static_cast<float>(line), size, drawn, color,
+                  Align::left, 0.0f);
     }
+}
+
+namespace
+{
+
+// The warning mark with its left edge at x, centred on the line of text of `size` at `baseline`.
+// Returns the room it takes, the gap to the text included.
+float warning_mark(Canvas &c, float x, float baseline, float size, Color color, bool draw = true)
+{
+    const float drawn = text_size(size);
+    const float radius = drawn * 0.46f;
+    if (draw)
+    {
+        const Color ink = text_ink(color);
+        const float cx = x + radius;
+        const float cy = baseline - size * 0.35f;
+        c.list.ring(cx, cy, radius - 0.5f, drawn * 0.085f, ink);
+        c.list.line(cx, cy - radius * 0.50f, cx, cy + radius * 0.10f, drawn * 0.11f, ink);
+        c.list.circle(cx, cy + radius * 0.48f, drawn * 0.065f, ink);
+    }
+    return radius * 2.0f + drawn * 0.42f;
+}
+
+} // namespace
+
+float notice(Canvas &c, std::string_view value, float x, float baseline, float size, Color color,
+             float max_width, bool warning, Align align)
+{
+    if (!warning || value.empty())
+        return text_shrink(c, value, x, baseline, size, color, max_width, align);
+    const float mark = warning_mark(c, x, baseline, size, color, false);
+    if (align == Align::right)
+    {
+        const float width = text_shrink(c, value, x, baseline, size, color, max_width - mark, align);
+        warning_mark(c, x - width - mark, baseline, size, color);
+        return width + mark;
+    }
+    warning_mark(c, x, baseline, size, color);
+    return mark + text_shrink(c, value, x + mark, baseline, size, color, max_width - mark, align);
+}
+
+void notice_block(Canvas &c, std::string_view value, float x, float first_baseline, float size,
+                  float line_height, Color color, float max_width, int max_lines, bool warning)
+{
+    const float mark = warning && !value.empty() ? warning_mark(c, x, first_baseline, size, color) : 0.0f;
+    text_block(c, value, x + mark, first_baseline, size, line_height, color, max_width - mark,
+               max_lines, kShrink);
 }
 
 float value_column(Canvas &c, std::initializer_list<std::string_view> labels, float left,
@@ -166,7 +251,7 @@ float value_column(Canvas &c, std::initializer_list<std::string_view> labels, fl
 {
     float widest = 0.0f;
     for (const std::string_view label : labels)
-        widest = std::max(widest, c.fonts.font->measure(label, size, tracking));
+        widest = std::max(widest, text_width(c, label, size, tracking));
     return std::max(column, left + widest + 24.0f);
 }
 
@@ -177,6 +262,12 @@ void glass(Canvas &c, const Rect &r, float radius, Color tint, Color edge, float
     if (shadow > 0.0f)
         c.list.shadow({r.x + 6.0f, r.y + 20.0f, r.w - 12.0f, r.h - 8.0f}, radius, 48.0f,
                       kBlack.with_alpha(0.42f * shadow));
+    if (look().high_contrast)
+    {
+        // A solid panel with a clear edge: nothing of the art shows through the text.
+        c.list.bordered_rect(r, radius, Color::rgb(0x050b08), 2.0f, Color::rgb(0xb9c9b4));
+        return;
+    }
     if (c.textures.backdrop_blur() != 0)
         c.list.rounded_image(c.textures.backdrop_blur(), r, c.backdrop.uv(r), radius, kWhite);
     c.list.bordered_rect(r, radius, tint, 1.0f, edge);
@@ -224,7 +315,11 @@ const Plate kNavPlate{12.0f,
 
 void plate_rest(Canvas &c, const Plate &style, const Rect &r)
 {
-    if (style.fill.a > 0.0f || style.edge.a > 0.0f)
+    if (style.fill.a <= 0.0f && style.edge.a <= 0.0f)
+        return;
+    if (look().high_contrast)
+        c.list.bordered_rect(r, style.radius, Color::rgb(0x0f1a14), 1.5f, Color::rgb(0x93a890));
+    else
         c.list.bordered_rect(r, style.radius, style.fill, 1.0f, style.edge);
 }
 
@@ -232,8 +327,15 @@ void plate_focus(Canvas &c, const Plate &style, const Rect &r, float amount)
 {
     if (amount <= 0.001f)
         return;
+    if (look().high_contrast)
+    {
+        // The highlight is a dark fill inside a bright outline: it does not rest on colour.
+        c.list.bordered_rect(r, style.radius, Color::rgb(0x1b3a29, amount), 3.0f,
+                             Color::rgb(0xf2ffc4, amount));
+        return;
+    }
     // The highlight glows, breathing slowly.
-    const float glow = 0.17f + 0.07f * std::sin(c.time * 2.6f);
+    const float glow = 0.17f + 0.07f * std::sin(c.time * 2.6f * motion());
     c.list.shadow({r.x - 2.0f, r.y + 2.0f, r.w + 4.0f, r.h + 2.0f}, style.radius + 2.0f, 26.0f,
                   theme::kLime.with_alpha(glow * amount));
     if (style.focus_base.a > 0.0f)
@@ -279,7 +381,7 @@ void controller_icon(Canvas &c, const Rect &r, float lit)
     if (lit > 0.01f)
     {
         // The light under a connected controller, breathing slowly.
-        const float breath = 0.85f + 0.15f * std::sin(c.time * 1.7f + r.x * 0.01f);
+        const float breath = 0.85f + 0.15f * std::sin(c.time * 1.7f * motion() + r.x * 0.01f);
         c.list.shadow({r.x + 8.0f * u, r.y + 8.0f * u, r.w - 16.0f * u, r.h - 14.0f * u},
                       14.0f * u, 22.0f * u, theme::kLime.with_alpha(0.26f * lit * breath));
     }
@@ -363,9 +465,10 @@ void draw_pad(Canvas &c, Pad button, float x, float cy, float size, float alpha)
     const float width = pad_width(button, size);
     const float cx = x + width * 0.5f;
     const float half = size * 0.5f;
-    const Color ring = theme::kText.with_alpha(0.40f * alpha);
-    const Color ink = theme::kText.with_alpha(0.92f * alpha);
-    const Color dim = theme::kText.with_alpha(0.30f * alpha);
+    const bool bold = look().high_contrast;
+    const Color ring = theme::kText.with_alpha((bold ? 0.85f : 0.40f) * alpha);
+    const Color ink = theme::kText.with_alpha((bold ? 1.0f : 0.92f) * alpha);
+    const Color dim = theme::kText.with_alpha((bold ? 0.45f : 0.30f) * alpha);
     const float stroke = size * 0.085f;
     switch (button)
     {
@@ -429,8 +532,8 @@ void draw_pad(Canvas &c, Pad button, float x, float cy, float size, float alpha)
         const float height = size * 0.80f;
         c.list.bordered_rect({x, cy - height * 0.5f, width, height}, height * 0.30f,
                              ink.with_alpha(0.0f), 1.6f, ring);
-        text(c, button == Pad::l1 ? "L1" : "R1", cx, cy + size * 0.17f, size * 0.48f, ink,
-             Align::center);
+        draw_text(c, button == Pad::l1 ? "L1" : "R1", cx, cy + size * 0.17f, size * 0.48f,
+                  size * 0.48f, ink, Align::center, 0.0f);
         return;
     }
     }
@@ -463,7 +566,7 @@ float draw_hints(Canvas &c, const Hint *hints, int count, float x, float cy, Col
             cursor += kIconGap;
             cursor += draw ? text(c, tr(hint.label), cursor, cy + theme::kSmall * 0.35f,
                                   theme::kSmall, color) :
-                             c.fonts.font->measure(tr(hint.label), theme::kSmall);
+                             text_width(c, tr(hint.label), theme::kSmall);
             if (i + 1 < count)
                 cursor += kItemGap;
         }
