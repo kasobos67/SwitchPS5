@@ -313,29 +313,46 @@ void SampleGpuFrame(unsigned frame) {
 
 extern "C" void ps5_opengl_heap_snapshot(const char* phase, unsigned iteration);
 extern "C" unsigned eden_heap_arenas_created(void) __attribute__((weak));
+extern "C" std::size_t eden_heap_committed(void) __attribute__((weak));
+extern "C" std::size_t eden_heap_large_held(unsigned* blocks) __attribute__((weak));
 #ifdef PS5_NATIVE
 extern "C" std::int64_t sceKernelGetDirectMemorySize();
 extern "C" std::int32_t sceKernelAvailableDirectMemorySize(std::int64_t, std::int64_t, std::size_t, std::int64_t*,
                                                            std::size_t*);
+// The allocated region at or after an offset (flag 1: find the next one).
+struct DirectMemoryRegion { std::int64_t start; std::int64_t end; std::int32_t type; };
+extern "C" std::int32_t sceKernelDirectMemoryQuery(std::int64_t, int, DirectMemoryRegion*, std::size_t);
 #endif
 
 #ifdef PS5_NATIVE
 // The largest free block of direct memory is what the next graphics allocation needs. Looked at
 // again every 100 ms; called on the GPU thread by the texture collector (KeepDirtyTextures).
+static std::atomic<unsigned long long> largest_free_block{0};
+static void RefreshFreeMemory() {
+    static std::atomic<long long> checked_ns{0};
+    const long long now = NowNs();
+    if (const long long last = checked_ns.load(std::memory_order_relaxed); last != 0 && now - last < 100'000'000)
+        return;
+    checked_ns.store(now, std::memory_order_relaxed);
+    std::int64_t start = 0;
+    std::size_t largest = 0;
+    const std::int64_t total = sceKernelGetDirectMemorySize();
+    const bool known = total > 0 && sceKernelAvailableDirectMemorySize(0, total, 0x4000, &start, &largest) == 0;
+    largest_free_block.store(known ? largest : 0, std::memory_order_relaxed);
+    graphics_memory_short.store(!known || largest < kShortMemory, std::memory_order_relaxed);
+}
 static bool GraphicsMemoryShort() {
-    static long long checked_ns = 0;
-    if (const long long now = NowNs(); checked_ns == 0 || now - checked_ns >= 100'000'000) {
-        checked_ns = now;
-        std::int64_t start = 0;
-        std::size_t largest = 0;
-        const std::int64_t total = sceKernelGetDirectMemorySize();
-        const bool known = total > 0 && sceKernelAvailableDirectMemorySize(0, total, 0x4000, &start, &largest) == 0;
-        graphics_memory_short.store(!known || largest < kShortMemory, std::memory_order_relaxed);
-    }
+    RefreshFreeMemory();
     return graphics_memory_short.load(std::memory_order_relaxed);
 }
+// What the caches' "memory in use" is measured against (performance.h, graphics_memory_free).
+static unsigned long long GraphicsMemoryFree() {
+    RefreshFreeMemory();
+    return largest_free_block.load(std::memory_order_relaxed);
+}
 [[maybe_unused]] static const bool graphics_memory_probe_installed =
-    (graphics_memory_probe.store(&GraphicsMemoryShort, std::memory_order_relaxed), true);
+    (graphics_memory_probe.store(&GraphicsMemoryShort, std::memory_order_relaxed),
+     graphics_memory_free.store(&GraphicsMemoryFree, std::memory_order_relaxed), true);
 #endif
 
 namespace {
@@ -368,9 +385,23 @@ void ReportGpuThread(unsigned frame) {
     if (const std::int64_t total = sceKernelGetDirectMemorySize(); total > 0) {
         std::int64_t start = 0;
         std::size_t largest = 0;
-        if (sceKernelAvailableDirectMemorySize(0, total, 0x4000, &start, &largest) == 0)
-            std::printf("EDEN_PERF_DIRECT total=%lld largest_free=%zu short=%d\n", static_cast<long long>(total),
-                        largest, int(graphics_memory_short.load(std::memory_order_relaxed)));
+        if (sceKernelAvailableDirectMemorySize(0, total, 0x4000, &start, &largest) == 0) {
+            // All that is free, against the largest block: how far apart they are tells how much
+            // of the pool is holes between allocations. -1: the regions could not be read.
+            std::int64_t taken = 0, offset = 0;
+            unsigned regions = 0;
+            DirectMemoryRegion region{};
+            while (offset < total && regions < 8192 &&
+                   sceKernelDirectMemoryQuery(offset, 1, &region, sizeof(region)) == 0 && region.end > offset) {
+                taken += region.end - region.start;
+                offset = region.end;
+                ++regions;
+            }
+            std::printf("EDEN_PERF_DIRECT total=%lld largest_free=%zu free=%lld regions=%u short=%d\n",
+                        static_cast<long long>(total), largest,
+                        regions != 0 ? static_cast<long long>(total - taken) : -1LL, regions,
+                        int(graphics_memory_short.load(std::memory_order_relaxed)));
+        }
     }
 #endif
     const auto load = [](const Totals& totals, bool calls) {

@@ -358,7 +358,27 @@ adapt('src/video_core/renderer_vulkan/vk_present_manager.cpp', 'vulkan_present_m
 # The spec requires a null pAddressInfo (or VK_WHOLE_SIZE) for a null descriptor.
 # Development A/B switches for device features (headless/dev_vulkan.h, dev-settings).
 adapt('src/video_core/vulkan_common/vulkan_device.cpp', 'vulkan_device.cpp', [
-    ('#include <algorithm>', '#include <algorithm>\n#include <cstdio>\n#include "dev_vulkan.h"'),
+    ('#include <algorithm>', '#include <algorithm>\n#include <cstdio>\n#include "dev_vulkan.h"\n#include "performance.h"'),
+    # "Memory in use" for the texture and buffer caches: on the console, the budget less what is
+    # left of the pool the CPU shares with the GPU (performance.h, graphics_memory_free).
+    ('u64 Device::GetDeviceMemoryUsage() const {\n',
+     'namespace {\n'
+     '// The largest block of the shared pool that was free when the device was made: about the most\n'
+     '// graphics can be given in this session.\n'
+     'u64 graphics_capacity = 0;\n'
+     '}\n\n'
+     'u64 Device::GetDeviceMemoryUsage() const {\n'
+     '    if (const auto free_memory = ::Eden::Performance::graphics_memory_free.load(std::memory_order_relaxed);\n'
+     '        free_memory && ::Eden::Performance::graphics_usage_from_pool.load(std::memory_order_relaxed)) {\n'
+     '        // The caches evict what is unused 1.6 GiB under the budget and evict hard 0.8 GiB under\n'
+     '        // it. Where the pool could never give graphics 6.4 GiB, those marks become a quarter\n'
+     '        // and an eighth of what it could give.\n'
+     '        const double scale = graphics_capacity != 0 && graphics_capacity < 6400_MiB\n'
+     '                                 ? static_cast<double>(6400_MiB) / static_cast<double>(graphics_capacity)\n'
+     '                                 : 1.0;\n'
+     '        const u64 free_bytes = static_cast<u64>(static_cast<double>(free_memory()) * scale);\n'
+     '        return device_access_memory > free_bytes ? device_access_memory - free_bytes : 0;\n'
+     '    }\n'),
     ('    extensions.descriptor_buffer = features.descriptor_buffer.descriptorBuffer;',
      '    extensions.descriptor_buffer = features.descriptor_buffer.descriptorBuffer &&\n'
      '        !::Eden::DevVulkan::disable_descriptor_buffer;'),
@@ -392,10 +412,15 @@ adapt('src/video_core/vulkan_common/vulkan_device.cpp', 'vulkan_device.cpp', [
      '        }\n    }\n}\n',
      '            device_access_memory = std::min<u64>(device_access_memory, normal_memory + scaler_memory);\n'
      '        }\n    }\n'
-     '    std::printf("EDEN_VULKAN_MEMORY integrated=%d heaps=%zu local=%llu initial_usage=%llu device_access=%llu\\n",\n'
+     '    if (const auto free_memory = ::Eden::Performance::graphics_memory_free.load(std::memory_order_relaxed)) {\n'
+     '        graphics_capacity = free_memory();\n'
+     '    }\n'
+     '    std::printf("EDEN_VULKAN_MEMORY integrated=%d heaps=%zu local=%llu initial_usage=%llu device_access=%llu "\n'
+     '                "capacity=%llu\\n",\n'
      '                int(is_integrated), valid_heap_memory.size(), static_cast<unsigned long long>(local_memory),\n'
      '                static_cast<unsigned long long>(device_initial_usage),\n'
-     '                static_cast<unsigned long long>(device_access_memory));\n}\n'),
+     '                static_cast<unsigned long long>(device_access_memory),\n'
+     '                static_cast<unsigned long long>(graphics_capacity));\n}\n'),
 ])
 # Development GPU fault probe (dev_vulkan.h, submit_sync=on): wait for every
 # submission, so the CPU never records against work the GPU has not finished.

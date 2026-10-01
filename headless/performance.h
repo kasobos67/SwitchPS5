@@ -107,6 +107,18 @@ inline std::atomic<bool> texture_budget_log{false};
 // header is compiled into libraries with and without PS5_NATIVE, so the function below must read
 // the same in all of them: the platform part is behind this pointer, not behind an #ifdef.
 inline std::atomic<bool (*)()> graphics_memory_probe{nullptr};
+// Graphics memory still free: the largest block of the direct memory pool, which is what the
+// driver's next allocation can be given. Installed by the PS5 build (performance.cpp).
+//
+// The texture and buffer caches decide what to evict from "memory in use" against a budget. On
+// the console that figure is the budget less this free block (tools/prepare-vulkan-port.py,
+// Device::GetDeviceMemoryUsage), not the driver's own count, for two reasons. The CPU and the
+// GPU share one pool, so what limits graphics is what is left of it, whoever took the rest; and
+// the driver reports its allocations twice over (as VRAM and as visible VRAM), which made the
+// caches evict at half the use they were set to. dev-settings graphics_usage=driver restores
+// the driver's count.
+inline std::atomic<unsigned long long (*)()> graphics_memory_free{nullptr};
+inline std::atomic<bool> graphics_usage_from_pool{true};
 // GPU thread only (the collector).
 inline bool KeepDirtyTextures() {
     if (!gc_keep_dirty.load(std::memory_order_relaxed)) return false;

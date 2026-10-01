@@ -572,8 +572,12 @@ int main(int argc, char** argv) {
                     Settings::values.cpu_accuracy = Settings::CpuAccuracy::Unsafe;
                 } else if (entry == "replay=off") {
                     // The profile title takes controller and runner input instead of the timed replay.
-                } else if (entry == "large_pages=off") {
-                    // Read directly by the page allocator (src/memory_pages.cpp) before this parse.
+                } else if (entry == "large_pages=off" || entry == "sparse_tables=off" || entry == "heap=whole") {
+                    // Read directly by the page allocator (src/memory_pages.cpp) before this parse:
+                    // 16 KiB pages only; Eden's large tables dense; the heap's 3 GiB taken at start.
+                } else if (entry == "graphics_usage=driver") {
+                    // The caches' "memory in use" as the driver counts it (performance.h).
+                    Eden::Performance::graphics_usage_from_pool = false;
                 } else if (entry == "gpu_accuracy=low") {
                     // Nothing calls UpdateGPUAccuracy() here; set the live value too.
                     Settings::values.gpu_accuracy.SetValue(Settings::GpuAccuracy::Low);
