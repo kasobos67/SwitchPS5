@@ -315,6 +315,25 @@ extern "C" std::int32_t sceKernelAvailableDirectMemorySize(std::int64_t, std::in
                                                            std::size_t*);
 #endif
 
+#ifdef PS5_NATIVE
+// The largest free block of direct memory is what the next graphics allocation needs. Looked at
+// again every 100 ms; called on the GPU thread by the texture collector (KeepDirtyTextures).
+static bool GraphicsMemoryShort() {
+    static long long checked_ns = 0;
+    if (const long long now = NowNs(); checked_ns == 0 || now - checked_ns >= 100'000'000) {
+        checked_ns = now;
+        std::int64_t start = 0;
+        std::size_t largest = 0;
+        const std::int64_t total = sceKernelGetDirectMemorySize();
+        const bool known = total > 0 && sceKernelAvailableDirectMemorySize(0, total, 0x4000, &start, &largest) == 0;
+        graphics_memory_short.store(!known || largest < kShortMemory, std::memory_order_relaxed);
+    }
+    return graphics_memory_short.load(std::memory_order_relaxed);
+}
+[[maybe_unused]] static const bool graphics_memory_probe_installed =
+    (graphics_memory_probe.store(&GraphicsMemoryShort, std::memory_order_relaxed), true);
+#endif
+
 namespace {
 std::mutex hle_mutex;
 // Keyed by the service's name pointer (one per service object) and command id.

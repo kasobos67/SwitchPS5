@@ -103,28 +103,15 @@ inline std::atomic<bool> graphics_memory_short{false};
 inline constexpr std::size_t kShortMemory = std::size_t{384} << 20;
 // Development: the texture cache reports its memory use and marks every 300 frames.
 inline std::atomic<bool> texture_budget_log{false};
-#ifdef PS5_NATIVE
-extern "C" std::int64_t sceKernelGetDirectMemorySize();
-extern "C" std::int32_t sceKernelAvailableDirectMemorySize(std::int64_t, std::int64_t, std::size_t, std::int64_t*,
-                                                           std::size_t*);
-#endif
-// GPU thread only (the collector). Looks at the free memory again every 100 ms.
+// "Is memory short?", installed by the PS5 build (performance.cpp, GraphicsMemoryShort). This
+// header is compiled into libraries with and without PS5_NATIVE, so the function below must read
+// the same in all of them: the platform part is behind this pointer, not behind an #ifdef.
+inline std::atomic<bool (*)()> graphics_memory_probe{nullptr};
+// GPU thread only (the collector).
 inline bool KeepDirtyTextures() {
     if (!gc_keep_dirty.load(std::memory_order_relaxed)) return false;
-#ifdef PS5_NATIVE
-    static long long checked_ns = 0;
-    if (const long long now = NowNs(); checked_ns == 0 || now - checked_ns >= 100'000'000) {
-        checked_ns = now;
-        std::int64_t start = 0;
-        std::size_t largest = 0;
-        const std::int64_t total = sceKernelGetDirectMemorySize();
-        const bool known = total > 0 && sceKernelAvailableDirectMemorySize(0, total, 0x4000, &start, &largest) == 0;
-        graphics_memory_short.store(!known || largest < kShortMemory, std::memory_order_relaxed);
-    }
-    return !graphics_memory_short.load(std::memory_order_relaxed);
-#else
-    return true;
-#endif
+    const auto probe = graphics_memory_probe.load(std::memory_order_relaxed);
+    return !probe || !probe();
 }
 // Development boot trace (dev-settings boot_trace=START:END, milliseconds after the settings
 // are read): guest GPU submissions and GPU-thread dispatches inside it are logged one by one.
