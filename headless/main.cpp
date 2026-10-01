@@ -988,6 +988,7 @@ int main(int argc, char** argv) {
                 }
 #endif
                 // The blocks this game compiled in earlier sessions, compiled ahead on a spare CPU.
+                if (std::filesystem::exists(Eden::AppFile("block-list.txt"))) Eden::JitList::enabled = true;
                 Eden::JitList::Session jit_list;
                 if (auto* process = system.ApplicationProcess()) {
                     Eden::JitList::BuildId build{};
