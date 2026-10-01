@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 
 #define INPUT_QUEUE_SIZE 64U
 #define PAD_SAMPLE_SIZE 120U
@@ -26,7 +27,6 @@ extern int scePadRead(int32_t handle, void * data, int32_t num);
 extern int sceUserServiceInitialize(void * init_params);
 extern int sceUserServiceGetInitialUser(int32_t * user_id);
 extern int sceUserServiceTerminate(void);
-extern uint64_t SDL_GetTicks64(void);
 
 static const button_map_t buttons[] = {
     {UINT32_C(0x00004000), RADIO_INPUT_CROSS},
@@ -52,12 +52,23 @@ static uint64_t analog_repeat_at;
 /* A held L1 or R1 repeats like the stick (the Game files browser pages with them). */
 static int shoulder_key = -1;
 static uint64_t shoulder_repeat_at;
+/* So does a held D-pad direction: the last one pressed. */
+static int dpad_key = -1;
+static uint64_t dpad_repeat_at;
 static int32_t pad_handle = -1;
 static bool owns_user_service;
 
 static uint64_t monotonic_milliseconds(void)
 {
-    return SDL_GetTicks64();
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (uint64_t)now.tv_sec * UINT64_C(1000) + (uint64_t)now.tv_nsec / UINT64_C(1000000);
+}
+
+static bool is_direction(radio_input_key_t key)
+{
+    return key == RADIO_INPUT_UP || key == RADIO_INPUT_DOWN ||
+        key == RADIO_INPUT_LEFT || key == RADIO_INPUT_RIGHT;
 }
 
 static int stick_direction(uint8_t x, uint8_t y)
@@ -106,6 +117,14 @@ static void process_sample(const unsigned char * sample)
                     shoulder_key = -1;
                 }
             }
+            if(is_direction(buttons[i].key)) {
+                if(down) {
+                    dpad_key = buttons[i].key;
+                    dpad_repeat_at = monotonic_milliseconds() + STICK_REPEAT_DELAY_MS;
+                } else if(dpad_key == (int)buttons[i].key) {
+                    dpad_key = -1;
+                }
+            }
         }
     }
     button_state = current;
@@ -148,6 +167,7 @@ bool radio_input_init(void)
     analog_key = -1;
     analog_repeat_at = 0;
     shoulder_key = -1;
+    dpad_key = -1;
     return true;
 }
 
@@ -168,6 +188,13 @@ void radio_input_poll(void)
         if(now >= shoulder_repeat_at) {
             queue_push((radio_input_key_t)shoulder_key, true);
             shoulder_repeat_at = now + STICK_REPEAT_MS;
+        }
+    }
+    if(dpad_key >= 0) {
+        const uint64_t now = monotonic_milliseconds();
+        if(now >= dpad_repeat_at) {
+            queue_push((radio_input_key_t)dpad_key, true);
+            dpad_repeat_at = now + STICK_REPEAT_MS;
         }
     }
 }
@@ -204,4 +231,5 @@ void radio_input_shutdown(void)
     analog_key = -1;
     analog_repeat_at = 0;
     shoulder_key = -1;
+    dpad_key = -1;
 }

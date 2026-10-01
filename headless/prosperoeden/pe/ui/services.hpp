@@ -1,0 +1,157 @@
+// ProsperoEden - What the launcher screens ask of the application.
+// Copyright (C) 2026 BlackBearReloaded
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#pragma once
+
+#include "pe/gfx/image.hpp"
+
+#include <cstdint>
+#include <string>
+#include <vector>
+
+namespace pe::ui
+{
+
+// One pressed button (a first press, or a repeat of a held direction or shoulder button).
+enum class Key : std::uint8_t
+{
+    cross,
+    circle,
+    square,
+    triangle,
+    options,
+    l1,
+    r1,
+    up,
+    down,
+    left,
+    right,
+};
+
+// A game file in the games folder.
+struct Game
+{
+    std::string name;
+    std::string format; // "NSP" or "XCI"
+    std::string size;   // "1.2 GB"
+    std::string file;   // its name in the games folder
+    std::string cover;  // image path; empty without cover art
+    std::uint64_t title_id = 0;
+    std::string addons;        // "Update 1.2.0, 2 DLC", or "None"
+    std::string language;      // the language the game will use
+    std::string language_note; // set when that is not the chosen one
+};
+
+struct Recent
+{
+    std::string file;
+    std::string title;
+    std::string cover;
+};
+
+// The home screen's content.
+struct Home
+{
+    bool setup_ready = false;
+    std::string status;    // a setup or launch problem; empty when there is none
+    bool launch_failed = false; // the status is about the game that just failed to start
+    std::string last_file; // the last game played; empty before the first one
+    bool last_exists = false;
+    std::string last_title;
+    std::string last_caption;
+    std::string last_cover;
+    std::string last_info; // add-ons and language
+    bool last_info_warning = false;
+    std::vector<Recent> recents; // at most four
+    std::string system_status;
+};
+
+struct Preferences
+{
+    bool hud = true;
+    int volume = 100; // game volume, 0-100
+    bool mute = false;
+    bool detailed_logging = false;
+    int renderer = 1; // 0 OpenGL, 1 Vulkan
+    int resolution = 2;
+    int filter = 0;
+    bool vibration = true;
+    int language = 0;
+    int menu_volume = 70; // launcher sounds, 0-100
+};
+
+// One game's overrides; -1 uses Settings > Video.
+struct GameSettings
+{
+    int renderer = -1;
+    int resolution = -1;
+    int filter = -1;
+};
+
+// What a folder holds, for Settings > Game files. Counts are -1 without the subfolder.
+struct FolderInfo
+{
+    bool keys = false;
+    int firmware = -1;
+    int games = -1;
+};
+
+class Services
+{
+  public:
+    virtual ~Services() = default;
+
+    // ---- home ----
+    virtual Home home() = 0;
+    virtual std::string clock() = 0;   // "14:05"
+    virtual std::string version() = 0; // "v1.000.040"
+
+    // ---- library ----
+    virtual std::vector<Game> games() = 0; // reads every game file: slow
+    // The value the launcher hands back to start a game.
+    virtual std::string game_path(const std::string &file) = 0;
+    virtual bool docked(std::uint64_t title_id) = 0;
+    virtual bool set_docked(std::uint64_t title_id, bool docked) = 0;
+    virtual GameSettings game_settings(std::uint64_t title_id) = 0;
+    virtual bool set_game_settings(std::uint64_t title_id, const GameSettings &settings) = 0;
+
+    // ---- settings ----
+    virtual Preferences preferences() = 0;
+    virtual bool set_preferences(const Preferences &preferences) = 0;
+    virtual const std::vector<std::string> &resolution_labels() = 0; // "1x (native)"
+    virtual const std::vector<std::string> &resolution_keys() = 0;   // "1x"
+    virtual const std::vector<std::string> &filter_labels() = 0;
+    virtual const std::vector<std::string> &language_labels() = 0;
+    virtual std::string language_region(int language) = 0;
+    virtual std::string setup_details() = 0;
+
+    // ---- game files ----
+    // The subfolder names of a folder; false when it cannot be opened.
+    virtual bool folders(const std::string &directory, std::vector<std::string> *names) = 0;
+    virtual FolderInfo folder_info(const std::string &directory) = 0;
+    virtual std::string files_folder() = 0;       // in use by this process
+    virtual std::string saved_files_folder() = 0; // used from the next start; empty when none
+    virtual std::string default_files_folder() = 0;
+    virtual bool set_files_folder(const std::string &directory) = 0;
+    virtual int filesystem_access() = 0; // 0: the whole filesystem
+
+    // ---- save import from another emulator's data folder (not in every build) ----
+    virtual bool save_import_available()
+    {
+        return false;
+    }
+    virtual bool save_import_status(std::uint64_t, std::string *)
+    {
+        return false;
+    }
+    virtual bool save_import(std::uint64_t, std::string *)
+    {
+        return false;
+    }
+
+    // ---- images ----
+    virtual bool load_image(const std::string &path, gfx::Image *image) = 0;
+};
+
+} // namespace pe::ui

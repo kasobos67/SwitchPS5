@@ -4,7 +4,6 @@ r=Path(__file__).resolve().parents[1]
 code=r'''
 #include "development_input.h"
 #include "radio_input.h"
-extern "C" uint64_t SDL_GetTicks64(void) { return 0; }
 #include <sstream>
 #include <cassert>
 int main(){

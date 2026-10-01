@@ -10,7 +10,7 @@ cd "$root"
 if [[ -n ${EDEN_DEV_CHECKOUT:-} ]]; then
     dev=$(cd -- "$EDEN_DEV_CHECKOUT" && pwd)
     if [[ $dev != "$root" ]]; then
-        for sibling in ps5-native-app-boilerplate ps5-radio-browser mihawk-vulkan-review mihawk-mesa-review mihawk-sdk-review; do
+        for sibling in ps5-native-app-boilerplate mihawk-vulkan-review mihawk-mesa-review mihawk-sdk-review; do
             if [[ ! -e ../$sibling && -d $dev/../$sibling ]]; then
                 ln -s "$(cd -- "$dev/../$sibling" && pwd)" "../$sibling"
             fi

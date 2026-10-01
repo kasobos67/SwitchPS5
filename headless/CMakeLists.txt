@@ -1991,39 +1991,47 @@ if(EDEN_PS5_OPENGL)
     target_compile_definitions(eden-headless PRIVATE EDEN_PS5_OPENGL=1)
     target_link_libraries(eden-headless PRIVATE PS5OpenGL::OpenGL glad)
 endif()
-    # Launcher UI uses SDL software rendering, independent of the game backend.
+    # Launcher UI: its own small OpenGL renderer, mixer and screens (headless/prosperoeden/pe),
+    # all gone before a game starts.
     if(PS5_NATIVE)
-        set(prosperoeden_vendor "${PORT_ROOT}/../ps5-radio-browser/vendor/ps5")
-        foreach(file
-            "${prosperoeden_vendor}/sdl/lib/libSDL2.a"
-            "${prosperoeden_vendor}/rmlui/lib/librmlui.a"
-            "${prosperoeden_vendor}/freetype/lib/libfreetype.a")
-            if(NOT EXISTS "${file}")
-                message(FATAL_ERROR "ProsperoEden UI dependency missing: ${file}")
-            endif()
-        endforeach()
+        set(launcher_dir "${EDEN_PORT_DIR}/prosperoeden")
         target_sources(eden-headless PRIVATE
-            "${EDEN_PORT_DIR}/prosperoeden/frontend.cpp"
-            "${EDEN_PORT_DIR}/prosperoeden/bitmap_font_engine.cpp"
-            "${EDEN_PORT_DIR}/prosperoeden/eden_app.cpp"
-            "${EDEN_PORT_DIR}/prosperoeden/radio_input.c")
-        set_source_files_properties(
-            "${EDEN_PORT_DIR}/prosperoeden/frontend.cpp"
-            "${EDEN_PORT_DIR}/prosperoeden/bitmap_font_engine.cpp"
-            "${EDEN_PORT_DIR}/prosperoeden/eden_app.cpp"
-            PROPERTIES COMPILE_OPTIONS "-frtti")
-        target_include_directories(eden-headless PRIVATE
-            "${EDEN_PORT_DIR}/prosperoeden"
-            "${prosperoeden_vendor}/sdl/include"
-            "${prosperoeden_vendor}/sdl/include/SDL2"
-            "${prosperoeden_vendor}/rmlui/include")
-        target_compile_definitions(eden-headless PRIVATE SDL_MAIN_HANDLED SDL_STATIC_LIB
-            USING_GENERATED_CONFIG_H RMLUI_STATIC_LIB ITLIB_FLAT_MAP_NO_THROW)
-        target_link_libraries(eden-headless PRIVATE eden-metadata
-            "${prosperoeden_vendor}/sdl/lib/libSDL2.a"
-            "${prosperoeden_vendor}/rmlui/lib/librmlui.a"
-            "${prosperoeden_vendor}/freetype/lib/libfreetype.a"
-            "${sdk}/target/lib/libSceImeDialog.so")
+            "${launcher_dir}/runtime_shims.cpp"
+            "${launcher_dir}/radio_input.c")
+        target_include_directories(eden-headless PRIVATE "${launcher_dir}")
+        if(EDEN_PS5_OPENGL)
+            set(launcher_sources
+                "${launcher_dir}/frontend.cpp"
+                "${launcher_dir}/eden_services.cpp"
+                "${launcher_dir}/pe/audio/mixer.cpp"
+                "${launcher_dir}/pe/audio/sounds.cpp"
+                "${launcher_dir}/pe/audio/wav.cpp"
+                "${launcher_dir}/pe/gfx/draw_list.cpp"
+                "${launcher_dir}/pe/gfx/font.cpp"
+                "${launcher_dir}/pe/gfx/gl_batch.cpp"
+                "${launcher_dir}/pe/gfx/gl_program.cpp"
+                "${launcher_dir}/pe/gfx/image.cpp"
+                "${launcher_dir}/pe/platform/audio_out.cpp"
+                "${launcher_dir}/pe/platform/display_egl.cpp"
+                "${launcher_dir}/pe/ui/browse.cpp"
+                "${launcher_dir}/pe/ui/home.cpp"
+                "${launcher_dir}/pe/ui/launcher.cpp"
+                "${launcher_dir}/pe/ui/library.cpp"
+                "${launcher_dir}/pe/ui/settings.cpp"
+                "${launcher_dir}/pe/ui/textures.cpp"
+                "${launcher_dir}/pe/ui/widgets.cpp")
+            target_sources(eden-headless PRIVATE ${launcher_sources})
+            # The launcher calls OpenGL by name (the SDK's headers), not through glad.
+            set(launcher_definitions "GL_GLEXT_PROTOTYPES=1")
+            if(EXISTS "${EDEN_PORT_DIR}/ryujinx_saves.h")
+                list(APPEND launcher_definitions "EDEN_SAVE_IMPORT=1")
+            endif()
+            set_source_files_properties(${launcher_sources}
+                PROPERTIES COMPILE_DEFINITIONS "${launcher_definitions}")
+        else()
+            target_sources(eden-headless PRIVATE "${launcher_dir}/frontend_stub.cpp")
+        endif()
+        target_link_libraries(eden-headless PRIVATE eden-metadata)
     endif()
 
 if(EDEN_PS5_VULKAN)

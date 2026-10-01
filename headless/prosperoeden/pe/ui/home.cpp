@@ -1,0 +1,295 @@
+// ProsperoEden - Launcher home: continue playing, recent games, navigation.
+// Copyright (C) 2026 BlackBearReloaded
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+#include "pe/ui/launcher.hpp"
+
+#include <algorithm>
+#include <string>
+
+namespace pe::ui
+{
+
+using audio::Cue;
+
+namespace
+{
+
+const Color kWhite{1.0f, 1.0f, 1.0f, 1.0f};
+
+constexpr Rect kHero{120.0f, 200.0f, 1680.0f, 480.0f};
+constexpr Rect kContinue{560.0f, 504.0f, 272.0f, 72.0f};
+constexpr Rect kDetails{848.0f, 504.0f, 272.0f, 72.0f};
+constexpr Rect kViewAll{1496.0f, 708.0f, 304.0f, 40.0f};
+
+Rect nav_rect(int index)
+{
+    return {1056.0f + 144.0f * static_cast<float>(index), 80.0f, 136.0f, 64.0f};
+}
+
+Rect tile_rect(int index)
+{
+    return {120.0f + 424.0f * static_cast<float>(index), 760.0f, 400.0f, 144.0f};
+}
+
+} // namespace
+
+void Launcher::open_library_at_last()
+{
+    open(Screen::library, true);
+    enter_library();
+    for (int i = 0; i < static_cast<int>(games_.size()); ++i)
+    {
+        if (games_[static_cast<std::size_t>(i)].file == home_.last_file)
+        {
+            library_.reset(library_.count, i);
+            refresh_selected_game();
+            break;
+        }
+    }
+}
+
+void Launcher::press_home(Key key)
+{
+    const bool ready = home_.setup_ready;
+    const bool continue_ready = ready && home_.last_exists;
+    // The status panel takes the place of the recent games.
+    const bool recents_shown = home_.status.empty();
+    const int recent_count = recents_shown ? static_cast<int>(home_.recents.size()) : 0;
+    const int before = home_focus_;
+    int &focus = home_focus_;
+
+    switch (key)
+    {
+    case Key::up:
+        if (focus == 0 || focus == 4)
+            focus = ready ? 1 : 2;
+        else if (focus >= 5)
+            focus = 0;
+        break;
+    case Key::down:
+        if (focus >= 1 && focus <= 3)
+        {
+            if (ready)
+                focus = 0;
+        }
+        else if ((focus == 0 || focus == 4) && recents_shown)
+        {
+            focus = recent_count > 0 ? 5 : 9;
+        }
+        break;
+    case Key::left:
+    case Key::right:
+    {
+        const int delta = key == Key::right ? 1 : -1;
+        if (focus >= 1 && focus <= 3)
+        {
+            focus = 1 + (focus - 1 + delta + 3) % 3;
+            if (focus == 1 && !ready)
+                focus = delta > 0 ? 2 : 3;
+        }
+        else if (focus == 0 || focus == 4)
+        {
+            if (continue_ready)
+                focus = focus == 0 ? 4 : 0;
+        }
+        else
+        {
+            const int length = recent_count + 1;
+            int position = focus == 9 ? recent_count : focus - 5;
+            position = (position + delta + length) % length;
+            focus = position == recent_count ? 9 : position + 5;
+        }
+        break;
+    }
+    case Key::triangle:
+        if ((focus == 0 || focus == 4) && continue_ready)
+            open_library_at_last();
+        return;
+    case Key::cross:
+        press_ = 1.0f;
+        if (focus == 0 && continue_ready)
+        {
+            launch(home_.last_file, home_.last_title, home_.last_cover);
+        }
+        else if ((focus == 0 || focus == 1 || focus == 9) && ready)
+        {
+            open(Screen::library, true);
+            enter_library();
+        }
+        else if (focus == 2)
+        {
+            open(Screen::settings, true);
+            prefs_ = services_.preferences();
+            section_.snap(1.0f);
+        }
+        else if (focus == 3)
+        {
+            open(Screen::about, true);
+        }
+        else if (focus == 4 && continue_ready)
+        {
+            open_library_at_last();
+        }
+        else if (focus >= 5 && focus < 5 + recent_count && ready)
+        {
+            const Recent &recent = home_.recents[static_cast<std::size_t>(focus - 5)];
+            launch(recent.file, recent.title, recent.cover);
+        }
+        else
+        {
+            cue(Cue::error);
+        }
+        return;
+    default:
+        return;
+    }
+    if (focus != before)
+        cue(Cue::focus);
+}
+
+void Launcher::draw_home(Canvas &c)
+{
+    gfx::DrawList &list = c.list;
+    const bool ready = home_.setup_ready;
+    const bool continue_ready = ready && home_.last_exists;
+    const auto focus = [&](int index) { return home_springs_[static_cast<std::size_t>(index)].value; };
+    // Each band of the screen arrives a moment after the one above it.
+    const auto arrive = [&](int band)
+    { return tween::cubic_out((intro_ - 0.12f - 0.08f * static_cast<float>(band)) / 0.55f); };
+    const auto begin_band = [&](int band, float rise)
+    {
+        const float e = arrive(band);
+        list.push_opacity(e);
+        list.push_transform(1.0f, 0.0f, 0.0f, 0.0f, (1.0f - e) * rise);
+    };
+    const auto end_band = [&]
+    {
+        list.pop_transform();
+        list.pop_opacity();
+    };
+    // A focused surface grows a little and dips when pressed.
+    const auto begin_lift = [&](const Rect &r, float amount, float grow)
+    {
+        const float scale = 1.0f + grow * amount - 0.035f * press_ * amount;
+        list.push_transform(scale, r.x + r.w * 0.5f, r.y + r.h * 0.5f, 0.0f, -3.0f * amount);
+    };
+
+    // ---- header ----
+    begin_band(0, -18.0f);
+    if (textures_.brand() != 0)
+        list.rounded_image(textures_.brand(), {120.0f, 72.0f, 72.0f, 72.0f},
+                           {0.0f, 0.0f, 1.0f, 1.0f}, 16.0f, kWhite);
+    text(c, "PROSPEROEDEN", 216.0f, baseline(72.0f, 44.0f, theme::kBrand), theme::kBrand,
+         theme::kText, Align::left, 3.0f);
+    text(c, "PS5 EDITION  /  " + version_, 216.0f, baseline(120.0f, 28.0f, theme::kSmall),
+         theme::kSmall, Color::rgb(0x9fac9e), Align::left, 1.0f);
+    static constexpr const char *kNav[] = {"Library", "Settings", "About"};
+    for (int i = 0; i < 3; ++i)
+    {
+        const Rect r = nav_rect(i);
+        const float f = focus(1 + i);
+        list.push_opacity(i == 0 && !ready ? 0.4f : 1.0f);
+        plate(c, kNavPlate, r, f);
+        text(c, kNav[i], r.x + r.w * 0.5f, baseline(r.y, 60.0f, theme::kText24), theme::kText24,
+             gfx::mix(theme::kMuted, theme::kText, f), Align::center);
+        list.pop_opacity();
+    }
+    text(c, clock_, 1800.0f, baseline(92.0f, 40.0f, theme::kClock), theme::kClock,
+         Color::rgb(0xc1cdc2), Align::right);
+    list.rounded_rect({120.0f, 160.0f, 1680.0f, 1.0f}, 0.0f, theme::kText.with_alpha(0.12f));
+    end_band();
+
+    // ---- continue playing ----
+    begin_band(1, 28.0f);
+    glass(c, kHero, 14.0f, theme::kGlass.with_alpha(0.60f), kWhite.with_alpha(0.125f));
+    cover(c, home_.last_cover, {168.0f, 272.0f, 336.0f, 336.0f}, 16.0f, 1.0f);
+    text(c, "CONTINUE PLAYING", 560.0f, baseline(264.0f, 30.0f, theme::kSmall), theme::kSmall,
+         theme::kLime, Align::left, 3.0f);
+    text_block(c, home_.last_file.empty() ? "Your next adventure" : home_.last_title, 560.0f,
+               baseline(312.0f, 56.0f, theme::kDisplay), theme::kDisplay, 56.0f, theme::kText,
+               1120.0f, 2);
+    text_fit(c, home_.last_file.empty() ? "Choose a game from your library." : home_.last_caption,
+             560.0f, baseline(424.0f, 36.0f, theme::kText24), theme::kText24, Color::rgb(0xabb8ae),
+             1040.0f);
+    text_fit(c, home_.last_info, 560.0f, baseline(462.0f, 30.0f, theme::kSmall), theme::kSmall,
+             home_.last_info_warning ? theme::kWarning : Color::rgb(0xabb8ae), 1160.0f);
+    {
+        const float f = focus(0);
+        list.push_opacity(ready ? 1.0f : 0.4f);
+        begin_lift(kContinue, f, 0.035f);
+        plate(c, kButtonPlate, kContinue, f);
+        text(c, continue_ready ? "Launch game" : "Open library", kContinue.x + kContinue.w * 0.5f,
+             baseline(kContinue.y, 70.0f, theme::kText24), theme::kText24, theme::kText,
+             Align::center);
+        list.pop_transform();
+        list.pop_opacity();
+    }
+    {
+        const float f = focus(4);
+        list.push_opacity(continue_ready ? 1.0f : 0.4f);
+        begin_lift(kDetails, f, 0.035f);
+        plate(c, kButtonPlate, kDetails, f);
+        text(c, "Game details", kDetails.x + kDetails.w * 0.5f,
+             baseline(kDetails.y, 70.0f, theme::kText24), theme::kText24, theme::kText,
+             Align::center);
+        list.pop_transform();
+        list.pop_opacity();
+    }
+    text(c, "Eden emulator for PlayStation 5", 560.0f, baseline(616.0f, 30.0f, theme::kSmall),
+         theme::kSmall, theme::kFaint);
+    end_band();
+
+    // ---- recently played, or what needs attention ----
+    begin_band(2, 28.0f);
+    if (!home_.status.empty())
+    {
+        const Rect panel{120.0f, 728.0f, 1680.0f, 152.0f};
+        const Color accent = home_.launch_failed ? theme::kWarning : theme::kLime;
+        glass(c, panel, 10.0f, Color::rgb(0x0a1611, 0.62f), kWhite.with_alpha(0.08f), 0.6f);
+        list.rounded_rect({panel.x, panel.y + 10.0f, 4.0f, panel.h - 20.0f}, 2.0f, accent);
+        text_block(c, home_.status, 148.0f, baseline(752.0f, 36.0f, theme::kText24),
+                   theme::kText24, 36.0f, theme::kText, 1624.0f, 3);
+    }
+    else
+    {
+        text(c, "RECENTLY PLAYED", 120.0f, baseline(712.0f, 30.0f, theme::kSmall), theme::kSmall,
+             Color::rgb(0xc6d2c7), Align::left, 3.0f);
+        {
+            const float f = focus(9);
+            plate(c, kNavPlate, kViewAll, f);
+            text(c, "VIEW ALL GAMES", kViewAll.x + 280.0f,
+                 baseline(kViewAll.y, 40.0f, theme::kSmall), theme::kSmall,
+                 gfx::mix(Color::rgb(0xafbbaf), theme::kLime, f), Align::right);
+        }
+        if (home_.recents.empty())
+            text(c, "Games you launch will appear here.", 120.0f,
+                 baseline(784.0f, 36.0f, theme::kText24), theme::kText24, theme::kMuted);
+        for (int i = 0; i < static_cast<int>(home_.recents.size()) && i < 4; ++i)
+        {
+            const Recent &recent = home_.recents[static_cast<std::size_t>(i)];
+            const Rect r = tile_rect(i);
+            const float f = focus(5 + i);
+            begin_lift(r, f, 0.03f);
+            plate(c, kTilePlate, r, f);
+            cover(c, recent.cover, {r.x + 24.0f, r.y + 24.0f, 96.0f, 96.0f}, 10.0f, 0.5f);
+            text_block(c, recent.title, r.x + 144.0f, baseline(r.y + 40.0f, 32.0f, theme::kText24),
+                       theme::kText24, 32.0f, gfx::mix(Color::rgb(0xd7e1d9), theme::kTitle, f),
+                       232.0f, 2);
+            list.pop_transform();
+        }
+    }
+    end_band();
+
+    // ---- footer ----
+    begin_band(3, 0.0f);
+    list.rounded_rect({120.0f, 952.0f, 1680.0f, 1.0f}, 0.0f, theme::kText.with_alpha(0.10f));
+    static constexpr Hint kHints[] = {
+        {Pad::cross, "Select"}, {Pad::triangle, "Details"}, {Pad::dpad, "Navigate"}};
+    draw_hints(c, kHints, 3, 120.0f, 982.0f, theme::kMuted);
+    text(c, home_.system_status, 1800.0f, 989.0f, theme::kSmall, Color::rgb(0x9eac9f),
+         Align::right);
+    end_band();
+}
+
+} // namespace pe::ui

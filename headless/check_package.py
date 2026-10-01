@@ -59,7 +59,7 @@ def check():
     if json.loads((OUT / 'frontend.json').read_text())['renderer'] == 'opengl-4.6-compatibility':
         assert b'[ps5-batch-summary] config gpu-present=1 multidraw=1 deferred=1 ' in (OUT / 'llvm-pie.elf').read_bytes(), 'SDK batching disabled or missing compiled receipt'
         expected += ['libSceAgc.prx', 'libSceAgcDriver.prx', 'libSceSystemService.sprx',
-                     'libSceVideoOut.sprx', 'libSceImeDialog.sprx']
+                     'libSceVideoOut.sprx']
     if frontend.get('vulkan'):
         expected.append('libSceSysmodule.sprx')
     if frontend.get('gpu_probe'):

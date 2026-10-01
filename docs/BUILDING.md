@@ -60,7 +60,6 @@ Next to this repository (`../`), as git checkouts:
 
 - **ps5-native-app-boilerplate**: the PS5 Payload SDK v0.42, the runtime `libc.prx` and the
   native packaging tool;
-- **psradio** (`../ps5-radio-browser`): the prebuilt PS5 SDL2, RmlUi and FreeType libraries;
 - **Mihawk's PS5_Vulkan, PS5_Mesa and PS5_PayloadSDK** (`../mihawk-*-review`): RADV and its
   build recipe. `make prepare` builds RADV once and isolates it beside the OpenGL Mesa
   (`tools/isolate-radv.py`).
@@ -68,6 +67,21 @@ Next to this repository (`../`), as git checkouts:
 The `libSceAgcDriver` import facade both drivers link against is built from
 `tools/stubs/libSceAgcDriver.c`. Small contracts from our research repositories are in
 `third_party/`.
+
+## Launcher
+
+The launcher (`headless/prosperoeden`) draws with OpenGL through the PS5 OpenGL SDK and plays its
+sounds through the console's audio output; it needs no other library. Its font atlas, artwork
+and sounds are committed in `headless/prosperoeden/ui`, so a build does not regenerate them.
+The tools that made them are in `tools/launcher`:
+
+- `assets.sh` bakes the font (`third_party/fonts/Montserrat-Medium.ttf`) and renders the art from
+  `assets/`; it needs a host C++ compiler and Python with Pillow.
+- `process-sfx.py` trims and levels the raw sound effects (needs `ffmpeg` and `numpy`).
+- `bake-wordmark.py` writes the "LOADING" lettering of the loading screen
+  (`headless/loading_wordmark.glsl`).
+- `preview.sh` draws every launcher screen on a PC (Mesa's software renderer, sample games) to
+  PNG files or a video, with the same code, shaders and font as on the console.
 
 ## Host tools
 
@@ -90,8 +104,7 @@ development checkout whose dependencies are reused instead of fetched.
 
 To cut a release:
 
-1. Bump the version in `tools/package-headless-native.sh` and
-   `headless/prosperoeden/ui/main.rml`.
+1. Bump the version in `headless/prosperoeden/version.h` (the launcher and the package read it).
 2. Add the "Changes in" section to the README.
 3. Test the build on a console.
 4. Push a `vX.Y.Z` tag.

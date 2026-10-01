@@ -7,6 +7,7 @@
 #include "audio_core/sink/null_sink.h"
 #include "common/logging.h"
 #include "native_audio.hpp"
+#include "audio_out_init.h"
 
 namespace Eden {
 using namespace AudioCore::Sink;
@@ -20,10 +21,7 @@ AudioStream::AudioStream(Core::System& system, u32 channels, const std::string& 
     system_channels = channels;
     device_channels = 2;
     SetRingSize(4);
-    static std::once_flag init;
-    static int init_result = -1;
-    std::call_once(init, [] { init_result = sceAudioOutInit(); });
-    if (init_result < 0) throw std::runtime_error("sceAudioOutInit failed");
+    if (!AudioOutReady()) throw std::runtime_error("sceAudioOutInit failed");
     handle = sceAudioOutOpen(0xff, 0, 0, kAudioOutGrain, kAudioOutRate, kAudioOutStereoS16);
     if (handle < 0) throw std::runtime_error("sceAudioOutOpen failed");
     std::array<int, 8> volumes;

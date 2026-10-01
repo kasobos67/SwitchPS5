@@ -5,7 +5,7 @@
 //     "version": 1,
 //     "video": { "renderer": "vulkan", "fps_overlay": true, "resolution": "1x",
 //                "upscaling_filter": "bilinear" },
-//     "audio": { "volume": 100, "mute": false },
+//     "audio": { "volume": 100, "mute": false, "menu_volume": 70 },
 //     "controls": { "vibration": true },
 //     "system": { "language": "en-US" },
 //     "diagnostics": { "detailed_logging": false },
@@ -70,6 +70,7 @@ struct Preferences {
     int upscaling_filter = 0;            // index into kUpscalingFilterKeys
     bool vibration = true;
     int language = 0;                    // index into kLanguageKeys (English (US), Eden's default)
+    int menu_volume = 70;                // the launcher's own sounds, 0 (off) to 100
 };
 
 inline int KeyIndex(const std::string& value, const char* const* keys, int count, int fallback) {
@@ -200,6 +201,8 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     const int volume = Settings::Int(document, Json::json_pointer("/audio/volume"), result.volume);
     if (volume >= 0 && volume <= 100) result.volume = volume;
     result.mute = Settings::Bool(document, Json::json_pointer("/audio/mute"), result.mute);
+    const int menu_volume = Settings::Int(document, Json::json_pointer("/audio/menu_volume"), result.menu_volume);
+    if (menu_volume >= 0 && menu_volume <= 100) result.menu_volume = menu_volume;
     result.detailed_logging = Settings::Bool(document, Json::json_pointer("/diagnostics/detailed_logging"),
                                              result.detailed_logging);
     result.resolution = KeyIndex(Settings::String(document, Json::json_pointer("/video/resolution")),
@@ -214,7 +217,7 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
 }
 
 inline bool SavePreferences(const Preferences& value, const std::string& file = SettingsFile()) {
-    if (value.volume < 0 || value.volume > 100 ||
+    if (value.volume < 0 || value.volume > 100 || value.menu_volume < 0 || value.menu_volume > 100 ||
         (value.backend != GraphicsBackend::OpenGL && value.backend != GraphicsBackend::Vulkan) ||
         value.resolution < 0 || value.resolution >= int(std::size(kResolutionKeys)) ||
         value.upscaling_filter < 0 || value.upscaling_filter >= int(std::size(kUpscalingFilterKeys)) ||
@@ -227,6 +230,7 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     document["video"]["upscaling_filter"] = kUpscalingFilterKeys[value.upscaling_filter];
     document["audio"]["volume"] = value.volume;
     document["audio"]["mute"] = value.mute;
+    document["audio"]["menu_volume"] = value.menu_volume;
     document["controls"]["vibration"] = value.vibration;
     document["system"]["language"] = kLanguageKeys[value.language];
     document["diagnostics"]["detailed_logging"] = value.detailed_logging;

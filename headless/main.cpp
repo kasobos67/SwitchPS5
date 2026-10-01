@@ -265,8 +265,12 @@ int main(int argc, char** argv) {
 #endif
         {
             std::ifstream dev_settings(Eden::AppFile("dev-settings.txt"));
-            for (std::string entry; dev_settings >> entry;)
+            for (std::string entry; dev_settings >> entry;) {
                 if (entry.starts_with("rom=") && entry.size() == 20) development_id = entry.substr(4);
+                // dev-settings launcher=first opens the launcher instead of the development title
+                // (launcher work: its captures and file-driven input need a development build).
+                if (entry == "launcher=first") autoboot_pending = false;
+            }
         }
 #endif
         for (;;) {

@@ -75,14 +75,6 @@
       "setup_creates": ".deps/native/ps5-payload-sdk/bin/prospero-clang"
     },
     {
-      "name": "psradio",
-      "about": "ProsperoRadio: the prebuilt PS5 SDL2, RmlUi and FreeType libraries under vendor/ps5",
-      "kind": "git",
-      "url": "https://github.com/blackbearreloaded/psradio.git",
-      "commit": "2268c1abe609327e6c325bcb98bda4b376c20f55",
-      "path": "../ps5-radio-browser"
-    },
-    {
       "name": "ps5-vulkan-tools",
       "about": "Mihawk's PS5_Vulkan: the RADV build and link recipes",
       "kind": "git",
