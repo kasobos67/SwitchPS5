@@ -349,7 +349,7 @@ std::string EdenServices::clock() {
 unsigned EdenServices::controllers() { return radio_input_controllers(); }
 
 std::string EdenServices::version() {
-    // "01.000.030" reads as v1.000.030.
+    // "01.000.040" reads as v1.000.040.
     const char* text = Eden::kAppVersion;
     while (text[0] == '0' && text[1] != '.' && text[1] != '\0') ++text;
     return std::string("v") + text;

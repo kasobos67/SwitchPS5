@@ -39,7 +39,7 @@ class FakeServices final : public ui::Services
     }
     std::string version() override
     {
-        return "v1.000.030";
+        return "v1.000.040";
     }
     std::vector<ui::Game> games() override
     {
