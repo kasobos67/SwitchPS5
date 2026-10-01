@@ -1209,15 +1209,19 @@ int main(int argc, char** argv) {
                         return completion->failure || completion->exited || completion->captured ||
                             completion->return_to_menu || !completion->guest_fault.empty();
                     };
+#ifdef EDEN_DEV_PROFILE
+                    // The 30-second segments a development session samples before it only waits.
+                    // On Vulkan a picture can be asked for (capture-once.txt) for as long as the
+                    // game runs.
+#ifdef EDEN_DEV_VULKAN
+                    [[maybe_unused]] constexpr unsigned segments = ~0u;
+#else
+                    [[maybe_unused]] constexpr unsigned segments = 12;
+#endif
+#endif
 #ifdef PS5_NATIVE
                     if (game) {
 #ifdef EDEN_DEV_PROFILE
-#ifdef EDEN_DEV_VULKAN
-                        // A picture can be asked for (capture-once.txt) for as long as the game runs.
-                        constexpr unsigned segments = ~0u;
-#else
-                        constexpr unsigned segments = 12;
-#endif
                         for (unsigned segment = 0; segment < segments; ++segment) {
                             bool finished = false;
                             for (unsigned poll = 0; poll < 600; ++poll) {
