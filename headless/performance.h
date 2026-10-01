@@ -91,6 +91,10 @@ inline std::array<IdleCounters, 4> guest_idle{};
 // a racing game's heavy phase from ~55 to ~59.6 FPS; dev-settings
 // idle_spin_us=N overrides it (0 sleeps at once).
 inline std::atomic<unsigned> idle_spin_iterations{5000};
+// Draws between the Vulkan rasterizer's hand-offs to its worker, minus one (a power of two minus
+// one; tools/prepare-vulkan-port.py). Upstream hands off every 8 draws; dev-settings
+// dispatch_draws=N (8 to 512) overrides the 64 used here.
+inline std::atomic<unsigned> dispatch_mask{63};
 inline void CountIdle(std::size_t core, long long nanoseconds, bool slept) {
     if (core >= guest_idle.size()) return;
     guest_idle[core].calls.fetch_add(1, std::memory_order_relaxed);

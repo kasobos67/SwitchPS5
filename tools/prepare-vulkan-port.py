@@ -80,6 +80,12 @@ void RasterizerVulkan::DispatchCompute() {"""),
      'bool RasterizerVulkan::OnCPUWrite(DAddr addr, u64 size) {\n    ::Eden::Performance::Timer guest_write_timer(::Eden::Performance::guest_cpu_write);'),
     ('VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {',
      'VideoCore::RasterizerDownloadArea RasterizerVulkan::GetFlushArea(DAddr addr, u64 size) {\n    ::Eden::Performance::Timer guest_read_timer(::Eden::Performance::guest_cpu_read);'),
+    # Hand recorded work to the worker every 64 draws rather than every 8: each hand-off wakes the
+    # worker with a system call (about 16.7k per second and ~7 us each in heavy scenes). A 32 KiB
+    # chunk still dispatches whenever it fills (about 15-25 draws of records); the 4,096-draw flush
+    # is unchanged. Development builds can pick 8-512 draws (dev-settings dispatch_draws=N).
+    ('    static constexpr u32 CHECK_MASK = 7;\n#endif // __ANDROID__\n\n    static_assert(DRAWS_TO_DISPATCH % (CHECK_MASK + 1) == 0);\n',
+     '    const u32 CHECK_MASK = ::Eden::Performance::dispatch_mask.load(std::memory_order_relaxed);\n#endif // __ANDROID__\n\n'),
     # Per-draw count for the GPU-thread report (dispatch time per draw).
     ('    FlushWork();\n    gpu_memory->FlushCaching();\n\n    GraphicsPipeline* const pipeline{pipeline_cache.CurrentGraphicsPipeline()};',
      '    ::Eden::Performance::rasterizer_draw.calls.fetch_add(1, std::memory_order_relaxed);\n    FlushWork();\n    gpu_memory->FlushCaching();\n\n    GraphicsPipeline* const pipeline{pipeline_cache.CurrentGraphicsPipeline()};'),
