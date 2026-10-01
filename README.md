@@ -45,6 +45,9 @@ The complete ProsperoEden source is in this repository: the PS5 frontend and lau
 - **Library** - game covers, **Continue Playing**, and **Recently Played**, which keep working after you move your files.
 - **Launcher** - an animated interface drawn with OpenGL, with sound effects (their level is in **Settings > Audio**) and a loading screen while a game starts. The home screen shows which controllers are connected.
 - **Per-game settings** - renderer, resolution, upscaling filter and Handheld / Docked mode for each game (Triangle in the Library).
+- **Your language** - the launcher follows the language the PS5 is set to (22 languages; English otherwise).
+- **Accessibility** - larger text, high contrast and reduced motion, in **Settings > Accessibility**.
+- **Save data in and out** - import a game's save from a folder or from a Ryujinx data folder, and export a copy (Triangle in the Library, then **Save data**).
 - **Game updates and DLC** - put update and DLC files (NSP or XCI) in the `updates` folder next to `roms`. They apply when the game starts, and each game's details show the update version and DLC count.
 - **Shader cache** - shaders compiled in earlier sessions are loaded when a game starts, so an effect stutters only the first time it appears.
 - **In-game shortcuts** - a performance overlay (Select + R1), and Select + L1 to end the game and return to the library.
@@ -76,7 +79,6 @@ Only these subfolders matter; the folder itself can have any name and location.
 │   └── Game.xci
 ├── updates/                            # optional: update and DLC files
 │   └── Game update.nsp
-├── mods/                               # optional: mods, one folder per title ID
 ├── save-import/                        # optional: saves to import, one folder per title ID
 ├── ryujinx/                            # optional: a Ryujinx data folder to import saves from
 └── save-export/                        # written by "Export a copy"
@@ -110,28 +112,30 @@ Emulators like Eden keep a save as the files the game wrote, so nothing is conve
 
 Cross imports, and asks before it replaces a save. The save it replaces is first moved to `/data/prosperoeden/backup/save-import`, so nothing is lost.
 
-### Mods
-
-A mod changes a game: a patch to its code (`.pchtxt` or `.ips` files in an `exefs` folder), replacement game files (a `romfs` folder), or cheats (a `cheats` folder). Mods made for other emulators of the same console come in this layout.
-
-- **Add a mod.** Each mod is a folder. Copy it to `mods/<title ID>/`, next to `roms/` in the game files folder, so that a patch ends up at `mods/<title ID>/<mod name>/exefs/<file>.pchtxt`. The title ID is the 16-character code in the game's file name. The Mods screen names the exact folder, and Square creates it. The About screen shows where the `mods` folder is.
-- **Switch it on or off.** In the Library, press Triangle on the game and pick **Mods**. Every mod found is listed with a switch. A mod is on unless you switch it off, and a change applies the next time the game starts.
-- **Switch all of a game's mods off or on.** In the Library, a game that has mods shows a **Mods** switch under its console mode; Square flips it. Off, the game starts without any of its mods, and each mod keeps its own switch for when you turn it back on.
-- **See what a game has.** The home screen and the Library count a game's mods next to its update and DLC (`Update 1.2.0, 2 DLC, 1 mod`), and say so when some are switched off (`1 of 2 mods on`).
-- **Match the game's version.** A patch is made for one version of a game. One made for another version is ignored without a message, so check that the mod matches the update you have in `updates/`.
-- **Frame rate.** A patch that makes a 30 FPS game run at 60 FPS works on the 60 Hz output ProsperoEden uses. A patch for more than 60 FPS needs the 120 Hz output: set **Refresh rate** to 120 Hz in the game's settings (Triangle in the Library) or in **Settings > Video**. That takes a display that shows 120 Hz and the PS5's own 120 Hz output setting; without them the game runs at 60 Hz. A 60 FPS patch can gain from it too: a game that misses some frames at 60 Hz has twice as many chances to show them. A patch for more frames than the output shows (240 FPS on the 120 Hz output, 120 FPS on the 60 Hz one) still runs at its own pace: the frames the display has no refresh for are left out.
-
-ProsperoEden does not include or download mods.
-
 ### Language and accessibility
 
-The launcher follows the language the PS5 is set to: Arabic, Chinese (simplified and traditional), Czech, Danish, Dutch, Finnish, French, German, Greek, Hungarian, Indonesian, Italian, Japanese, Korean, Norwegian, Polish, Portuguese, Romanian, Russian, Spanish, Swedish, Thai, Turkish, Ukrainian and Vietnamese (with the regional variants the PS5 has for French, Portuguese and Spanish), and English otherwise. Arabic, Chinese, Greek, Japanese, Korean and Thai are drawn with the PS5's own system fonts. Arabic text runs right to left; the screens themselves are not mirrored. To use another one, put a file named `language.txt` holding its tag (for example `en-US` or `pt-BR`) in `/data/homebrew/PPSA99008`. The language *games* use is a separate setting, **Settings > Language**.
+The launcher follows the language the PS5 is set to: Czech, Danish, Dutch, Finnish, French, German, Hungarian, Indonesian, Italian, Norwegian, Polish, Portuguese, Romanian, Russian, Spanish, Swedish, Turkish, Ukrainian and Vietnamese (with the regional variants the PS5 has for French, Portuguese and Spanish), and English otherwise. To use another one, put a file named `language.txt` holding its tag (for example `en-US` or `pt-BR`) in `/data/homebrew/PPSA99008`. The language *games* use is a separate setting, **Settings > Language**.
 
 **Settings > Accessibility** has three switches. **Larger text** draws the menu's small text about a third larger. **High contrast** uses solid panels, brighter text and an outlined highlight. **Reduce motion** stops the background drifting and the screens sliding, in the menu and on the loading screen. There is no screen reader.
 
 ### Upgrading from an earlier alpha
 
 Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That folder keeps working until you choose a game files folder, and settings are migrated automatically on first launch. To move to the new layout, move `assets/keys`, `assets/firmware` and `assets/roms` into any folder, then select it in **Settings > Game files**. The release ZIP contains no user files, so copy its app files over your installation without deleting your own data.
+
+## Changes in v1.000.040
+
+- **The launcher in your language.** It follows the language the PS5 is set to, in 22 languages. Text that runs longer in another language makes its own room instead of being cut.
+- **Accessibility.** **Settings > Accessibility** adds **Larger text**, **High contrast** and **Reduce motion**. Warnings carry a mark as well as a colour.
+- **Save data in and out.** Import a game's save from a folder or from a Ryujinx data folder, and export a copy. See [Moving save data](#moving-save-data).
+- **A ten-second slowdown with the AMD FSR filter is fixed.** In a large open-world game, gameplay could start at 3-9 FPS for about ten seconds, and frames of about a tenth of a second kept coming afterwards. The texture cache was throwing away images the GPU had drawn, with a wait for the GPU each time, as soon as memory use passed a mark that the FSR filter's own images pushed it over. It now keeps them until graphics memory is really short.
+- **Smoother heavy scenes.** The renderer hands its work to the Vulkan worker in larger batches, and the emulated cores wait less on the GPU caches' locks. In the heaviest area of a test walk this removed drops to 26-28 FPS and cut the GPU thread's work by about a quarter.
+- **Touchpad as Select in games.** A tap of the touchpad presses the game's Select (Minus) button, and a longer press holds it. The Select + L1 and Select + R1 shortcuts never reach the game as a press.
+- **A crash a few seconds into some games is fixed.** The motion sensors' updates could reach a part of the controller service that was not set up yet.
+- **Games' own system screens.** A game's error dialog, profile picker and similar screens use Eden's built-in versions, and its error dialog now answers the game instead of leaving it waiting. The firmware's versions could end a session with an out-of-memory error.
+- **A clearer message when a game runs out of graphics memory.** A large game can need more than there is above 1x. Give such a game its own 1x resolution: Triangle on it in the Library, then **Resolution**.
+- **Games that accept only one kind of Joy-Con** now get a controller.
+- The graphics driver's shader cache moved to `/data/prosperoeden/cache`, so a read-only package install keeps it.
+- **Experimental: block list.** With an empty file named `block-list.txt` in `/data/homebrew/PPSA99008`, ProsperoEden saves which code a 64-bit game compiled and compiles it again on a spare CPU when the game next starts. In a repeat session of a large open-world game, the emulated cores then compiled 426 blocks during play instead of 138,262, and gameplay started at 30 FPS instead of 22. It is off by default until more games have run with it.
 
 ## Changes in v1.000.030
 
@@ -175,14 +179,12 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 
 ## Roadmap
 
-- **FPKG support** - install ProsperoEden as a fake package, alongside the current homebrew folder install. Each release now includes a ShadowMountPlus package image (`.ffpfsc`); installing it still needs testing.
-- **More performance** - CPU and GPU work to keep demanding games at their target frame rate, including the short stutter when a game starts, heavy cutscenes, and games that run slower in Docked mode than in Handheld.
+- **FPKG support** - install ProsperoEden as a fake package, alongside the current homebrew folder install. Each release includes a ShadowMountPlus package image (`.ffpfsc`); installing it still needs testing.
+- **More performance** - CPU and GPU work to keep demanding games at their target frame rate: the short stutter when a game reaches new areas (the block list, once it is on by default), heavy cutscenes, games that run slower in Docked mode than in Handheld, and more graphics memory for large games above 1x.
 - **More reliable game loading** - fix the remaining hangs on the loading screen.
 - **Faster exit in every game** - a few games still take up to several minutes to close.
-- **Touchpad button in every game** - in some games the touchpad (Select) does not respond and only the Create (Share) button works.
 - **Controller selection screen** - some games wait forever on the screen that asks you to choose a controller.
-- **Import saves from Ryujinx** - copy a game's save from a Ryujinx data folder into ProsperoEden. Eden's desktop app can already link Ryujinx saves, and the code that finds them is in the shared code ProsperoEden builds; ProsperoEden needs its own import step in the launcher.
-- **Launcher in your language** - show the launcher's own text in the language the PS5 is set to.
+- **More languages** - Japanese, Korean, Chinese, Greek, Thai and Arabic need letters the launcher's font does not have.
 - **More game compatibility** - validate more games on the PS5, and fix what keeps them from running well, such as games that crash at launch.
 
 ## Issues are disabled
