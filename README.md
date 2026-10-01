@@ -45,7 +45,7 @@ The complete ProsperoEden source is in this repository: the PS5 frontend and lau
 - **Library** - game covers, **Continue Playing**, and **Recently Played**, which keep working after you move your files.
 - **Launcher** - an animated interface drawn with OpenGL, with sound effects (their level is in **Settings > Audio**) and a loading screen while a game starts. The home screen shows which controllers are connected.
 - **Per-game settings** - renderer, resolution, upscaling filter and Handheld / Docked mode for each game (Triangle in the Library).
-- **Your language** - the launcher follows the language the PS5 is set to (22 languages; English otherwise).
+- **Your language** - the launcher follows the language the PS5 is set to (29 languages; English otherwise).
 - **Accessibility** - larger text, high contrast and reduced motion, in **Settings > Accessibility**.
 - **Save data in and out** - import a game's save from a folder or from a Ryujinx data folder, and export a copy (Triangle in the Library, then **Save data**).
 - **Game updates and DLC** - put update and DLC files (NSP or XCI) in the `updates` folder next to `roms`. They apply when the game starts, and each game's details show the update version and DLC count.
@@ -114,7 +114,7 @@ Cross imports, and asks before it replaces a save. The save it replaces is first
 
 ### Language and accessibility
 
-The launcher follows the language the PS5 is set to: Czech, Danish, Dutch, Finnish, French, German, Hungarian, Indonesian, Italian, Norwegian, Polish, Portuguese, Romanian, Russian, Spanish, Swedish, Turkish, Ukrainian and Vietnamese (with the regional variants the PS5 has for French, Portuguese and Spanish), and English otherwise. To use another one, put a file named `language.txt` holding its tag (for example `en-US` or `pt-BR`) in `/data/homebrew/PPSA99008`. The language *games* use is a separate setting, **Settings > Language**.
+The launcher follows the language the PS5 is set to: Arabic, Chinese (simplified and traditional), Czech, Danish, Dutch, Finnish, French, German, Greek, Hungarian, Indonesian, Italian, Japanese, Korean, Norwegian, Polish, Portuguese, Romanian, Russian, Spanish, Swedish, Thai, Turkish, Ukrainian and Vietnamese (with the regional variants the PS5 has for French, Portuguese and Spanish), and English otherwise. Arabic, Chinese, Greek, Japanese, Korean and Thai are drawn with the PS5's own system fonts. Arabic text runs right to left; the screens themselves are not mirrored. To use another one, put a file named `language.txt` holding its tag (for example `en-US` or `pt-BR`) in `/data/homebrew/PPSA99008`. The language *games* use is a separate setting, **Settings > Language**.
 
 **Settings > Accessibility** has three switches. **Larger text** draws the menu's small text about a third larger. **High contrast** uses solid panels, brighter text and an outlined highlight. **Reduce motion** stops the background drifting and the screens sliding, in the menu and on the loading screen. There is no screen reader.
 
@@ -124,7 +124,7 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 
 ## Changes in v1.000.040
 
-- **The launcher in your language.** It follows the language the PS5 is set to, in 22 languages. Text that runs longer in another language makes its own room instead of being cut.
+- **The launcher in your language.** It follows the language the PS5 is set to, in 29 languages. Arabic, Chinese, Greek, Japanese, Korean and Thai are drawn with the console's own fonts. Text that runs longer in another language makes its own room instead of being cut.
 - **Accessibility.** **Settings > Accessibility** adds **Larger text**, **High contrast** and **Reduce motion**. Warnings carry a mark as well as a colour.
 - **Save data in and out.** Import a game's save from a folder or from a Ryujinx data folder, and export a copy. See [Moving save data](#moving-save-data).
 - **A ten-second slowdown with the AMD FSR filter is fixed.** In a large open-world game, gameplay could start at 3-9 FPS for about ten seconds, and frames of about a tenth of a second kept coming afterwards. The texture cache was throwing away images the GPU had drawn, with a wait for the GPU each time, as soon as memory use passed a mark that the FSR filter's own images pushed it over. It now keeps them until graphics memory is really short.
@@ -184,7 +184,6 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 - **More reliable game loading** - fix the remaining hangs on the loading screen.
 - **Faster exit in every game** - a few games still take up to several minutes to close.
 - **Controller selection screen** - some games wait forever on the screen that asks you to choose a controller. Games that take single Joy-Cons should now get past it; other cases still need a log from a game that does it.
-- **More languages** - Japanese, Korean, Chinese, Greek, Thai and Arabic need letters the launcher's font does not have.
 - **More game compatibility** - validate more games on the PS5, and fix what keeps them from running well, such as games that crash at launch.
 
 ## Issues are disabled

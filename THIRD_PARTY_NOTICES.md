@@ -43,9 +43,13 @@ builds on the following projects, each under its own license.
   (`headless/prosperoeden/pe`) started there.
 - **Montserrat** by Julieta Ulanovsky and contributors, SIL Open Font License
   1.1 (`third_party/fonts`). The launcher's font is baked from Montserrat Medium.
+- **[HarfBuzz](https://github.com/harfbuzz/harfbuzz)**, "Old MIT" license (its
+  `COPYING` file). Shapes the launcher's text in the scripts that need it, such
+  as Thai and Arabic. Fetched at the release pinned in `tools/deps.json`.
 - **[stb](https://github.com/nothings/stb)** by Sean Barrett, MIT or public
-  domain. `stb_truetype` bakes the font and `stb_image_write` saves the PC
-  previews (`tools/launcher/stb`); neither is part of the app.
+  domain (`tools/launcher/stb`). `stb_truetype` bakes the launcher's font and,
+  in the app, reads the console's system fonts for the scripts Montserrat does
+  not have. `stb_image_write` saves the PC previews and is not part of the app.
 - The launcher's sound effects were generated with
   [ElevenLabs](https://elevenlabs.io) and edited for this project.
 - `third_party/ps5_pad.hpp` comes from
