@@ -1391,6 +1391,25 @@ get_target_property(controller_sources hid_core SOURCES)
 list(FILTER controller_sources EXCLUDE REGEX "(^|/)emulated_controller\\.cpp$")
 list(APPEND controller_sources "${PORT_BUILD_DIR}/emulated_controller.cpp")
 set_property(TARGET hid_core PROPERTY SOURCES "${controller_sources}")
+# A controller update reaches every applet resource that is assigned. One that is assigned but not
+# activated yet has no controllers set up (NPad::Activate fills them in), and upstream calls
+# through its null device. Buttons rarely changed in that window; the motion sensors change with
+# every sample, so a game that registers a second applet resource crashed a few seconds after it
+# started (seen on the console: page fault in NPad::ControllerUpdate from the pad thread).
+file(READ "${PROJECT_SOURCE_DIR}/src/hid_core/resources/npad/npad.cpp" npad_source)
+set(npad_update "        auto& controller = controller_data[aruid_index][controller_idx];\n        const auto is_connected = controller.device->IsConnected();")
+string(FIND "${npad_source}" "${npad_update}" npad_update_at)
+if(npad_update_at LESS 0)
+    message(FATAL_ERROR "Pinned NPad controller update changed")
+endif()
+string(REPLACE "${npad_update}"
+    "        auto& controller = controller_data[aruid_index][controller_idx];\n        if (controller.device == nullptr) {\n            continue;  // ProsperoEden: this applet resource is not activated yet\n        }\n        const auto is_connected = controller.device->IsConnected();"
+    npad_source "${npad_source}")
+write_derived("${PORT_BUILD_DIR}/npad.cpp" "${npad_source}")
+get_target_property(npad_sources hid_core SOURCES)
+list(FILTER npad_sources EXCLUDE REGEX "(^|/)npad\\.cpp$")
+list(APPEND npad_sources "${PORT_BUILD_DIR}/npad.cpp")
+set_property(TARGET hid_core PROPERTY SOURCES "${npad_sources}")
 add_library(eden-pad STATIC "${EDEN_PORT_DIR}/pad.cpp"
     "${PROJECT_SOURCE_DIR}/src/input_common/input_engine.cpp"
     "${PROJECT_SOURCE_DIR}/src/input_common/input_poller.cpp"
