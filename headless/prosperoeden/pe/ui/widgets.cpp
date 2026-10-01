@@ -230,6 +230,30 @@ void cover(Canvas &c, const std::string &path, const Rect &r, float radius, floa
     c.list.bordered_rect(r, radius, kWhite.with_alpha(0.0f), 1.0f, kWhite.with_alpha(0.10f));
 }
 
+void controller_icon(Canvas &c, const Rect &r, float lit)
+{
+    const std::uint32_t picture = c.textures.controller();
+    if (picture == 0)
+        return;
+    const float u = r.w / 72.0f; // the picture is drawn in a 72x50 box
+    if (lit > 0.01f)
+    {
+        // The light under a connected controller, breathing slowly.
+        const float breath = 0.85f + 0.15f * std::sin(c.time * 1.7f + r.x * 0.01f);
+        c.list.shadow({r.x + 8.0f * u, r.y + 8.0f * u, r.w - 16.0f * u, r.h - 14.0f * u},
+                      14.0f * u, 22.0f * u, theme::kLime.with_alpha(0.26f * lit * breath));
+    }
+    c.list.image(picture, r, {0.0f, 0.0f, 1.0f, 1.0f},
+                 gfx::mix(kWhite.with_alpha(0.16f), Color::rgb(0xf3f7ef), lit));
+    if (lit > 0.01f)
+    {
+        // The light bar on either side of the touchpad.
+        const Color bar = theme::kLime.with_alpha(lit);
+        for (const float x : {26.0f, 46.0f})
+            c.list.line(r.x + x * u, r.y + 10.0f * u, r.x + x * u, r.y + 19.0f * u, 1.4f * u, bar);
+    }
+}
+
 void toggle(Canvas &c, float right, float cy, float position)
 {
     constexpr float kWidth = 64.0f;

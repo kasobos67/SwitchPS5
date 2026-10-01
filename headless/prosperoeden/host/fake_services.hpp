@@ -24,11 +24,16 @@ class FakeServices final : public ui::Services
     std::string launch_error;
     bool has_history = true;
     bool import_available = false;
+    unsigned connected_controllers = 0b0011;
 
     ui::Home home() override;
     std::string clock() override
     {
         return "21:47";
+    }
+    unsigned controllers() override
+    {
+        return connected_controllers;
     }
     std::string version() override
     {

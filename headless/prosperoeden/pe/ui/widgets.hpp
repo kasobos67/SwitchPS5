@@ -89,6 +89,9 @@ void plate_focus(Canvas &c, const Plate &style, const Rect &r, float amount);
 // A cover (or the app icon while it loads or when there is none), with rounded corners.
 void cover(Canvas &c, const std::string &path, const Rect &r, float radius, float shadow = 0.0f);
 
+// A controller r.w wide (r.h is 25/36 of that): a faint outline at lit 0, white with its light
+// bar glowing at lit 1.
+void controller_icon(Canvas &c, const Rect &r, float lit);
 // A switch: knob at `position` (0 off .. 1 on).
 void toggle(Canvas &c, float right, float cy, float position);
 // A level bar ending at `right`: `level` 0..1.

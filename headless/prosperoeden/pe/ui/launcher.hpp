@@ -86,7 +86,9 @@ class Launcher
 
     // ---- home (home.cpp) ----
     void press_home(Key key);
+    void update_controllers(float dt);
     void draw_home(Canvas &c);
+    void draw_controllers(Canvas &c);
     void open_library_at_last();
 
     // ---- library and game settings (library.cpp) ----
@@ -153,6 +155,11 @@ class Launcher
 
     // home: 0 continue, 1-3 header, 4 game details, 5-8 recent, 9 view all
     Home home_;
+    // The controllers connected now (bit 0 is player 1), and how lit each one's icon is.
+    unsigned controllers_ = 0;
+    bool controllers_known_ = false;
+    std::array<tween::Spring, 4> controller_lit_{};
+    std::array<float, 4> controller_pop_{}; // 1 when a controller appears, then decays
     int home_focus_ = 0;
     std::array<tween::Spring, 10> home_springs_{};
     float intro_ = 0.0f;

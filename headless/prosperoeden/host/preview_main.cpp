@@ -236,13 +236,32 @@ void pictures(Stage &s)
     s.wait(2.0f);
     s.shoot("26-home-first-run");
     s.services.has_history = true;
+
+    // Controllers: one, then a third one joining (caught mid-bounce), then all four.
+    s.services.connected_controllers = 0b0001;
+    s.restart();
+    s.wait(2.0f);
+    s.shoot("27-home-one-controller");
+    s.services.connected_controllers = 0b0101;
+    s.wait(0.2f);
+    s.shoot("28-home-controller-joining");
+    s.services.connected_controllers = 0b1111;
+    s.wait(2.0f);
+    s.shoot("29-home-four-controllers");
+    s.services.connected_controllers = 0b0011;
 }
 
 // A walk through the launcher, one frame per call of frame().
 void tour(Stage &s)
 {
+    s.services.connected_controllers = 0b0001;
     s.restart(true);
-    s.wait(2.6f);
+    s.wait(2.0f);
+    // A second controller is switched on, then a third.
+    s.services.connected_controllers = 0b0011;
+    s.wait(1.2f);
+    s.services.connected_controllers = 0b0111;
+    s.wait(1.4f);
     s.press({Key::right, Key::left, Key::down, Key::right, Key::right, Key::left, Key::up}, 0.32f);
     s.wait(0.5f);
     s.press({Key::up}, 0.4f);

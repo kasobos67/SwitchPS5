@@ -5,6 +5,7 @@
 #include "diagnostics.h"
 #include "metadata_bridge.h"
 #include "native_directory.h"
+#include "radio_input.h"
 #include "version.h"
 
 #include <algorithm>
@@ -291,6 +292,8 @@ std::string EdenServices::clock() {
         (void)std::strftime(label, sizeof(label), "%H:%M", local);
     return label;
 }
+
+unsigned EdenServices::controllers() { return radio_input_controllers(); }
 
 std::string EdenServices::version() {
     // "01.000.030" reads as v1.000.030.

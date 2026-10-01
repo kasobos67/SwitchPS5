@@ -16,6 +16,7 @@ public:
 
     pe::ui::Home home() override;
     std::string clock() override;
+    unsigned controllers() override;
     std::string version() override;
 
     std::vector<pe::ui::Game> games() override;

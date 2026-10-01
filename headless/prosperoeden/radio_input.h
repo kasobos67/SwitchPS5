@@ -34,6 +34,9 @@ void radio_input_development_sample(const void * sample);
 #endif
 bool radio_input_next(radio_input_event_t * event);
 bool radio_input_pressed(radio_input_key_t key);
+/* The players whose controller is connected (bit 0: the one driving the menu; bits 1-3: the
+   other signed-in users), as of the last poll. */
+unsigned radio_input_controllers(void);
 void radio_input_shutdown(void);
 
 #ifdef __cplusplus

@@ -5,6 +5,7 @@
 #include "pe/ui/launcher.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 
 namespace pe::ui
@@ -30,6 +31,13 @@ Rect nav_rect(int index)
 Rect tile_rect(int index)
 {
     return {120.0f + 424.0f * static_cast<float>(index), 760.0f, 400.0f, 144.0f};
+}
+
+// The four controllers, at the right of the hero beside its buttons.
+constexpr float kPadsRight = 1752.0f;
+Rect pad_rect(int player)
+{
+    return {kPadsRight - 354.0f + 94.0f * static_cast<float>(player), 506.0f, 72.0f, 50.0f};
 }
 
 } // namespace
@@ -148,6 +156,60 @@ void Launcher::press_home(Key key)
         cue(Cue::focus);
 }
 
+void Launcher::update_controllers(float dt)
+{
+    const unsigned now = services_.controllers() & 0xfu;
+    bool joined = false;
+    bool left = false;
+    for (int player = 0; player < 4; ++player)
+    {
+        const std::size_t index = static_cast<std::size_t>(player);
+        const bool on = (now >> player & 1u) != 0;
+        controller_lit_[index].target = on ? 1.0f : 0.0f;
+        if (!controllers_known_)
+        {
+            controller_lit_[index].snap(controller_lit_[index].target);
+        }
+        else if (on != ((controllers_ >> player & 1u) != 0))
+        {
+            (on ? joined : left) = true;
+            if (on)
+                controller_pop_[index] = 1.0f;
+        }
+        controller_lit_[index].update(dt, 10.0f);
+        controller_pop_[index] = std::max(0.0f, controller_pop_[index] - dt / 0.5f);
+    }
+    // One sound however many changed at once; none while a game is starting.
+    if ((joined || left) && selected_game_.empty())
+        cue(joined ? Cue::saved : Cue::modal_close);
+    controllers_ = now;
+    controllers_known_ = true;
+}
+
+void Launcher::draw_controllers(Canvas &c)
+{
+    if (textures_.controller() == 0)
+        return;
+    text(c, "CONTROLLERS", kPadsRight, baseline(462.0f, 30.0f, theme::kSmall), theme::kSmall,
+         Color::rgb(0xc6d2c7), Align::right, 3.0f);
+    for (int player = 0; player < 4; ++player)
+    {
+        const std::size_t index = static_cast<std::size_t>(player);
+        const Rect r = pad_rect(player);
+        const float lit = tween::clamp01(controller_lit_[index].value);
+        // A controller that joins lands with a small bounce.
+        const float pop = controller_pop_[index];
+        const float bounce = std::sin(3.14159265f * (1.0f - pop)) * pop;
+        c.list.push_transform(1.0f + 0.34f * bounce, r.x + r.w * 0.5f, r.y + r.h * 0.5f, 0.0f,
+                              -5.0f * bounce);
+        controller_icon(c, r, lit);
+        c.list.pop_transform();
+        const char number[] = {static_cast<char>('1' + player), 0};
+        text(c, number, r.x + r.w * 0.5f, baseline(564.0f, 26.0f, theme::kSmall), theme::kSmall,
+             gfx::mix(theme::kFaint.with_alpha(0.6f), theme::kLime, lit), Align::center);
+    }
+}
+
 void Launcher::draw_home(Canvas &c)
 {
     gfx::DrawList &list = c.list;
@@ -213,7 +275,7 @@ void Launcher::draw_home(Canvas &c)
              560.0f, baseline(424.0f, 36.0f, theme::kText24), theme::kText24, Color::rgb(0xabb8ae),
              1040.0f);
     text_fit(c, home_.last_info, 560.0f, baseline(462.0f, 30.0f, theme::kSmall), theme::kSmall,
-             home_.last_info_warning ? theme::kWarning : Color::rgb(0xabb8ae), 1160.0f);
+             home_.last_info_warning ? theme::kWarning : Color::rgb(0xabb8ae), 960.0f);
     {
         const float f = focus(0);
         list.push_opacity(ready ? 1.0f : 0.4f);
@@ -238,6 +300,7 @@ void Launcher::draw_home(Canvas &c)
     }
     text(c, "Eden emulator for PlayStation 5", 560.0f, baseline(616.0f, 30.0f, theme::kSmall),
          theme::kSmall, theme::kFaint);
+    draw_controllers(c);
     end_band();
 
     // ---- recently played, or what needs attention ----

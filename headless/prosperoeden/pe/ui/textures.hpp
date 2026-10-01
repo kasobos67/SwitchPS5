@@ -50,6 +50,11 @@ class Textures
     {
         return brand_;
     }
+    // A controller in white on transparent (0 when the picture is missing).
+    std::uint32_t controller() const
+    {
+        return controller_;
+    }
 
     // The cover drawn `size` virtual pixels wide. Queues it on first use.
     Cover cover(const std::string &path, float size);
@@ -79,6 +84,7 @@ class Textures
     std::uint32_t backdrop_ = 0;
     std::uint32_t backdrop_blur_ = 0;
     std::uint32_t brand_ = 0;
+    std::uint32_t controller_ = 0;
     std::unordered_map<std::string, Entry> covers_;
     std::vector<std::string> queue_;
     std::uint64_t frame_ = 0;

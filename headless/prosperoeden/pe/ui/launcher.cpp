@@ -142,6 +142,7 @@ void Launcher::update(float dt)
     backdrop_.update(dt);
     textures_.pump(dt);
     finish_scan(false);
+    update_controllers(dt);
     transition_.update(dt);
     press_ = std::max(0.0f, press_ - dt / 0.18f);
 

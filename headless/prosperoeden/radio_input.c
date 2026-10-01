@@ -13,17 +13,27 @@
 #define STICK_HIGH 192U
 #define STICK_REPEAT_DELAY_MS UINT64_C(350)
 #define STICK_REPEAT_MS UINT64_C(110)
+#define MAX_PLAYERS 4U
+#define USER_SCAN_MS UINT64_C(500)
 
 typedef struct {
     uint32_t button;
     radio_input_key_t key;
 } button_map_t;
 
+/* Signed-in users; unused entries are -1. */
+typedef struct {
+    int32_t user_id[4];
+} login_user_list_t;
+
 extern int scePadInit(void);
 extern int scePadOpen(int32_t user_id, int32_t port_type, int32_t index,
                       const void * param);
 extern int scePadClose(int32_t handle);
 extern int scePadRead(int32_t handle, void * data, int32_t num);
+extern int scePadReadState(int32_t handle, void * data);
+extern int scePadGetHandle(int32_t user_id, int32_t port_type, int32_t index);
+extern int sceUserServiceGetLoginUserIdList(login_user_list_t * list);
 extern int sceUserServiceInitialize(void * init_params);
 extern int sceUserServiceGetInitialUser(int32_t * user_id);
 extern int sceUserServiceTerminate(void);
@@ -57,6 +67,12 @@ static int dpad_key = -1;
 static uint64_t dpad_repeat_at;
 static int32_t pad_handle = -1;
 static bool owns_user_service;
+/* Every signed-in user's controller, for the home screen's controller display. Player 1 (slot 0)
+   drives the menu; the other slots only tell whether their controller is connected. */
+static int32_t player_user[MAX_PLAYERS] = {-1, -1, -1, -1};
+static int32_t player_handle[MAX_PLAYERS] = {-1, -1, -1, -1};
+static unsigned connected_players;
+static uint64_t user_scan_at;
 
 static uint64_t monotonic_milliseconds(void)
 {
@@ -140,6 +156,65 @@ static void process_sample(const unsigned char * sample)
     }
 }
 
+static void close_player(unsigned player)
+{
+    if(player > 0 && player_handle[player] >= 0) scePadClose(player_handle[player]);
+    player_handle[player] = -1;
+    player_user[player] = -1;
+    connected_players &= ~(1U << player);
+}
+
+/* Players 2-4 follow the signed-in users: one leaves when their user signs out, and a new user
+   takes the first free slot. */
+static void scan_users(void)
+{
+    login_user_list_t list = {{-1, -1, -1, -1}};
+    if(sceUserServiceGetLoginUserIdList(&list) < 0) return;
+    for(unsigned player = 1; player < MAX_PLAYERS; ++player) {
+        if(player_handle[player] < 0) continue;
+        bool signed_in = false;
+        for(unsigned i = 0; i < 4; ++i) signed_in |= list.user_id[i] == player_user[player];
+        if(!signed_in) close_player(player);
+    }
+    for(unsigned i = 0; i < 4; ++i) {
+        const int32_t user = list.user_id[i];
+        if(user < 0) continue;
+        bool known = false;
+        for(unsigned player = 0; player < MAX_PLAYERS; ++player)
+            known |= player_handle[player] >= 0 && player_user[player] == user;
+        if(known) continue;
+        for(unsigned player = 1; player < MAX_PLAYERS; ++player) {
+            if(player_handle[player] >= 0) continue;
+            int32_t handle = scePadOpen(user, 0, 0, NULL);
+            /* A handle this process already holds for the user is reused. */
+            if(handle < 0) handle = scePadGetHandle(user, 0, 0);
+            if(handle >= 0) {
+                player_user[player] = user;
+                player_handle[player] = handle;
+            }
+            break;
+        }
+    }
+}
+
+static void poll_players(void)
+{
+    const uint64_t now = monotonic_milliseconds();
+    if(now >= user_scan_at) {
+        user_scan_at = now + USER_SCAN_MS;
+        scan_users();
+    }
+    for(unsigned player = 0; player < MAX_PLAYERS; ++player) {
+        unsigned char state[PAD_SAMPLE_SIZE];
+        if(player_handle[player] < 0) continue;
+        memset(state, 0, sizeof(state));
+        if(scePadReadState(player_handle[player], state) == 0 && state[76] != 0)
+            connected_players |= 1U << player;
+        else
+            connected_players &= ~(1U << player);
+    }
+}
+
 #ifdef EDEN_DEV_ROM_ID
 void radio_input_development_sample(const void * sample)
 {
@@ -168,6 +243,10 @@ bool radio_input_init(void)
     analog_repeat_at = 0;
     shoulder_key = -1;
     dpad_key = -1;
+    player_user[0] = user_id;
+    player_handle[0] = pad_handle;
+    connected_players = 0;
+    user_scan_at = 0;
     return true;
 }
 
@@ -176,6 +255,7 @@ void radio_input_poll(void)
     if(pad_handle < 0) return;
     const int count = scePadRead(pad_handle, samples, PAD_SAMPLE_CAPACITY);
     for(int i = 0; i < count; ++i) process_sample(samples[i]);
+    poll_players();
     if(analog_key >= 0) {
         const uint64_t now = monotonic_milliseconds();
         if(now >= analog_repeat_at) {
@@ -207,6 +287,11 @@ bool radio_input_next(radio_input_event_t * event)
     return true;
 }
 
+unsigned radio_input_controllers(void)
+{
+    return connected_players;
+}
+
 bool radio_input_pressed(radio_input_key_t key)
 {
     if(key < 0 || key >= RADIO_INPUT_COUNT) return false;
@@ -218,6 +303,8 @@ bool radio_input_pressed(radio_input_key_t key)
 
 void radio_input_shutdown(void)
 {
+    for(unsigned player = 1; player < MAX_PLAYERS; ++player) close_player(player);
+    close_player(0);
     if(pad_handle >= 0) {
         scePadClose(pad_handle);
         pad_handle = -1;

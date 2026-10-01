@@ -105,6 +105,11 @@ class Services
     // ---- home ----
     virtual Home home() = 0;
     virtual std::string clock() = 0;   // "14:05"
+    // The players (bit 0 is player 1) whose controller is connected right now.
+    virtual unsigned controllers()
+    {
+        return 1u;
+    }
     virtual std::string version() = 0; // "v1.000.030"
 
     // ---- library ----
