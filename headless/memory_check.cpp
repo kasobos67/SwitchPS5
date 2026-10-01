@@ -941,8 +941,14 @@ static std::atomic<unsigned long long> shared_check_compiles{0};
 extern "C" void eden_jit_compile(unsigned, unsigned long long) {
     shared_check_compiles.fetch_add(1, std::memory_order_relaxed);
 }
+extern "C" void* eden_jit_list_open();
+extern "C" void eden_jit_list_close(void* handle);
+extern "C" int eden_jit_precompile(void* handle, unsigned long long location);
+extern "C" std::size_t eden_jit_history(void* handle, unsigned long long* out, std::size_t capacity);
 // same_path: every core starts at the same block, so the cores need the same blocks at once.
-static void CheckSharedJit(unsigned rounds, bool shared, unsigned disturb, bool same_path) {
+// precompile: a fifth thread compiles the program's blocks into the cores' regions meanwhile
+// (jit_impl.inc, EdenPrecompile), as a saved block list does at a game's start.
+static void CheckSharedJit(unsigned rounds, bool shared, unsigned disturb, bool same_path, bool precompile = false) {
     struct SharedProgram : Memory<false> {
         const std::vector<uint32_t>* program{};
         std::optional<uint32_t> MemoryReadCode(uint64_t pc) override {
@@ -998,6 +1004,7 @@ static void CheckSharedJit(unsigned rounds, bool shared, unsigned disturb, bool 
     }
     eden_jit_shared = previous;
     uint64_t invalidations = 0, clears = 0;
+    std::atomic<unsigned long long> precompiled{0};
     const auto first_block = [&](unsigned core, unsigned round) {
         return ((same_path ? 0 : core * 4099) + round * 31) % blocks;
     };
@@ -1029,6 +1036,19 @@ static void CheckSharedJit(unsigned rounds, bool shared, unsigned disturb, bool 
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
         });
+        std::thread precompiler([&] {
+            if (!precompile) return;
+            // With the floating-point modes at zero a block's location is its address. A busy
+            // answer (2) is tried again, as the block list does.
+            void* const list = eden_jit_list_open();
+            require(list != nullptr);
+            for (unsigned i = round * 977; running.load() != 0;) {
+                const int result = eden_jit_precompile(list, slot(i % blocks));
+                if (result == 1) precompiled.fetch_add(1);
+                if (result == 2) std::this_thread::yield(); else ++i;
+            }
+            eden_jit_list_close(list);
+        });
         std::vector<std::thread> threads;
         for (unsigned core = 0; core < cores; ++core) threads.emplace_back([&, core] {
             while (!Has(jits[core]->Run(), HaltReason::UserDefined1)) {}
@@ -1036,6 +1056,7 @@ static void CheckSharedJit(unsigned rounds, bool shared, unsigned disturb, bool 
         });
         for (auto& thread : threads) thread.join();
         disturber.join();
+        precompiler.join();
         for (unsigned core = 0; core < cores; ++core)
             require(jits[core]->GetRegister(1) == expected(first_block(core, round), steps));
         for (unsigned core = 0; core < cores; ++core) {
@@ -1053,10 +1074,102 @@ static void CheckSharedJit(unsigned rounds, bool shared, unsigned disturb, bool 
     const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
     if (disturb > 1)
         require(clears > 0);
+    if (precompile)
+        require(shared && precompiled.load() > 0);
     std::printf("Shared JIT %s disturb=%u same=%u PASS: %u rounds x %u cores, %llu compilations, %llu invalidations, "
-                "%llu clears, %.3f s\n", shared ? "shared" : "per-core", disturb, unsigned(same_path), rounds, cores,
-                static_cast<unsigned long long>(shared_check_compiles.load()), static_cast<unsigned long long>(invalidations),
-                static_cast<unsigned long long>(clears), seconds);
+                "%llu clears, %llu precompiled, %.3f s\n", shared ? "shared" : "per-core", disturb, unsigned(same_path),
+                rounds, cores, static_cast<unsigned long long>(shared_check_compiles.load()),
+                static_cast<unsigned long long>(invalidations), static_cast<unsigned long long>(clears),
+                precompiled.load(), seconds);
+}
+
+// A saved block list: the locations one session published, compiled before the next session's
+// cores start, leave those cores (almost) nothing to compile, and the same results.
+static void CheckBlockList() {
+    struct ListProgram : Memory<false> {
+        const std::vector<uint32_t>* program{};
+        std::optional<uint32_t> MemoryReadCode(uint64_t pc) override {
+            if (pc < 0x1000 || (pc - 0x1000) % 4 != 0 || (pc - 0x1000) / 4 >= program->size()) return std::nullopt;
+            return (*program)[(pc - 0x1000) / 4];
+        }
+    };
+    constexpr unsigned blocks = 4096, cores = 4;
+    constexpr uint64_t base = 0x1000, end = base + blocks * 16, steps = 60000;
+    const auto next = [](unsigned i) { return (i * 3571u + 7u) % blocks; };
+    std::vector<uint32_t> program;
+    for (unsigned i = 0; i < blocks; ++i) {
+        const uint64_t pc = base + uint64_t(i) * 16;
+        program.push_back(0x91000021u | ((i & 0xfffu) << 10));                                // ADD X1, X1, #i
+        program.push_back(0xf1000442u);                                                       // SUBS X2, X2, #1
+        program.push_back(0x54000000u | uint32_t((((end - (pc + 8)) / 4) & 0x7ffff) << 5));   // B.EQ end
+        program.push_back(0x14000000u | uint32_t((((base + uint64_t(next(i)) * 16) - (pc + 12)) / 4) & 0x3ffffff));
+    }
+    program.push_back(0xd4000001u);  // end: SVC #0
+    const auto expected = [&](unsigned i) {
+        uint64_t sum = 0;
+        for (uint64_t left = steps;; i = next(i)) {
+            sum += i & 0xfff;
+            if (--left == 0) return sum;
+        }
+    };
+    const bool previous = eden_jit_shared;
+    std::vector<unsigned long long> list;
+    unsigned long long cold = 0, warm = 0, ahead = 0;
+    for (unsigned session = 0; session < 2; ++session) {
+        eden_jit_shared = true;
+        std::vector<void*> pages(1 << 12);
+        ExclusiveMonitor monitor{cores};
+        std::vector<ListProgram> memories(cores);
+        std::vector<std::unique_ptr<A64::Jit>> jits;
+        for (unsigned core = 0; core < cores; ++core) {
+            memories[core].program = &program;
+            auto config = TableConfig(memories[core], pages.data());
+            config.global_monitor = &monitor;
+            config.processor_id = core;
+            config.code_cache_size = 16 * 1024 * 1024;
+            jits.push_back(std::make_unique<A64::Jit>(config));
+            memories[core].jit = jits.back().get();
+        }
+        eden_jit_shared = previous;
+        void* const handle = eden_jit_list_open();
+        require(handle != nullptr);
+        if (session == 1) {
+            // What the first session saved, compiled before any core runs; an address without code
+            // and a second request for the same block are harmless.
+            for (const unsigned long long location : list)
+                if (eden_jit_precompile(handle, location) == 1) ++ahead;
+            require(ahead == list.size());
+            require(eden_jit_precompile(handle, list.front()) == 0);
+            require(eden_jit_precompile(handle, 0x10) >= 0);
+        }
+        shared_check_compiles = 0;
+        for (unsigned core = 0; core < cores; ++core) {
+            auto& jit = *jits[core];
+            jit.Reset(); jit.ClearHalt(~HaltReason{});
+            jit.SetPC(base + uint64_t((core * 1021) % blocks) * 16);
+            jit.SetRegister(1, 0);
+            jit.SetRegister(2, steps);
+        }
+        std::vector<std::thread> threads;
+        for (unsigned core = 0; core < cores; ++core) threads.emplace_back([&, core] {
+            while (!Has(jits[core]->Run(), HaltReason::UserDefined1)) {}
+        });
+        for (auto& thread : threads) thread.join();
+        for (unsigned core = 0; core < cores; ++core)
+            require(jits[core]->GetRegister(1) == expected((core * 1021) % blocks));
+        (session == 0 ? cold : warm) = shared_check_compiles.load();
+        if (session == 0) {
+            list.resize(eden_jit_history(handle, nullptr, 0));
+            require(!list.empty() && eden_jit_history(handle, list.data(), list.size()) == list.size());
+        }
+        // The handle outlives the JITs: with them gone, precompiling says stop.
+        jits.clear();
+        require(eden_jit_precompile(handle, base) == -1);
+        eden_jit_list_close(handle);
+    }
+    require(cold >= blocks && warm * 20 < cold);
+    std::printf("Block list PASS: %zu locations saved, %llu compiled ahead, the cores compiled %llu blocks instead of "
+                "%llu\n", list.size(), ahead, warm, cold);
 }
 
 // Dispatcher lookups of three hot loops (100k iterations each) once their blocks exist: a
@@ -1111,7 +1224,9 @@ int main(int argc, char** argv) {
         for (unsigned disturb : {0u, 1u, 2u}) {
             CheckSharedJit(4, false, disturb, same_path);
             CheckSharedJit(4, true, disturb, same_path);
+            CheckSharedJit(4, true, disturb, same_path, true);
         }
+        CheckBlockList();
         return 0;
     }
     if (argc == 2 && std::strcmp(argv[1], "--compile-chains") == 0) {
@@ -1161,6 +1276,8 @@ int main(int argc, char** argv) {
     CheckAtomicLoop(backing, false);
     CheckAtomicLoopA32(backing, false);
     CheckSharedJit(2, true, 2, true);
+    CheckSharedJit(2, true, 2, false, true);
+    CheckBlockList();
     CheckLinks();
     CheckFastmemA32();
     StressFastmemA32();

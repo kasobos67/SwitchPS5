@@ -9,6 +9,7 @@
 #include "assets_dir.h"
 #include "gpu_failure.h"
 #include "guest_fault.h"
+#include "jit_list.h"
 #ifdef PS5_NATIVE
 #include "elevation/elevation.hpp"
 #include <sys/stat.h>
@@ -67,13 +68,13 @@ extern "C" std::int64_t sceKernelGetDirectMemorySize();
 #include "core/hle/service/set/settings_types.h"
 #include "hid_core/frontend/emulated_controller.h"
 #include "hid_core/hid_core.h"
-#ifdef PS5_NATIVE
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-private-field"
-#include "core/hle/kernel/k_process.h"
+#include "core/hle/kernel/k_process.h"  // every build: the game's code address (jit_list.h)
+#ifdef PS5_NATIVE
 #include "core/hle/kernel/k_thread.h"
-#pragma clang diagnostic pop
 #endif
+#pragma clang diagnostic pop
 #ifdef EDEN_DEV_PROFILE
 #include "watch.h"
 #include "core/arm/debug.h"
@@ -540,6 +541,9 @@ int main(int argc, char** argv) {
                 } else if (entry == "jit_dups=on") {
                     // Which cores compiled each A64 block, and when (EDEN_PERF_DUPLICATES).
                     Eden::Performance::jit_duplicate_tracking = true;
+                } else if (entry == "jit_list=on") {
+                    // Save the blocks this session compiles and compile the saved ones ahead (jit_list.h).
+                    Eden::JitList::enabled = true;
                 } else if (entry == "jit_shared=off") {
                     // Every guest core keeps its own compiled blocks (headless/dynarmic/jit_group.h).
                     eden_jit_shared = false;
@@ -956,6 +960,15 @@ int main(int argc, char** argv) {
                                  Eden::Watch::dump_range.offset, Eden::Watch::dump_range.size);
                 }
 #endif
+                // The blocks this game compiled in earlier sessions, compiled ahead on a spare CPU.
+                Eden::JitList::Session jit_list;
+                if (auto* process = system.ApplicationProcess()) {
+                    Eden::JitList::BuildId build{};
+                    const auto& id = system.GetApplicationProcessBuildID();
+                    std::memcpy(build.data(), id.data(), std::min(build.size(), id.size()));
+                    jit_list.Start(system.GetApplicationProcessProgramID(), build,
+                                   GetInteger(process->GetEntryPoint()));
+                }
                 Eden::TakeGuestFault(); // Nothing from an earlier session belongs to this one.
                 system.Run();
 #if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
@@ -1169,6 +1182,7 @@ int main(int argc, char** argv) {
                     const auto neutral = ps5::pad::neutral_data();
                     pad->Consume({&neutral, 1});
                 }
+                jit_list.Finish();  // while the JITs still exist: their block list is saved
                 // Shutdown requests cancellation before suspending cores; Pause can
                 // block while a CPU producer is waiting on a full GPU queue.
                 Eden::ReportStep("shutdown", "Stopping the game");

@@ -19,6 +19,13 @@
 // - A range invalidation unlinks and forgets the affected blocks at once (their code stays until
 //   the next full clear, so a core still inside one finishes it), then every member drops its
 //   return stack buffer and their fast dispatch entries on its own thread before running again.
+// - A host thread that is no guest core may compile into a core's region (EdenPrecompile, for a
+//   saved block list). eden_compile_mutex serializes it with the core's own compilations, which
+//   use the same translator, emitter and region; eden_pre_state is its Compiling mark, which a
+//   clear waits for like a core's. It never clears: it stops while the region has a reserve left.
+//   The core comes first: it announces itself in eden_compile_waiters before it takes the mutex,
+//   and the precompiler only tries the mutex, and only while no core is announced, so a core
+//   waits for at most the one block being emitted.
 struct Jit::Impl final {
 public:
     Impl(Jit* jit, UserConfig conf)
@@ -32,11 +39,21 @@ public:
         const bool shared = eden_jit_shared && conf.page_table && !conf.enable_cycle_counting;
         group = EdenJoinGroup(shared ? static_cast<const void*>(conf.page_table) : this, this);
         emitter.eden_group = group.get();
+        {
+            std::lock_guard lock{group->mutex};
+            group->precompile = &EdenPrecompileThunk;
+            group->space = &EdenSpaceThunk;
+        }
+        eden_space.store(block_of_code.SpaceRemaining(), std::memory_order_relaxed);
         EdenInitState();
     }
 
     ~Impl() {
-        EdenLeaveGroup(*group, this);
+        {
+            // A precompilation in this region finishes before the region goes.
+            std::lock_guard precompiling{group->precompile_mutex};
+            EdenLeaveGroup(*group, this);
+        }
         eden_state_arg_remove(reinterpret_cast<u64>(conf.callbacks));
         eden_state_arg_remove(reinterpret_cast<u64>(this));
     }
@@ -259,6 +276,10 @@ private:
                 EdenClearGroup();
                 continue;
             }
+            // Held until the block is published: a precompilation uses the same emitter.
+            eden_compile_waiters.fetch_add(1, std::memory_order_seq_cst);
+            std::lock_guard compiling{eden_compile_mutex};
+            eden_compile_waiters.fetch_sub(1, std::memory_order_seq_cst);
             block_of_code.EnsureMemoryCommitted(MINIMUM_REMAINING_CODESIZE);
 
             const u32 previous = eden_state.exchange(EdenCompiling, std::memory_order_seq_cst);
@@ -279,6 +300,7 @@ private:
             const auto emitted = emitter.Emit(ir_block, false);
             eden_state.store(previous, std::memory_order_seq_cst);
             EdenReportCompile(descriptor, start, translated, optimized);
+            eden_space.store(block_of_code.SpaceRemaining(), std::memory_order_relaxed);
 
             std::lock_guard lock{group->mutex};
             if (group->epoch.load(std::memory_order_seq_cst) != epoch)
@@ -288,6 +310,61 @@ private:
                             emitter.eden_range_last, emitter.eden_pending_sites, registered);
             return registered.entrypoint;
         }
+    }
+
+    // Compiles `descriptor` into this core's region from a host thread that is no guest core.
+    // 1: compiled and published. 0: already published, or a clear is under way. -2: the region is
+    // at its reserve (32 MiB, or a quarter of a smaller region), kept for the core's own
+    // compilations so that precompiling never causes a clear. -3: the core is compiling here.
+    int EdenPrecompile(IR::LocationDescriptor descriptor) {
+        const size_t RESERVE = std::min<size_t>(32 * 1024 * 1024, conf.code_cache_size / 4);
+        if (group->clearing.load(std::memory_order_seq_cst))
+            return 0;
+        {
+            std::lock_guard lock{group->mutex};
+            if (group->Find(descriptor))
+                return 0;
+        }
+        if (eden_compile_waiters.load(std::memory_order_seq_cst) != 0)
+            return -3;
+        std::unique_lock compiling{eden_compile_mutex, std::try_to_lock};
+        if (!compiling.owns_lock() || eden_compile_waiters.load(std::memory_order_seq_cst) != 0)
+            return -3;
+        if (block_of_code.SpaceRemaining() < RESERVE)
+            return -2;
+        const u64 epoch = group->epoch.load(std::memory_order_seq_cst);
+        eden_pre_state.store(EdenCompiling, std::memory_order_seq_cst);
+        if (group->clearing.load(std::memory_order_seq_cst)) {
+            eden_pre_state.store(EdenOutside, std::memory_order_seq_cst);
+            return 0;
+        }
+        block_of_code.EnsureMemoryCommitted(1 * 1024 * 1024);
+        const auto get_code = [this](u64 vaddr) { return conf.callbacks->MemoryReadCode(vaddr); };
+        auto const arch_descriptor = A64::LocationDescriptor{descriptor};
+        ir_block.Reset(arch_descriptor);
+        A64::Translate(ir_block, arch_descriptor, get_code, {conf.define_unpredictable_behaviour, conf.wall_clock_cntpct});
+        Optimization::Optimize(ir_block, conf, polyfill_options);
+        emitter.eden_pending_sites.clear();
+        const auto emitted = emitter.Emit(ir_block, false);
+        eden_pre_state.store(EdenOutside, std::memory_order_seq_cst);
+        eden_space.store(block_of_code.SpaceRemaining(), std::memory_order_relaxed);
+
+        std::lock_guard lock{group->mutex};
+        if (group->epoch.load(std::memory_order_seq_cst) != epoch)
+            return 0;  // every region was reset after the emission
+        JitGroup::Block registered{};
+        return group->Register(descriptor, {emitted.entrypoint, emitted.size}, emitter.eden_range_first,
+                               emitter.eden_range_last, emitter.eden_pending_sites, registered) ? 1 : 0;
+    }
+
+    static int EdenPrecompileThunk(void* member, u64 location) {
+        return static_cast<Impl*>(member)->EdenPrecompile(IR::LocationDescriptor{location});
+    }
+
+    // Room left in the member's region as of its last compilation (no lock: it is only a hint
+    // for choosing the region with the most room).
+    static std::size_t EdenSpaceThunk(void* member) {
+        return static_cast<Impl*>(member)->eden_space.load(std::memory_order_relaxed);
     }
 
     void PerformRequestedCacheInvalidation(HaltReason hr) {
@@ -392,6 +469,10 @@ private:
                 std::this_thread::yield();
             }
         }
+        // A precompilation may be emitting into any member's region, this core's included.
+        for (Impl* member : members)
+            while (member->eden_pre_state.load(std::memory_order_seq_cst) == EdenCompiling)
+                std::this_thread::yield();
         {
             std::lock_guard lock{group->mutex};
             // Eden asks every core's JIT for the same clear or invalidation: this clear satisfies
@@ -404,6 +485,7 @@ private:
             for (Impl* member : members) {
                 member->block_of_code.ClearCache();
                 member->emitter.ClearCache();
+                member->eden_space.store(member->block_of_code.SpaceRemaining(), std::memory_order_relaxed);
                 member->jit_state.ResetRSB();
                 std::lock_guard flush{member->eden_flush_mutex};
                 member->eden_flush_locations.clear();
@@ -476,6 +558,10 @@ private:
     std::mutex invalidation_mutex;
     std::shared_ptr<JitGroup> group;
     std::atomic<u32> eden_state{EdenOutside};
+    std::mutex eden_compile_mutex;
+    std::atomic<u32> eden_compile_waiters{0};
+    std::atomic<u32> eden_pre_state{EdenOutside};
+    std::atomic<std::size_t> eden_space{0};
     std::atomic<bool> eden_flush{false};
     std::mutex eden_flush_mutex;
     std::vector<u64> eden_flush_locations;

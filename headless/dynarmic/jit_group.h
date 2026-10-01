@@ -14,6 +14,11 @@
 // stub that stores the destination PC and returns to the dispatcher.
 //
 // All members are guarded by `mutex` except the clear protocol's atomics (see a64_interface.cpp).
+//
+// Precompilation: `history` lists every location published, in order and across clears: the block
+// list a later session compiles ahead of the game (headless/jit_list.h). A host thread that is no
+// guest core compiles such a block into a member's region through `precompile` (jit_impl.inc,
+// EdenPrecompile); `precompile_mutex` keeps the members alive while it does.
 #pragma once
 
 #include <atomic>
@@ -130,6 +135,8 @@ public:
         result = it->second;
         if (!inserted)
             return false;
+        if (history.size() < history_limit)
+            history.push_back(location.Value());
         ranges.AddRange(boost::icl::discrete_interval<u64>::closed(first, last), location);
         for (const PendingSite& pending : own_sites) {
             if (const auto target = blocks.find(pending.target); target != blocks.end())
@@ -164,6 +171,15 @@ public:
         sites.clear();
         ranges.ClearCache();
     }
+
+    // Precompilation (see the top of this file). The functions take a member. From `precompile`,
+    // -2 means its region is at the reserve kept for the core's own compilations and -3 that the
+    // core is compiling there now (it never waits behind a precompilation that could wait).
+    static constexpr std::size_t history_limit = 4'000'000;
+    std::vector<u64> history;
+    int (*precompile)(void* member, u64 location) = nullptr;
+    std::size_t (*space)(void* member) = nullptr;
+    std::mutex precompile_mutex;
 
     // Members (Jit::Impl, type-erased) and the clear protocol.
     std::vector<void*> members;

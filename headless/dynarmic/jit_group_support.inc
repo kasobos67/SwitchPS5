@@ -49,6 +49,93 @@ void EdenLeaveGroup(JitGroup& group, void* member) {
 
 }  // namespace
 
+namespace {
+// The application's group: the shared one with the most member cores (system processes and
+// unshared JITs have groups of their own).
+std::shared_ptr<JitGroup> EdenApplicationGroup() {
+    std::lock_guard lock{eden_groups_mutex};
+    std::shared_ptr<JitGroup> best;
+    std::size_t most = 1;
+    for (const auto& weak : eden_groups) {
+        auto group = weak.lock();
+        if (!group)
+            continue;
+        std::lock_guard members{group->mutex};
+        if (group->members.size() > most) {
+            most = group->members.size();
+            best = std::move(group);
+        }
+    }
+    return best;
+}
+}  // namespace
+
+// Precompilation for a host thread that is no guest core (headless/jit_list.h).
+//
+// eden_jit_list_open: a handle on the application's compiled blocks, or null when there is no
+// shared application group (yet). Close it with eden_jit_list_close.
+extern "C" void* eden_jit_list_open() {
+    std::shared_ptr<JitGroup> group = EdenApplicationGroup();
+    return group ? new std::shared_ptr<JitGroup>(std::move(group)) : nullptr;
+}
+
+extern "C" void eden_jit_list_close(void* handle) {
+    delete static_cast<std::shared_ptr<JitGroup>*>(handle);
+}
+
+// Compiles the block at `location` (a location descriptor's value) into the member region with
+// the most room that its core is not compiling in, so that the cores keep equal headroom for
+// their own compilations and never wait. 1: compiled; 0: nothing to do (already compiled, or a
+// clear is under way); 2: every usable region is busy, try this location again; -1: stop (the
+// game's JITs are gone, or every region is at its reserve).
+extern "C" int eden_jit_precompile(void* handle, unsigned long long location) {
+    JitGroup* const group = handle ? static_cast<std::shared_ptr<JitGroup>*>(handle)->get() : nullptr;
+    if (!group)
+        return -1;
+    std::lock_guard precompiling{group->precompile_mutex};
+    std::array<void*, 8> members{};
+    std::size_t count = 0;
+    int (*compile)(void*, u64) = nullptr;
+    std::size_t (*space)(void*) = nullptr;
+    {
+        std::lock_guard lock{group->mutex};
+        for (void* member : group->members)
+            if (count < members.size())
+                members[count++] = member;
+        compile = group->precompile;
+        space = group->space;
+    }
+    if (!compile || !space || count == 0)
+        return -1;
+    // Most room first. The room is read once: it changes while the cores compile.
+    std::array<std::pair<std::size_t, void*>, 8> order{};
+    for (std::size_t i = 0; i < count; ++i)
+        order[i] = {space(members[i]), members[i]};
+    std::sort(order.begin(), order.begin() + count,
+              [](const auto& a, const auto& b) { return a.first > b.first; });
+    bool busy = false;
+    for (std::size_t i = 0; i < count; ++i) {
+        const int result = compile(order[i].second, location);
+        if (result >= 0)
+            return result;
+        busy |= result == -3;
+    }
+    return busy ? 2 : -1;
+}
+
+// The application's published locations so far, oldest first: copies up to `capacity` of them and
+// returns how many there are.
+extern "C" std::size_t eden_jit_history(void* handle, unsigned long long* out, std::size_t capacity) {
+    JitGroup* const group = handle ? static_cast<std::shared_ptr<JitGroup>*>(handle)->get() : nullptr;
+    if (!group)
+        return 0;
+    std::lock_guard lock{group->mutex};
+    const std::size_t count = std::min(capacity, group->history.size());
+    for (std::size_t i = 0; i < count; ++i)
+        out[i] = group->history[i];
+    return group->history.size();
+}
+
 extern "C" void eden_jit_path_counters(unsigned core, unsigned long long* out) {
     if (core >= eden_path.size()) return;
     for (unsigned i = 0; i < EdenPathCount; ++i)
