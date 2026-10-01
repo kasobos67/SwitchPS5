@@ -15,8 +15,14 @@ check fails when a catalog
   - changes the {0} {1} placeholders of a text,
   - uses a character the launcher's font does not have.
 It warns when a translation is much longer than the English text (it may not fit its place).
+
+The launcher's own font has Latin and Cyrillic letters. Japanese, Korean, Chinese, Greek, Thai and
+Arabic are drawn with the console's fonts (pe/gfx/system_fonts.hpp): their catalogs are checked
+against those when PE_SYSTEM_FONTS names a folder holding copies of them, and only for their
+Latin text otherwise.
 """
 
+import os
 import re
 import struct
 import sys
@@ -201,6 +207,65 @@ def font_characters():
     return {struct.unpack_from("<I", data, 40 + 24 * index)[0] for index in range(glyphs)}
 
 
+# Catalogs written in scripts the console's fonts draw.
+SYSTEM_FONT_CATALOGS = {"ja-JP", "ko-KR", "zh-Hans", "zh-Hant", "el-GR", "th-TH", "ar"}
+# Characters that take no room: the zero-width space (a line may break there), direction marks.
+INVISIBLE = {0x200B, 0x200C, 0x200D, 0x200E, 0x200F}
+
+
+def cmap_characters(data):
+    """The characters a TrueType or OpenType font file maps (its Unicode cmap, format 4 or 12)."""
+    offset = struct.unpack_from(">I", data, 12)[0] if data[:4] == b"ttcf" else 0
+    tables = {}
+    for index in range(struct.unpack_from(">H", data, offset + 4)[0]):
+        tag, _sum, start, _length = struct.unpack_from(">4sIII", data, offset + 12 + 16 * index)
+        tables[tag] = start
+    cmap = tables[b"cmap"]
+    best = None
+    for index in range(struct.unpack_from(">H", data, cmap + 2)[0]):
+        platform, encoding, at = struct.unpack_from(">HHI", data, cmap + 4 + 8 * index)
+        kind = struct.unpack_from(">H", data, cmap + at)[0]
+        rank = {(3, 10): 4, (0, 4): 4, (0, 6): 4, (3, 1): 2, (0, 3): 2}.get((platform, encoding), 0)
+        if kind in (4, 12) and (best is None or rank > best[0]):
+            best = (rank, kind, cmap + at)
+    characters = set()
+    if best is None:
+        return characters
+    _rank, kind, at = best
+    if kind == 12:
+        for index in range(struct.unpack_from(">I", data, at + 12)[0]):
+            first, last, _glyph = struct.unpack_from(">III", data, at + 16 + 12 * index)
+            characters.update(range(first, last + 1))
+        return characters
+    segments = struct.unpack_from(">H", data, at + 6)[0] // 2
+    ends = struct.unpack_from(f">{segments}H", data, at + 14)
+    starts = struct.unpack_from(f">{segments}H", data, at + 16 + 2 * segments)
+    deltas = struct.unpack_from(f">{segments}h", data, at + 16 + 4 * segments)
+    ranges_at = at + 16 + 6 * segments
+    ranges = struct.unpack_from(f">{segments}H", data, ranges_at)
+    for i in range(segments):
+        for code in range(starts[i], min(ends[i], 0xFFFE) + 1):
+            if ranges[i] == 0:
+                glyph = (code + deltas[i]) & 0xFFFF
+            else:
+                glyph = struct.unpack_from(">H", data, ranges_at + 2 * i + ranges[i] + 2 * (code - starts[i]))[0]
+            if glyph:
+                characters.add(code)
+    return characters
+
+
+def system_font_characters():
+    """The characters of the console's fonts in PE_SYSTEM_FONTS, or None when it is not set."""
+    folder = os.environ.get("PE_SYSTEM_FONTS")
+    if not folder:
+        return None
+    characters = set()
+    for path in sorted(Path(folder).iterdir()):
+        if path.suffix.lower() in (".otf", ".ttf"):
+            characters |= cmap_characters(path.read_bytes())
+    return characters
+
+
 def launch_error_problems():
     """The launch errors the launcher translates must still be what headless/main.cpp reports."""
     services = (LAUNCHER / "eden_services.cpp").read_text(encoding="utf-8")
@@ -216,7 +281,8 @@ def launch_error_problems():
 
 def check():
     texts = marked_text()
-    characters = font_characters()
+    baked = font_characters()
+    system = system_font_characters()
     failed = False
     for problem in launch_error_problems():
         print(problem)
@@ -227,6 +293,16 @@ def check():
     for path in catalogs:
         entries = parse_po(path)
         problems, warnings = [], []
+        # What can be drawn: the launcher's font, and for the catalogs of other scripts the
+        # console's fonts (when they are at hand; otherwise only their Latin text is checked).
+        characters = baked | INVISIBLE
+        unchecked = set()
+        if path.stem in SYSTEM_FONT_CATALOGS:
+            if system is None:
+                unchecked = {ord(c) for text in entries.values() for c in text if ord(c) not in characters and c != "\n"}
+                characters = characters | unchecked
+            else:
+                characters = characters | system
         for text in texts:
             if not entries.get(text):
                 problems.append(f"untranslated: {text!r}")
@@ -243,7 +319,8 @@ def check():
                 warnings.append(f"label not uppercase: {text!r} -> {translation!r}")
             if translation and len(translation) > max(len(text) * 1.7, len(text) + 12):
                 warnings.append(f"long ({len(text)} -> {len(translation)}): {translation!r}")
-        print(f"{path.name}: {len(entries)} texts, {len(problems)} problems, {len(warnings)} warnings")
+        note = f", {len(unchecked)} characters of the console's fonts not checked" if unchecked else ""
+        print(f"{path.name}: {len(entries)} texts, {len(problems)} problems, {len(warnings)} warnings{note}")
         for line in problems[:40]:
             print("   ", line)
         for line in warnings[:12]:

@@ -1,0 +1,1089 @@
+# ProsperoEden launcher - zh-Hans
+# English text is the key (msgid); msgstr is the translation. Keep {0} {1} as they are,
+# keep UPPERCASE labels uppercase, and keep names (ProsperoEden, Eden, PS5, Vulkan, OpenGL,
+# AMD FSR, DLC, NSP, XCI, prod.keys, Ryujinx) unchanged.
+
+#: settings_store.h
+msgid "0.5x (faster, softer)"
+msgstr "0.5x（更快，更柔和）"
+
+#: settings_store.h
+msgid "0.75x (faster)"
+msgstr "0.75x（更快）"
+
+#: settings_store.h
+msgid "1.5x (sharper)"
+msgstr "1.5x（更清晰）"
+
+#: settings_store.h
+msgid "1x (native)"
+msgstr "1x（原生）"
+
+#: settings_store.h
+msgid "2x (sharpest)"
+msgstr "2x（最清晰）"
+
+#: eden_services.cpp
+msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
+msgstr "无法读取固件 NCA。请重新安装固件。"
+
+#: pe/ui/home.cpp
+msgid "About"
+msgstr "关于"
+
+#: pe/ui/browse.cpp
+msgid "About ProsperoEden"
+msgstr "关于 ProsperoEden"
+
+#. Label: which folders the app can read.
+#: pe/ui/browse.cpp
+msgid "ACCESS"
+msgstr "访问权限"
+
+#. A settings category: options that make the menu easier to see and follow.
+#: pe/ui/settings.cpp
+msgid "Accessibility"
+msgstr "辅助功能"
+
+#: pe/ui/settings.cpp
+msgid "ACCESSIBILITY"
+msgstr "辅助功能"
+
+#. Label: a game's updates and DLC.
+#: pe/ui/library.cpp
+msgid "ADD-ONS"
+msgstr "附加内容"
+
+#. {0}: updates and DLC of the game; {1}: the language it will use.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Add-ons: {0}  /  Language: {1}"
+msgstr "附加内容：{0}  /  语言：{1}"
+
+#: pe/ui/settings.cpp
+msgid "Adjust the essentials without leaving your library behind."
+msgstr "无需离开游戏库即可调整基本设置。"
+
+#: pe/ui/browse.cpp
+msgid "All credit for the Eden emulator goes to its developers and contributors."
+msgstr "Eden 模拟器的全部功劳归于其开发者和贡献者。"
+
+#: settings_store.h
+msgid "AMD FSR"
+msgstr "AMD FSR"
+
+#: eden_services.cpp
+msgid "Another language"
+msgstr "其他语言"
+
+#: pe/ui/settings.cpp
+msgid "Audio"
+msgstr "音频"
+
+#: pe/ui/settings.cpp
+msgid "AUDIO"
+msgstr "音频"
+
+#: eden_services.cpp
+msgid "Australia"
+msgstr "澳大利亚"
+
+#. Button hint: go back one screen.
+#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Back"
+msgstr "返回"
+
+#. An upscaling filter.
+#: settings_store.h
+msgid "Bicubic"
+msgstr "双三次"
+
+#. An upscaling filter.
+#: settings_store.h
+msgid "Bilinear"
+msgstr "双线性"
+
+#. Button hint: move through the list.
+#: pe/ui/browse.cpp
+msgid "Browse"
+msgstr "浏览"
+
+#: pe/ui/library.cpp
+msgid "Browse games"
+msgstr "浏览游戏"
+
+#: pe/ui/settings.cpp
+msgid "Browse settings"
+msgstr "浏览设置"
+
+#: eden_services.cpp
+msgid "Cannot read firmware/ in {0}. Install extracted firmware NCAs."
+msgstr "无法读取 {0} 中的 firmware/。请安装解包后的固件 NCA。"
+
+#. Button hint: change the highlighted setting.
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Change"
+msgstr "更改"
+
+#: pe/ui/library.cpp
+msgid "Change mode. Saved per game."
+msgstr "更改模式。按游戏分别保存。"
+
+#: eden_services.cpp
+msgid "China"
+msgstr "中国"
+
+#: settings_store.h
+msgid "Chinese (Simplified)"
+msgstr "中文（简体）"
+
+#: settings_store.h
+msgid "Chinese (Traditional)"
+msgstr "中文（繁体）"
+
+#. Button hint: choose the highlighted language.
+#: pe/ui/browse.cpp
+msgid "Choose"
+msgstr "选择"
+
+#: pe/ui/home.cpp
+msgid "Choose a game from your library."
+msgstr "请从游戏库中选择一个游戏。"
+
+#: pe/ui/browse.cpp
+msgid "Choose the folder that holds your keys, firmware and games"
+msgstr "选择存放密钥、固件和游戏的文件夹"
+
+#: pe/ui/browse.cpp
+msgid "Choose the language games use"
+msgstr "选择游戏使用的语言"
+
+#: pe/ui/library.cpp
+msgid "Console mode"
+msgstr "主机模式"
+
+#: pe/ui/home.cpp
+msgid "CONTINUE PLAYING"
+msgstr "继续游戏"
+
+#: pe/ui/settings.cpp
+msgid "Controller shortcuts and supported features."
+msgstr "手柄快捷键和支持的功能。"
+
+#: pe/ui/home.cpp
+msgid "CONTROLLERS"
+msgstr "手柄"
+
+#: pe/ui/settings.cpp
+msgid "Controls"
+msgstr "操作"
+
+#: pe/ui/settings.cpp
+msgid "CONTROLS"
+msgstr "操作"
+
+#: pe/ui/library.cpp
+msgid "Could not save console mode. Please try again."
+msgstr "无法保存主机模式。请重试。"
+
+#: pe/ui/launcher.cpp
+msgid "Could not save settings. Please try again."
+msgstr "无法保存设置。请重试。"
+
+#: pe/ui/browse.cpp
+msgid "Could not save the folder. Please try again."
+msgstr "无法保存文件夹。请重试。"
+
+#: pe/ui/browse.cpp, pe/ui/library.cpp
+msgid "Could not save. Please try again."
+msgstr "无法保存。请重试。"
+
+#: pe/ui/browse.cpp
+msgid "Credits and setup"
+msgstr "制作人员与设置说明"
+
+#. A per-game setting that follows the general setting; {0} is its value.
+#: pe/ui/library.cpp
+msgid "Default ({0})"
+msgstr "默认（{0}）"
+
+#: pe/ui/browse.cpp
+msgid "Default folder"
+msgstr "默认文件夹"
+
+#: pe/ui/browse.cpp
+msgid "Default folder saved. Reopen ProsperoEden to use it."
+msgstr "默认文件夹已保存。重新打开 ProsperoEden 后生效。"
+
+#: pe/ui/settings.cpp
+msgid "Detailed logging"
+msgstr "详细日志"
+
+#: pe/ui/settings.cpp
+msgid "DETAILED LOGS"
+msgstr "详细日志"
+
+#: pe/ui/settings.cpp
+msgid "Detailed logs apply to the next game launch."
+msgstr "详细日志将在下次启动游戏时生效。"
+
+#: pe/ui/settings.cpp
+msgid "Detailed logs on"
+msgstr "详细日志已开启"
+
+#. Button hint: show the game's details.
+#: pe/ui/home.cpp
+msgid "Details"
+msgstr "详情"
+
+#: pe/ui/settings.cpp
+msgid "Diagnostics"
+msgstr "诊断"
+
+#: pe/ui/settings.cpp
+msgid "DIAGNOSTICS"
+msgstr "诊断"
+
+#. Console mode: the console as if connected to a TV. Keep it short (about 9 letters).
+#: pe/ui/library.cpp
+msgid "Docked"
+msgstr "TV模式"
+
+#: pe/ui/settings.cpp
+msgid "Draws the menu's small text larger."
+msgstr "将菜单中的小字放大显示。"
+
+#: settings_store.h
+msgid "Dutch"
+msgstr "荷兰语"
+
+#: pe/ui/home.cpp
+msgid "Eden emulator for PlayStation 5"
+msgstr "适用于 PlayStation 5 的 Eden 模拟器"
+
+#. Label of the shortcut that ends the running game.
+#: pe/ui/settings.cpp
+msgid "END GAME"
+msgstr "结束游戏"
+
+#: pe/ui/settings.cpp
+msgid "End the game and return to this menu"
+msgstr "结束游戏并返回此菜单"
+
+#: settings_store.h
+msgid "English (UK)"
+msgstr "英语（英国）"
+
+#: settings_store.h
+msgid "English (US)"
+msgstr "英语（美国）"
+
+#: eden_services.cpp
+msgid "Europe"
+msgstr "欧洲"
+
+#. Button hint: copy the game's save out to a folder.
+#: pe/ui/library.cpp
+msgid "Export a copy"
+msgstr "导出副本"
+
+#: eden_services.cpp
+msgid "Export failed. Check that the game files folder can be written."
+msgstr "导出失败。请确认游戏文件的文件夹可以写入。"
+
+#. {0} is a folder.
+#: eden_services.cpp, host/fake_services.hpp
+msgid "Exported to {0}."
+msgstr "已导出到 {0}。"
+
+#: pe/ui/library.cpp
+msgid "FILE"
+msgstr "文件"
+
+#: pe/ui/settings.cpp
+msgid "Fine-tune your experience"
+msgstr "微调你的体验"
+
+#: pe/ui/browse.cpp
+msgid "FIRMWARE"
+msgstr "固件"
+
+#: eden_services.cpp
+msgid "Firmware NCA validation failed (code {0}). Check that firmware and prod.keys are compatible."
+msgstr "固件 NCA 验证失败（代码 {0}）。请确认固件与 prod.keys 相互匹配。"
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Firmware ready"
+msgstr "固件就绪"
+
+#: eden_services.cpp
+msgid "Firmware SystemVersion data is missing or unreadable. Install a complete firmware dump."
+msgstr "固件的 SystemVersion 数据缺失或无法读取。请安装完整的固件。"
+
+#: pe/ui/browse.cpp
+msgid "FOLDERS"
+msgstr "文件夹"
+
+#: pe/ui/library.cpp
+msgid "FORMAT"
+msgstr "格式"
+
+#. Label: the frames-per-second counter drawn over a game.
+#: pe/ui/settings.cpp
+msgid "FPS OVERLAY"
+msgstr "帧率显示"
+
+#: pe/ui/settings.cpp
+msgid "FPS overlay"
+msgstr "帧率显示"
+
+#: settings_store.h
+msgid "French"
+msgstr "法语"
+
+#: settings_store.h
+msgid "French (Canada)"
+msgstr "法语（加拿大）"
+
+#. The app can read every folder of the console.
+#: pe/ui/browse.cpp
+msgid "Full filesystem"
+msgstr "完整文件系统"
+
+#: pe/ui/settings.cpp
+msgid "Game audio; PS5 system-menu music is unchanged."
+msgstr "游戏声音；PS5 系统菜单的音乐不受影响。"
+
+#. {0} is the reason, a sentence in English; {1} is a file.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Game could not start: {0} Details: {1}"
+msgstr "游戏无法启动：{0} 详情：{1}"
+
+#: pe/ui/home.cpp
+msgid "Game details"
+msgstr "游戏详情"
+
+#: pe/ui/library.cpp
+msgid "GAME DETAILS"
+msgstr "游戏详情"
+
+#: pe/ui/browse.cpp, pe/ui/settings.cpp
+msgid "Game files"
+msgstr "游戏文件"
+
+#: pe/ui/settings.cpp
+msgid "GAME FILES"
+msgstr "游戏文件"
+
+#: pe/ui/library.cpp
+msgid "Game settings"
+msgstr "游戏设置"
+
+#: pe/ui/settings.cpp
+msgid "GAME VOLUME"
+msgstr "游戏音量"
+
+#: pe/ui/settings.cpp
+msgid "Game volume"
+msgstr "游戏音量"
+
+#: pe/ui/settings.cpp
+msgid "Game volume, and the sounds of this menu."
+msgstr "游戏音量和本菜单的音效。"
+
+#: pe/ui/browse.cpp
+msgid "GAMES"
+msgstr "游戏"
+
+#: pe/ui/browse.cpp
+msgid "Games use this language when they offer it, and their own default otherwise. It applies when a game starts."
+msgstr "游戏支持此语言时使用此语言，否则使用游戏自身的默认语言。启动游戏时生效。"
+
+#: pe/ui/home.cpp
+msgid "Games you launch will appear here."
+msgstr "你启动过的游戏会显示在这里。"
+
+#: settings_store.h
+msgid "German"
+msgstr "德语"
+
+#: pe/ui/browse.cpp
+msgid "GETTING STARTED"
+msgstr "入门"
+
+#: pe/ui/settings.cpp
+msgid "Graphics backend and how games are scaled to your TV."
+msgstr "图形后端，以及游戏画面如何缩放到电视。"
+
+#: eden_services.cpp
+msgid "Graphics backend initialization failed. Try another backend in Settings; see stderr.log and eden_log.txt for driver details."
+msgstr "图形后端初始化失败。请在设置中尝试其他后端；驱动详情见 stderr.log 和 eden_log.txt。"
+
+#. Console mode: the console as if held in the hands. Keep it short (about 9 letters).
+#: pe/ui/library.cpp
+msgid "Handheld"
+msgstr "掌机模式"
+
+#: pe/ui/settings.cpp
+msgid "HIGH CONTRAST"
+msgstr "高对比度"
+
+#. A switch: solid dark panels, brighter text.
+#: pe/ui/settings.cpp
+msgid "High contrast"
+msgstr "高对比度"
+
+#: pe/ui/settings.cpp
+msgid "How games are drawn and scaled to your TV."
+msgstr "游戏的绘制方式，以及如何缩放到电视。"
+
+#. Button hint: copy a save in.
+#: pe/ui/library.cpp
+msgid "Import"
+msgstr "导入"
+
+#: eden_services.cpp
+msgid "Import failed. The current save is unchanged."
+msgstr "导入失败。当前存档未改动。"
+
+#: eden_services.cpp
+msgid "Imported."
+msgstr "已导入。"
+
+#: eden_services.cpp, host/fake_services.hpp
+msgid "Imported. The save it replaced was backed up."
+msgstr "已导入。被替换的存档已备份。"
+
+#. Tag on the language or folder that is in use now.
+#: pe/ui/browse.cpp, pe/ui/settings.cpp
+msgid "IN USE"
+msgstr "使用中"
+
+#: settings_store.h
+msgid "Italian"
+msgstr "意大利语"
+
+#: eden_services.cpp
+msgid "Japan"
+msgstr "日本"
+
+#: settings_store.h
+msgid "Japanese"
+msgstr "日语"
+
+#. keys, firmware and roms are folder names (unchanged). TRIANGLE is the controller's triangle button, in capitals.
+#: pe/ui/browse.cpp
+msgid "Keep keys, firmware and roms folders together. TRIANGLE uses the folder shown."
+msgstr "请将 keys、firmware 和 roms 文件夹放在一起。按△键使用当前显示的文件夹。"
+
+#. Label: the encryption keys file (prod.keys).
+#: pe/ui/browse.cpp
+msgid "KEYS"
+msgstr "密钥"
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Keys and firmware: startup checks passed. Game-specific compatibility is checked at launch."
+msgstr "密钥和固件：已通过启动检查。各游戏的兼容性在启动时检查。"
+
+#: eden_services.cpp
+msgid "Korea"
+msgstr "韩国"
+
+#: settings_store.h
+msgid "Korean"
+msgstr "韩语"
+
+#: pe/ui/browse.cpp, pe/ui/settings.cpp
+msgid "Language"
+msgstr "语言"
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "LANGUAGE"
+msgstr "语言"
+
+#: pe/ui/browse.cpp
+msgid "LANGUAGES"
+msgstr "语言"
+
+#: pe/ui/settings.cpp
+msgid "LARGER TEXT"
+msgstr "放大文字"
+
+#. A switch: the menu's small text is drawn larger.
+#: pe/ui/settings.cpp
+msgid "Larger text"
+msgstr "放大文字"
+
+#. Caption under the title of the game played last.
+#: eden_services.cpp
+msgid "Last game opened"
+msgstr "上次打开的游戏"
+
+#: pe/ui/home.cpp
+msgid "Launch game"
+msgstr "启动游戏"
+
+#: pe/ui/home.cpp
+msgid "Library"
+msgstr "游戏库"
+
+#: pe/ui/library.cpp
+msgid "LIBRARY"
+msgstr "游戏库"
+
+#. Headline of the Settings screen.
+#: pe/ui/settings.cpp
+msgid "Make it yours."
+msgstr "随心定制。"
+
+#: pe/ui/settings.cpp
+msgid "Make the menu easier to see and follow."
+msgstr "让菜单更易看清、更易操作。"
+
+#: pe/ui/browse.cpp
+msgid "Menu sound effects made with ElevenLabs."
+msgstr "菜单音效使用 ElevenLabs 制作。"
+
+#: pe/ui/settings.cpp
+msgid "MENU SOUNDS"
+msgstr "菜单音效"
+
+#: pe/ui/settings.cpp
+msgid "Menu sounds"
+msgstr "菜单音效"
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Missing or empty keys/prod.keys in {0}."
+msgstr "{0} 中缺少 keys/prod.keys，或该文件为空。"
+
+#: pe/ui/settings.cpp
+msgid "MUTE"
+msgstr "静音"
+
+#: pe/ui/settings.cpp
+msgid "Mute"
+msgstr "静音"
+
+#: pe/ui/settings.cpp
+msgid "Muted"
+msgstr "已静音"
+
+#. Button hint: move the highlight.
+#: pe/ui/home.cpp
+msgid "Navigate"
+msgstr "导航"
+
+#. An upscaling filter (nearest neighbour). Keep it short.
+#: settings_store.h
+msgid "Nearest"
+msgstr "最近邻"
+
+#: pe/ui/settings.cpp
+msgid "Needs attention"
+msgstr "需要处理"
+
+#. {0} is the folder used the next time the app starts.
+#: pe/ui/browse.cpp
+msgid "Next launch: {0}"
+msgstr "下次启动：{0}"
+
+#. Label: the folder used the next time the app starts.
+#: pe/ui/settings.cpp
+msgid "NEXT START"
+msgstr "下次启动"
+
+#: pe/ui/library.cpp
+msgid "No cover art"
+msgstr "无封面"
+
+#: pe/ui/browse.cpp
+msgid "No firmware folder"
+msgstr "没有 firmware 文件夹"
+
+#: eden_services.cpp
+msgid "No firmware NCAs found in {0}."
+msgstr "在 {0} 中未找到固件 NCA。"
+
+#: pe/ui/browse.cpp
+msgid "No folders here."
+msgstr "这里没有文件夹。"
+
+#: pe/ui/library.cpp
+msgid "No ROM files found."
+msgstr "未找到 ROM 文件。"
+
+#: pe/ui/library.cpp
+msgid "No ROM selected"
+msgstr "未选择 ROM"
+
+#: pe/ui/browse.cpp
+msgid "No roms folder"
+msgstr "没有 roms 文件夹"
+
+#. No add-ons (updates or DLC).
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/library.cpp
+msgid "None"
+msgstr "无"
+
+#. Short status at the right of the Save data row.
+#: pe/ui/library.cpp
+msgid "Nothing to import"
+msgstr "没有可导入的内容"
+
+#. A setting that is switched off.
+#: pe/ui/settings.cpp
+msgid "Off"
+msgstr "关"
+
+#. A setting that is switched on.
+#: pe/ui/settings.cpp
+msgid "On"
+msgstr "开"
+
+#: pe/ui/settings.cpp
+msgid "ON THIS CONSOLE"
+msgstr "本机"
+
+#. Short tag on a folder row.
+#: pe/ui/browse.cpp
+msgid "OPEN"
+msgstr "打开"
+
+#. Button hint: open the highlighted folder.
+#: pe/ui/browse.cpp
+msgid "Open"
+msgstr "打开"
+
+#: pe/ui/home.cpp
+msgid "Open library"
+msgstr "打开游戏库"
+
+#. Button hint: jump a page of the list (L1 / R1).
+#: pe/ui/browse.cpp
+msgid "Page"
+msgstr "翻页"
+
+#: pe/ui/browse.cpp
+msgid "Parent folder"
+msgstr "上级文件夹"
+
+#: settings_store.h
+msgid "Polish"
+msgstr "波兰语"
+
+#: settings_store.h
+msgid "Portuguese"
+msgstr "葡萄牙语"
+
+#: settings_store.h
+msgid "Portuguese (Brazil)"
+msgstr "葡萄牙语（巴西）"
+
+#. Eden is the emulator's name (unchanged).
+#: pe/ui/browse.cpp
+msgid "Powered by Eden"
+msgstr "Powered by Eden"
+
+#: pe/ui/settings.cpp
+msgid "PREFERENCES"
+msgstr "偏好设置"
+
+#. Asked before a save is imported over the one in use.
+#: pe/ui/library.cpp
+msgid "Press again to replace this game's save. The current one is backed up."
+msgstr "再按一次将替换此游戏的存档。当前存档会被备份。"
+
+#: eden_services.cpp
+msgid "prod.keys could not supply an NCA header key. Replace it with a valid key dump."
+msgstr "prod.keys 无法提供 NCA 头密钥。请换用有效的密钥文件。"
+
+#: pe/ui/browse.cpp
+msgid "prod.keys found"
+msgstr "已找到 prod.keys"
+
+#: pe/ui/browse.cpp
+msgid "prod.keys missing"
+msgstr "缺少 prod.keys"
+
+#: pe/ui/browse.cpp
+msgid "PROJECT CREDITS"
+msgstr "项目致谢"
+
+#: pe/ui/browse.cpp
+msgid "ProsperoEden is an unofficial PS5 port brought to you by BlackBearReloaded."
+msgstr "ProsperoEden 是由 BlackBearReloaded 带来的非官方 PS5 移植版。"
+
+#. Why a game did not start.
+#: eden_services.cpp
+msgid "PS5 controller initialization failed"
+msgstr "PS5 手柄初始化失败"
+
+#: pe/ui/browse.cpp
+msgid "PS5 EDITION"
+msgstr "PS5 版"
+
+#. {0} is the version, for example v1.000.030.
+#: pe/ui/home.cpp
+msgid "PS5 EDITION  /  {0}"
+msgstr "PS5 版  /  {0}"
+
+#: pe/ui/settings.cpp
+msgid "Ready"
+msgstr "就绪"
+
+#: pe/ui/home.cpp
+msgid "RECENTLY PLAYED"
+msgstr "最近游玩"
+
+#: pe/ui/settings.cpp
+msgid "REDUCE MOTION"
+msgstr "减少动态效果"
+
+#. A switch: no drifting, sliding or zooming on screen.
+#: pe/ui/settings.cpp
+msgid "Reduce motion"
+msgstr "减少动态效果"
+
+#: pe/ui/browse.cpp, pe/ui/settings.cpp
+msgid "REGION"
+msgstr "地区"
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Renderer"
+msgstr "渲染器"
+
+#: pe/ui/settings.cpp
+msgid "RENDERER"
+msgstr "渲染器"
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Resolution"
+msgstr "分辨率"
+
+#: pe/ui/settings.cpp
+msgid "RESOLUTION"
+msgstr "分辨率"
+
+#: eden_services.cpp
+msgid "ROM missing from the game files folder"
+msgstr "游戏文件的文件夹中缺少 ROM"
+
+#: settings_store.h
+msgid "Russian"
+msgstr "俄语"
+
+#. Short status at the right of the Save data row. Ryujinx is a name (unchanged).
+#: pe/ui/library.cpp
+msgid "Ryujinx save found"
+msgstr "已找到 Ryujinx 存档"
+
+#. The app can read only its own folder; {0} is a number.
+#: pe/ui/browse.cpp
+msgid "Sandboxed (code {0}): app folder only"
+msgstr "沙盒（代码 {0}）：仅应用文件夹"
+
+#. A row of a game's settings: the game's saved progress, which can be copied in or out.
+#: pe/ui/library.cpp
+msgid "Save data"
+msgstr "存档数据"
+
+#. Short status at the right of the Save data row: a folder with a save to import.
+#: pe/ui/library.cpp
+msgid "Save folder found"
+msgstr "已找到存档文件夹"
+
+#: pe/ui/library.cpp
+msgid "Saved for this game. Applies on next launch."
+msgstr "已为此游戏保存。下次启动时生效。"
+
+#: pe/ui/browse.cpp, pe/ui/launcher.cpp
+msgid "Saved. Applies when a game starts."
+msgstr "已保存。启动游戏时生效。"
+
+#: pe/ui/browse.cpp
+msgid "Saved. Reopen ProsperoEden to use this folder."
+msgstr "已保存。重新打开 ProsperoEden 后使用此文件夹。"
+
+#. Button hint: choose the highlighted item (not the Select button).
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Select"
+msgstr "确定"
+
+#: pe/ui/library.cpp
+msgid "Select a game"
+msgstr "选择游戏"
+
+#: pe/ui/library.cpp
+msgid "Select a game to begin"
+msgstr "选择一个游戏开始"
+
+#: pe/ui/library.cpp
+msgid "Select a readable game to configure its mode."
+msgstr "请选择一个可读取的游戏来设置其模式。"
+
+#. Select is a button's name (unchanged).
+#: pe/ui/settings.cpp
+msgid "Select is the touchpad button on PS5."
+msgstr "Select 是 PS5 上的触摸板按键。"
+
+#. Heading: the language highlighted in the list.
+#: pe/ui/browse.cpp
+msgid "SELECTED"
+msgstr "已选"
+
+#. Why a game did not start (the file is gone).
+#: eden_services.cpp
+msgid "Selected ROM is no longer available"
+msgstr "所选的 ROM 已不存在"
+
+#: pe/ui/home.cpp, pe/ui/settings.cpp
+msgid "Settings"
+msgstr "设置"
+
+#. Label: whether keys and firmware are in place.
+#: pe/ui/settings.cpp
+msgid "SETUP"
+msgstr "设置状态"
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Setup required"
+msgstr "需要设置"
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Setup required: {0} Open Settings, Game files to choose the folder that holds your keys, firmware and roms folders (or add the files to {1}), then reopen ProsperoEden."
+msgstr "需要设置：{0} 请打开“设置”中的“游戏文件”，选择存放 keys、firmware 和 roms 文件夹的文件夹（或将文件放入 {1}），然后重新打开 ProsperoEden。"
+
+#: pe/ui/settings.cpp
+msgid "Setup status and detailed logs."
+msgstr "设置状态和详细日志。"
+
+#: eden_services.cpp
+msgid "Setup validation failed. Check that firmware and key files are readable and valid."
+msgstr "设置验证失败。请确认固件和密钥文件可以读取且有效。"
+
+#: pe/ui/settings.cpp
+msgid "Shortcuts during a game, and vibration."
+msgstr "游戏中的快捷键和振动。"
+
+#: pe/ui/settings.cpp
+msgid "Show or hide the FPS overlay"
+msgstr "显示或隐藏帧率"
+
+#: pe/ui/library.cpp
+msgid "SIZE"
+msgstr "大小"
+
+#: pe/ui/settings.cpp
+msgid "Solid panels, brighter text and an outlined highlight."
+msgstr "不透明的面板、更亮的文字和带边框的高亮。"
+
+#: settings_store.h
+msgid "Spanish"
+msgstr "西班牙语"
+
+#: settings_store.h
+msgid "Spanish (Latin America)"
+msgstr "西班牙语（拉丁美洲）"
+
+#. The app creates its user the first time a game runs.
+#: eden_services.cpp
+msgid "Start any game once before importing a save."
+msgstr "导入存档前，请先启动任意游戏一次。"
+
+#. Shown over a game's cover while it starts.
+#: pe/ui/launcher.cpp
+msgid "STARTING"
+msgstr "正在启动"
+
+#: pe/ui/settings.cpp
+msgid "Stops the background drifting and the screens sliding, here and on the loading screen."
+msgstr "停止背景飘动和画面滑动，加载画面也同样适用。"
+
+#: pe/ui/browse.cpp
+msgid "Supply your own files"
+msgstr "请自备文件"
+
+#: eden_services.cpp
+msgid "Taiwan"
+msgstr "台湾"
+
+#: settings_store.h
+msgid "Thai"
+msgstr "泰语"
+
+#. Heading of the acknowledgements.
+#: pe/ui/browse.cpp
+msgid "THANKS"
+msgstr "鸣谢"
+
+#: pe/ui/browse.cpp
+msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make ProsperoEden possible."
+msgstr "感谢整个 PS5 自制软件社区，以及让 ProsperoEden 成为可能的驱动、工具和库的每一位开发者。"
+
+#: pe/ui/settings.cpp
+msgid "The folder that holds your keys, firmware and games."
+msgstr "存放密钥、固件和游戏的文件夹。"
+
+#. Why a game stopped. 'Settings, Video' is the menu path; 'the game's own settings' is the Game settings dialog of the Library.
+#: eden_services.cpp
+msgid "The game ran out of graphics memory. Lower the resolution in Settings, Video (or in the game's own settings) and start it again."
+msgstr "游戏的图形内存已用尽。请在“设置”的“视频”（或游戏自己的设置）中降低分辨率，然后重新启动。"
+
+#: pe/ui/settings.cpp
+msgid "The language games use when they offer it."
+msgstr "游戏支持时使用的语言。"
+
+#: pe/ui/browse.cpp
+msgid "THIS FOLDER"
+msgstr "此文件夹"
+
+#: pe/ui/browse.cpp
+msgid "This folder cannot be opened."
+msgstr "无法打开此文件夹。"
+
+#: eden_services.cpp
+msgid "This game has no save to export yet."
+msgstr "此游戏还没有可导出的存档。"
+
+#: pe/ui/library.cpp
+msgid "This game's settings cannot be saved (no title ID)."
+msgstr "无法保存此游戏的设置（没有游戏 ID）。"
+
+#. ryujinx/, save-import/ and roms/ are folder names (unchanged); {0} is the game's ID.
+#: eden_services.cpp
+msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
+msgstr "要导入，请将 Ryujinx 文件夹复制到 ryujinx/，或将存档复制到 save-import/{0}/（与 roms/ 同级）。"
+
+#: pe/ui/library.cpp
+msgid "Unavailable"
+msgstr "不可用"
+
+#. Short tag on the 'Parent folder' row.
+#: pe/ui/browse.cpp
+msgid "UP"
+msgstr "上级"
+
+#. A game update; {0} is its version, for example 1.2.0.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Update {0}"
+msgstr "更新 {0}"
+
+#: pe/ui/browse.cpp
+msgid "UPDATES, DLC"
+msgstr "更新、DLC"
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Upscaling filter"
+msgstr "缩放滤镜"
+
+#: pe/ui/settings.cpp
+msgid "UPSCALING FILTER"
+msgstr "缩放滤镜"
+
+#: eden_services.cpp
+msgid "USA"
+msgstr "美国"
+
+#: pe/ui/browse.cpp
+msgid "Use extracted firmware NCA files. Choose the folder in Settings, Game files; restart the app after changing it."
+msgstr "请使用解包后的固件 NCA 文件。在“设置”的“游戏文件”中选择文件夹；更改后请重新启动应用。"
+
+#: pe/ui/browse.cpp
+msgid "Use this folder"
+msgstr "使用此文件夹"
+
+#: pe/ui/settings.cpp
+msgid "VIBRATION"
+msgstr "振动"
+
+#: pe/ui/settings.cpp
+msgid "Vibration"
+msgstr "振动"
+
+#: pe/ui/settings.cpp
+msgid "Vibration off"
+msgstr "振动已关闭"
+
+#: pe/ui/settings.cpp
+msgid "Vibration on"
+msgstr "振动已开启"
+
+#: pe/ui/settings.cpp
+msgid "Video"
+msgstr "视频"
+
+#: pe/ui/settings.cpp
+msgid "VIDEO"
+msgstr "视频"
+
+#: pe/ui/home.cpp
+msgid "VIEW ALL GAMES"
+msgstr "查看全部游戏"
+
+#. Vulkan is a name (unchanged).
+#: pe/ui/settings.cpp
+msgid "Vulkan (recommended)"
+msgstr "Vulkan（推荐）"
+
+#: pe/ui/library.cpp
+msgid "Your games"
+msgstr "你的游戏"
+
+#. Headline when no game has been played yet.
+#: pe/ui/home.cpp
+msgid "Your next adventure"
+msgstr "你的下一段冒险"
+
+#. {0} is how many DLC (add-on content) a game has installed.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "{0} DLC"
+msgstr "{0} 个 DLC"
+
+#. Exactly one game. In a language with more than two plural forms, word it so that it reads well with any number (Games: {0}).
+#: pe/ui/browse.cpp
+msgid "{0} game"
+msgstr "{0} 个游戏"
+
+#. Exactly one game. See '{0} game'.
+#: eden_services.cpp
+msgid "{0} game installed"
+msgstr "已安装 {0} 个游戏"
+
+#. Any number of games other than one (also 0). See '{0} game'.
+#: pe/ui/browse.cpp
+msgid "{0} games"
+msgstr "{0} 个游戏"
+
+#. Any number of games other than one. See '{0} game'.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "{0} games installed"
+msgstr "已安装 {0} 个游戏"
+
+#. Exactly one file. See '{0} game'.
+#: pe/ui/browse.cpp
+msgid "{0} NCA file"
+msgstr "{0} 个 NCA 文件"
+
+#. Any number of files other than one. See '{0} game'.
+#: pe/ui/browse.cpp
+msgid "{0} NCA files"
+msgstr "{0} 个 NCA 文件"
+
+#. {0} is a language name. Shown beside a game that lacks that language.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "{0} not available"
+msgstr "{0}不可用"
+
+#. Position in a list: 3 OF 12.
+#: pe/ui/widgets.cpp
+msgid "{0} OF {1}"
+msgstr "{0} / {1}"
+
+#. A percentage (a volume): write it as the language does, for example with a space before the sign.
+#: pe/ui/settings.cpp
+msgid "{0}%"
+msgstr "{0}%"
+
+#. {0} is a folder; NSP and XCI are file types.
+#: pe/ui/browse.cpp
+msgid "{0}/ (NSP or XCI)"
+msgstr "{0}/（NSP 或 XCI）"

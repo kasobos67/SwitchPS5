@@ -1,0 +1,1089 @@
+# ProsperoEden launcher - ko-KR
+# English text is the key (msgid); msgstr is the translation. Keep {0} {1} as they are,
+# keep UPPERCASE labels uppercase, and keep names (ProsperoEden, Eden, PS5, Vulkan, OpenGL,
+# AMD FSR, DLC, NSP, XCI, prod.keys, Ryujinx) unchanged.
+
+#: settings_store.h
+msgid "0.5x (faster, softer)"
+msgstr "0.5x(빠름, 부드러움)"
+
+#: settings_store.h
+msgid "0.75x (faster)"
+msgstr "0.75x(빠름)"
+
+#: settings_store.h
+msgid "1.5x (sharper)"
+msgstr "1.5x(선명함)"
+
+#: settings_store.h
+msgid "1x (native)"
+msgstr "1x(기본)"
+
+#: settings_store.h
+msgid "2x (sharpest)"
+msgstr "2x(가장 선명함)"
+
+#: eden_services.cpp
+msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
+msgstr "펌웨어 NCA를 읽을 수 없습니다. 펌웨어를 다시 설치하세요."
+
+#: pe/ui/home.cpp
+msgid "About"
+msgstr "정보"
+
+#: pe/ui/browse.cpp
+msgid "About ProsperoEden"
+msgstr "ProsperoEden 정보"
+
+#. Label: which folders the app can read.
+#: pe/ui/browse.cpp
+msgid "ACCESS"
+msgstr "접근 권한"
+
+#. A settings category: options that make the menu easier to see and follow.
+#: pe/ui/settings.cpp
+msgid "Accessibility"
+msgstr "접근성"
+
+#: pe/ui/settings.cpp
+msgid "ACCESSIBILITY"
+msgstr "접근성"
+
+#. Label: a game's updates and DLC.
+#: pe/ui/library.cpp
+msgid "ADD-ONS"
+msgstr "추가 콘텐츠"
+
+#. {0}: updates and DLC of the game; {1}: the language it will use.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Add-ons: {0}  /  Language: {1}"
+msgstr "추가 콘텐츠: {0}  /  언어: {1}"
+
+#: pe/ui/settings.cpp
+msgid "Adjust the essentials without leaving your library behind."
+msgstr "라이브러리를 벗어나지 않고 기본 설정을 조정하세요."
+
+#: pe/ui/browse.cpp
+msgid "All credit for the Eden emulator goes to its developers and contributors."
+msgstr "Eden 에뮬레이터의 모든 공로는 개발자와 기여자에게 있습니다."
+
+#: settings_store.h
+msgid "AMD FSR"
+msgstr "AMD FSR"
+
+#: eden_services.cpp
+msgid "Another language"
+msgstr "다른 언어"
+
+#: pe/ui/settings.cpp
+msgid "Audio"
+msgstr "오디오"
+
+#: pe/ui/settings.cpp
+msgid "AUDIO"
+msgstr "오디오"
+
+#: eden_services.cpp
+msgid "Australia"
+msgstr "호주"
+
+#. Button hint: go back one screen.
+#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Back"
+msgstr "뒤로"
+
+#. An upscaling filter.
+#: settings_store.h
+msgid "Bicubic"
+msgstr "바이큐빅"
+
+#. An upscaling filter.
+#: settings_store.h
+msgid "Bilinear"
+msgstr "바이리니어"
+
+#. Button hint: move through the list.
+#: pe/ui/browse.cpp
+msgid "Browse"
+msgstr "이동"
+
+#: pe/ui/library.cpp
+msgid "Browse games"
+msgstr "게임 둘러보기"
+
+#: pe/ui/settings.cpp
+msgid "Browse settings"
+msgstr "설정 둘러보기"
+
+#: eden_services.cpp
+msgid "Cannot read firmware/ in {0}. Install extracted firmware NCAs."
+msgstr "{0}의 firmware/를 읽을 수 없습니다. 추출한 펌웨어 NCA를 설치하세요."
+
+#. Button hint: change the highlighted setting.
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Change"
+msgstr "변경"
+
+#: pe/ui/library.cpp
+msgid "Change mode. Saved per game."
+msgstr "모드를 변경합니다. 게임별로 저장됩니다."
+
+#: eden_services.cpp
+msgid "China"
+msgstr "중국"
+
+#: settings_store.h
+msgid "Chinese (Simplified)"
+msgstr "중국어(간체)"
+
+#: settings_store.h
+msgid "Chinese (Traditional)"
+msgstr "중국어(번체)"
+
+#. Button hint: choose the highlighted language.
+#: pe/ui/browse.cpp
+msgid "Choose"
+msgstr "선택"
+
+#: pe/ui/home.cpp
+msgid "Choose a game from your library."
+msgstr "라이브러리에서 게임을 선택하세요."
+
+#: pe/ui/browse.cpp
+msgid "Choose the folder that holds your keys, firmware and games"
+msgstr "키, 펌웨어, 게임이 들어 있는 폴더를 선택하세요"
+
+#: pe/ui/browse.cpp
+msgid "Choose the language games use"
+msgstr "게임에서 사용할 언어를 선택하세요"
+
+#: pe/ui/library.cpp
+msgid "Console mode"
+msgstr "본체 모드"
+
+#: pe/ui/home.cpp
+msgid "CONTINUE PLAYING"
+msgstr "이어서 플레이"
+
+#: pe/ui/settings.cpp
+msgid "Controller shortcuts and supported features."
+msgstr "컨트롤러 단축키와 지원 기능."
+
+#: pe/ui/home.cpp
+msgid "CONTROLLERS"
+msgstr "컨트롤러"
+
+#: pe/ui/settings.cpp
+msgid "Controls"
+msgstr "조작"
+
+#: pe/ui/settings.cpp
+msgid "CONTROLS"
+msgstr "조작"
+
+#: pe/ui/library.cpp
+msgid "Could not save console mode. Please try again."
+msgstr "본체 모드를 저장하지 못했습니다. 다시 시도해 주세요."
+
+#: pe/ui/launcher.cpp
+msgid "Could not save settings. Please try again."
+msgstr "설정을 저장하지 못했습니다. 다시 시도해 주세요."
+
+#: pe/ui/browse.cpp
+msgid "Could not save the folder. Please try again."
+msgstr "폴더를 저장하지 못했습니다. 다시 시도해 주세요."
+
+#: pe/ui/browse.cpp, pe/ui/library.cpp
+msgid "Could not save. Please try again."
+msgstr "저장하지 못했습니다. 다시 시도해 주세요."
+
+#: pe/ui/browse.cpp
+msgid "Credits and setup"
+msgstr "크레딧 및 설정 안내"
+
+#. A per-game setting that follows the general setting; {0} is its value.
+#: pe/ui/library.cpp
+msgid "Default ({0})"
+msgstr "기본값({0})"
+
+#: pe/ui/browse.cpp
+msgid "Default folder"
+msgstr "기본 폴더"
+
+#: pe/ui/browse.cpp
+msgid "Default folder saved. Reopen ProsperoEden to use it."
+msgstr "기본 폴더를 저장했습니다. ProsperoEden을 다시 열면 적용됩니다."
+
+#: pe/ui/settings.cpp
+msgid "Detailed logging"
+msgstr "상세 로그"
+
+#: pe/ui/settings.cpp
+msgid "DETAILED LOGS"
+msgstr "상세 로그"
+
+#: pe/ui/settings.cpp
+msgid "Detailed logs apply to the next game launch."
+msgstr "상세 로그는 다음 게임 실행부터 적용됩니다."
+
+#: pe/ui/settings.cpp
+msgid "Detailed logs on"
+msgstr "상세 로그 켜짐"
+
+#. Button hint: show the game's details.
+#: pe/ui/home.cpp
+msgid "Details"
+msgstr "상세 정보"
+
+#: pe/ui/settings.cpp
+msgid "Diagnostics"
+msgstr "진단"
+
+#: pe/ui/settings.cpp
+msgid "DIAGNOSTICS"
+msgstr "진단"
+
+#. Console mode: the console as if connected to a TV. Keep it short (about 9 letters).
+#: pe/ui/library.cpp
+msgid "Docked"
+msgstr "TV 모드"
+
+#: pe/ui/settings.cpp
+msgid "Draws the menu's small text larger."
+msgstr "메뉴의 작은 글자를 더 크게 표시합니다."
+
+#: settings_store.h
+msgid "Dutch"
+msgstr "네덜란드어"
+
+#: pe/ui/home.cpp
+msgid "Eden emulator for PlayStation 5"
+msgstr "PlayStation 5용 Eden 에뮬레이터"
+
+#. Label of the shortcut that ends the running game.
+#: pe/ui/settings.cpp
+msgid "END GAME"
+msgstr "게임 종료"
+
+#: pe/ui/settings.cpp
+msgid "End the game and return to this menu"
+msgstr "게임을 종료하고 이 메뉴로 돌아가기"
+
+#: settings_store.h
+msgid "English (UK)"
+msgstr "영어(영국)"
+
+#: settings_store.h
+msgid "English (US)"
+msgstr "영어(미국)"
+
+#: eden_services.cpp
+msgid "Europe"
+msgstr "유럽"
+
+#. Button hint: copy the game's save out to a folder.
+#: pe/ui/library.cpp
+msgid "Export a copy"
+msgstr "사본 내보내기"
+
+#: eden_services.cpp
+msgid "Export failed. Check that the game files folder can be written."
+msgstr "내보내지 못했습니다. 게임 파일 폴더에 쓸 수 있는지 확인하세요."
+
+#. {0} is a folder.
+#: eden_services.cpp, host/fake_services.hpp
+msgid "Exported to {0}."
+msgstr "{0}에 내보냈습니다."
+
+#: pe/ui/library.cpp
+msgid "FILE"
+msgstr "파일"
+
+#: pe/ui/settings.cpp
+msgid "Fine-tune your experience"
+msgstr "나에게 맞게 세부 조정"
+
+#: pe/ui/browse.cpp
+msgid "FIRMWARE"
+msgstr "펌웨어"
+
+#: eden_services.cpp
+msgid "Firmware NCA validation failed (code {0}). Check that firmware and prod.keys are compatible."
+msgstr "펌웨어 NCA 검증에 실패했습니다(코드 {0}). 펌웨어와 prod.keys가 서로 맞는지 확인하세요."
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Firmware ready"
+msgstr "펌웨어 준비됨"
+
+#: eden_services.cpp
+msgid "Firmware SystemVersion data is missing or unreadable. Install a complete firmware dump."
+msgstr "펌웨어의 SystemVersion 데이터가 없거나 읽을 수 없습니다. 완전한 펌웨어를 설치하세요."
+
+#: pe/ui/browse.cpp
+msgid "FOLDERS"
+msgstr "폴더"
+
+#: pe/ui/library.cpp
+msgid "FORMAT"
+msgstr "형식"
+
+#. Label: the frames-per-second counter drawn over a game.
+#: pe/ui/settings.cpp
+msgid "FPS OVERLAY"
+msgstr "FPS 표시"
+
+#: pe/ui/settings.cpp
+msgid "FPS overlay"
+msgstr "FPS 표시"
+
+#: settings_store.h
+msgid "French"
+msgstr "프랑스어"
+
+#: settings_store.h
+msgid "French (Canada)"
+msgstr "프랑스어(캐나다)"
+
+#. The app can read every folder of the console.
+#: pe/ui/browse.cpp
+msgid "Full filesystem"
+msgstr "전체 파일 시스템"
+
+#: pe/ui/settings.cpp
+msgid "Game audio; PS5 system-menu music is unchanged."
+msgstr "게임 소리입니다. PS5 시스템 메뉴 음악은 바뀌지 않습니다."
+
+#. {0} is the reason, a sentence in English; {1} is a file.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Game could not start: {0} Details: {1}"
+msgstr "게임을 시작할 수 없습니다: {0} 자세한 내용: {1}"
+
+#: pe/ui/home.cpp
+msgid "Game details"
+msgstr "게임 상세 정보"
+
+#: pe/ui/library.cpp
+msgid "GAME DETAILS"
+msgstr "게임 상세 정보"
+
+#: pe/ui/browse.cpp, pe/ui/settings.cpp
+msgid "Game files"
+msgstr "게임 파일"
+
+#: pe/ui/settings.cpp
+msgid "GAME FILES"
+msgstr "게임 파일"
+
+#: pe/ui/library.cpp
+msgid "Game settings"
+msgstr "게임 설정"
+
+#: pe/ui/settings.cpp
+msgid "GAME VOLUME"
+msgstr "게임 음량"
+
+#: pe/ui/settings.cpp
+msgid "Game volume"
+msgstr "게임 음량"
+
+#: pe/ui/settings.cpp
+msgid "Game volume, and the sounds of this menu."
+msgstr "게임 음량과 이 메뉴의 효과음."
+
+#: pe/ui/browse.cpp
+msgid "GAMES"
+msgstr "게임"
+
+#: pe/ui/browse.cpp
+msgid "Games use this language when they offer it, and their own default otherwise. It applies when a game starts."
+msgstr "게임이 이 언어를 지원하면 이 언어를, 그렇지 않으면 게임의 기본 언어를 사용합니다. 게임을 시작할 때 적용됩니다."
+
+#: pe/ui/home.cpp
+msgid "Games you launch will appear here."
+msgstr "실행한 게임이 여기에 표시됩니다."
+
+#: settings_store.h
+msgid "German"
+msgstr "독일어"
+
+#: pe/ui/browse.cpp
+msgid "GETTING STARTED"
+msgstr "시작하기"
+
+#: pe/ui/settings.cpp
+msgid "Graphics backend and how games are scaled to your TV."
+msgstr "그래픽 백엔드와 TV에 맞춘 화면 확대 방식."
+
+#: eden_services.cpp
+msgid "Graphics backend initialization failed. Try another backend in Settings; see stderr.log and eden_log.txt for driver details."
+msgstr "그래픽 백엔드를 초기화하지 못했습니다. 설정에서 다른 백엔드를 사용해 보세요. 드라이버 정보는 stderr.log와 eden_log.txt를 참고하세요."
+
+#. Console mode: the console as if held in the hands. Keep it short (about 9 letters).
+#: pe/ui/library.cpp
+msgid "Handheld"
+msgstr "휴대 모드"
+
+#: pe/ui/settings.cpp
+msgid "HIGH CONTRAST"
+msgstr "고대비"
+
+#. A switch: solid dark panels, brighter text.
+#: pe/ui/settings.cpp
+msgid "High contrast"
+msgstr "고대비"
+
+#: pe/ui/settings.cpp
+msgid "How games are drawn and scaled to your TV."
+msgstr "게임을 그리는 방식과 TV에 맞춘 확대 방식."
+
+#. Button hint: copy a save in.
+#: pe/ui/library.cpp
+msgid "Import"
+msgstr "가져오기"
+
+#: eden_services.cpp
+msgid "Import failed. The current save is unchanged."
+msgstr "가져오지 못했습니다. 현재 세이브 데이터는 그대로입니다."
+
+#: eden_services.cpp
+msgid "Imported."
+msgstr "가져왔습니다."
+
+#: eden_services.cpp, host/fake_services.hpp
+msgid "Imported. The save it replaced was backed up."
+msgstr "가져왔습니다. 대체된 세이브 데이터는 백업했습니다."
+
+#. Tag on the language or folder that is in use now.
+#: pe/ui/browse.cpp, pe/ui/settings.cpp
+msgid "IN USE"
+msgstr "사용 중"
+
+#: settings_store.h
+msgid "Italian"
+msgstr "이탈리아어"
+
+#: eden_services.cpp
+msgid "Japan"
+msgstr "일본"
+
+#: settings_store.h
+msgid "Japanese"
+msgstr "일본어"
+
+#. keys, firmware and roms are folder names (unchanged). TRIANGLE is the controller's triangle button, in capitals.
+#: pe/ui/browse.cpp
+msgid "Keep keys, firmware and roms folders together. TRIANGLE uses the folder shown."
+msgstr "keys, firmware, roms 폴더를 한곳에 두세요. △ 버튼을 누르면 표시된 폴더를 사용합니다."
+
+#. Label: the encryption keys file (prod.keys).
+#: pe/ui/browse.cpp
+msgid "KEYS"
+msgstr "키"
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Keys and firmware: startup checks passed. Game-specific compatibility is checked at launch."
+msgstr "키와 펌웨어: 시작 검사를 통과했습니다. 게임별 호환성은 실행할 때 확인합니다."
+
+#: eden_services.cpp
+msgid "Korea"
+msgstr "한국"
+
+#: settings_store.h
+msgid "Korean"
+msgstr "한국어"
+
+#: pe/ui/browse.cpp, pe/ui/settings.cpp
+msgid "Language"
+msgstr "언어"
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "LANGUAGE"
+msgstr "언어"
+
+#: pe/ui/browse.cpp
+msgid "LANGUAGES"
+msgstr "언어"
+
+#: pe/ui/settings.cpp
+msgid "LARGER TEXT"
+msgstr "큰 글자"
+
+#. A switch: the menu's small text is drawn larger.
+#: pe/ui/settings.cpp
+msgid "Larger text"
+msgstr "큰 글자"
+
+#. Caption under the title of the game played last.
+#: eden_services.cpp
+msgid "Last game opened"
+msgstr "마지막으로 연 게임"
+
+#: pe/ui/home.cpp
+msgid "Launch game"
+msgstr "게임 실행"
+
+#: pe/ui/home.cpp
+msgid "Library"
+msgstr "라이브러리"
+
+#: pe/ui/library.cpp
+msgid "LIBRARY"
+msgstr "라이브러리"
+
+#. Headline of the Settings screen.
+#: pe/ui/settings.cpp
+msgid "Make it yours."
+msgstr "나만의 설정으로."
+
+#: pe/ui/settings.cpp
+msgid "Make the menu easier to see and follow."
+msgstr "메뉴를 더 보기 쉽고 따라가기 쉽게 만듭니다."
+
+#: pe/ui/browse.cpp
+msgid "Menu sound effects made with ElevenLabs."
+msgstr "메뉴 효과음은 ElevenLabs로 제작했습니다."
+
+#: pe/ui/settings.cpp
+msgid "MENU SOUNDS"
+msgstr "메뉴 효과음"
+
+#: pe/ui/settings.cpp
+msgid "Menu sounds"
+msgstr "메뉴 효과음"
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Missing or empty keys/prod.keys in {0}."
+msgstr "{0}에 keys/prod.keys가 없거나 비어 있습니다."
+
+#: pe/ui/settings.cpp
+msgid "MUTE"
+msgstr "음소거"
+
+#: pe/ui/settings.cpp
+msgid "Mute"
+msgstr "음소거"
+
+#: pe/ui/settings.cpp
+msgid "Muted"
+msgstr "음소거됨"
+
+#. Button hint: move the highlight.
+#: pe/ui/home.cpp
+msgid "Navigate"
+msgstr "이동"
+
+#. An upscaling filter (nearest neighbour). Keep it short.
+#: settings_store.h
+msgid "Nearest"
+msgstr "니어리스트"
+
+#: pe/ui/settings.cpp
+msgid "Needs attention"
+msgstr "확인 필요"
+
+#. {0} is the folder used the next time the app starts.
+#: pe/ui/browse.cpp
+msgid "Next launch: {0}"
+msgstr "다음 실행: {0}"
+
+#. Label: the folder used the next time the app starts.
+#: pe/ui/settings.cpp
+msgid "NEXT START"
+msgstr "다음 실행"
+
+#: pe/ui/library.cpp
+msgid "No cover art"
+msgstr "커버 이미지 없음"
+
+#: pe/ui/browse.cpp
+msgid "No firmware folder"
+msgstr "firmware 폴더 없음"
+
+#: eden_services.cpp
+msgid "No firmware NCAs found in {0}."
+msgstr "{0}에서 펌웨어 NCA를 찾을 수 없습니다."
+
+#: pe/ui/browse.cpp
+msgid "No folders here."
+msgstr "여기에는 폴더가 없습니다."
+
+#: pe/ui/library.cpp
+msgid "No ROM files found."
+msgstr "ROM 파일을 찾을 수 없습니다."
+
+#: pe/ui/library.cpp
+msgid "No ROM selected"
+msgstr "선택한 ROM 없음"
+
+#: pe/ui/browse.cpp
+msgid "No roms folder"
+msgstr "roms 폴더 없음"
+
+#. No add-ons (updates or DLC).
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/library.cpp
+msgid "None"
+msgstr "없음"
+
+#. Short status at the right of the Save data row.
+#: pe/ui/library.cpp
+msgid "Nothing to import"
+msgstr "가져올 항목 없음"
+
+#. A setting that is switched off.
+#: pe/ui/settings.cpp
+msgid "Off"
+msgstr "끔"
+
+#. A setting that is switched on.
+#: pe/ui/settings.cpp
+msgid "On"
+msgstr "켬"
+
+#: pe/ui/settings.cpp
+msgid "ON THIS CONSOLE"
+msgstr "이 본체"
+
+#. Short tag on a folder row.
+#: pe/ui/browse.cpp
+msgid "OPEN"
+msgstr "열기"
+
+#. Button hint: open the highlighted folder.
+#: pe/ui/browse.cpp
+msgid "Open"
+msgstr "열기"
+
+#: pe/ui/home.cpp
+msgid "Open library"
+msgstr "라이브러리 열기"
+
+#. Button hint: jump a page of the list (L1 / R1).
+#: pe/ui/browse.cpp
+msgid "Page"
+msgstr "페이지"
+
+#: pe/ui/browse.cpp
+msgid "Parent folder"
+msgstr "상위 폴더"
+
+#: settings_store.h
+msgid "Polish"
+msgstr "폴란드어"
+
+#: settings_store.h
+msgid "Portuguese"
+msgstr "포르투갈어"
+
+#: settings_store.h
+msgid "Portuguese (Brazil)"
+msgstr "포르투갈어(브라질)"
+
+#. Eden is the emulator's name (unchanged).
+#: pe/ui/browse.cpp
+msgid "Powered by Eden"
+msgstr "Powered by Eden"
+
+#: pe/ui/settings.cpp
+msgid "PREFERENCES"
+msgstr "환경 설정"
+
+#. Asked before a save is imported over the one in use.
+#: pe/ui/library.cpp
+msgid "Press again to replace this game's save. The current one is backed up."
+msgstr "다시 누르면 이 게임의 세이브 데이터를 교체합니다. 현재 데이터는 백업됩니다."
+
+#: eden_services.cpp
+msgid "prod.keys could not supply an NCA header key. Replace it with a valid key dump."
+msgstr "prod.keys에서 NCA 헤더 키를 얻지 못했습니다. 올바른 키로 교체하세요."
+
+#: pe/ui/browse.cpp
+msgid "prod.keys found"
+msgstr "prod.keys 있음"
+
+#: pe/ui/browse.cpp
+msgid "prod.keys missing"
+msgstr "prod.keys 없음"
+
+#: pe/ui/browse.cpp
+msgid "PROJECT CREDITS"
+msgstr "프로젝트 크레딧"
+
+#: pe/ui/browse.cpp
+msgid "ProsperoEden is an unofficial PS5 port brought to you by BlackBearReloaded."
+msgstr "ProsperoEden은 BlackBearReloaded가 제공하는 비공식 PS5 이식판입니다."
+
+#. Why a game did not start.
+#: eden_services.cpp
+msgid "PS5 controller initialization failed"
+msgstr "PS5 컨트롤러를 초기화하지 못했습니다"
+
+#: pe/ui/browse.cpp
+msgid "PS5 EDITION"
+msgstr "PS5 에디션"
+
+#. {0} is the version, for example v1.000.030.
+#: pe/ui/home.cpp
+msgid "PS5 EDITION  /  {0}"
+msgstr "PS5 에디션  /  {0}"
+
+#: pe/ui/settings.cpp
+msgid "Ready"
+msgstr "준비됨"
+
+#: pe/ui/home.cpp
+msgid "RECENTLY PLAYED"
+msgstr "최근 플레이"
+
+#: pe/ui/settings.cpp
+msgid "REDUCE MOTION"
+msgstr "움직임 줄이기"
+
+#. A switch: no drifting, sliding or zooming on screen.
+#: pe/ui/settings.cpp
+msgid "Reduce motion"
+msgstr "움직임 줄이기"
+
+#: pe/ui/browse.cpp, pe/ui/settings.cpp
+msgid "REGION"
+msgstr "지역"
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Renderer"
+msgstr "렌더러"
+
+#: pe/ui/settings.cpp
+msgid "RENDERER"
+msgstr "렌더러"
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Resolution"
+msgstr "해상도"
+
+#: pe/ui/settings.cpp
+msgid "RESOLUTION"
+msgstr "해상도"
+
+#: eden_services.cpp
+msgid "ROM missing from the game files folder"
+msgstr "게임 파일 폴더에 ROM이 없습니다"
+
+#: settings_store.h
+msgid "Russian"
+msgstr "러시아어"
+
+#. Short status at the right of the Save data row. Ryujinx is a name (unchanged).
+#: pe/ui/library.cpp
+msgid "Ryujinx save found"
+msgstr "Ryujinx 세이브 있음"
+
+#. The app can read only its own folder; {0} is a number.
+#: pe/ui/browse.cpp
+msgid "Sandboxed (code {0}): app folder only"
+msgstr "샌드박스(코드 {0}): 앱 폴더만"
+
+#. A row of a game's settings: the game's saved progress, which can be copied in or out.
+#: pe/ui/library.cpp
+msgid "Save data"
+msgstr "세이브 데이터"
+
+#. Short status at the right of the Save data row: a folder with a save to import.
+#: pe/ui/library.cpp
+msgid "Save folder found"
+msgstr "세이브 폴더 있음"
+
+#: pe/ui/library.cpp
+msgid "Saved for this game. Applies on next launch."
+msgstr "이 게임에 저장했습니다. 다음 실행부터 적용됩니다."
+
+#: pe/ui/browse.cpp, pe/ui/launcher.cpp
+msgid "Saved. Applies when a game starts."
+msgstr "저장했습니다. 게임을 시작할 때 적용됩니다."
+
+#: pe/ui/browse.cpp
+msgid "Saved. Reopen ProsperoEden to use this folder."
+msgstr "저장했습니다. ProsperoEden을 다시 열면 이 폴더를 사용합니다."
+
+#. Button hint: choose the highlighted item (not the Select button).
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Select"
+msgstr "선택"
+
+#: pe/ui/library.cpp
+msgid "Select a game"
+msgstr "게임 선택"
+
+#: pe/ui/library.cpp
+msgid "Select a game to begin"
+msgstr "게임을 선택해 시작하세요"
+
+#: pe/ui/library.cpp
+msgid "Select a readable game to configure its mode."
+msgstr "모드를 설정하려면 읽을 수 있는 게임을 선택하세요."
+
+#. Select is a button's name (unchanged).
+#: pe/ui/settings.cpp
+msgid "Select is the touchpad button on PS5."
+msgstr "Select는 PS5의 터치패드 버튼입니다."
+
+#. Heading: the language highlighted in the list.
+#: pe/ui/browse.cpp
+msgid "SELECTED"
+msgstr "선택됨"
+
+#. Why a game did not start (the file is gone).
+#: eden_services.cpp
+msgid "Selected ROM is no longer available"
+msgstr "선택한 ROM을 더 이상 사용할 수 없습니다"
+
+#: pe/ui/home.cpp, pe/ui/settings.cpp
+msgid "Settings"
+msgstr "설정"
+
+#. Label: whether keys and firmware are in place.
+#: pe/ui/settings.cpp
+msgid "SETUP"
+msgstr "설정 상태"
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Setup required"
+msgstr "설정 필요"
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Setup required: {0} Open Settings, Game files to choose the folder that holds your keys, firmware and roms folders (or add the files to {1}), then reopen ProsperoEden."
+msgstr "설정 필요: {0} 설정의 게임 파일에서 keys, firmware, roms 폴더가 들어 있는 폴더를 선택하거나 파일을 {1}에 넣은 다음 ProsperoEden을 다시 여세요."
+
+#: pe/ui/settings.cpp
+msgid "Setup status and detailed logs."
+msgstr "설정 상태와 상세 로그."
+
+#: eden_services.cpp
+msgid "Setup validation failed. Check that firmware and key files are readable and valid."
+msgstr "설정 검증에 실패했습니다. 펌웨어와 키 파일을 읽을 수 있고 올바른지 확인하세요."
+
+#: pe/ui/settings.cpp
+msgid "Shortcuts during a game, and vibration."
+msgstr "게임 중 단축키와 진동."
+
+#: pe/ui/settings.cpp
+msgid "Show or hide the FPS overlay"
+msgstr "FPS 표시 켜기/끄기"
+
+#: pe/ui/library.cpp
+msgid "SIZE"
+msgstr "크기"
+
+#: pe/ui/settings.cpp
+msgid "Solid panels, brighter text and an outlined highlight."
+msgstr "불투명한 패널, 더 밝은 글자, 테두리가 있는 강조 표시."
+
+#: settings_store.h
+msgid "Spanish"
+msgstr "스페인어"
+
+#: settings_store.h
+msgid "Spanish (Latin America)"
+msgstr "스페인어(중남미)"
+
+#. The app creates its user the first time a game runs.
+#: eden_services.cpp
+msgid "Start any game once before importing a save."
+msgstr "세이브 데이터를 가져오기 전에 아무 게임이나 한 번 실행하세요."
+
+#. Shown over a game's cover while it starts.
+#: pe/ui/launcher.cpp
+msgid "STARTING"
+msgstr "시작 중"
+
+#: pe/ui/settings.cpp
+msgid "Stops the background drifting and the screens sliding, here and on the loading screen."
+msgstr "배경의 움직임과 화면 슬라이드를 멈춥니다. 로딩 화면에도 적용됩니다."
+
+#: pe/ui/browse.cpp
+msgid "Supply your own files"
+msgstr "파일은 직접 준비하세요"
+
+#: eden_services.cpp
+msgid "Taiwan"
+msgstr "대만"
+
+#: settings_store.h
+msgid "Thai"
+msgstr "태국어"
+
+#. Heading of the acknowledgements.
+#: pe/ui/browse.cpp
+msgid "THANKS"
+msgstr "감사의 말"
+
+#: pe/ui/browse.cpp
+msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make ProsperoEden possible."
+msgstr "PS5 홈브루 커뮤니티 여러분과 ProsperoEden을 가능하게 한 드라이버, 도구, 라이브러리의 모든 개발자에게 감사드립니다."
+
+#: pe/ui/settings.cpp
+msgid "The folder that holds your keys, firmware and games."
+msgstr "키, 펌웨어, 게임이 들어 있는 폴더."
+
+#. Why a game stopped. 'Settings, Video' is the menu path; 'the game's own settings' is the Game settings dialog of the Library.
+#: eden_services.cpp
+msgid "The game ran out of graphics memory. Lower the resolution in Settings, Video (or in the game's own settings) and start it again."
+msgstr "게임의 그래픽 메모리가 부족합니다. 설정의 비디오(또는 게임별 설정)에서 해상도를 낮춘 다음 다시 시작하세요."
+
+#: pe/ui/settings.cpp
+msgid "The language games use when they offer it."
+msgstr "게임이 지원할 때 사용할 언어."
+
+#: pe/ui/browse.cpp
+msgid "THIS FOLDER"
+msgstr "이 폴더"
+
+#: pe/ui/browse.cpp
+msgid "This folder cannot be opened."
+msgstr "이 폴더를 열 수 없습니다."
+
+#: eden_services.cpp
+msgid "This game has no save to export yet."
+msgstr "이 게임에는 아직 내보낼 세이브 데이터가 없습니다."
+
+#: pe/ui/library.cpp
+msgid "This game's settings cannot be saved (no title ID)."
+msgstr "이 게임의 설정을 저장할 수 없습니다(타이틀 ID 없음)."
+
+#. ryujinx/, save-import/ and roms/ are folder names (unchanged); {0} is the game's ID.
+#: eden_services.cpp
+msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
+msgstr "가져오려면 Ryujinx 폴더를 ryujinx/에, 또는 세이브 데이터를 save-import/{0}/에 복사하세요(roms/ 옆)."
+
+#: pe/ui/library.cpp
+msgid "Unavailable"
+msgstr "사용할 수 없음"
+
+#. Short tag on the 'Parent folder' row.
+#: pe/ui/browse.cpp
+msgid "UP"
+msgstr "위로"
+
+#. A game update; {0} is its version, for example 1.2.0.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Update {0}"
+msgstr "업데이트 {0}"
+
+#: pe/ui/browse.cpp
+msgid "UPDATES, DLC"
+msgstr "업데이트, DLC"
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Upscaling filter"
+msgstr "확대 필터"
+
+#: pe/ui/settings.cpp
+msgid "UPSCALING FILTER"
+msgstr "확대 필터"
+
+#: eden_services.cpp
+msgid "USA"
+msgstr "미국"
+
+#: pe/ui/browse.cpp
+msgid "Use extracted firmware NCA files. Choose the folder in Settings, Game files; restart the app after changing it."
+msgstr "추출한 펌웨어 NCA 파일을 사용하세요. 폴더는 설정의 게임 파일에서 선택하고, 변경한 뒤에는 앱을 다시 시작하세요."
+
+#: pe/ui/browse.cpp
+msgid "Use this folder"
+msgstr "이 폴더 사용"
+
+#: pe/ui/settings.cpp
+msgid "VIBRATION"
+msgstr "진동"
+
+#: pe/ui/settings.cpp
+msgid "Vibration"
+msgstr "진동"
+
+#: pe/ui/settings.cpp
+msgid "Vibration off"
+msgstr "진동 끔"
+
+#: pe/ui/settings.cpp
+msgid "Vibration on"
+msgstr "진동 켬"
+
+#: pe/ui/settings.cpp
+msgid "Video"
+msgstr "비디오"
+
+#: pe/ui/settings.cpp
+msgid "VIDEO"
+msgstr "비디오"
+
+#: pe/ui/home.cpp
+msgid "VIEW ALL GAMES"
+msgstr "모든 게임 보기"
+
+#. Vulkan is a name (unchanged).
+#: pe/ui/settings.cpp
+msgid "Vulkan (recommended)"
+msgstr "Vulkan(권장)"
+
+#: pe/ui/library.cpp
+msgid "Your games"
+msgstr "내 게임"
+
+#. Headline when no game has been played yet.
+#: pe/ui/home.cpp
+msgid "Your next adventure"
+msgstr "다음 모험"
+
+#. {0} is how many DLC (add-on content) a game has installed.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "{0} DLC"
+msgstr "DLC {0}개"
+
+#. Exactly one game. In a language with more than two plural forms, word it so that it reads well with any number (Games: {0}).
+#: pe/ui/browse.cpp
+msgid "{0} game"
+msgstr "게임 {0}개"
+
+#. Exactly one game. See '{0} game'.
+#: eden_services.cpp
+msgid "{0} game installed"
+msgstr "게임 {0}개 설치됨"
+
+#. Any number of games other than one (also 0). See '{0} game'.
+#: pe/ui/browse.cpp
+msgid "{0} games"
+msgstr "게임 {0}개"
+
+#. Any number of games other than one. See '{0} game'.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "{0} games installed"
+msgstr "게임 {0}개 설치됨"
+
+#. Exactly one file. See '{0} game'.
+#: pe/ui/browse.cpp
+msgid "{0} NCA file"
+msgstr "NCA 파일 {0}개"
+
+#. Any number of files other than one. See '{0} game'.
+#: pe/ui/browse.cpp
+msgid "{0} NCA files"
+msgstr "NCA 파일 {0}개"
+
+#. {0} is a language name. Shown beside a game that lacks that language.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "{0} not available"
+msgstr "{0} 사용 불가"
+
+#. Position in a list: 3 OF 12.
+#: pe/ui/widgets.cpp
+msgid "{0} OF {1}"
+msgstr "{0} / {1}"
+
+#. A percentage (a volume): write it as the language does, for example with a space before the sign.
+#: pe/ui/settings.cpp
+msgid "{0}%"
+msgstr "{0}%"
+
+#. {0} is a folder; NSP and XCI are file types.
+#: pe/ui/browse.cpp
+msgid "{0}/ (NSP or XCI)"
+msgstr "{0}/(NSP 또는 XCI)"
