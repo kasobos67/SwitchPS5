@@ -33,6 +33,7 @@ std::int32_t sceKernelMapDirectMemory(void**, std::size_t, int, int, std::int64_
 std::int32_t sceKernelReleaseDirectMemory(std::int64_t, std::size_t);
 std::int32_t sceKernelReserveVirtualRange(void**, std::size_t, int, std::size_t);
 std::int32_t sceKernelEnableDmemAliasing();
+int sceKernelDebugOutText(int, const char*);
 }
 #endif
 
@@ -54,6 +55,23 @@ bool DevSetting(const char* entry) {
     close(fd);
     text[count > 0 ? count : 0] = '\0';
     return std::strstr(text, entry) != nullptr;
+}
+// A line for the log from inside the allocator: no stdio (it may allocate). On the console the
+// app's stderr is a stream of the C library and not descriptor 2, so the line goes to the kernel
+// log.
+void Note(const char* line) noexcept {
+#ifdef PS5_NATIVE
+    sceKernelDebugOutText(0, line);
+#else
+    (void)!write(2, line, std::strlen(line));
+#endif
+}
+// The same for a line written outside the allocator: on the console it is in the app's log too.
+void Report(const char* line) noexcept {
+    Note(line);
+#ifdef PS5_NATIVE
+    std::fputs(line, stderr);
+#endif
 }
 bool LargePagesEnabled() {
     static std::atomic<int> state{0}; // 0 unknown, 1 on, 2 off
@@ -110,7 +128,7 @@ void* AllocateMemoryPages(std::size_t size) noexcept {
         char line[96];
         const int length = std::snprintf(line, sizeof(line), "EDEN_LARGE_ALLOC bytes=%zu va=%p pa=%llx\n",
                                          total, base, static_cast<unsigned long long>(physical));
-        if (length > 0) (void)!write(2, line, static_cast<std::size_t>(length));
+        if (length > 0) Note(line);
     }
     std::memset(base, 0, total);
 #else
@@ -362,7 +380,7 @@ bool SparseAvailable() {
     }
     char line[96];
     const int length = std::snprintf(line, sizeof(line), "EDEN_SPARSE_TABLES available=%d step=%s\n", ok ? 1 : 0, step);
-    if (length > 0) (void)!write(2, line, static_cast<std::size_t>(length));
+    if (length > 0) Report(line);
     sparse_state.store(ok ? 1 : 2, std::memory_order_release);
     return ok;
 }
@@ -393,7 +411,7 @@ void* AllocateSparsePages(std::size_t size) noexcept {
         // The platform took the check's two slots but not this table: it is dense, as before.
         char line[96];
         const int length = std::snprintf(line, sizeof(line), "EDEN_SPARSE_TABLES dense bytes=%zu\n", size);
-        if (length > 0) (void)!write(2, line, static_cast<std::size_t>(length));
+        if (length > 0) Report(line);
         return AllocateMemoryPages(size);
     }
     for (std::size_t slot = 0; slot < slots; ++slot) {
@@ -432,8 +450,7 @@ void CommitSparsePage(std::uintptr_t page) noexcept {
     if (range->owned[slot].load(std::memory_order_relaxed)) return;
     if (!OwnSlot(begin + slot * SparseSlot, &range->physical[slot])) {
         // Out of memory in the middle of a guest mapping: there is no table to continue with.
-        static const char message[] = "EDEN_SPARSE_TABLES commit failed: out of memory\n";
-        (void)!write(2, message, sizeof(message) - 1);
+        Report("EDEN_SPARSE_TABLES commit failed: out of memory\n");
         std::abort();
     }
     sparse_committed.fetch_add(SparseSlot, std::memory_order_relaxed);
@@ -487,7 +504,7 @@ bool CommitMemoryRange(void* address, std::size_t size) noexcept {
     char line[96];
     const int length = std::snprintf(line, sizeof(line), "EDEN_HEAP_PIECE bytes=%zu va=%p pa=%llx\n", size, address,
                                      static_cast<unsigned long long>(physical));
-    if (length > 0) (void)!write(2, line, static_cast<std::size_t>(length));
+    if (length > 0) Note(line);
     std::memset(address, 0, size);
     return true;
 #else

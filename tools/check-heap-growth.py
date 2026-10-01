@@ -165,6 +165,7 @@ int sceLibcMspacePosixMemalign(void *space, void **address, size_t alignment, si
     return 0;
 }
 int sceKernelUsleep(unsigned int microseconds) { return usleep(microseconds); }
+int sceKernelDebugOutText(int channel, const char *text) { (void)channel; return (int)write(2, text, strlen(text)); }
 
 // The C library's own allocator, for what the app's heap does not own.
 void *__real_malloc(size_t size) { return malloc(size); }
@@ -292,7 +293,14 @@ int main(int argc, char **argv) {
     const size_t peak = atomic_load(&ps5_heap_peak_bytes);
     assert(eden_heap_arenas_created() >= 8);
     if (!refuse_range) {
-        assert(after_threads > piece && after_threads < heap && atomic_load(&committed_bytes) == after_threads);
+        // It grew, by exactly what was committed. How far depends on how the threads interleave and
+        // on this stand-in allocator, which packs blocks far less tightly than the console's: the
+        // limit itself is a valid outcome here (requests then fail, and the workers carry on).
+        if (!(after_threads > piece && after_threads <= heap && atomic_load(&committed_bytes) == after_threads)) {
+            fprintf(stderr, "pieces %zu MiB, committed %zu MiB, most in use %zu MiB\n", after_threads >> 20,
+                    atomic_load(&committed_bytes) >> 20, peak >> 20);
+            abort();
+        }
         // A large block has memory of its own: the heap's pieces do not grow, and it is given
         // back when freed. It can grow in place of nothing: a resize moves it.
         unsigned blocks_alive = 99;

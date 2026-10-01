@@ -24,7 +24,6 @@
  */
 #include <pthread.h>
 #include <string.h>
-#include <unistd.h>
 
 #define EDEN_HEAP_ARENA_SHIFT 23u /* 8 MiB arenas and slots (<=256 MiB reserved) */
 #define EDEN_HEAP_ARENA_SIZE (1u << EDEN_HEAP_ARENA_SHIFT)
@@ -330,12 +329,14 @@ static void *eden_heap_space_try(void *space, int kind, size_t a, size_t b) {
   return sceLibcMspacePosixMemalign(space, &address, a, b) == 0 ? address : NULL;
 }
 
-/* Why the heap could not grow, for the log: the allocation that asked is about to fail. No
- * stdio here (it allocates), and only the first few times. */
+int sceKernelDebugOutText(int channel, const char *text);
+
+/* Why the heap could not grow, for the kernel log: the allocation that asked is about to fail.
+ * No stdio here (it allocates), and only the first few times. */
 static void eden_heap_grow_refused(const char *line) {
   static atomic_uint reported;
   if (atomic_fetch_add_explicit(&reported, 1, memory_order_relaxed) < 8)
-    (void)!write(2, line, strlen(line));
+    sceKernelDebugOutText(0, line);
 }
 
 /* Adds a space with room for `bytes`: memory for the next pieces of the range and an mspace
