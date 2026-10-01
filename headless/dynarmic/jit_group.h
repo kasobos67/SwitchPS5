@@ -154,6 +154,7 @@ public:
     // next full clear.
     std::vector<u64> Invalidate(const boost::icl::interval_set<u64>& invalid) {
         std::vector<u64> invalidated;
+        ++invalidations;
         for (const auto& location : ranges.InvalidateRanges(invalid)) {
             if (blocks.erase(location) == 0)
                 continue;
@@ -167,6 +168,7 @@ public:
 
     // With every member quiescent: forget all blocks and sites (their regions are reset too).
     void Clear() {
+        ++invalidations;
         blocks.clear();
         sites.clear();
         ranges.ClearCache();
@@ -175,8 +177,12 @@ public:
     // Precompilation (see the top of this file). The functions take a member. From `precompile`,
     // -2 means its region is at the reserve kept for the core's own compilations and -3 that the
     // core is compiling there now (it never waits behind a precompilation that could wait).
+    // `invalidations` counts range invalidations and clears: a precompiled block is dropped when
+    // one happened while it was compiled, because the precompiler reads guest code the game is
+    // not about to run and the game may be mapping it at that moment.
     static constexpr std::size_t history_limit = 4'000'000;
     std::vector<u64> history;
+    u64 invalidations = 0;
     int (*precompile)(void* member, u64 location) = nullptr;
     std::size_t (*space)(void* member) = nullptr;
     std::mutex precompile_mutex;

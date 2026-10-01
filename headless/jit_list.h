@@ -10,11 +10,12 @@
 //   value per block: the block's mode bits (the top byte of the JIT's location descriptor) and
 //   its address as an offset from where the game's code starts.
 //
-// Addresses are offsets because the code is loaded at a different address every session. Blocks
-// outside the first 4 GiB of the game's code (modules a game loads later) are not kept. A list is
-// used only for the build it was saved from. A session's own blocks come first, in the order it
-// used them; blocks only earlier sessions used follow, so the list grows to cover every part of
-// the game that was played.
+// Addresses are offsets because the code is loaded at a different address every session. Only
+// blocks in the game's own modules are kept (the code mapped when it starts): code a game maps
+// later, such as plug-in modules, lands at another address every session, and the game may be
+// mapping it while a block there is read. A list is used only for the build it was saved from. A
+// session's own blocks come first, in the order it used them; blocks only earlier sessions used
+// follow, so the list grows to cover every part of the game that was played.
 //
 // Compiling ahead never makes the game wait (a guest core that wants to compile goes first) and
 // never fills the code cache: it stops while each region keeps a reserve (jit_impl.inc,
@@ -33,6 +34,7 @@
 #include <vector>
 #include <sys/stat.h>
 
+#ifndef EDEN_JIT_LIST_FORMAT_ONLY  // a host check includes only the file format
 #include "performance.h"
 #include "storage_paths.h"
 
@@ -40,6 +42,7 @@ extern "C" void* eden_jit_list_open();
 extern "C" void eden_jit_list_close(void* handle);
 extern "C" int eden_jit_precompile(void* handle, unsigned long long location);
 extern "C" std::size_t eden_jit_history(void* handle, unsigned long long* out, std::size_t capacity);
+#endif
 
 namespace Eden::JitList {
 // Development switch for now (dev-settings jit_list=on).
@@ -53,17 +56,20 @@ inline constexpr Value kSpan = Value{1} << 32;
 inline constexpr std::size_t kLimit = 1'500'000;  // entries kept in a file (12 MB)
 
 // The entries for the locations a session published, first use first, without repeats; then
-// those of `earlier` (a loaded list) that the session did not use.
-inline std::vector<Value> Encode(const std::vector<Value>& locations, Value code_start,
+// those of `earlier` (a loaded list) that the session did not use. `image` is the size of the
+// game's own modules from code_start; blocks outside them are left out.
+inline std::vector<Value> Encode(const std::vector<Value>& locations, Value code_start, Value image,
                                  const std::vector<Value>& earlier = {}) {
     std::vector<Value> entries;
     std::unordered_set<Value> seen;
+    image = std::min(image, kSpan);
     const auto add = [&](Value entry) {
-        if (entries.size() < kLimit && seen.insert(entry).second) entries.push_back(entry);
+        if (entries.size() < kLimit && (entry & kAddressMask) < image && seen.insert(entry).second)
+            entries.push_back(entry);
     };
     for (const Value location : locations) {
         const Value address = location & kAddressMask;
-        if ((location & kSingleStep) || address < code_start || address - code_start >= kSpan) continue;
+        if ((location & kSingleStep) || address < code_start) continue;
         add((location & ~kAddressMask) | (address - code_start));
     }
     for (const Value entry : earlier) add(entry);
@@ -110,10 +116,12 @@ inline std::vector<Value> Load(const std::string& path, const BuildId& build) {
     return entries;
 }
 
+#ifndef EDEN_JIT_LIST_FORMAT_ONLY
 // One game session: Start once the game is loaded and its JITs exist, Finish before they go.
+// `image` is the size of the game's own modules from code_start.
 class Session {
 public:
-    void Start(Value program, const BuildId& build, Value code_start) {
+    void Start(Value program, const BuildId& build, Value code_start, Value image) {
         if (!enabled.load(std::memory_order_relaxed)) return;
         handle_ = eden_jit_list_open();
         if (!handle_) {
@@ -128,8 +136,11 @@ public:
         path_ = folder + name;
         build_ = build;
         code_start_ = code_start;
+        image_ = std::min(image, kSpan);
         earlier_ = Load(path_, build);
-        std::printf("EDEN_JIT_LIST loaded=%zu code_start=%llx\n", earlier_.size(), code_start);
+        // A list saved before only the game's own modules were kept may name code outside them.
+        std::erase_if(earlier_, [this](Value entry) { return (entry & kAddressMask) >= image_; });
+        std::printf("EDEN_JIT_LIST loaded=%zu code_start=%llx image=%llx\n", earlier_.size(), code_start, image_);
         if (earlier_.empty()) return;
         worker_ = std::jthread([this](std::stop_token stop) {
 #ifdef PS5_NATIVE
@@ -172,7 +183,7 @@ public:
         locations.resize(std::min(locations.size(), eden_jit_history(handle_, locations.data(), locations.size())));
         eden_jit_list_close(handle_);
         handle_ = nullptr;
-        const std::vector<Value> entries = Encode(locations, code_start_, earlier_);
+        const std::vector<Value> entries = Encode(locations, code_start_, image_, earlier_);
         const bool saved = !entries.empty() && Save(path_, build_, entries);
         std::printf("EDEN_JIT_LIST saved=%d entries=%zu session=%zu earlier=%zu\n", saved, entries.size(),
                     locations.size(), earlier_.size());
@@ -185,7 +196,9 @@ private:
     std::string path_;
     BuildId build_{};
     Value code_start_ = 0;
+    Value image_ = 0;
     std::vector<Value> earlier_;
     std::jthread worker_;
 };
+#endif
 } // namespace Eden::JitList

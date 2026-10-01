@@ -314,16 +314,19 @@ private:
 
     // Compiles `descriptor` into this core's region from a host thread that is no guest core.
     // 1: compiled and published. 0: already published, or a clear is under way. -2: the region is
-    // at its reserve (32 MiB, or a quarter of a smaller region), kept for the core's own
-    // compilations so that precompiling never causes a clear. -3: the core is compiling here.
+    // at its reserve: half of it stays for the core's own compilations, so that a session which
+    // goes somewhere the list does not cover is no closer to a clear than it would be with a
+    // region half the size. -3: the core is compiling here.
     int EdenPrecompile(IR::LocationDescriptor descriptor) {
-        const size_t RESERVE = std::min<size_t>(32 * 1024 * 1024, conf.code_cache_size / 4);
+        const size_t RESERVE = conf.code_cache_size / 2;
         if (group->clearing.load(std::memory_order_seq_cst))
             return 0;
+        u64 invalidations = 0;
         {
             std::lock_guard lock{group->mutex};
             if (group->Find(descriptor))
                 return 0;
+            invalidations = group->invalidations;
         }
         if (eden_compile_waiters.load(std::memory_order_seq_cst) != 0)
             return -3;
@@ -352,6 +355,8 @@ private:
         std::lock_guard lock{group->mutex};
         if (group->epoch.load(std::memory_order_seq_cst) != epoch)
             return 0;  // every region was reset after the emission
+        if (group->invalidations != invalidations)
+            return 0;  // the game changed code meanwhile: this block may be of the old code
         JitGroup::Block registered{};
         return group->Register(descriptor, {emitted.entrypoint, emitted.size}, emitter.eden_range_first,
                                emitter.eden_range_last, emitter.eden_pending_sites, registered) ? 1 : 0;

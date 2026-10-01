@@ -19,6 +19,9 @@
 #include "dynarmic/interface/exclusive_monitor.h"
 #include "common/host_memory.h"
 #include "../src/fastmem.h"
+#define EDEN_JIT_LIST_FORMAT_ONLY
+#include "jit_list.h"
+#include <unistd.h>
 
 static void require(bool value, std::source_location at = std::source_location::current()) {
     if (!value) { std::fprintf(stderr, "Memory check failed at line %u\n", at.line()); std::abort(); }
@@ -1172,6 +1175,39 @@ static void CheckBlockList() {
                 "%llu\n", list.size(), ahead, warm, cold);
 }
 
+// The block list's file: offsets from where the code starts, only inside the game's own modules,
+// the session's blocks before earlier ones, one build per list, nothing from a damaged file.
+static void CheckBlockListFile() {
+    using namespace Eden::JitList;
+    const Value start = 0x8055c000, image = 0x100000, mode = Value{0x21} << 56;
+    const std::vector<Value> session{
+        mode | (start + 0x40), start + 0x80, start + 0x40,  // the same address in two modes is two blocks
+        mode | (start + 0x40),                              // a repeat
+        kSingleStep | (start + 0xc0),                       // single-step blocks are not kept
+        start - 4, start + image, start + image + 0x1000,   // outside the game's own modules
+    };
+    const std::vector<Value> earlier{mode | 0x40, 0x200, image + 8};  // a repeat, a new one, one outside
+    const std::vector<Value> entries = Encode(session, start, image, earlier);
+    require((entries == std::vector<Value>{mode | 0x40, 0x80, 0x40, 0x200}));
+    // The next session's code is somewhere else.
+    const Value moved = 0x80550000;
+    require(Decode(entries[0], moved) == (mode | (moved + 0x40)) && Decode(entries[3], moved) == moved + 0x200);
+    char folder[] = "/tmp/eden-block-list-XXXXXX";
+    require(mkdtemp(folder) != nullptr);
+    const std::string path = std::string(folder) + "/0100000000000000.blocks";
+    BuildId build{}, other{};
+    build[0] = 7;
+    other[0] = 8;
+    require(Load(path, build).empty());
+    require(Save(path, build, entries) && Load(path, build) == entries);
+    require(Load(path, other).empty());
+    require(truncate(path.c_str(), 4 + 32 + 8 + 8 * 3) == 0 && Load(path, build).empty());
+    require(Save(path, build, entries) && Load(path, build) == entries);  // replaced whole
+    std::remove(path.c_str());
+    rmdir(folder);
+    std::puts("Block list file PASS: offsets, own modules only, session first, one build, damaged file ignored");
+}
+
 // Dispatcher lookups of three hot loops (100k iterations each) once their blocks exist: a
 // conditional branch to itself (block link), a call and return (return stack buffer) and an
 // indirect branch (fast dispatch). Linked code needs only a handful of lookups per loop.
@@ -1227,6 +1263,7 @@ int main(int argc, char** argv) {
             CheckSharedJit(4, true, disturb, same_path, true);
         }
         CheckBlockList();
+        CheckBlockListFile();
         return 0;
     }
     if (argc == 2 && std::strcmp(argv[1], "--compile-chains") == 0) {
@@ -1278,6 +1315,7 @@ int main(int argc, char** argv) {
     CheckSharedJit(2, true, 2, true);
     CheckSharedJit(2, true, 2, false, true);
     CheckBlockList();
+    CheckBlockListFile();
     CheckLinks();
     CheckFastmemA32();
     StressFastmemA32();

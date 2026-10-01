@@ -966,8 +966,18 @@ int main(int argc, char** argv) {
                     Eden::JitList::BuildId build{};
                     const auto& id = system.GetApplicationProcessBuildID();
                     std::memcpy(build.data(), id.data(), std::min(build.size(), id.size()));
-                    jit_list.Start(system.GetApplicationProcessProgramID(), build,
-                                   GetInteger(process->GetEntryPoint()));
+                    // The game's own modules: the run of code mappings from its entry point.
+                    const u64 code_start = GetInteger(process->GetEntryPoint());
+                    u64 code_end = code_start;
+                    for (;;) {
+                        Kernel::KMemoryInfo info{};
+                        Kernel::Svc::PageInfo page{};
+                        if (process->GetPageTable().QueryInfo(&info, &page, code_end).IsError() || info.m_size == 0 ||
+                            (info.m_state != Kernel::KMemoryState::Code && info.m_state != Kernel::KMemoryState::CodeData))
+                            break;
+                        code_end = info.m_address + info.m_size;
+                    }
+                    jit_list.Start(system.GetApplicationProcessProgramID(), build, code_start, code_end - code_start);
                 }
                 Eden::TakeGuestFault(); // Nothing from an earlier session belongs to this one.
                 system.Run();
