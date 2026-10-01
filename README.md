@@ -175,13 +175,14 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 
 ## Roadmap
 
-- **FPKG support** - install ProsperoEden as a fake package, alongside the current homebrew folder install. Each build already produces a ShadowMountPlus package image; installing it still needs testing.
+- **FPKG support** - install ProsperoEden as a fake package, alongside the current homebrew folder install. Each release now includes a ShadowMountPlus package image (`.ffpfsc`); installing it still needs testing.
 - **More performance** - CPU and GPU work to keep demanding games at their target frame rate, including the short stutter when a game starts, heavy cutscenes, and games that run slower in Docked mode than in Handheld.
 - **More reliable game loading** - fix the remaining hangs on the loading screen.
 - **Faster exit in every game** - a few games still take up to several minutes to close.
 - **Touchpad button in every game** - in some games the touchpad (Select) does not respond and only the Create (Share) button works.
 - **Controller selection screen** - some games wait forever on the screen that asks you to choose a controller.
 - **Import saves from Ryujinx** - copy a game's save from a Ryujinx data folder into ProsperoEden. Eden's desktop app can already link Ryujinx saves, and the code that finds them is in the shared code ProsperoEden builds; ProsperoEden needs its own import step in the launcher.
+- **Launcher in your language** - show the launcher's own text in the language the PS5 is set to.
 - **More game compatibility** - validate more games on the PS5, and fix what keeps them from running well, such as games that crash at launch.
 
 ## Issues are disabled
