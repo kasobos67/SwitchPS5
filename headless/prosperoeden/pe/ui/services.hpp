@@ -39,6 +39,7 @@ struct Game
     std::string cover;  // image path; empty without cover art
     std::uint64_t title_id = 0;
     std::string addons;        // "Update 1.2.0, 2 DLC"; empty without either
+    std::string addons_short;  // the same where there is little room: "v1.2.0, 2 DLC"
     std::string language;      // the language the game will use
     std::string language_note; // set when that is not the chosen one
     // Its mods, and how many of them are switched on. The launcher counts them (Services::mods)

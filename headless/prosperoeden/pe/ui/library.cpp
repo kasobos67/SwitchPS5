@@ -150,16 +150,19 @@ void Launcher::count_mods(Game &game, const std::vector<Mod> &mods)
     }
 }
 
-std::string Launcher::addons_line(const std::string &addons, int mods, int mods_on)
+std::string Launcher::addons_line(const std::string &addons, int mods, int mods_on, bool brief)
 {
     std::string line = addons;
     if (mods > 0)
     {
-        // Mods that are switched off are still there: "1 of 2 mods on".
+        // Mods that are switched off are still there: "1 of 2 mods on", or "1/2 mods" where there
+        // is little room.
         const std::string count = std::to_string(mods);
+        const char *counted = mods == 1 ? tr("{0} mod") : tr("{0} mods");
         line += (line.empty() ? "" : ", ") +
-                (mods_on < mods ? fill(tr("{0} of {1} mods on"), {std::to_string(mods_on), count}) :
-                                  fill(mods == 1 ? tr("{0} mod") : tr("{0} mods"), {count}));
+                (mods_on == mods ? fill(counted, {count}) :
+                 brief ? fill(counted, {std::to_string(mods_on) + "/" + count}) :
+                         fill(tr("{0} of {1} mods on"), {std::to_string(mods_on), count}));
     }
     return line.empty() ? std::string{tr("None")} : line;
 }
@@ -357,7 +360,7 @@ void Launcher::draw_library(Canvas &c)
         std::string value;
         Color color;
     };
-    const Field fields[] = {
+    Field fields[] = {
         {tr("FORMAT"), game != nullptr ? game->format : "-", theme::kValue},
         {tr("SIZE"), game != nullptr ? game->size : "-", theme::kValue},
         {tr("ADD-ONS"),
@@ -373,8 +376,12 @@ void Launcher::draw_library(Canvas &c)
         // The name keeps its size up to 200 wide; the value has the rest of the line.
         const float label =
             text_shrink(c, fields[i].label, 1336.0f, line, theme::kSmall, theme::kLabel, 200.0f);
-        text_shrink(c, fields[i].value, 1776.0f, line, theme::kSmall, fields[i].color,
-                    440.0f - label - 16.0f, Align::right);
+        const float room = 440.0f - label - 16.0f;
+        // What a game comes with is said briefly where the whole line does not fit.
+        if (i == 2 && game != nullptr && text_width(c, fields[i].value, theme::kSmall) > room)
+            fields[i].value = addons_line(game->addons_short, game->mods, game->mods_on, true);
+        text_shrink(c, fields[i].value, 1776.0f, line, theme::kSmall, fields[i].color, room,
+                    Align::right);
     }
     if (game != nullptr && !game->language_note.empty())
         notice(c, game->language_note, 1776.0f, baseline(544.0f, 28.0f, 18.0f), 18.0f,
@@ -596,8 +603,8 @@ void Launcher::draw_game(Canvas &c, float open)
         import_source_ == SaveSource::folder ? tr("Save folder found") : tr("Nothing to import"),
     };
     static constexpr const char *kLabels[] = {TR("Console mode"), TR("Renderer"), TR("Resolution"),
-                                              TR("Upscaling filter"), TR("Refresh rate"), TR("Mods"),
-                                              TR("Save data")};
+                                              TR("Upscaling filter"), TR("Refresh rate"),
+                                              TR("Mods"), TR("Save data")};
     // Five rows show; the list scrolls to the others.
     list.push_clip({kDialogWindow.x - 24.0f, kDialogWindow.y - 6.0f, kDialogWindow.w + 48.0f,
                     kDialogWindow.h + 12.0f});

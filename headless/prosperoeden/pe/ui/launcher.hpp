@@ -109,7 +109,9 @@ class Launcher
     // A game's mods as its list has them: how many, and how many are switched on.
     void count_mods(Game &game, const std::vector<Mod> &mods);
     // What a game comes with, on one line: "Update 1.2.0, 2 DLC, 2 mods"; "None" without any.
-    static std::string addons_line(const std::string &addons, int mods, int mods_on);
+    // brief: for Game::addons_short, where the line would not fit ("v1.2.0, 2 DLC, 1/2 mods").
+    static std::string addons_line(const std::string &addons, int mods, int mods_on,
+                                   bool brief = false);
     // A refresh rate setting as the player reads it: 0 is "60 Hz", 1 is "120 Hz".
     static std::string hertz(int refresh);
     void enter_library();

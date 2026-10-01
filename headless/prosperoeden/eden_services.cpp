@@ -35,11 +35,15 @@ bool IsFile(const std::string& path) {
     return stat(path.c_str(), &info) == 0 && S_ISREG(info.st_mode);
 }
 
-std::string AddOnSummary(uint64_t title_id) {
+// A game's update and DLC: "Update 1.2.0, 2 DLC"; brief leaves the word out ("v1.2.0, 2 DLC") for
+// places with little room.
+std::string AddOnSummary(uint64_t title_id, bool brief = false) {
     char update[64]{};
     unsigned dlc = 0;
     eden_game_addons(title_id, update, sizeof(update), &dlc);
-    std::string text = update[0] ? fill(tr("Update {0}"), {update}) : std::string{};
+    std::string text;
+    if (update[0]) text = brief ? (update[0] == 'v' ? std::string{update} : "v" + std::string{update}) :
+                                  fill(tr("Update {0}"), {update});
     if (dlc) text += (text.empty() ? "" : ", ") + fill(tr("{0} DLC"), {std::to_string(dlc)});
     return text;
 }
@@ -415,6 +419,7 @@ std::vector<pe::ui::Game> EdenServices::games() {
             game.title_id = eden_game_title_id(path.c_str());
             const GameLanguage language = LanguageFor(path, game.title_id, language_choice);
             game.addons = AddOnSummary(game.title_id);
+            game.addons_short = AddOnSummary(game.title_id, true);
             game.language = language.label;
             game.language_note = language.note;
         } catch (const std::exception& error) {

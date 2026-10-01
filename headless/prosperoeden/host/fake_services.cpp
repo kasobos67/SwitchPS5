@@ -144,10 +144,16 @@ FakeServices::FakeServices(const std::string &covers_directory)
                     (std::string(sample.format) == "NSP" ? "nsp" : "xci");
         game.title_id = 0x0100A00000001000ull + static_cast<std::uint64_t>(index) * 0x10000;
         if (sample.update[0] != 0)
+        {
             game.addons = fill(tr("Update {0}"), {sample.update});
+            game.addons_short = std::string("v") + sample.update;
+        }
         if (sample.dlc > 0)
-            game.addons += (game.addons.empty() ? "" : ", ") +
-                           fill(tr("{0} DLC"), {std::to_string(sample.dlc)});
+        {
+            const std::string dlc = fill(tr("{0} DLC"), {std::to_string(sample.dlc)});
+            game.addons += (game.addons.empty() ? "" : ", ") + dlc;
+            game.addons_short += (game.addons_short.empty() ? "" : ", ") + dlc;
+        }
         if (sample.mods)
             modded_.push_back(game.title_id);
         game.language = tr(sample.language);
