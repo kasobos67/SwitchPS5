@@ -25,6 +25,10 @@ constexpr unsigned kPollsPerScan = 250;
 // (for about 100 ms), and a press held this long (about a quarter of a second) holds Minus.
 constexpr unsigned kSelectTapPolls = 25;
 constexpr unsigned kSelectHoldPolls = 60;
+// Eden's virtual gamepad numbers the right Joy-Con's SL and SR after its named buttons
+// (hid_core, emulated_controller.cpp: virtual_button_params).
+constexpr int kRightSL = 20;
+constexpr int kRightSR = 21;
 
 PadEngine::PadEngine(std::string name) : InputEngine(std::move(name)) {
     for (std::size_t player = 0; player < kPlayers; ++player) PreSetController(Identifier(player));
@@ -54,7 +58,7 @@ void PadEngine::ResetControllers() {
     for (std::size_t player = 0; player < kPlayers; ++player) {
         SetStickPosition(player, 0, 0.0f, 0.0f);
         SetStickPosition(player, 1, 0.0f, 0.0f);
-        for (int button = 0; button <= static_cast<int>(VirtualButton::ButtonCapture); ++button)
+        for (int button = 0; button <= kRightSR; ++button)
             SetButtonState(player, button, false);
         SetMotionAtRest(player);
     }
@@ -250,6 +254,12 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
         {kButtonOptions, Button::ButtonPlus},
         {kButtonLeft, Button::ButtonLeft}, {kButtonUp, Button::ButtonUp},
         {kButtonRight, Button::ButtonRight}, {kButtonDown, Button::ButtonDown},
+        // SL and SR, the shoulder buttons of a single Joy-Con held sideways: L1 and R1 press them
+        // too. A game that takes single Joy-Cons asks for SL + SR on its controller screen, and
+        // nothing pressed them before. Eden passes them to the game only for that controller
+        // style (left Joy-Con: virtual buttons 16 and 17, right Joy-Con: kRightSL and kRightSR).
+        {kButtonL1, Button::ButtonSL}, {kButtonR1, Button::ButtonSR},
+        {kButtonL1, static_cast<Button>(kRightSL)}, {kButtonR1, static_cast<Button>(kRightSR)},
     };
     auto& slot = slots[player];
     // The guest's Minus: the Create button, or the touchpad as Select.

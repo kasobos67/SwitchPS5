@@ -115,7 +115,10 @@ void CheckPad() {
         };
         for (auto [mask, button] : mapping) {
             sample.buttons = mask; consume();
-            for (int i = 0; i < 22; ++i) CHECK(pad.Engine().GetButton({}, i) == (i == button));
+            // L1 and R1 are also SL and SR of a single Joy-Con (left: 16 and 17, right: 20 and 21).
+            const int sl_sr = mask == kButtonL1 ? 16 : mask == kButtonR1 ? 17 : -1;
+            for (int i = 0; i < 22; ++i)
+                CHECK(pad.Engine().GetButton({}, i) == (i == button || (sl_sr >= 0 && (i == sl_sr || i == sl_sr + 4))));
         }
         sample.buttons = 0;
         sample.left_stick = {0, 255}; sample.right_stick = {255, 0}; consume();
