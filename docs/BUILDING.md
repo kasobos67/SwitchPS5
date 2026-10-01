@@ -52,7 +52,7 @@ Inside this repository, in `.deps/`:
   modify Eden's files: the PS5 frontend in `headless/` replaces and derives sources at
   configure time (`headless/inject.cmake`).
 - **FFmpeg** at the commit Eden pins, built with only the decoders games use.
-- **PS5 OpenGL 4.6 SDK 0.6.0** (release archive), for the launcher and the OpenGL renderer.
+- **PS5 OpenGL 4.6 SDK 1.0.0** (release archive), for the launcher and the OpenGL renderer.
 - **OpenSSL and zlib** from pacbrew v0.40.2.
 - **LLVM 18.1.8 compiler-rt** emulated-TLS sources and **fmt 12.1.0** headers.
 
@@ -91,6 +91,27 @@ The tools that made them are in `tools/launcher`:
 The image step fetches [PSBrew/MkPFS](https://github.com/PSBrew/MkPFS) at a pinned commit into
 `~/.cache/prosperoeden-mkpfs`.
 
+## Crash reports
+
+When the app crashes it writes `crash-YYYYMMDD-HHMMSS.txt` to its logs folder
+(`/data/prosperoeden/logs`), starts again and says on the home screen where the report is
+(`headless/crash_report.h`). At the next start that run's logs are moved beside the report
+(`-stderr.log`, `-heap.log`, `-eden_log.txt`); the five newest reports are kept.
+
+The report lists addresses as `eboot+0x...`. To get function names, files and lines:
+
+```bash
+python3 tools/symbolize-crash.py crash-20261001-121314.txt build/symbols/ProsperoEden-v1.000.040.elf
+```
+
+The second argument is the unstripped executable of the build that wrote the report:
+`build/headless-native/llvm-pie.elf` right after a build. `make release` copies it to
+`build/symbols/ProsperoEden-vX.Y.Z.elf`; keep that file with the release, it is not published.
+
+`make test` checks the report on the host (`tools/check-crash-report.py`). A development build
+crashes on request, to try it on a console: write `segv`, `thread`, `abort` or `throw` to
+`crash-app.txt` in the app folder.
+
 ## Release workflow
 
 `.github/workflows/release.yml` runs `tools/ci/build-release.sh` (`make release`) on a
@@ -108,3 +129,5 @@ To cut a release:
 2. Add the "Changes in" section to the README.
 3. Test the build on a console.
 4. Push a `vX.Y.Z` tag.
+5. Keep `build/symbols/ProsperoEden-vX.Y.Z.elf` from the build that was published (crash reports
+   are read with it).
