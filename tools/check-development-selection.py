@@ -10,7 +10,7 @@ code=r'''
 #include <system_error>
 #include <stdexcept>
 #include <cassert>
-#define EDEN_DEV_ROM_ID "01009EA00B714000"
+#define EDEN_DEV_ROM_ID "0100000000090000"
 namespace Eden {std::vector<std::filesystem::directory_entry> entries;
 auto ReadNativeDirectory(const char*,std::error_code&){return entries;}}
 int menus=0;std::string SelectProsperoEdenGame(std::string&){++menus;return "menu";}
