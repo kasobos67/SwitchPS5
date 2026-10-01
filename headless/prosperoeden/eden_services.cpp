@@ -437,11 +437,12 @@ bool EdenServices::set_docked(std::uint64_t title_id, bool docked) {
 
 pe::ui::GameSettings EdenServices::game_settings(std::uint64_t title_id) {
     const Eden::GameSettings saved = Eden::LoadGameSettings(title_id);
-    return {saved.renderer, saved.resolution, saved.upscaling_filter};
+    return {saved.renderer, saved.resolution, saved.upscaling_filter, saved.refresh};
 }
 
 bool EdenServices::set_game_settings(std::uint64_t title_id, const pe::ui::GameSettings& settings) {
-    const bool saved = Eden::SaveGameSettings(title_id, {settings.renderer, settings.resolution, settings.filter});
+    const bool saved = Eden::SaveGameSettings(
+        title_id, {settings.renderer, settings.resolution, settings.filter, settings.refresh});
     if (!saved) Eden::Report("settings", "Could not write game settings");
     return saved;
 }
@@ -456,6 +457,7 @@ pe::ui::Preferences EdenServices::preferences() {
     result.renderer = saved.backend == Eden::GraphicsBackend::OpenGL ? 0 : 1;
     result.resolution = saved.resolution;
     result.filter = saved.upscaling_filter;
+    result.refresh = saved.refresh;
     result.vibration = saved.vibration;
     result.language = saved.language;
     result.menu_volume = saved.menu_volume;
@@ -474,6 +476,7 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.backend = preferences.renderer == 0 ? Eden::GraphicsBackend::OpenGL : Eden::GraphicsBackend::Vulkan;
     value.resolution = preferences.resolution;
     value.upscaling_filter = preferences.filter;
+    value.refresh = preferences.refresh;
     value.vibration = preferences.vibration;
     value.language = preferences.language;
     value.menu_volume = preferences.menu_volume;

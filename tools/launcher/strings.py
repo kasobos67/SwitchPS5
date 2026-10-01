@@ -114,6 +114,11 @@ NOTES = {
     "SETUP": "Label: whether keys and firmware are in place.",
     "ACCESS": "Label: which folders the app can read.",
     "KEYS": "Label: the encryption keys file (prod.keys).",
+    "Refresh rate": "Setting: how many times a second the TV picture is refreshed while a game runs "
+                    "(60 or 120 Hz).",
+    "REFRESH RATE": "Label: see 'Refresh rate'.",
+    "{0} Hz": "{0} is 60 or 120 (hertz).",
+    "Saved. A display that cannot show 120 Hz stays at 60 Hz.": "Shown after choosing 120 Hz.",
     "ADD-ONS": "Label: a game's updates, DLC and mods.",
     "Add-ons: {0}  /  Language: {1}": "{0}: updates, DLC and mods of the game; {1}: the language it will use.",
     "Ryujinx save": "A save file of the Ryujinx emulator. Ryujinx is a name (unchanged).",

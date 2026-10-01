@@ -75,6 +75,20 @@ int main() {
     video.resolution = 5;
     assert(!Eden::SavePreferences(video, file));
 
+    // Refresh rate (Settings > Video): 60 Hz unless 120 Hz is chosen; other values are refused or
+    // read as 60 Hz.
+    video = Eden::LoadPreferences(file);
+    assert(video.refresh == 0 && Eden::kRefreshHz[video.refresh] == 60);
+    video.refresh = 1;
+    assert(Eden::SavePreferences(video, file));
+    assert(Eden::LoadPreferences(file).refresh == 1 && Eden::kRefreshHz[1] == 120);
+    assert(Read(file).find("\"refresh_rate\": \"120\"") != std::string::npos);
+    video.refresh = 2;
+    assert(!Eden::SavePreferences(video, file));
+    const std::string unknown_refresh = std::string(directory) + "/unknown-refresh.json";
+    std::ofstream(unknown_refresh) << R"({"video": {"refresh_rate": "144"}})";
+    assert(Eden::LoadPreferences(unknown_refresh).refresh == 0);
+
     // Vibration (Settings > Controls): on unless turned off.
     auto controls = Eden::LoadPreferences(file);
     assert(controls.vibration);
@@ -104,6 +118,13 @@ int main() {
     game = Eden::LoadGameSettings(racer, file);
     assert(game.renderer == -1 && game.resolution == 4 && game.upscaling_filter == -1);
     assert(!Eden::SaveGameSettings(0, {}, file) && !Eden::SaveGameSettings(racer, {2, -1, -1}, file));
+    // The same for the refresh rate.
+    assert(game.refresh == -1);
+    assert(Eden::SaveGameSettings(racer, {-1, 4, -1, 1}, file));
+    game = Eden::LoadGameSettings(racer, file);
+    assert(game.refresh == 1 && game.resolution == 4 && Eden::LoadGameSettings(quest, file).refresh == -1);
+    assert(Eden::SaveGameSettings(racer, {-1, 4, -1, -1}, file) && Eden::LoadGameSettings(racer, file).refresh == -1);
+    assert(!Eden::SaveGameSettings(racer, {-1, -1, -1, 2}, file));
 
     // Game files folder.
     assert(Eden::LoadSavedAssetsDir(file).empty());

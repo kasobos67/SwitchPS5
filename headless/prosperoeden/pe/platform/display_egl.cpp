@@ -98,6 +98,10 @@ bool Display::open(int width, int height)
         if (!eglSetDisplayModePS5(display_, PS5_OPENGL_NATIVE_WIDTH, PS5_OPENGL_NATIVE_HEIGHT))
             fail("eglSetDisplayModePS5 default");
     }
+    // The menu runs at 60 Hz. A game on the OpenGL renderer may have asked for 120 Hz, and the
+    // rate stays as it was last set.
+    if (!eglSetDisplayRefreshPS5(display_, 60))
+        fail("eglSetDisplayRefreshPS5");
 #else
     (void)width;
     (void)height;

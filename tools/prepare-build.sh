@@ -62,8 +62,17 @@ if [[ ! -f ../ps5-native-app-boilerplate/runtime/libc.prx ]]; then
 fi
 step "libSceAgcDriver link stub"
 bash tools/build-agc-driver-stub.sh
+# The driver's display code carries this repository's adaptation (tools/patch-radv-wsi.py): a
+# driver built with another version of it is built again (only the changed file compiles).
+radv_release=../mihawk-vulkan-review/.deps/native/radv-release
+if [[ -f $radv_release/lib/libvulkan_radeon.ps5.a ]] &&
+   ! python3 -B tools/patch-radv-wsi.py --check "$radv_release/EDEN_WSI_SHA256"; then
+    step "RADV: the display code's adaptation changed"
+    bash tools/build-radv-dependencies.sh
+    rm -f build/radv-isolated/libvulkan_radeon.ps5.a
+fi
 if [[ ! -f build/radv-isolated/libvulkan_radeon.ps5.a ]]; then
-    if [[ ! -f ../mihawk-vulkan-review/.deps/native/radv-release/lib/libvulkan_radeon.ps5.a ]]; then
+    if [[ ! -f $radv_release/lib/libvulkan_radeon.ps5.a ]]; then
         step "RADV (Mesa) for the PS5 - this takes a while"
         bash tools/build-radv-dependencies.sh
     fi

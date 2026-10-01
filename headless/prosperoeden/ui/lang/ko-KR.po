@@ -792,6 +792,16 @@ msgstr "움직임 줄이기"
 msgid "Reduce motion"
 msgstr "움직임 줄이기"
 
+#. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Refresh rate"
+msgstr "주사율"
+
+#. Label: see 'Refresh rate'.
+#: pe/ui/settings.cpp
+msgid "REFRESH RATE"
+msgstr "주사율"
+
 #: pe/ui/browse.cpp, pe/ui/settings.cpp
 msgid "REGION"
 msgstr "지역"
@@ -843,6 +853,11 @@ msgstr "세이브 폴더 있음"
 #: pe/ui/library.cpp
 msgid "Saved for this game. Applies on next launch."
 msgstr "이 게임에 저장했습니다. 다음 실행부터 적용됩니다."
+
+#. Shown after choosing 120 Hz.
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Saved. A display that cannot show 120 Hz stays at 60 Hz."
+msgstr "저장했습니다. 120Hz를 지원하지 않는 디스플레이는 60Hz로 유지됩니다."
 
 #: pe/ui/browse.cpp, pe/ui/launcher.cpp
 msgid "Saved. Applies when a game starts."
@@ -1111,6 +1126,11 @@ msgstr "게임 {0}개"
 #: eden_services.cpp, host/fake_services.cpp
 msgid "{0} games installed"
 msgstr "게임 {0}개 설치됨"
+
+#. {0} is 60 or 120 (hertz).
+#: pe/ui/library.cpp
+msgid "{0} Hz"
+msgstr "{0}Hz"
 
 #. Exactly one mod, in the list of what a game comes with (Update 1.2.0, 2 DLC, 1 mod). See '{0} game'.
 #: pe/ui/library.cpp

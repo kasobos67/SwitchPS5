@@ -792,6 +792,16 @@ msgstr "GIẢM CHUYỂN ĐỘNG"
 msgid "Reduce motion"
 msgstr "Giảm chuyển động"
 
+#. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Refresh rate"
+msgstr "Tần số quét"
+
+#. Label: see 'Refresh rate'.
+#: pe/ui/settings.cpp
+msgid "REFRESH RATE"
+msgstr "TẦN SỐ QUÉT"
+
 #: pe/ui/browse.cpp, pe/ui/settings.cpp
 msgid "REGION"
 msgstr "KHU VỰC"
@@ -843,6 +853,11 @@ msgstr "Đã tìm thấy thư mục lưu"
 #: pe/ui/library.cpp
 msgid "Saved for this game. Applies on next launch."
 msgstr "Đã lưu cho trò chơi này. Áp dụng từ lần mở tới."
+
+#. Shown after choosing 120 Hz.
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Saved. A display that cannot show 120 Hz stays at 60 Hz."
+msgstr "Đã lưu. Màn hình không hỗ trợ 120 Hz sẽ giữ ở 60 Hz."
 
 #: pe/ui/browse.cpp, pe/ui/launcher.cpp
 msgid "Saved. Applies when a game starts."
@@ -1111,6 +1126,11 @@ msgstr "{0} trò chơi"
 #: eden_services.cpp, host/fake_services.cpp
 msgid "{0} games installed"
 msgstr "{0} trò chơi đã cài đặt"
+
+#. {0} is 60 or 120 (hertz).
+#: pe/ui/library.cpp
+msgid "{0} Hz"
+msgstr "{0} Hz"
 
 #. Exactly one mod, in the list of what a game comes with (Update 1.2.0, 2 DLC, 1 mod). See '{0} game'.
 #: pe/ui/library.cpp

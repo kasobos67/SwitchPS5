@@ -174,8 +174,12 @@ void pictures(Stage &s)
     s.press({Key::down, Key::right});
     s.wait(0.6f);
     s.shoot("10-game-settings-changed");
+    // The output's refresh rate for this game.
+    s.press({Key::down, Key::down, Key::down, Key::right, Key::right});
+    s.wait(0.6f);
+    s.shoot("40-game-refresh");
     // The game's mods: the row, the list, one switched on, and a game that has none.
-    s.press({Key::down, Key::down, Key::down});
+    s.press({Key::down});
     s.wait(0.6f);
     s.shoot("35-game-mods-row");
     s.press({Key::cross});
@@ -221,6 +225,9 @@ void pictures(Stage &s)
     s.press({Key::down, Key::right});
     s.wait(0.6f);
     s.shoot("15-video-saved");
+    s.press({Key::down, Key::down, Key::right});
+    s.wait(0.6f);
+    s.shoot("41-video-refresh");
     s.press({Key::circle, Key::down, Key::cross});
     s.wait(0.8f);
     s.shoot("16-audio");

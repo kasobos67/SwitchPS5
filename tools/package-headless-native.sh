@@ -65,6 +65,9 @@ value['contentVersion'] = re.search(r'kAppVersion = "([0-9.]+)"',
     (root / 'headless/prosperoeden/version.h').read_text()).group(1)
 value['localizedParameters']['en-US']['titleName'] = 'ProsperoEden'
 value['pubtools']['loudnessSnd0'] = '-28.00'
+# The console gives a 120 Hz output (Settings > Video, headless/display_refresh.h) only to a title
+# that declares it. Declaring it changes nothing by itself: the output stays at 60 Hz until asked.
+value['attribute3'] = int(value['attribute3']) | 0x80040
 (app / 'sce_sys/param.json').write_text(json.dumps(value, indent=2) + '\n')
 runpy.run_path(str(root / 'tools/load_alignment.py'))['check_load_alignment']((app / 'eboot.bin').read_bytes())
 profile = (root / 'build/headless-native/CMakeCache.txt').read_text()

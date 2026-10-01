@@ -34,6 +34,7 @@ enum GameRow : int
     row_renderer,
     row_resolution,
     row_filter,
+    row_refresh,
     row_mods,
     row_save, // in builds that move saves
 };
@@ -161,6 +162,11 @@ std::string Launcher::addons_line(const std::string &addons, int mods, int mods_
                                   fill(mods == 1 ? tr("{0} mod") : tr("{0} mods"), {count}));
     }
     return line.empty() ? std::string{tr("None")} : line;
+}
+
+std::string Launcher::hertz(int refresh)
+{
+    return fill(tr("{0} Hz"), {refresh == 1 ? "120" : "60"});
 }
 
 void Launcher::enter_library()
@@ -531,11 +537,17 @@ void Launcher::press_game(Key key)
                 cycle(next.resolution, static_cast<int>(services_.resolution_labels().size()));
         if (option_ == row_filter)
             next.filter = cycle(next.filter, static_cast<int>(services_.filter_labels().size()));
+        if (option_ == row_refresh)
+            next.refresh = cycle(next.refresh, 2);
         saved = services_.set_game_settings(game.title_id, next);
         if (saved)
             game_settings_ = next;
     }
-    say(saved ? tr("Saved for this game. Applies on next launch.") : tr("Could not save. Please try again."),
+    // 120 Hz is a request: the display has the last word.
+    const bool fast = saved && option_ == row_refresh &&
+                      (game_settings_.refresh >= 0 ? game_settings_.refresh : prefs_.refresh) == 1;
+    say(fast ? tr("Saved. A display that cannot show 120 Hz stays at 60 Hz.") :
+        saved ? tr("Saved for this game. Applies on next launch.") : tr("Could not save. Please try again."),
         !saved);
     cue(saved ? Cue::toggle : Cue::error);
 }
@@ -573,6 +585,8 @@ void Launcher::draw_game(Canvas &c, float open)
             fill(tr("Default ({0})"), {short_resolution(pick(resolutions, prefs_.resolution))}),
         game_settings_.filter >= 0 ? pick(filters, game_settings_.filter) :
             fill(tr("Default ({0})"), {pick(filters, prefs_.filter)}),
+        game_settings_.refresh >= 0 ? hertz(game_settings_.refresh) :
+            fill(tr("Default ({0})"), {hertz(prefs_.refresh)}),
         mods_.empty() ? std::string{tr("No mods")} :
             fill(tr("{0} of {1} on"),
                  {std::to_string(std::count_if(mods_.begin(), mods_.end(),
@@ -582,7 +596,8 @@ void Launcher::draw_game(Canvas &c, float open)
         import_source_ == SaveSource::folder ? tr("Save folder found") : tr("Nothing to import"),
     };
     static constexpr const char *kLabels[] = {TR("Console mode"), TR("Renderer"), TR("Resolution"),
-                                              TR("Upscaling filter"), TR("Mods"), TR("Save data")};
+                                              TR("Upscaling filter"), TR("Refresh rate"), TR("Mods"),
+                                              TR("Save data")};
     // Five rows show; the list scrolls to the others.
     list.push_clip({kDialogWindow.x - 24.0f, kDialogWindow.y - 6.0f, kDialogWindow.w + 48.0f,
                     kDialogWindow.h + 12.0f});

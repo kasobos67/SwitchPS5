@@ -2,6 +2,7 @@
 #include "core/frontend/emu_window.h"
 #include "video_core/vulkan_common/vulkan_surface.h"
 #include "video_core/vulkan_common/vulkan_wrapper.h"
+#include "display_refresh.h"
 #include <vector>
 #include <cstdio>
 
@@ -53,15 +54,20 @@ vk::SurfaceKHR CreateSurface(const vk::Instance& instance,
     check(result);
     if (!count) throw vk::Exception(VK_ERROR_INITIALIZATION_FAILED);
     modes.resize(count);
-    // Prefer the existing 60 Hz output even if RADV lists 120 Hz first.
+    // The driver lists 120 Hz first when the output took it (display_refresh.h). A session that
+    // asked for it takes that mode; any other keeps the 60 Hz one.
+    const bool fast = Eden::Display::requested_hz.load() >= 120;
     auto mode = modes.front();
     for (const auto& candidate : modes) {
-        if (candidate.parameters.refreshRate >= 59000 &&
-            candidate.parameters.refreshRate <= 61000) {
+        if ((candidate.parameters.refreshRate >= 119000) == fast) {
             mode = candidate;
             break;
         }
     }
+    Eden::Display::output_millihertz.store(static_cast<int>(mode.parameters.refreshRate));
+    if (mode.parameters.refreshRate >= 119000) Eden::Display::settle.store(true);
+    std::fprintf(stderr, "[ProsperoEden] Vulkan display: %u modes, asked for %d Hz, using %.2f Hz\n", count,
+                 Eden::Display::requested_hz.load(), mode.parameters.refreshRate / 1000.0);
     const VkDisplaySurfaceCreateInfoKHR info{
         .sType = VK_STRUCTURE_TYPE_DISPLAY_SURFACE_CREATE_INFO_KHR,
         .displayMode = mode.displayMode,

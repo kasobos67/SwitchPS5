@@ -35,6 +35,11 @@ videoout_unref(void)
    out->thread_started = false;
    out->stop = false;
 
+   /* A session at 119.88 Hz hands the output back at 59.94 Hz, as it found it. */
+   if (out->handle >= 0 && out->high_frame_rate) {
+      const int restored = sceVideoOutConfigureOutput(out->handle, PS5_VIDEO_OUT_MODE_RESTORE, NULL, NULL, NULL);
+      fprintf(stderr, "wsi/videoout: 59.94 Hz restored: 0x%08x\n", (unsigned)restored);
+   }
    const int closed = out->handle >= 0 ? sceVideoOutClose(out->handle) : 0;
    if (closed == 0) {
       /* Successful close ends display ownership, including pending flips.

@@ -181,6 +181,7 @@ void Launcher::draw_settings(Canvas &c)
         lines = {{tr("RENDERER"), prefs_.renderer != 0 ? tr("Vulkan (recommended)") : "OpenGL"},
                  {tr("RESOLUTION"), pick(services_.resolution_labels(), prefs_.resolution)},
                  {tr("UPSCALING FILTER"), pick(services_.filter_labels(), prefs_.filter)},
+                 {tr("REFRESH RATE"), hertz(prefs_.refresh)},
                  {tr("FPS OVERLAY"), on_off(prefs_.hud)}};
         break;
     case kAudio:
@@ -249,13 +250,14 @@ int Launcher::dialog_rows(Modal modal) const
     switch (modal)
     {
     case Modal::video:
-        return 4;
+        return 5;
     case Modal::audio:
     case Modal::accessibility:
         return 3;
     case Modal::game:
-        // Console mode, renderer, resolution, filter, mods; save data in builds that move saves.
-        return services_.save_transfer_available() ? 6 : 5;
+        // Console mode, renderer, resolution, filter, refresh rate, mods; save data in builds that
+        // move saves.
+        return services_.save_transfer_available() ? 7 : 6;
     default:
         return 1;
     }
@@ -265,10 +267,10 @@ float Launcher::dialog_row_top(Modal modal, int row) const
 {
     switch (modal)
     {
-    case Modal::video:
     case Modal::audio:
     case Modal::accessibility:
         return 370.0f + 102.0f * static_cast<float>(row);
+    case Modal::video: // five rows, placed as the game's settings are
     case Modal::game:
         return 334.0f + 96.0f * static_cast<float>(row);
     default:
@@ -314,6 +316,8 @@ void Launcher::press_dialog(Key key)
             const int count = static_cast<int>(services_.filter_labels().size());
             prefs_.filter = (prefs_.filter + step + count) % count;
         }
+        else if (option_ == 3)
+            prefs_.refresh = prefs_.refresh != 0 ? 0 : 1;
         else
             prefs_.hud = !prefs_.hud;
         break;
@@ -357,6 +361,11 @@ void Launcher::press_dialog(Key key)
     {
         prefs_ = before;
         sound = Cue::error;
+    }
+    else if (modal_ == Modal::video && option_ == 3 && prefs_.refresh == 1)
+    {
+        // 120 Hz is a request: the display has the last word.
+        say(tr("Saved. A display that cannot show 120 Hz stays at 60 Hz."));
     }
     apply_look();
     cue(sound);
@@ -429,8 +438,9 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
               choice(0, prefs_.renderer != 0 ? tr("Vulkan (recommended)") : "OpenGL"));
         label(1, tr("Resolution"), choice(1, pick(services_.resolution_labels(), prefs_.resolution)));
         label(2, tr("Upscaling filter"), choice(2, pick(services_.filter_labels(), prefs_.filter)));
-        label(3, tr("FPS overlay"), kToggle);
-        toggle(c, 1292.0f, row_centre(3), knob);
+        label(3, tr("Refresh rate"), choice(3, hertz(prefs_.refresh)));
+        label(4, tr("FPS overlay"), kToggle);
+        toggle(c, 1292.0f, row_centre(4), knob);
         break;
     case Modal::audio:
     {
@@ -509,21 +519,23 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         break;
     }
 
+    // Under the rows: Video's five end lower than the other dialogs' three.
+    const float foot = modal == Modal::video ? 848.0f : 811.0f;
     if (!message_.empty())
     {
-        notice(c, message_, 592.0f, 818.0f, theme::kSmall,
+        notice(c, message_, 592.0f, foot + 7.0f, theme::kSmall,
                message_warning_ ? theme::kWarning : theme::kLimePale, 736.0f, message_warning_);
     }
     else if (rows > 1)
     {
         static constexpr Hint kHints[] = {
             {Pad::updown, TR("Select")}, {Pad::leftright, TR("Change")}, {Pad::circle, TR("Back")}};
-        draw_hints(c, kHints, 3, 592.0f, 811.0f, theme::kCopy, 736.0f);
+        draw_hints(c, kHints, 3, 592.0f, foot, theme::kCopy, 736.0f);
     }
     else
     {
         static constexpr Hint kHints[] = {{Pad::cross, TR("Change")}, {Pad::circle, TR("Back")}};
-        draw_hints(c, kHints, 2, 592.0f, 811.0f, theme::kCopy, 736.0f);
+        draw_hints(c, kHints, 2, 592.0f, foot, theme::kCopy, 736.0f);
     }
     list.pop_transform();
     list.pop_opacity();

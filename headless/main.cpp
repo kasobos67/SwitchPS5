@@ -30,6 +30,7 @@
 #include <nlohmann/json.hpp>
 #include "devices.h"
 #include "diagnostics.h"
+#include "display_refresh.h"
 #include "log_pipe.h"
 #include "mods.h"
 #include "controller_applet.h"
@@ -323,6 +324,14 @@ int main(int argc, char** argv) {
 #endif
         std::string selected_game;
         Eden::Crash::SetSession("launcher", false);
+#ifdef PS5_NATIVE
+        // A Vulkan session at 120 Hz handed the output back at 60 Hz as it closed; the launcher
+        // opens it once the display has had time to follow (display_refresh.h).
+        if (Eden::Display::settle.exchange(false)) {
+            Eden::Report("display", "Back to 60 Hz after a 120 Hz session");
+            std::this_thread::sleep_for(std::chrono::seconds(Eden::Display::kSettleSeconds));
+        }
+#endif
 #ifdef EDEN_DEV_VULKAN
         if (check_backend_recovery && !recovery_opengl && !launch_error.empty()) {
             recovery_opengl = true;
@@ -725,8 +734,15 @@ int main(int argc, char** argv) {
             Settings::values.resolution_setup.SetValue(resolutions[resolution]);
             Settings::values.scaling_filter.SetValue(filters[filter]);
             Settings::UpdateRescalingInfo();
+            // The output's refresh rate while the game runs (display_refresh.h): the renderer asks
+            // for it as it opens the output.
+            const int refresh = game_video.refresh >= 0 ? game_video.refresh : video.refresh;
+            Eden::Display::requested_hz.store(Eden::kRefreshHz[refresh]);
+            Eden::Display::output_millihertz.store(0);
+            setenv(Eden::Display::kVulkanSwitch, refresh ? "1" : "0", 1);
             Eden::Report("launch", (std::string("Resolution ") + Eden::kResolutionKeys[resolution] + ", " +
-                                    Eden::kUpscalingFilterLabels[filter]).c_str());
+                                    Eden::kUpscalingFilterLabels[filter] + ", " + Eden::kRefreshKeys[refresh] +
+                                    " Hz").c_str());
             // What a crash report says was running.
             char title_id[20];
             std::snprintf(title_id, sizeof(title_id), "%016llx",
@@ -741,7 +757,7 @@ int main(int argc, char** argv) {
             Eden::Crash::SetSession("game " + std::filesystem::path(guest).filename().string() + " (" + title_id +
                                     "), " + Eden::BackendName(backend) + ", resolution " +
                                     Eden::kResolutionKeys[resolution] + ", " + Eden::kUpscalingFilterLabels[filter] +
-                                    ", mods: " + mods,
+                                    ", " + Eden::kRefreshKeys[refresh] + " Hz, mods: " + mods,
                                     true);
         }
 #endif

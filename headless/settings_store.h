@@ -4,7 +4,7 @@
 //   {
 //     "version": 1,
 //     "video": { "renderer": "vulkan", "fps_overlay": true, "resolution": "1x",
-//                "upscaling_filter": "bilinear" },
+//                "upscaling_filter": "bilinear", "refresh_rate": "60" },
 //     "audio": { "volume": 100, "mute": false, "menu_volume": 70 },
 //     "controls": { "vibration": true },
 //     "system": { "language": "en-US" },
@@ -14,6 +14,7 @@
 //     "library": { "last_game": "Game [id].nsp", "recent": ["Game [id].nsp"] },
 //     "games": { "0100000000010000": { "console_mode": "handheld", "renderer": "opengl",
 //                                      "resolution": "0.75x", "upscaling_filter": "fsr",
+//                                      "refresh_rate": "120",
 //                                      "mods_off": ["A mod's folder name"] } }
 //   }
 //
@@ -48,6 +49,10 @@ inline constexpr const char* kResolutionLabels[] = {"0.5x (faster, softer)", "0.
 inline constexpr int kNativeResolution = 2;
 inline constexpr const char* kUpscalingFilterKeys[] = {"bilinear", "fsr", "bicubic", "nearest"};
 inline constexpr const char* kUpscalingFilterLabels[] = {"Bilinear", "AMD FSR", "Bicubic", "Nearest"};
+// Settings > Video: the refresh rate of the output while a game runs. 120 Hz is asked of the
+// display (display_refresh.h); one that cannot show it stays at 60 Hz.
+inline constexpr const char* kRefreshKeys[] = {"60", "120"};
+inline constexpr int kRefreshHz[] = {60, 120};
 // Settings > Language: the system language games see, in launcher order. Each entry maps to Eden's
 // Settings::Language and to the Settings::Region consoles sold with that language have (indices in
 // Eden's enum order; headless/main.cpp checks them). Eden's older "Chinese" and "Taiwanese" codes
@@ -70,6 +75,7 @@ struct Preferences {
     GraphicsBackend backend = GraphicsBackend::Vulkan;
     int resolution = kNativeResolution;  // index into kResolutionKeys
     int upscaling_filter = 0;            // index into kUpscalingFilterKeys
+    int refresh = 0;                     // index into kRefreshKeys
     bool vibration = true;
     int language = 0;                    // index into kLanguageKeys (English (US), Eden's default)
     int menu_volume = 70;                // the launcher's own sounds, 0 (off) to 100
@@ -215,6 +221,8 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     result.upscaling_filter = KeyIndex(Settings::String(document, Json::json_pointer("/video/upscaling_filter")),
                                        kUpscalingFilterKeys, int(std::size(kUpscalingFilterKeys)),
                                        result.upscaling_filter);
+    result.refresh = KeyIndex(Settings::String(document, Json::json_pointer("/video/refresh_rate")),
+                              kRefreshKeys, int(std::size(kRefreshKeys)), result.refresh);
     result.vibration = Settings::Bool(document, Json::json_pointer("/controls/vibration"), result.vibration);
     result.language = KeyIndex(Settings::String(document, Json::json_pointer("/system/language")),
                                kLanguageKeys, int(std::size(kLanguageKeys)), result.language);
@@ -229,6 +237,7 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
         (value.backend != GraphicsBackend::OpenGL && value.backend != GraphicsBackend::Vulkan) ||
         value.resolution < 0 || value.resolution >= int(std::size(kResolutionKeys)) ||
         value.upscaling_filter < 0 || value.upscaling_filter >= int(std::size(kUpscalingFilterKeys)) ||
+        value.refresh < 0 || value.refresh >= int(std::size(kRefreshKeys)) ||
         value.language < 0 || value.language >= int(std::size(kLanguageKeys))) return false;
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
@@ -236,6 +245,7 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     document["video"]["fps_overlay"] = value.hud;
     document["video"]["resolution"] = kResolutionKeys[value.resolution];
     document["video"]["upscaling_filter"] = kUpscalingFilterKeys[value.upscaling_filter];
+    document["video"]["refresh_rate"] = kRefreshKeys[value.refresh];
     document["audio"]["volume"] = value.volume;
     document["audio"]["mute"] = value.mute;
     document["audio"]["menu_volume"] = value.menu_volume;
@@ -270,12 +280,13 @@ inline bool SaveGameDocked(uint64_t title_id, bool docked, const std::string& fi
     return Settings::Write(document, file);
 }
 
-// Library > Game settings: renderer, resolution and upscaling filter for one game; -1 (absent
-// from the file) uses Settings > Video.
+// Library > Game settings: renderer, resolution, upscaling filter and refresh rate for one game;
+// -1 (absent from the file) uses Settings > Video.
 struct GameSettings {
     int renderer = -1;          // 0 OpenGL, 1 Vulkan
     int resolution = -1;        // index into kResolutionKeys
     int upscaling_filter = -1;  // index into kUpscalingFilterKeys
+    int refresh = -1;           // index into kRefreshKeys
 };
 inline constexpr const char* kRendererKeys[] = {"opengl", "vulkan"};
 
@@ -290,13 +301,15 @@ inline GameSettings LoadGameSettings(uint64_t title_id, const std::string& file 
     result.resolution = KeyIndex(key("resolution"), kResolutionKeys, int(std::size(kResolutionKeys)), -1);
     result.upscaling_filter = KeyIndex(key("upscaling_filter"), kUpscalingFilterKeys,
                                        int(std::size(kUpscalingFilterKeys)), -1);
+    result.refresh = KeyIndex(key("refresh_rate"), kRefreshKeys, int(std::size(kRefreshKeys)), -1);
     return result;
 }
 
 inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const std::string& file = SettingsFile()) {
     if (!title_id || value.renderer >= int(std::size(kRendererKeys)) ||
         value.resolution >= int(std::size(kResolutionKeys)) ||
-        value.upscaling_filter >= int(std::size(kUpscalingFilterKeys))) return false;
+        value.upscaling_filter >= int(std::size(kUpscalingFilterKeys)) ||
+        value.refresh >= int(std::size(kRefreshKeys))) return false;
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
     auto& game = document["games"][Settings::TitleKey(title_id)];
@@ -308,6 +321,7 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
     store("renderer", value.renderer, kRendererKeys);
     store("resolution", value.resolution, kResolutionKeys);
     store("upscaling_filter", value.upscaling_filter, kUpscalingFilterKeys);
+    store("refresh_rate", value.refresh, kRefreshKeys);
     return Settings::Write(document, file);
 }
 

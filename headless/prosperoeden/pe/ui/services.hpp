@@ -86,6 +86,7 @@ struct Preferences
     int renderer = 1; // 0 OpenGL, 1 Vulkan
     int resolution = 2;
     int filter = 0;
+    int refresh = 0; // the output while a game runs: 0 60 Hz, 1 120 Hz
     bool vibration = true;
     int language = 0;
     int menu_volume = 70; // launcher sounds, 0-100
@@ -101,6 +102,7 @@ struct GameSettings
     int renderer = -1;
     int resolution = -1;
     int filter = -1;
+    int refresh = -1;
 };
 
 // A mod of one game, from the game files folder's mods/<title ID>/.

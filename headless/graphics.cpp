@@ -4,6 +4,9 @@
 #include <glad/glad.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
+#if __has_include(<ps5_opengl_display_modes.h>)
+#include <ps5_opengl_display_modes.h>  // the output's refresh rate (display_refresh.h)
+#endif
 #include <cstdio>
 #include <cstdlib>
 #include <stdexcept>
@@ -15,6 +18,7 @@
 #include "loading_scene_glsl.h"
 #include "preferences.h"
 #include "diagnostics.h"
+#include "display_refresh.h"
 #include "graphics.h"
 #include "common/scope_exit.h"
 #include "core/core.h"
@@ -516,6 +520,13 @@ GraphicsWindow::GraphicsWindow(bool use_vulkan) : vulkan(use_vulkan) {
     strict_context_required = true;
     try {
         display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+#ifdef PS5_OPENGL_DYNAMIC_DISPLAY
+        // Settings > Video: the output's refresh rate. It is a setting of the process, so every
+        // session sets it; a display that cannot show 120 Hz presents at 60 Hz.
+        if (display != EGL_NO_DISPLAY && !eglSetDisplayRefreshPS5(display, Display::requested_hz.load()))
+            std::fprintf(stderr, "[ProsperoEden] OpenGL display: the refresh rate was not set (0x%x)\n",
+                         static_cast<unsigned>(eglGetError()));
+#endif
         Check(display != EGL_NO_DISPLAY && eglInitialize(display, nullptr, nullptr), "eglInitialize");
         constexpr EGLint attributes[]{EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
             EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT, EGL_RED_SIZE, 8, EGL_GREEN_SIZE, 8,
@@ -562,6 +573,13 @@ GraphicsWindow::GraphicsWindow(bool use_vulkan) : vulkan(use_vulkan) {
 GraphicsWindow::~GraphicsWindow() {
     if (vulkan) return;
     Cleanup(!window_context.load(), "renderer context still alive");
+#ifdef PS5_OPENGL_DYNAMIC_DISPLAY
+    // What the display took (known once a frame was presented).
+    if (EGLint hz = 0; eglGetDisplayModePS5(display, nullptr, nullptr, &hz)) {
+        Display::output_millihertz.store(hz * 1000);
+        std::printf("EDEN_EGL_REFRESH asked=%d hz=%d\n", Display::requested_hz.load(), hz);
+    }
+#endif
     Cleanup(eglDestroyContext(display, root), "root");
     Cleanup(eglDestroySurface(display, surface), "surface");
     Cleanup(eglTerminate(display), "display");
@@ -592,10 +610,12 @@ void GraphicsWindow::OnFrameDisplayed() {
             frame_sample_worst = std::max(frame_sample_worst, now - frame_sample_last);
 #ifdef EDEN_DEV_PROFILE
             // Present intervals by vsync multiple: a 60 FPS title that misses by a little
-            // shows up in the 2-vsync bucket, a slow one across all of them.
-            static std::array<unsigned, 4> interval_hist{};
+            // shows up in the 2-vsync bucket, a slow one across all of them. "half" counts the
+            // frames that came within one refresh of a 120 Hz output.
+            static std::array<unsigned, 5> interval_hist{};
             const double interval_ms = (now - frame_sample_last) * 1000.0;
-            ++interval_hist[interval_ms < 20.0 ? 0 : interval_ms < 36.0 ? 1 : interval_ms < 52.0 ? 2 : 3];
+            ++interval_hist[interval_ms < 12.5 ? 4 : interval_ms < 20.0 ? 0 : interval_ms < 36.0 ? 1 :
+                            interval_ms < 52.0 ? 2 : 3];
 #endif
             frame_sample_last = now;
             if (now - frame_sample_start >= 5.0) {
@@ -604,8 +624,8 @@ void GraphicsWindow::OnFrameDisplayed() {
                     frame_sample_count / (now - frame_sample_start),
                     frame_sample_worst * 1000.0, frame_total);
 #ifdef EDEN_DEV_PROFILE
-                std::printf("EDEN_VULKAN_INTERVALS v1=%u v2=%u v3=%u v4plus=%u\n", interval_hist[0],
-                            interval_hist[1], interval_hist[2], interval_hist[3]);
+                std::printf("EDEN_VULKAN_INTERVALS v1=%u v2=%u v3=%u v4plus=%u half=%u\n", interval_hist[0],
+                            interval_hist[1], interval_hist[2], interval_hist[3], interval_hist[4]);
                 interval_hist = {};
 #endif
                 Eden::Performance::ReportVulkan();

@@ -792,6 +792,16 @@ msgstr "RÉDUIRE LES ANIMATIONS"
 msgid "Reduce motion"
 msgstr "Réduire les animations"
 
+#. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Refresh rate"
+msgstr "Fréquence de rafraîchissement"
+
+#. Label: see 'Refresh rate'.
+#: pe/ui/settings.cpp
+msgid "REFRESH RATE"
+msgstr "FRÉQUENCE DE RAFRAÎCHISSEMENT"
+
 #: pe/ui/browse.cpp, pe/ui/settings.cpp
 msgid "REGION"
 msgstr "RÉGION"
@@ -843,6 +853,11 @@ msgstr "Dossier de sauvegarde trouvé"
 #: pe/ui/library.cpp
 msgid "Saved for this game. Applies on next launch."
 msgstr "Enregistré pour ce jeu. S'applique au prochain lancement."
+
+#. Shown after choosing 120 Hz.
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Saved. A display that cannot show 120 Hz stays at 60 Hz."
+msgstr "Enregistré. Un écran incompatible avec le 120 Hz reste à 60 Hz."
 
 #: pe/ui/browse.cpp, pe/ui/launcher.cpp
 msgid "Saved. Applies when a game starts."
@@ -1111,6 +1126,11 @@ msgstr "{0} jeux"
 #: eden_services.cpp, host/fake_services.cpp
 msgid "{0} games installed"
 msgstr "{0} jeux installés"
+
+#. {0} is 60 or 120 (hertz).
+#: pe/ui/library.cpp
+msgid "{0} Hz"
+msgstr "{0} Hz"
 
 #. Exactly one mod, in the list of what a game comes with (Update 1.2.0, 2 DLC, 1 mod). See '{0} game'.
 #: pe/ui/library.cpp

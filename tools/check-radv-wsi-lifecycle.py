@@ -29,6 +29,7 @@ harness = r'''
 #define VIDEOOUT_BUFFERS 5
 #define VIDEOOUT_BUFFER_BYTES 4096
 #define PS5_VIDEO_OUT_FLIP_VSYNC 1
+#define PS5_VIDEO_OUT_MODE_RESTORE 1u
 #define VK_TRUE 1
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 typedef uint64_t VkFence;
@@ -37,8 +38,12 @@ struct wsi_videoout_swapchain {
   struct { const struct wsi_device *wsi; int device; } base;
   unsigned in_flight;
 };
-static int close_error, closes, unmaps, releases, flips, unmap_error;
+static int close_error, closes, unmaps, releases, flips, unmap_error, restores, closes_at_restore;
 static int sceVideoOutClose(int handle) { assert(handle == 7); closes++; return close_error; }
+static int sceVideoOutConfigureOutput(int handle, unsigned mode, const void *a, const void *b, const void *c) {
+  assert(handle == 7 && mode == PS5_VIDEO_OUT_MODE_RESTORE);
+  restores++; closes_at_restore = closes; return 0;
+}
 static int sceKernelMunmap(void *p, size_t n) {
   assert(closes > 0 && !close_error && n == VIDEOOUT_BUFFERS * VIDEOOUT_BUFFER_BYTES);
   unmaps++; if (!unmap_error) free(p); return unmap_error;
@@ -89,8 +94,15 @@ int main(void) {
   videoout_unref(); assert(flips == 1 && !o->thread_started && !o->stop && !o->closing);
   // A new owner can create and close a fresh output after the worker joined.
   videoout_ref(); opened(); videoout_unref(); assert(unmaps == 5 && releases == 5);
+  // Only a session at 119.88 Hz restores 59.94 Hz, once, before its close.
+  assert(restores == 0);
+  videoout_ref(); opened(); o->high_frame_rate = true; const int closed_before = closes;
+  videoout_unref();
+  assert(restores == 1 && closes_at_restore == closed_before && closes == closed_before + 1 &&
+         !o->high_frame_rate && unmaps == 6);
+  videoout_ref(); opened(); videoout_unref(); assert(restores == 1);
   cnd_destroy(&o->changed); mtx_destroy(&o->lock);
-  puts("RADV WSI owners, partial init, close failure, worker drain/join and reopen PASS");
+  puts("RADV WSI owners, partial init, close failure, worker drain/join, reopen and 59.94 Hz restore PASS");
 }
 '''
 with tempfile.TemporaryDirectory(prefix='eden-radv-wsi-') as directory:
