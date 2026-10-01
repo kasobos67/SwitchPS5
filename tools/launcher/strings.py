@@ -119,6 +119,9 @@ NOTES = {
     "REFRESH RATE": "Label: see 'Refresh rate'.",
     "{0} Hz": "{0} is 60 or 120 (hertz).",
     "Saved. A display that cannot show 120 Hz stays at 60 Hz.": "Shown after choosing 120 Hz.",
+    "MODS": "Label on the About screen: the folder that holds games' mods (see 'Mods').",
+    "{0}/ (one folder per game ID)": "{0} is the mods folder; inside it each game has a folder named after "
+                                     "its ID (16 letters and digits).",
     "Output resolution": "Setting: the size of the picture sent to the TV (1080p, 1440p or 2160p). Not the "
                          "same as 'Resolution', which scales the game's own picture (1x, 2x...).",
     "OUTPUT RESOLUTION": "Label: see 'Output resolution'.",

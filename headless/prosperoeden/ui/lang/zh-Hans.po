@@ -587,6 +587,11 @@ msgstr "菜单音效"
 msgid "Missing or empty keys/prod.keys in {0}."
 msgstr "{0} 中缺少 keys/prod.keys，或该文件为空。"
 
+#. Label on the About screen: the folder that holds games' mods (see 'Mods').
+#: pe/ui/browse.cpp
+msgid "MODS"
+msgstr "模组"
+
 #. Changes to a game that the player added: patches, replaced files, cheats. Keep the word 'mod' if the language uses it.
 #: pe/ui/library.cpp
 msgid "Mods"
@@ -677,7 +682,7 @@ msgid "Nothing to import"
 msgstr "没有可导入的内容"
 
 #. A setting that is switched off.
-#: pe/ui/settings.cpp
+#: pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Off"
 msgstr "关"
 
@@ -1199,3 +1204,8 @@ msgstr "{0}%"
 #: pe/ui/browse.cpp
 msgid "{0}/ (NSP or XCI)"
 msgstr "{0}/（NSP 或 XCI）"
+
+#. {0} is the mods folder; inside it each game has a folder named after its ID (16 letters and digits).
+#: pe/ui/browse.cpp
+msgid "{0}/ (one folder per game ID)"
+msgstr "{0}/（每个游戏 ID 一个文件夹）"

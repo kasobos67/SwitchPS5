@@ -468,18 +468,21 @@ void Launcher::draw_about(Canvas &c)
                 theme::kLead, theme::kTitle, 748.0f);
     const std::string folder = services_.files_folder();
     const float column = value_column(
-        c, {tr("KEYS"), tr("FIRMWARE"), tr("GAMES"), tr("UPDATES, DLC")}, 1016.0f, 1232.0f,
-        theme::kSmall);
+        c, {tr("KEYS"), tr("FIRMWARE"), tr("GAMES"), tr("UPDATES, DLC"), tr("MODS")}, 1016.0f,
+        1232.0f, theme::kSmall);
     const auto line = [&](float top, const char *label, const std::string &value)
     {
         text(c, label, 1016.0f, baseline(top, 30.0f, theme::kSmall), theme::kSmall, theme::kMeta);
         text_shrink(c, value, column, baseline(top, 34.0f, theme::kText24), theme::kText24,
                     theme::kValue, 1764.0f - column);
     };
+    // Five lines above the rule. A game's own mods folder is named after its ID: its settings in
+    // the Library show it (and create it).
     line(384.0f, tr("KEYS"), short_path(folder + "/keys/prod.keys", 36));
-    line(464.0f, tr("FIRMWARE"), short_path(folder + "/firmware/*.nca", 36));
-    line(544.0f, tr("GAMES"), fill(tr("{0}/ (NSP or XCI)"), {short_path(folder + "/roms", 36)}));
-    line(624.0f, tr("UPDATES, DLC"), fill(tr("{0}/ (NSP or XCI)"), {short_path(folder + "/updates", 36)}));
+    line(450.0f, tr("FIRMWARE"), short_path(folder + "/firmware/*.nca", 36));
+    line(516.0f, tr("GAMES"), fill(tr("{0}/ (NSP or XCI)"), {short_path(folder + "/roms", 36)}));
+    line(582.0f, tr("UPDATES, DLC"), fill(tr("{0}/ (NSP or XCI)"), {short_path(folder + "/updates", 36)}));
+    line(648.0f, tr("MODS"), fill(tr("{0}/ (one folder per game ID)"), {short_path(folder + "/mods", 36)}));
     list.rounded_rect({1016.0f, 712.0f, 748.0f, 1.0f}, 0.0f, theme::kRule);
     text_block(c,
                tr("Use extracted firmware NCA files. Choose the folder in Settings, Game files; "
