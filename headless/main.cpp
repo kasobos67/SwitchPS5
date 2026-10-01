@@ -1014,6 +1014,22 @@ int main(int argc, char** argv) {
                         }
                         if (const auto sample = development_input.Sample(command_now))
                             pad->Consume({&*sample, 1});
+                        // The guest's Minus going down and up, with how long the state before it
+                        // lasted: the touchpad's tap and long press (headless/pad.cpp) on real timing.
+                        {
+                            static bool minus_down = false;
+                            static auto minus_since = std::chrono::steady_clock::now();
+                            const bool down = pad->Engine().GetButton({}, static_cast<int>(
+                                InputCommon::VirtualGamepad::VirtualButton::ButtonMinus));
+                            if (down != minus_down) {
+                                const auto changed = std::chrono::steady_clock::now();
+                                std::printf("EDEN_DEV_MINUS state=%d after_ms=%lld\n", down,
+                                    static_cast<long long>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                        changed - minus_since).count()));
+                                minus_down = down;
+                                minus_since = changed;
+                            }
+                        }
 #endif
 #ifdef EDEN_DEV_PROFILE
                         } else {
