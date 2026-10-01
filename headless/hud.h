@@ -86,11 +86,29 @@ struct HudSnapshot {
     uint32_t width{};
     uint32_t x{28}, y{30}, loading{};
 };
-inline HudSnapshot MakeLoadingSnapshot(double now) {
-    char text[16] = "LOADING";
-    for (unsigned i = 0; i < static_cast<unsigned>(now * 4) % 4; ++i) text[7 + i] = '.';
-    return {HudText(text), 1920, 880, 530, 1};
+// The loading screen: the shader draws its scene from the time alone (loading_scene.glsl).
+// `loading` carries the milliseconds since loading began, plus one; x and y carry the size of the
+// picture, set where it is drawn (vulkan_hud_draw.inc).
+inline HudSnapshot MakeLoadingSnapshot(double seconds) {
+    HudSnapshot snapshot{};
+    snapshot.width = 1920;
+    snapshot.x = 1920;
+    snapshot.y = 1080;
+    snapshot.loading = 1 + static_cast<uint32_t>(std::max(0.0, seconds) * 1000.0);
+    return snapshot;
 }
+// When the next picture of the loading screen is due. With nothing else to do (idle) the GPU
+// thread draws one for every display refresh; while it works on the game's own commands it draws
+// only a few a second, so the animation never slows the game's start.
+struct LoadingPace {
+    double next{-1}, last{-1};
+    bool Due(double now, bool idle) {
+        if (last >= 0 && (idle ? now < next : now - last < 0.1)) return false;
+        next = last < 0 || now - next > 0.05 ? now + 1.0 / 60.0 : next + 1.0 / 60.0;
+        last = now;
+        return true;
+    }
+};
 inline std::array<char, 25> FormatHudText(const HudClock& clock, double speed,
                                           const char* backend) {
     std::array<char, 25> text{};

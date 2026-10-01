@@ -1571,9 +1571,9 @@ if(EDEN_PS5_OPENGL)
         if(hud_wait_offset LESS 0)
             message(FATAL_ERROR "Pinned GPU queue wait changed")
         endif()
-        string(PREPEND gpu_worker "namespace VideoCore { class RendererBase; }\nnamespace Eden { bool LoadingTick(VideoCore::RendererBase&); }\n")
+        string(PREPEND gpu_worker "namespace VideoCore { class RendererBase; }\nnamespace Eden { bool LoadingTick(VideoCore::RendererBase&, bool idle); }\n")
         string(REPLACE "${hud_wait}"
-            "            if (Eden::LoadingTick(renderer)) {\n                if (!state.queue.TryPop(next)) {\n                    std::this_thread::sleep_for(std::chrono::milliseconds(1));\n                    continue;\n                }\n            } else {\n${hud_wait}\n            }" gpu_worker "${gpu_worker}")
+            "            if (Eden::LoadingTick(renderer, false)) {\n                if (!state.queue.TryPop(next)) {\n                    Eden::LoadingTick(renderer, true);\n                    std::this_thread::sleep_for(std::chrono::milliseconds(1));\n                    continue;\n                }\n            } else {\n${hud_wait}\n            }" gpu_worker "${gpu_worker}")
         if(EDEN_DEV_PROFILE)
             string(PREPEND gpu_worker "#include \"${EDEN_PORT_DIR}/performance.h\"\n")
             string(REPLACE "${hud_wait}"
@@ -1988,6 +1988,14 @@ if(EDEN_PS5_OPENGL)
     set(PS5OpenGL_DIR "${gl46}/lib/cmake/PS5OpenGL" CACHE PATH "Frozen Eden graphics SDK" FORCE)
     find_package(PS5OpenGL CONFIG REQUIRED PATHS "${gl46}/lib/cmake/PS5OpenGL" NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
     target_sources(eden-headless PRIVATE "${EDEN_PORT_DIR}/graphics.cpp")
+    # The loading screen's shader as a string for the OpenGL window; the Vulkan HUD pass includes
+    # the same two files (vulkan_hud.frag).
+    file(READ "${EDEN_PORT_DIR}/loading_wordmark.glsl" loading_wordmark)
+    file(READ "${EDEN_PORT_DIR}/loading_scene.glsl" loading_scene)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${EDEN_PORT_DIR}/loading_wordmark.glsl" "${EDEN_PORT_DIR}/loading_scene.glsl")
+    write_derived("${PORT_BUILD_DIR}/include/loading_scene_glsl.h"
+        "// Generated from loading_wordmark.glsl and loading_scene.glsl.\n#pragma once\ninline constexpr const char* kLoadingSceneGlsl = R\"glsl(\n${loading_wordmark}${loading_scene})glsl\";\n")
     target_compile_definitions(eden-headless PRIVATE EDEN_PS5_OPENGL=1)
     target_link_libraries(eden-headless PRIVATE PS5OpenGL::OpenGL glad)
 endif()

@@ -6,6 +6,12 @@
             cmdbuf.SetViewport(0, viewport);
             cmdbuf.SetScissor(0, scissor);
             cmdbuf.BindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, hud_graphics_pipeline);
-            cmdbuf.PushConstants(hud_pipeline_layout, VK_SHADER_STAGE_FRAGMENT_BIT, hud);
+            auto constants = hud;
+            if (hud.loading) {
+                // The loading scene fills the picture: tell it how large that is.
+                constants.x = render_area.width;
+                constants.y = render_area.height;
+            }
+            cmdbuf.PushConstants(hud_pipeline_layout, VK_SHADER_STAGE_FRAGMENT_BIT, constants);
             cmdbuf.Draw(4, 1, 0, 0);
         }

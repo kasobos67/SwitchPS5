@@ -8,8 +8,12 @@ graphics = (root/'headless/graphics.cpp').read_text()
 draw_hud = graphics.split('    void DrawHud(', 1)[1].split('    unsigned presented_frames', 1)[0]
 assert 'glReadPixels' not in draw_hud
 assert 'eglSwapBuffers' not in draw_hud
-present_loading = graphics.split('    void PresentLoading()', 1)[1].split('    bool LoadingTick()', 1)[0]
-assert present_loading.index('DrawHud(text, true)') < present_loading.index('eglSwapBuffers')
+present_loading = graphics.split('    void PresentLoading()', 1)[1].split('    bool LoadingTick(bool idle)', 1)[0]
+# The loading scene, or plain text when its shader does not build; then one swap.
+assert (present_loading.index('DrawLoading(') < present_loading.index('DrawHud(text, true)')
+        < present_loading.index('eglSwapBuffers'))
+draw_loading = graphics.split('    bool DrawLoading(', 1)[1].split('    void DrawHud(', 1)[0]
+assert 'eglSwapBuffers' not in draw_loading and 'loading_failed = true' in draw_loading
 assert 'vec4(0.025,0.04,0.075,0.5)' in graphics
 assert 'glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)' in graphics
 assert 'int(std::strlen(text)) * 16 + 24' in graphics
@@ -58,10 +62,17 @@ int main() {
     clock.worst_ms = 1000000;
     assert(Eden::MakeHudSnapshot(clock, 1000000).width <= 24 * 16 + 24);
     static_assert(sizeof(Eden::HudSnapshot) == 112);
-    assert(Eden::MakeLoadingSnapshot(0).glyphs == Eden::HudText("LOADING"));
-    assert(Eden::MakeLoadingSnapshot(0.75).glyphs == Eden::HudText("LOADING..."));
-    assert(Eden::MakeLoadingSnapshot(1).glyphs == Eden::HudText("LOADING"));
-    assert(Eden::MakeLoadingSnapshot(0).loading == 1);
+    // The loading scene is drawn from the time alone: milliseconds since it began, plus one.
+    assert(Eden::MakeLoadingSnapshot(0).loading == 1 && Eden::MakeLoadingSnapshot(0).width != 0);
+    assert(Eden::MakeLoadingSnapshot(2.5).loading == 2501);
+    assert(Eden::MakeLoadingSnapshot(-1).loading == 1);
+    // A picture per display refresh while the GPU thread is idle, ten a second while it works.
+    Eden::LoadingPace pace;
+    assert(pace.Due(10.0, false) && !pace.Due(10.05, false) && pace.Due(10.11, false));
+    assert(!pace.Due(10.12, true) && pace.Due(10.13, true));
+    int pictures = 0;
+    for (int ms = 0; ms < 1000; ++ms) pictures += pace.Due(11.0 + ms / 1000.0, true);
+    assert(pictures >= 59 && pictures <= 61);
 }
 ''')
     subprocess.run(['c++', '-std=c++20', '-I'+str(root/'headless'), str(source), '-o', str(binary)], check=True)

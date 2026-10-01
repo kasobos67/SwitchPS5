@@ -29,8 +29,9 @@ dispatch_trace = ('                const auto count = ++dispatches;\n'
                   f'                if ({trace_when}) LOG_INFO(Render_OpenGL, "EDEN_GPU_DISPATCH_END count={{}}", count);')
 assert worker.count(dispatch_trace) == 1
 untraced = worker.replace(dispatch_trace, dispatch_call).replace('        unsigned dispatches = 0;\n', '')
-loading_wait = """            if (Eden::LoadingTick(renderer)) {
+loading_wait = """            if (Eden::LoadingTick(renderer, false)) {
                 if (!state.queue.TryPop(next)) {
+                    Eden::LoadingTick(renderer, true);
                     std::this_thread::sleep_for(std::chrono::milliseconds(1));
                     continue;
                 }

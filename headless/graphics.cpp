@@ -12,6 +12,7 @@
 #include <cstring>
 #include <time.h>
 #include "hud.h"
+#include "loading_scene_glsl.h"
 #include "preferences.h"
 #include "diagnostics.h"
 #include "graphics.h"
@@ -39,7 +40,9 @@ HudClock vulkan_hud_clock;
 HudSnapshot vulkan_hud;
 double vulkan_hud_stats_time{}, vulkan_hud_speed{};
 bool vulkan_loading{};
-double vulkan_loading_last{-1};
+double vulkan_loading_start{-1};
+unsigned vulkan_loading_frames{};
+LoadingPace vulkan_loading_pace;
 void Check(bool success, const char* operation) {
     if (!success) {
         char detail[256];
@@ -197,6 +200,8 @@ public:
             Cleanup(eglMakeCurrent(display, surface, surface, hud_context), "HUD cleanup current");
             glDeleteProgram(hud_program);
             glDeleteVertexArrays(1, &hud_vao);
+            glDeleteProgram(loading_program);
+            glDeleteVertexArrays(1, &loading_vao);
             DoneCurrent();
             Cleanup(eglDestroyContext(display, hud_context), "HUD context");
         }
@@ -229,6 +234,8 @@ public:
         }
         if (loading) {
             loading = false;
+            std::printf("EDEN_LOADING_DONE frames=%u seconds=%.2f scene=%d\n", loading_frames,
+                        loading_start < 0 ? 0.0 : now - loading_start, !loading_failed);
             if (system) (void)system->GetAndResetPerfStats();
             last_stats = now;
             std::printf("EDEN_GAME_VISIBLE guest_frames=%u stabilization_ms=100 smooth_frames=8\n",
@@ -295,22 +302,85 @@ public:
         Check(eglSwapBuffers(display, surface), "eglSwapBuffers");
     }
     void PresentLoading() {
-        const unsigned dots = static_cast<unsigned>(Now() * 4) % 4;
-        char text[16] = "LOADING";
-        for (unsigned i = 0; i < dots; ++i) text[7 + i] = '.';
-        DrawHud(text, true);
+        const double now = Now();
+        if (loading_start < 0) loading_start = now;
+        if (!DrawLoading(now - loading_start)) {
+            // The scene's shader did not build on this driver: plain text instead.
+            const unsigned dots = static_cast<unsigned>(now * 4) % 4;
+            char text[16] = "LOADING";
+            for (unsigned i = 0; i < dots; ++i) text[7 + i] = '.';
+            DrawHud(text, true);
+        }
         Check(eglSwapBuffers(display, surface), "loading swap");
-        if (loading_frames++ < 4) std::printf("EDEN_LOADING phase=%u\n", dots);
-        last_loading = Now();
+        if (loading_frames++ < 4) std::printf("EDEN_LOADING frame=%u scene=%d\n", loading_frames, !loading_failed);
     }
-    bool LoadingTick() {
+    // idle: the GPU thread has no game commands waiting (hud.h, LoadingPace).
+    bool LoadingTick(bool idle) {
         if (!loading) return false;
-        if (Now() - last_loading >= 0.25) PresentLoading();
+        if (loading_pace.Due(Now(), idle)) PresentLoading();
         return true;
     }
 private:
     static double Now() {
         return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    }
+    // The loading screen (loading_scene.glsl): false when its shader cannot be used.
+    bool DrawLoading(double seconds) {
+        if (!window_owner || loading_failed) return false;
+        Check(eglMakeCurrent(display, surface, surface, hud_context), "loading current");
+        SCOPE_EXIT { Cleanup(eglMakeCurrent(display, surface, surface, context), "loading restore"); };
+        if (!loading_program) {
+            const std::string fragment = std::string("#version 330 core\n") + kLoadingSceneGlsl +
+                "uniform vec2 size; uniform float seconds; out vec4 color;\n"
+                "void main(){ color = vec4(loading_scene(gl_FragCoord.xy, size, seconds), 1.0); }\n";
+            const char* sources[]{
+                "#version 330 core\nvoid main(){vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);"
+                "gl_Position=vec4(p*2.0-1.0,0.0,1.0);}",
+                fragment.c_str()};
+            const GLuint program = glCreateProgram();
+            bool built = true;
+            for (unsigned i = 0; i < 2; ++i) {
+                GLuint shader = glCreateShader(i ? GL_FRAGMENT_SHADER : GL_VERTEX_SHADER);
+                glShaderSource(shader, 1, &sources[i], nullptr);
+                glCompileShader(shader);
+                GLint ok{};
+                glGetShaderiv(shader, GL_COMPILE_STATUS, &ok);
+                if (!ok) {
+                    char log[512]{};
+                    glGetShaderInfoLog(shader, sizeof(log), nullptr, log);
+                    Report("loading screen", log);
+                }
+                glAttachShader(program, shader);
+                glDeleteShader(shader);
+                built = built && ok;
+            }
+            GLint linked{};
+            if (built) {
+                glLinkProgram(program);
+                glGetProgramiv(program, GL_LINK_STATUS, &linked);
+            }
+            if (!linked) {
+                Report("loading screen", "The loading scene's shader did not build; showing text instead");
+                glDeleteProgram(program);
+                loading_failed = true;
+                return false;
+            }
+            loading_program = program;
+            glGenVertexArrays(1, &loading_vao);
+        }
+        EGLint width{}, height{};
+        Check(eglQuerySurface(display, surface, EGL_WIDTH, &width) &&
+              eglQuerySurface(display, surface, EGL_HEIGHT, &height), "loading dimensions");
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDisable(GL_BLEND);
+        glUseProgram(loading_program);
+        glBindVertexArray(loading_vao);
+        glViewport(0, 0, width, height);
+        glUniform2f(glGetUniformLocation(loading_program, "size"), float(width), float(height));
+        glUniform1f(glGetUniformLocation(loading_program, "seconds"), float(seconds));
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glFlush();
+        return true;
     }
     void DrawHud(const char* text, bool startup) {
         if (!window_owner) return;
@@ -366,8 +436,10 @@ private:
         glFlush();
     }
     unsigned presented_frames{}, loading_frames{};
-    bool loading{true};
-    double last_loading{};
+    bool loading{true}, loading_failed{};
+    double loading_start{-1};
+    LoadingPace loading_pace;
+    GLuint loading_program{}, loading_vao{};
     unsigned startup_guest_frames{};
     StartupGate startup_gate;
     HudClock clock;
@@ -396,25 +468,30 @@ void ToggleHud() {
 HudSnapshot GetVulkanHud() {
     return vulkan_loading || hud_enabled.load(std::memory_order_relaxed) ? vulkan_hud : HudSnapshot{};
 }
-bool LoadingTick(VideoCore::RendererBase& renderer) {
+// idle: the GPU thread has no game commands waiting (hud.h, LoadingPace).
+bool LoadingTick(VideoCore::RendererBase& renderer, bool idle) {
 #ifdef EDEN_PS5_VULKAN
     if (vulkan_loading) {
         const double now = std::chrono::duration<double>(
             std::chrono::steady_clock::now().time_since_epoch()).count();
-        if (vulkan_loading_last < 0 || now - vulkan_loading_last >= 0.25) {
-            vulkan_hud = MakeLoadingSnapshot(now);
+        const bool first = vulkan_loading_start < 0;
+        if (first) vulkan_loading_start = now;
+        if (vulkan_loading_pace.Due(now, idle)) {
+            vulkan_hud = MakeLoadingSnapshot(now - vulkan_loading_start);
             PresentVulkanLoading(renderer);
-            if (vulkan_loading_last < 0) sceSystemServiceHideSplashScreen();
-            vulkan_loading_last = now;
+            ++vulkan_loading_frames;
+            if (first) sceSystemServiceHideSplashScreen();
         }
         return true;
     }
 #endif
-    return current_window_context && current_window_context->LoadingTick();
+    return current_window_context && current_window_context->LoadingTick(idle);
 }
 GraphicsWindow::GraphicsWindow(bool use_vulkan) : vulkan(use_vulkan) {
     vulkan_loading = vulkan;
-    vulkan_loading_last = -1;
+    vulkan_loading_start = -1;
+    vulkan_loading_frames = 0;
+    vulkan_loading_pace = {};
     hud_enabled.store(LoadPreferences().hud, std::memory_order_relaxed);
 #ifdef EDEN_PS5_VULKAN
     if (vulkan) {
@@ -487,9 +564,12 @@ GraphicsWindow::~GraphicsWindow() {
 void GraphicsWindow::OnFrameDisplayed() {
 #ifdef PS5_NATIVE
     if (vulkan) {
-        vulkan_loading = false;
         const double now = std::chrono::duration<double>(
             std::chrono::steady_clock::now().time_since_epoch()).count();
+        if (vulkan_loading && vulkan_loading_start >= 0)
+            std::printf("EDEN_LOADING_DONE frames=%u seconds=%.2f\n", vulkan_loading_frames,
+                        now - vulkan_loading_start);
+        vulkan_loading = false;
 #ifdef EDEN_PS5_VULKAN
         vulkan_hud_clock.Present(now);
         if (system && now - vulkan_hud_stats_time >= 1.0) {
