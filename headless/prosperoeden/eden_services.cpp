@@ -41,7 +41,7 @@ std::string AddOnSummary(uint64_t title_id) {
     eden_game_addons(title_id, update, sizeof(update), &dlc);
     std::string text = update[0] ? fill(tr("Update {0}"), {update}) : std::string{};
     if (dlc) text += (text.empty() ? "" : ", ") + fill(tr("{0} DLC"), {std::to_string(dlc)});
-    return text.empty() ? tr("None") : text;
+    return text;
 }
 
 // The language a game will use for the chosen one (Settings > Language), and a note when the game
@@ -321,7 +321,9 @@ pe::ui::Home EdenServices::home() {
         eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str());
         const uint64_t title_id = eden_game_title_id(last_path.c_str());
         const GameLanguage language = LanguageFor(last_path, title_id, Eden::LoadPreferences().language);
-        home.last_info = fill(tr("Add-ons: {0}  /  Language: {1}"), {AddOnSummary(title_id), language.label});
+        home.last_title_id = title_id;
+        home.last_addons = AddOnSummary(title_id);
+        home.last_language = language.label;
         if (!language.note.empty()) {
             home.last_caption = language.note;
             home.last_caption_warning = true;

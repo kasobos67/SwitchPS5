@@ -289,8 +289,13 @@ void Launcher::draw_home(Canvas &c)
     // The line under it ends before the controllers' label.
     const float info_width =
         kPadsRight - measure(tr("CONTROLLERS"), theme::kSmall, 3.0f) - 48.0f - 560.0f;
-    text_shrink(c, home_.last_info, 560.0f, baseline(462.0f, 30.0f, theme::kSmall), theme::kSmall,
-                Color::rgb(0xabb8ae), info_width);
+    if (!home_.last_language.empty())
+        text_shrink(c,
+                    fill(tr("Add-ons: {0}  /  Language: {1}"),
+                         {addons_line(home_.last_addons, home_.last_mods, home_.last_mods_on),
+                          home_.last_language}),
+                    560.0f, baseline(462.0f, 30.0f, theme::kSmall), theme::kSmall,
+                    Color::rgb(0xabb8ae), info_width);
     const char *first = continue_ready ? tr("Launch game") : tr("Open library");
     const char *second = tr("Game details");
     const float button = std::clamp(

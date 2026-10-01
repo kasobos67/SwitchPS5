@@ -92,6 +92,11 @@ NOTES = {
             "'mod' if the language uses it.",
     "No mods": "Shown on the Mods row of a game that has none.",
     "{0} of {1} on": "How many of a game's mods are switched on: 2 of 3 on.",
+    "{0} mod": "Exactly one mod, in the list of what a game comes with (Update 1.2.0, 2 DLC, 1 mod). "
+               "See '{0} game'.",
+    "{0} mods": "Any number of mods other than one. See '{0} mod'.",
+    "{0} of {1} mods on": "In the same list, when some of the game's mods are switched off: "
+                          "1 of 2 mods on. Keep it short.",
     "Patch": "What a mod is made of: a change to the game's program (not a game update).",
     "Files": "What a mod is made of: files that replace the game's own.",
     "Cheats": "What a mod is made of: cheat codes.",
@@ -109,8 +114,8 @@ NOTES = {
     "SETUP": "Label: whether keys and firmware are in place.",
     "ACCESS": "Label: which folders the app can read.",
     "KEYS": "Label: the encryption keys file (prod.keys).",
-    "ADD-ONS": "Label: a game's updates and DLC.",
-    "Add-ons: {0}  /  Language: {1}": "{0}: updates and DLC of the game; {1}: the language it will use.",
+    "ADD-ONS": "Label: a game's updates, DLC and mods.",
+    "Add-ons: {0}  /  Language: {1}": "{0}: updates, DLC and mods of the game; {1}: the language it will use.",
     "Ryujinx save": "A save file of the Ryujinx emulator. Ryujinx is a name (unchanged).",
     "Last game opened": "Caption under the title of the game played last.",
     "Powered by Eden": "Eden is the emulator's name (unchanged).",

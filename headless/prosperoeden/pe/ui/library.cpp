@@ -96,6 +96,9 @@ void Launcher::apply_games(std::vector<Game> games)
                                      std::string{};
     games_ = std::move(games);
     games_loaded_ = true;
+    for (Game &game : games_)
+        if (game.title_id != 0)
+            count_mods(game, services_.mods(game.title_id));
     if (!same)
     {
         int index = 0;
@@ -120,6 +123,44 @@ void Launcher::name_home_games()
             if (recent.file == game.file)
                 recent.title = game.name;
     }
+}
+
+void Launcher::read_home()
+{
+    home_ = services_.home();
+    if (home_.last_title_id == 0)
+        return;
+    const std::vector<Mod> mods = services_.mods(home_.last_title_id);
+    home_.last_mods = static_cast<int>(mods.size());
+    home_.last_mods_on = static_cast<int>(
+        std::count_if(mods.begin(), mods.end(), [](const Mod &mod) { return mod.enabled; }));
+}
+
+void Launcher::count_mods(Game &game, const std::vector<Mod> &mods)
+{
+    game.mods = static_cast<int>(mods.size());
+    game.mods_on = static_cast<int>(
+        std::count_if(mods.begin(), mods.end(), [](const Mod &mod) { return mod.enabled; }));
+    // The home screen says the same of its game.
+    if (game.file == home_.last_file && home_.last_title_id != 0)
+    {
+        home_.last_mods = game.mods;
+        home_.last_mods_on = game.mods_on;
+    }
+}
+
+std::string Launcher::addons_line(const std::string &addons, int mods, int mods_on)
+{
+    std::string line = addons;
+    if (mods > 0)
+    {
+        // Mods that are switched off are still there: "1 of 2 mods on".
+        const std::string count = std::to_string(mods);
+        line += (line.empty() ? "" : ", ") +
+                (mods_on < mods ? fill(tr("{0} of {1} mods on"), {std::to_string(mods_on), count}) :
+                                  fill(mods == 1 ? tr("{0} mod") : tr("{0} mods"), {count}));
+    }
+    return line.empty() ? std::string{tr("None")} : line;
 }
 
 void Launcher::enter_library()
@@ -214,6 +255,7 @@ void Launcher::press_library(Key key)
                              services_.save_import_source(game->title_id) : SaveSource::none;
         import_armed_ = false;
         mods_ = services_.mods(game->title_id);
+        count_mods(games_[static_cast<std::size_t>(library_.selected)], mods_);
         open_modal(Modal::game);
         game_rows_.visible = kDialogRowsShown;
         game_rows_.pitch = kDialogRowPitch;
@@ -312,8 +354,10 @@ void Launcher::draw_library(Canvas &c)
     const Field fields[] = {
         {tr("FORMAT"), game != nullptr ? game->format : "-", theme::kValue},
         {tr("SIZE"), game != nullptr ? game->size : "-", theme::kValue},
-        {tr("ADD-ONS"), game != nullptr ? game->addons : "-",
-         game != nullptr && game->addons != tr("None") ? theme::kLimePale : theme::kValue},
+        {tr("ADD-ONS"),
+         game != nullptr ? addons_line(game->addons, game->mods, game->mods_on) : "-",
+         game != nullptr && (!game->addons.empty() || game->mods > 0) ? theme::kLimePale :
+                                                                         theme::kValue},
         {tr("LANGUAGE"), game != nullptr ? game->language : "-",
          game != nullptr && !game->language_note.empty() ? theme::kWarning : theme::kValue},
     };
@@ -390,7 +434,7 @@ void Launcher::draw_library(Canvas &c)
 
 void Launcher::press_game(Key key)
 {
-    const Game &game = games_[static_cast<std::size_t>(library_.selected)];
+    Game &game = games_[static_cast<std::size_t>(library_.selected)];
     switch (key)
     {
     case Key::circle:
@@ -425,6 +469,7 @@ void Launcher::press_game(Key key)
         if (key != Key::cross)
             return;
         mods_ = services_.mods(game.title_id);
+        count_mods(game, mods_);
         mod_rows_.visible = kDialogRowsShown;
         mod_rows_.pitch = kDialogRowPitch;
         mod_rows_.reset(static_cast<int>(mods_.size()), 0);
@@ -608,7 +653,7 @@ void Launcher::draw_game(Canvas &c, float open)
 
 void Launcher::press_mods(Key key)
 {
-    const Game &game = games_[static_cast<std::size_t>(library_.selected)];
+    Game &game = games_[static_cast<std::size_t>(library_.selected)];
     switch (key)
     {
     case Key::circle:
@@ -647,7 +692,10 @@ void Launcher::press_mods(Key key)
         Mod &mod = mods_[static_cast<std::size_t>(mod_rows_.selected)];
         const bool saved = services_.set_mod_enabled(game.title_id, mod.name, !mod.enabled);
         if (saved)
+        {
             mod.enabled = !mod.enabled;
+            count_mods(game, mods_);
+        }
         say(saved ? tr("Saved for this game. Applies on next launch.") :
                     tr("Could not save. Please try again."),
             !saved);

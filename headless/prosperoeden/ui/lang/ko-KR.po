@@ -49,13 +49,13 @@ msgstr "접근성"
 msgid "ACCESSIBILITY"
 msgstr "접근성"
 
-#. Label: a game's updates and DLC.
+#. Label: a game's updates, DLC and mods.
 #: pe/ui/library.cpp
 msgid "ADD-ONS"
 msgstr "추가 콘텐츠"
 
-#. {0}: updates and DLC of the game; {1}: the language it will use.
-#: eden_services.cpp, host/fake_services.cpp
+#. {0}: updates, DLC and mods of the game; {1}: the language it will use.
+#: pe/ui/home.cpp
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "추가 콘텐츠: {0}  /  언어: {1}"
 
@@ -659,7 +659,7 @@ msgid "No roms folder"
 msgstr "roms 폴더 없음"
 
 #. No add-ons (updates or DLC).
-#: eden_services.cpp, host/fake_services.cpp, pe/ui/library.cpp
+#: pe/ui/library.cpp
 msgid "None"
 msgstr "없음"
 
@@ -1112,6 +1112,16 @@ msgstr "게임 {0}개"
 msgid "{0} games installed"
 msgstr "게임 {0}개 설치됨"
 
+#. Exactly one mod, in the list of what a game comes with (Update 1.2.0, 2 DLC, 1 mod). See '{0} game'.
+#: pe/ui/library.cpp
+msgid "{0} mod"
+msgstr "모드 {0}개"
+
+#. Any number of mods other than one. See '{0} mod'.
+#: pe/ui/library.cpp
+msgid "{0} mods"
+msgstr "모드 {0}개"
+
 #. Exactly one file. See '{0} game'.
 #: pe/ui/browse.cpp
 msgid "{0} NCA file"
@@ -1131,6 +1141,11 @@ msgstr "{0} 사용 불가"
 #: pe/ui/widgets.cpp
 msgid "{0} OF {1}"
 msgstr "{0} / {1}"
+
+#. In the same list, when some of the game's mods are switched off: 1 of 2 mods on. Keep it short.
+#: pe/ui/library.cpp
+msgid "{0} of {1} mods on"
+msgstr "모드 {1}개 중 {0}개 켜짐"
 
 #. How many of a game's mods are switched on: 2 of 3 on.
 #: pe/ui/library.cpp

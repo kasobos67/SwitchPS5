@@ -295,7 +295,7 @@ void Launcher::press_language(Key key)
     case Key::circle:
         open(Screen::settings, false);
         // The home screen names the language the last game will use, and so does the Library.
-        home_ = services_.home();
+        read_home();
         name_home_games();
         finish_scan(false);
         start_scan();

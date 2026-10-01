@@ -49,13 +49,13 @@ msgstr "Accessibilité"
 msgid "ACCESSIBILITY"
 msgstr "ACCESSIBILITÉ"
 
-#. Label: a game's updates and DLC.
+#. Label: a game's updates, DLC and mods.
 #: pe/ui/library.cpp
 msgid "ADD-ONS"
 msgstr "EXTENSIONS"
 
-#. {0}: updates and DLC of the game; {1}: the language it will use.
-#: eden_services.cpp, host/fake_services.cpp
+#. {0}: updates, DLC and mods of the game; {1}: the language it will use.
+#: pe/ui/home.cpp
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "Extensions : {0}  /  Langue : {1}"
 
@@ -659,7 +659,7 @@ msgid "No roms folder"
 msgstr "Aucun dossier roms"
 
 #. No add-ons (updates or DLC).
-#: eden_services.cpp, host/fake_services.cpp, pe/ui/library.cpp
+#: pe/ui/library.cpp
 msgid "None"
 msgstr "Aucune"
 
@@ -1112,6 +1112,16 @@ msgstr "{0} jeux"
 msgid "{0} games installed"
 msgstr "{0} jeux installés"
 
+#. Exactly one mod, in the list of what a game comes with (Update 1.2.0, 2 DLC, 1 mod). See '{0} game'.
+#: pe/ui/library.cpp
+msgid "{0} mod"
+msgstr "{0} mod"
+
+#. Any number of mods other than one. See '{0} mod'.
+#: pe/ui/library.cpp
+msgid "{0} mods"
+msgstr "{0} mods"
+
 #. Exactly one file. See '{0} game'.
 #: pe/ui/browse.cpp
 msgid "{0} NCA file"
@@ -1131,6 +1141,11 @@ msgstr "{0} indisponible"
 #: pe/ui/widgets.cpp
 msgid "{0} OF {1}"
 msgstr "{0} SUR {1}"
+
+#. In the same list, when some of the game's mods are switched off: 1 of 2 mods on. Keep it short.
+#: pe/ui/library.cpp
+msgid "{0} of {1} mods on"
+msgstr "{0} sur {1} mods activés"
 
 #. How many of a game's mods are switched on: 2 of 3 on.
 #: pe/ui/library.cpp

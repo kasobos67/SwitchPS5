@@ -117,7 +117,8 @@ class FakeServices final : public ui::Services
         *message = fill(tr("Exported to {0}."), {"save-export/0100A00B00003000-20261001-213000"});
         return true;
     }
-    // Sample mods: three, the second switched off; none when has_mods is cleared.
+    // Sample mods, for two of the games: three, the second switched off; none when has_mods is
+    // cleared.
     bool has_mods = true;
     std::vector<ui::Mod> mods(std::uint64_t) override;
     bool set_mod_enabled(std::uint64_t, const std::string &name, bool enabled) override;
@@ -140,6 +141,7 @@ class FakeServices final : public ui::Services
     ui::GameSettings game_settings_;
     ui::Preferences preferences_;
     std::string saved_folder_;
+    std::vector<std::uint64_t> modded_; // the games that have the sample mods
     std::vector<std::string> mods_off_{"Sharper textures"};
 };
 

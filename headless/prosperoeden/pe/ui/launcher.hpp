@@ -104,6 +104,12 @@ class Launcher
     void finish_scan(bool wait);
     void apply_games(std::vector<Game> games);
     void name_home_games();
+    // The home screen's content, with its game's mods counted.
+    void read_home();
+    // A game's mods as its list has them: how many, and how many are switched on.
+    void count_mods(Game &game, const std::vector<Mod> &mods);
+    // What a game comes with, on one line: "Update 1.2.0, 2 DLC, 2 mods"; "None" without any.
+    static std::string addons_line(const std::string &addons, int mods, int mods_on);
     void enter_library();
     void press_library(Key key);
     void draw_library(Canvas &c);

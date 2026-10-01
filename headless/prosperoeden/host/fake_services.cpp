@@ -28,6 +28,7 @@ struct Sample
     std::uint32_t sky;  // cover colours
     std::uint32_t land;
     std::uint32_t mark;
+    bool mods = false; // has the sample mods (FakeServices::mods)
 };
 
 // Invented titles: nothing here names a real game.
@@ -37,14 +38,14 @@ constexpr Sample kSamples[] = {
     {"Kart Carnival Deluxe", "NSP", "7.8 GB", "3.0.1", 48, "English (US)", "", 0xb3261e, 0xffb238, 0xffffff},
     {"Tiny Harbor", "NSP", "512.0 MB", "", 0, "English (US)", "", 0x256d8f, 0x9bd8e6, 0xfff3d6},
     {"Echoes of the Valley", "XCI", "14.2 GB", "1.1.0", 0, "Spanish",
-     "Portuguese (Brazil)", 0x3b1f5e, 0xc77dff, 0xffe0f5},
+     "Portuguese (Brazil)", 0x3b1f5e, 0xc77dff, 0xffe0f5, true},
     {"Pocket Rally Turbo", "NSP", "1.9 GB", "", 0, "English (US)", "", 0x202020, 0xe85d04, 0xf8f9fa},
     {"Cloudline", "NSP", "3.3 GB", "", 1, "English (US)", "", 0x5fa8d3, 0xcae9ff, 0x1b4965},
     {"Ember Knights II", "XCI", "9.6 GB", "2.4.0", 5, "English (US)", "", 0x3d0c02, 0xd62828, 0xfcbf49},
     {"Paper Garden", "NSP", "840.5 MB", "", 0, "English (US)", "", 0xf1e3c6, 0x90be6d, 0x386641},
     {"Neon Drifters", "NSP", "5.2 GB", "1.0.3", 0, "English (US)", "", 0x10002b, 0x7b2cbf, 0x5ef2ff},
     {"Caf\xC3\xA9 Nocturne", "NSP", "2.7 GB", "", 0, "French", "", 0x2b1d0e, 0xa9713c, 0xf6e7cb},
-    {"Sky Shepherds", "XCI", "4.4 GB", "", 3, "English (US)", "", 0x457b9d, 0xa8dadc, 0xf1faee},
+    {"Sky Shepherds", "XCI", "4.4 GB", "", 3, "English (US)", "", 0x457b9d, 0xa8dadc, 0xf1faee, true},
 };
 
 void put_pixel(std::vector<std::uint8_t> &pixels, int size, int x, int y, float r, float g, float b)
@@ -147,8 +148,8 @@ FakeServices::FakeServices(const std::string &covers_directory)
         if (sample.dlc > 0)
             game.addons += (game.addons.empty() ? "" : ", ") +
                            fill(tr("{0} DLC"), {std::to_string(sample.dlc)});
-        if (game.addons.empty())
-            game.addons = tr("None");
+        if (sample.mods)
+            modded_.push_back(game.title_id);
         game.language = tr(sample.language);
         if (sample.missing[0] != 0)
             game.language_note = fill(tr("{0} not available"), {tr(sample.missing)});
@@ -203,7 +204,9 @@ ui::Home FakeServices::home()
         home.last_caption = last.language_note;
         home.last_caption_warning = true;
         home.last_cover = last.cover;
-        home.last_info = fill(tr("Add-ons: {0}  /  Language: {1}"), {last.addons, last.language});
+        home.last_title_id = last.title_id;
+        home.last_addons = last.addons;
+        home.last_language = last.language;
         for (const char *name : {"Echoes of the Valley", "Kart Carnival Deluxe", "Starfall Odyssey",
                                  "Caf\xC3\xA9 Nocturne"})
         {
@@ -282,9 +285,9 @@ bool FakeServices::folders(const std::string &directory, std::vector<std::string
     return true;
 }
 
-std::vector<ui::Mod> FakeServices::mods(std::uint64_t)
+std::vector<ui::Mod> FakeServices::mods(std::uint64_t title_id)
 {
-    if (!has_mods)
+    if (!has_mods || std::find(modded_.begin(), modded_.end(), title_id) == modded_.end())
         return {};
     std::vector<ui::Mod> mods = {
         {"60 FPS", tr("Patch"), true},

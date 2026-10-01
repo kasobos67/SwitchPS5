@@ -38,9 +38,13 @@ struct Game
     std::string file;   // its name in the games folder
     std::string cover;  // image path; empty without cover art
     std::uint64_t title_id = 0;
-    std::string addons;        // "Update 1.2.0, 2 DLC", or "None"
+    std::string addons;        // "Update 1.2.0, 2 DLC"; empty without either
     std::string language;      // the language the game will use
     std::string language_note; // set when that is not the chosen one
+    // Its mods, and how many of them are switched on. The launcher counts them (Services::mods)
+    // when it takes the list and whenever they change.
+    int mods = 0;
+    int mods_on = 0;
 };
 
 struct Recent
@@ -62,7 +66,13 @@ struct Home
     std::string last_caption;
     bool last_caption_warning = false; // the caption says what is wrong with the game
     std::string last_cover;
-    std::string last_info; // add-ons and language
+    // What the last game comes with, when it can be started: its title ID, its update and DLC
+    // (as Game::addons) and the language it will use. Its mods are counted by the launcher.
+    std::uint64_t last_title_id = 0;
+    std::string last_addons;
+    std::string last_language;
+    int last_mods = 0;
+    int last_mods_on = 0;
     std::vector<Recent> recents; // at most four
     std::string system_status;
 };
