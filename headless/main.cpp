@@ -47,7 +47,9 @@
 #include "stall_watchdog.h"
 #include "dev_vulkan.h"
 #include "../src/fastmem.h"
+#include "crash_report.h"
 #include "prosperoeden/frontend.h"
+#include "prosperoeden/version.h"
 extern "C" void ps5_opengl_heap_snapshot(const char*, unsigned);
 extern "C" std::int64_t sceKernelGetDirectMemorySize();
 #else
@@ -77,6 +79,7 @@ extern "C" std::int64_t sceKernelGetDirectMemorySize();
 #endif
 #pragma clang diagnostic pop
 #ifdef EDEN_DEV_PROFILE
+#include "crash_trigger.h"
 #include "watch.h"
 #include "core/arm/debug.h"
 #include "core/memory.h"
@@ -146,6 +149,14 @@ int main(int argc, char** argv) {
             std::error_code folder_error;
             std::filesystem::create_directories(folder, folder_error);
         }
+        // Keep the previous session's logs: a freeze is diagnosed after the app is reopened.
+        for (const char* name : {"stderr.log", "heap.log"}) {
+            const std::string log = Eden::LogFile(name);
+            std::rename(log.c_str(), (log.substr(0, log.size() - 4) + ".prev.log").c_str());
+        }
+        // A crash report the previous run left: that run's logs move beside it, and the launcher
+        // says where it is (crash_report.h).
+        const Eden::Crash::Last last_crash = Eden::Crash::TakeLast(Eden::LogsDir(), Eden::UserDir() + "/log/eden_log.txt");
 #ifdef EDEN_DEV_PROFILE
         // UI inspection captures are disposable; keep saves, settings and shader caches.
         for (const char* name : {"ui-preview.bmp", "ui-main.bmp", "ui-nav.bmp",
@@ -154,11 +165,6 @@ int main(int argc, char** argv) {
         for (const char* name : {"eden_log.txt", "eden_log.txt.old.txt"})
             std::filesystem::remove(std::filesystem::path{Eden::UserDir()} / "log" / name);
 #endif
-        // Keep the previous session's logs: a freeze is diagnosed after the app is reopened.
-        for (const char* name : {"stderr.log", "heap.log"}) {
-            const std::string log = Eden::LogFile(name);
-            std::rename(log.c_str(), (log.substr(0, log.size() - 4) + ".prev.log").c_str());
-        }
         if (!std::freopen(Eden::LogFile("stderr.log").c_str(), "w", stderr) ||
             !std::freopen(Eden::LogFile("heap.log").c_str(), "w", stdout)) return 2;
         std::setvbuf(stderr, nullptr, _IONBF, 0);
@@ -169,13 +175,14 @@ int main(int argc, char** argv) {
         static Eden::LogPipe stderr_pipe, stdout_pipe;
         if (!stderr_pipe.Attach(stderr) || !stdout_pipe.Attach(stdout))
             Eden::Report("logs", "Asynchronous log writing unavailable; writing directly");
+        Eden::Crash::Install(Eden::LogsDir(), Eden::kAppVersion, last_crash.restarted);
         std::set_new_handler([] {
             ps5_opengl_heap_snapshot("allocation_failure", 0);
             std::fflush(stdout);
             Eden::Report("allocation failure", "operator new: heap exhausted");
             throw std::bad_alloc{};
         });
-        // Name the exception in klog before aborting; stderr files vanish with the sandbox.
+        // Name the exception in klog, then the crash report (which starts the app again).
         std::set_terminate([] {
             const char* detail = "no active exception";
             if (const auto current = std::current_exception()) {
@@ -188,7 +195,7 @@ int main(int argc, char** argv) {
                 }
             }
             Eden::Report("terminate", detail);
-            std::abort();
+            Eden::Crash::Fail(detail);
         });
         {
             const std::string access = "status=" + std::to_string(Eden::FilesystemAccessStatus()) +
@@ -265,6 +272,8 @@ int main(int argc, char** argv) {
         (void)argc;
         (void)argv;
         std::string launch_error;
+        // The previous run crashed: the launcher says where its report is.
+        if (!last_crash.report.empty()) launch_error = std::string{Eden::Crash::kNotice} + last_crash.report;
         // A game that faulted early in its boot is restarted (at most four times per launch).
         std::string relaunch_game;
         unsigned guest_fault_retries = 0;
@@ -291,6 +300,8 @@ int main(int argc, char** argv) {
                 // (launcher work: its captures and file-driven input need a development build).
                 if (entry == "launcher=first") autoboot_pending = false;
             }
+            // After a crash the launcher opens with its notice, not the development title again.
+            if (!last_crash.report.empty()) autoboot_pending = false;
         }
 #ifdef EDEN_DEV_ROM_ID
         {
@@ -310,6 +321,7 @@ int main(int argc, char** argv) {
         }
 #endif
         std::string selected_game;
+        Eden::Crash::SetSession("launcher", false);
 #ifdef EDEN_DEV_VULKAN
         if (check_backend_recovery && !recovery_opengl && !launch_error.empty()) {
             recovery_opengl = true;
@@ -710,6 +722,14 @@ int main(int argc, char** argv) {
             Settings::UpdateRescalingInfo();
             Eden::Report("launch", (std::string("Resolution ") + Eden::kResolutionKeys[resolution] + ", " +
                                     Eden::kUpscalingFilterLabels[filter]).c_str());
+            // What a crash report says was running.
+            char title_id[20];
+            std::snprintf(title_id, sizeof(title_id), "%016llx",
+                          static_cast<unsigned long long>(eden_game_title_id(guest)));
+            Eden::Crash::SetSession("game " + std::filesystem::path(guest).filename().string() + " (" + title_id +
+                                    "), " + Eden::BackendName(backend) + ", resolution " +
+                                    Eden::kResolutionKeys[resolution] + ", " + Eden::kUpscalingFilterLabels[filter],
+                                    true);
         }
 #endif
         Settings::values.sink_id = Settings::AudioEngine::Null;
@@ -1160,6 +1180,12 @@ int main(int argc, char** argv) {
                                 if (completion->wake.wait_for(lock, std::chrono::milliseconds(50), completed)) {
                                     finished = true;
                                     break;
+                                }
+                                // The runner's crash request, to test the crash report in a game.
+                                if (poll % 20 == 0) {
+                                    lock.unlock();
+                                    Eden::Crash::DevelopmentRequest(Eden::AppFile("crash-app.txt"));
+                                    lock.lock();
                                 }
 #ifndef EDEN_DEV_VULKAN
                                 if (segment >= 5) {

@@ -2,6 +2,7 @@
 #include "eden_services.h"
 
 #include "assets_dir.h"
+#include "crash_report.h"
 #include "diagnostics.h"
 #include "metadata_bridge.h"
 #include "native_directory.h"
@@ -285,6 +286,11 @@ pe::ui::Home EdenServices::home() {
         home.status = fill(tr("Setup required: {0} Open Settings, Game files to choose the folder that holds your "
                               "keys, firmware and roms folders (or add the files to {1}), then reopen ProsperoEden."),
                            {SetupMessage(setup_), Eden::AssetsDir()});
+    } else if (launch_error_.starts_with(Eden::Crash::kNotice)) {
+        // The previous run ended with a crash report (headless/crash_report.h).
+        home.status = fill(tr("ProsperoEden stopped because of an error. A report was saved to {0}."),
+                           {launch_error_.substr(Eden::Crash::kNotice.size())});
+        home.launch_failed = true;
     } else if (!launch_error_.empty()) {
         home.status = fill(tr("Game could not start: {0} Details: {1}"),
                            {LaunchError(launch_error_), Eden::LogFile("stderr.log")});

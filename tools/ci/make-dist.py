@@ -50,6 +50,14 @@ digest = hashlib.sha256(archive.read_bytes()).hexdigest()
 subprocess.run(['bash', str(root / 'tools/ci/package-image.sh'), str(app), str(image)], check=True)
 image_digest = hashlib.sha256(image.read_bytes()).hexdigest()
 (dist / 'SHA256SUMS').write_text(f'{digest}  {archive.name}\n{image_digest}  {image.name}\n')
+# The unstripped executable of this release, to name the functions in a crash report later
+# (tools/symbolize-crash.py). Kept out of dist/: it is not a release file.
+unstripped = root / 'build/headless-native/llvm-pie.elf'
+if unstripped.exists():
+    symbols = root / 'build/symbols' / f'ProsperoEden-{tag}.elf'
+    symbols.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(unstripped, symbols)
+    print(f'{symbols} (keep it with the release: crash reports are read with it)')
 readme = (root / 'README.md').read_text()
 match = re.search(rf'^## Changes in {re.escape(tag)}\n(.*?)(?=^## )', readme, re.M | re.S)
 if match:

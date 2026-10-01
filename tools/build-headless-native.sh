@@ -82,6 +82,7 @@ python3 -B "$root/tools/check-jit-protection.py"
 python3 -B "$root/tools/check-jit-allocator.py"
 python3 -B "$root/tools/check-jit-patch-lookup.py"
 python3 -B "$root/tools/check-jit-assert.py"
+python3 -B "$root/tools/check-crash-report.py"
 if [[ "$probe" == OFF ]]; then
     python3 -B "$root/tools/check-exclusive-monitor.py"
 else

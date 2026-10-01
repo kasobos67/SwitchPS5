@@ -1,4 +1,4 @@
-# ProsperoEden launcher - Français
+# ProsperoEden launcher - fr-FR
 # English text is the key (msgid); msgstr is the translation. Keep {0} {1} as they are,
 # keep UPPERCASE labels uppercase, and keep names (ProsperoEden, Eden, PS5, Vulkan, OpenGL,
 # AMD FSR, DLC, NSP, XCI, prod.keys, Ryujinx) unchanged.
@@ -711,6 +711,11 @@ msgstr "CRÉDITS DU PROJET"
 #: pe/ui/browse.cpp
 msgid "ProsperoEden is an unofficial PS5 port brought to you by BlackBearReloaded."
 msgstr "ProsperoEden est un portage PS5 non officiel proposé par BlackBearReloaded."
+
+#. Shown on the home screen after the app crashed and started again; {0} is a file.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "ProsperoEden stopped because of an error. A report was saved to {0}."
+msgstr "ProsperoEden s'est arrêté à cause d'une erreur. Un rapport a été enregistré dans {0}."
 
 #. Why a game did not start.
 #: eden_services.cpp

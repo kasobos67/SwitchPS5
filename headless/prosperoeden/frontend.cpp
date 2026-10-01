@@ -19,6 +19,7 @@
 #include "radio_input.h"
 #include "ps5_system_language.hpp"
 #ifdef EDEN_DEV_ROM_ID
+#include "crash_trigger.h"
 #include "development_input.h"
 #include <fstream>
 #endif
@@ -247,6 +248,8 @@ std::string RunApp(const std::string& launch_error, bool first_start) {
                     std::fprintf(stderr, "EDEN_DEV_QUIT requested=1\n");
                     running = false;
                 }
+                // The runner's crash request, to test the crash report in the launcher.
+                Eden::Crash::DevelopmentRequest(Eden::AppFile("crash-app.txt"));
             }
             if (!development_input.active) radio_input_poll();
             if (const auto sample = development_input.Sample(now)) {

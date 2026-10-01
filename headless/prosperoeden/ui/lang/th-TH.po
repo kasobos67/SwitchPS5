@@ -712,6 +712,11 @@ msgstr "เครดิตโครงการ"
 msgid "ProsperoEden is an unofficial PS5 port brought to you by BlackBearReloaded."
 msgstr "ProsperoEden ​เป็น​พอร์ต PS5 ​อย่าง​ไม่เป็นทางการ​โดย BlackBearReloaded"
 
+#. Shown on the home screen after the app crashed and started again; {0} is a file.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "ProsperoEden stopped because of an error. A report was saved to {0}."
+msgstr "ProsperoEden หยุด​ทำงาน​เนื่องจาก​ข้อผิดพลาด บันทึก​รายงาน​ไว้ที่ {0} แล้ว"
+
 #. Why a game did not start.
 #: eden_services.cpp
 msgid "PS5 controller initialization failed"

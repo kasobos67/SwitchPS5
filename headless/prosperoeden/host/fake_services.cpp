@@ -176,6 +176,11 @@ ui::Home FakeServices::home()
                               "then reopen ProsperoEden."),
                            {fill(tr("Missing or empty keys/prod.keys in {0}."), {"/data/prosperoeden"}),
                             "/data/prosperoeden"});
+    else if (!crash_report.empty())
+    {
+        home.status = fill(tr("ProsperoEden stopped because of an error. A report was saved to {0}."), {crash_report});
+        home.launch_failed = true;
+    }
     else if (!launch_error.empty())
     {
         home.status = fill(tr("Game could not start: {0} Details: {1}"),

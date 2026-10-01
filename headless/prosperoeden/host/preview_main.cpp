@@ -252,6 +252,11 @@ void pictures(Stage &s)
     s.wait(2.0f);
     s.shoot("25-home-launch-failed");
     s.services.launch_error.clear();
+    s.services.crash_report = "/data/prosperoeden/logs/crash-20261001-213000.txt";
+    s.restart();
+    s.wait(2.0f);
+    s.shoot("25b-home-crash-report");
+    s.services.crash_report.clear();
     s.services.has_history = false;
     s.restart();
     s.wait(2.0f);

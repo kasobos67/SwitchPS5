@@ -23,6 +23,7 @@ class FakeServices final : public ui::Services
     // What the preview varies between pictures.
     bool setup_ready = true;
     std::string launch_error;
+    std::string crash_report; // the previous run's crash report, when it left one
     bool has_history = true;
     bool import_available = true;
     ui::SaveSource import_source = ui::SaveSource::ryujinx;

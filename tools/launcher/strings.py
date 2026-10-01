@@ -88,6 +88,8 @@ NOTES = {
     "Bicubic": "An upscaling filter.",
     "Vulkan (recommended)": "Vulkan is a name (unchanged).",
     "Game could not start: {0} Details: {1}": "{0} is the reason, a sentence in English; {1} is a file.",
+    "ProsperoEden stopped because of an error. A report was saved to {0}.":
+        "Shown on the home screen after the app crashed and started again; {0} is a file.",
     "Sandboxed (code {0}): app folder only": "The app can read only its own folder; {0} is a number.",
     "Full filesystem": "The app can read every folder of the console.",
     "END GAME": "Label of the shortcut that ends the running game.",

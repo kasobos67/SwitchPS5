@@ -19,6 +19,26 @@ __attribute__((noreturn)) void catchReturnFromMain(int status) {
     sceKernelDebugOutText(0, marker);
     for (;;) sceKernelUsleep(100000);
 }
+// Start this app again in a fresh process: the system ends this one and runs the app's own
+// executable. After a crash report was written (headless/crash_report.cpp). No stdio: the caller
+// is a helper beside a crashed thread. Returns only when the system refuses.
+int eden_restart_app(void) {
+    char marker[96];
+    sceKernelDebugOutText(0, "EDEN_PPSA99121_RESTART\n");
+    const int refused = sceSystemServiceLoadExec("/app0/eboot.bin", NULL);
+    snprintf(marker, sizeof(marker), "EDEN_PPSA99121_RESTART_REFUSED rc=%x\n", (unsigned)refused);
+    sceKernelDebugOutText(0, marker);
+    return refused;
+}
+// End the app the way a return from main does, from any thread. Returns only when refused.
+int eden_exit_app(void) {
+    char marker[96];
+    sceKernelDebugOutText(0, "EDEN_PPSA99121_EXIT\n");
+    const int refused = sceSystemServiceLoadExec("exit", NULL);
+    snprintf(marker, sizeof(marker), "EDEN_PPSA99121_EXIT_REFUSED rc=%x\n", (unsigned)refused);
+    sceKernelDebugOutText(0, marker);
+    return refused;
+}
 __attribute__((noreturn)) void __assert(const char *function, const char *file,
                                       int line, const char *expression) {
     fprintf(stderr, "assertion failed: %s (%s:%d, %s)\n", expression, file, line, function);

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "performance.h"
+#include "crash_report.h"
 #include "stall_watchdog.h"
 #include "../src/fastmem.h"
 #include "common/cpu_features.h"
@@ -472,6 +473,7 @@ void ReportGpuThread(unsigned frame) {
 }
 
 void RegisterWorker(const char* name) {
+    Eden::Crash::NameThread(name);  // a crash report names the thread
 #if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
     Eden::Stall::NoteThread(name);
 #endif
