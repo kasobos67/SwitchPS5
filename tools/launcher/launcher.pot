@@ -1,0 +1,961 @@
+# ProsperoEden launcher - template
+# English text is the key (msgid); msgstr is the translation. Keep {0} {1} as they are,
+# keep UPPERCASE labels uppercase, and keep names (ProsperoEden, Eden, PS5, Vulkan, OpenGL,
+# AMD FSR, DLC, NSP, XCI, prod.keys, Ryujinx) unchanged.
+
+#: settings_store.h
+msgid "0.5x (faster, softer)"
+msgstr ""
+
+#: settings_store.h
+msgid "0.75x (faster)"
+msgstr ""
+
+#: settings_store.h
+msgid "1.5x (sharper)"
+msgstr ""
+
+#: settings_store.h
+msgid "1x (native)"
+msgstr ""
+
+#: settings_store.h
+msgid "2x (sharpest)"
+msgstr ""
+
+#: eden_services.cpp
+msgid "A firmware NCA cannot be read. Reinstall the firmware dump."
+msgstr ""
+
+#: pe/ui/home.cpp
+msgid "About"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "About ProsperoEden"
+msgstr ""
+
+#. Label: which folders the app can read.
+#: pe/ui/browse.cpp
+msgid "ACCESS"
+msgstr ""
+
+#. Label: a game's updates and DLC.
+#: pe/ui/library.cpp
+msgid "ADD-ONS"
+msgstr ""
+
+#. {0}: updates and DLC of the game; {1}: the language it will use.
+#: eden_services.cpp
+msgid "Add-ons: {0}  /  Language: {1}"
+msgstr ""
+
+#. {2} is the text '{0} not available'.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Add-ons: {0}  /  Language: {1} ({2} in this game)"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Adjust the essentials without leaving your library behind."
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "All credit for the Eden emulator goes to its developers and contributors."
+msgstr ""
+
+#: settings_store.h
+msgid "AMD FSR"
+msgstr ""
+
+#: eden_services.cpp
+msgid "Another language"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Audio"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "AUDIO"
+msgstr ""
+
+#: eden_services.cpp
+msgid "Australia"
+msgstr ""
+
+#. Button hint: go back one screen.
+#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Back"
+msgstr ""
+
+#. An upscaling filter.
+#: settings_store.h
+msgid "Bicubic"
+msgstr ""
+
+#. An upscaling filter.
+#: settings_store.h
+msgid "Bilinear"
+msgstr ""
+
+#. Button hint: move through the list.
+#: pe/ui/browse.cpp
+msgid "Browse"
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "Browse games"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Browse settings"
+msgstr ""
+
+#: eden_services.cpp
+msgid "Cannot read firmware/ in {0}. Install extracted firmware NCAs."
+msgstr ""
+
+#. Button hint: change the highlighted setting.
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Change"
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "Change mode. Saved per game."
+msgstr ""
+
+#: eden_services.cpp
+msgid "China"
+msgstr ""
+
+#: settings_store.h
+msgid "Chinese (Simplified)"
+msgstr ""
+
+#: settings_store.h
+msgid "Chinese (Traditional)"
+msgstr ""
+
+#. Button hint: choose the highlighted language.
+#: pe/ui/browse.cpp
+msgid "Choose"
+msgstr ""
+
+#: pe/ui/home.cpp
+msgid "Choose a game from your library."
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "Choose the folder that holds your keys, firmware and games"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "Choose the language games use"
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "Console mode"
+msgstr ""
+
+#: pe/ui/home.cpp
+msgid "CONTINUE PLAYING"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Controller shortcuts and supported features."
+msgstr ""
+
+#: pe/ui/home.cpp
+msgid "CONTROLLERS"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Controls"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "CONTROLS"
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "Copy a Ryujinx data folder into ryujinx/ next to roms/."
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "Could not save console mode. Please try again."
+msgstr ""
+
+#: pe/ui/launcher.cpp
+msgid "Could not save settings. Please try again."
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "Could not save the folder. Please try again."
+msgstr ""
+
+#: pe/ui/browse.cpp, pe/ui/library.cpp
+msgid "Could not save. Please try again."
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "Credits and setup"
+msgstr ""
+
+#. A per-game setting that follows the general setting; {0} is its value.
+#: pe/ui/library.cpp
+msgid "Default ({0})"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "Default folder"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "Default folder saved. Reopen ProsperoEden to use it."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Detailed logging"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "DETAILED LOGS"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Detailed logs apply to the next game launch."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Detailed logs on"
+msgstr ""
+
+#. Button hint: show the game's details.
+#: pe/ui/home.cpp
+msgid "Details"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Diagnostics"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "DIAGNOSTICS"
+msgstr ""
+
+#. Console mode: the console as if connected to a TV. Keep it short (about 9 letters).
+#: pe/ui/library.cpp
+msgid "Docked"
+msgstr ""
+
+#: settings_store.h
+msgid "Dutch"
+msgstr ""
+
+#: pe/ui/home.cpp
+msgid "Eden emulator for PlayStation 5"
+msgstr ""
+
+#. Label of the shortcut that ends the running game.
+#: pe/ui/settings.cpp
+msgid "END GAME"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "End the game and return to this menu"
+msgstr ""
+
+#: settings_store.h
+msgid "English (UK)"
+msgstr ""
+
+#: settings_store.h
+msgid "English (US)"
+msgstr ""
+
+#: eden_services.cpp
+msgid "Europe"
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "FILE"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Fine-tune your experience"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "FIRMWARE"
+msgstr ""
+
+#: eden_services.cpp
+msgid "Firmware NCA validation failed (code {0}). Check that firmware and prod.keys are compatible."
+msgstr ""
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Firmware ready"
+msgstr ""
+
+#: eden_services.cpp
+msgid "Firmware SystemVersion data is missing or unreadable. Install a complete firmware dump."
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "FOLDERS"
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "FORMAT"
+msgstr ""
+
+#. Label: the frames-per-second counter drawn over a game.
+#: pe/ui/settings.cpp
+msgid "FPS OVERLAY"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "FPS overlay"
+msgstr ""
+
+#: settings_store.h
+msgid "French"
+msgstr ""
+
+#: settings_store.h
+msgid "French (Canada)"
+msgstr ""
+
+#. The app can read every folder of the console.
+#: pe/ui/browse.cpp
+msgid "Full filesystem"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Game audio; PS5 system-menu music is unchanged."
+msgstr ""
+
+#. {0} is the reason, a sentence in English; {1} is a file.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Game could not start: {0} Details: {1}"
+msgstr ""
+
+#: pe/ui/home.cpp
+msgid "Game details"
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "GAME DETAILS"
+msgstr ""
+
+#: pe/ui/browse.cpp, pe/ui/settings.cpp
+msgid "Game files"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "GAME FILES"
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "Game settings"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "GAME VOLUME"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Game volume"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Game volume, and the sounds of this menu."
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "GAMES"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "Games use this language when they offer it, and their own default otherwise. It applies when a game starts."
+msgstr ""
+
+#: pe/ui/home.cpp
+msgid "Games you launch will appear here."
+msgstr ""
+
+#: settings_store.h
+msgid "German"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "GETTING STARTED"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Graphics backend and how games are scaled to your TV."
+msgstr ""
+
+#. Console mode: the console as if held in the hands. Keep it short (about 9 letters).
+#: pe/ui/library.cpp
+msgid "Handheld"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "How games are drawn and scaled to your TV."
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "Import it (the current save is backed up)"
+msgstr ""
+
+#. Tag on the language or folder that is in use now.
+#: pe/ui/browse.cpp, pe/ui/settings.cpp
+msgid "IN USE"
+msgstr ""
+
+#: settings_store.h
+msgid "Italian"
+msgstr ""
+
+#: eden_services.cpp
+msgid "Japan"
+msgstr ""
+
+#: settings_store.h
+msgid "Japanese"
+msgstr ""
+
+#. keys, firmware and roms are folder names (unchanged). TRIANGLE is the controller's triangle button, in capitals.
+#: pe/ui/browse.cpp
+msgid "Keep keys, firmware and roms folders together. TRIANGLE uses the folder shown."
+msgstr ""
+
+#. Label: the encryption keys file (prod.keys).
+#: pe/ui/browse.cpp
+msgid "KEYS"
+msgstr ""
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Keys and firmware: startup checks passed. Game-specific compatibility is checked at launch."
+msgstr ""
+
+#: eden_services.cpp
+msgid "Korea"
+msgstr ""
+
+#: settings_store.h
+msgid "Korean"
+msgstr ""
+
+#: pe/ui/browse.cpp, pe/ui/settings.cpp
+msgid "Language"
+msgstr ""
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "LANGUAGE"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "LANGUAGES"
+msgstr ""
+
+#. Caption under the title of the game played last.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Last game opened"
+msgstr ""
+
+#: pe/ui/home.cpp
+msgid "Launch game"
+msgstr ""
+
+#: pe/ui/home.cpp
+msgid "Library"
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "LIBRARY"
+msgstr ""
+
+#. Headline of the Settings screen.
+#: pe/ui/settings.cpp
+msgid "Make it yours."
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "Menu sound effects made with ElevenLabs."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "MENU SOUNDS"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Menu sounds"
+msgstr ""
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Missing or empty keys/prod.keys in {0}."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "MUTE"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Mute"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Muted"
+msgstr ""
+
+#. Button hint: move the highlight.
+#: pe/ui/home.cpp
+msgid "Navigate"
+msgstr ""
+
+#. An upscaling filter (nearest neighbour). Keep it short.
+#: settings_store.h
+msgid "Nearest"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Needs attention"
+msgstr ""
+
+#. {0} is the folder used the next time the app starts.
+#: pe/ui/browse.cpp
+msgid "Next launch: {0}"
+msgstr ""
+
+#. Label: the folder used the next time the app starts.
+#: pe/ui/settings.cpp
+msgid "NEXT START"
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "No cover art"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "No firmware folder"
+msgstr ""
+
+#: eden_services.cpp
+msgid "No firmware NCAs found in {0}."
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "No folders here."
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "No ROM files found."
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "No ROM selected"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "No roms folder"
+msgstr ""
+
+#. No add-ons (updates or DLC).
+#: eden_services.cpp, host/fake_services.cpp, pe/ui/library.cpp
+msgid "None"
+msgstr ""
+
+#. A setting that is switched off.
+#: pe/ui/settings.cpp
+msgid "Off"
+msgstr ""
+
+#. A setting that is switched on.
+#: pe/ui/settings.cpp
+msgid "On"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "ON THIS CONSOLE"
+msgstr ""
+
+#. Short tag on a folder row.
+#: pe/ui/browse.cpp
+msgid "OPEN"
+msgstr ""
+
+#. Button hint: open the highlighted folder.
+#: pe/ui/browse.cpp
+msgid "Open"
+msgstr ""
+
+#: pe/ui/home.cpp
+msgid "Open library"
+msgstr ""
+
+#. Button hint: jump a page of the list (L1 / R1).
+#: pe/ui/browse.cpp
+msgid "Page"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "Parent folder"
+msgstr ""
+
+#: settings_store.h
+msgid "Polish"
+msgstr ""
+
+#: settings_store.h
+msgid "Portuguese"
+msgstr ""
+
+#: settings_store.h
+msgid "Portuguese (Brazil)"
+msgstr ""
+
+#. Eden is the emulator's name (unchanged).
+#: pe/ui/browse.cpp
+msgid "Powered by Eden"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "PREFERENCES"
+msgstr ""
+
+#: eden_services.cpp
+msgid "prod.keys could not supply an NCA header key. Replace it with a valid key dump."
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "prod.keys found"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "prod.keys missing"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "PROJECT CREDITS"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "ProsperoEden is an unofficial PS5 port brought to you by BlackBearReloaded."
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "PS5 EDITION"
+msgstr ""
+
+#. {0} is the version, for example v1.000.030.
+#: pe/ui/home.cpp
+msgid "PS5 EDITION  /  {0}"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Ready"
+msgstr ""
+
+#: pe/ui/home.cpp
+msgid "RECENTLY PLAYED"
+msgstr ""
+
+#: pe/ui/browse.cpp, pe/ui/settings.cpp
+msgid "REGION"
+msgstr ""
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Renderer"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "RENDERER"
+msgstr ""
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Resolution"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "RESOLUTION"
+msgstr ""
+
+#: eden_services.cpp
+msgid "ROM missing from the game files folder"
+msgstr ""
+
+#: settings_store.h
+msgid "Russian"
+msgstr ""
+
+#. A save file of the Ryujinx emulator. Ryujinx is a name (unchanged).
+#: pe/ui/library.cpp
+msgid "Ryujinx save"
+msgstr ""
+
+#. The app can read only its own folder; {0} is a number.
+#: pe/ui/browse.cpp
+msgid "Sandboxed (code {0}): app folder only"
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "Saved for this game. Applies on next launch."
+msgstr ""
+
+#: pe/ui/browse.cpp, pe/ui/launcher.cpp
+msgid "Saved. Applies when a game starts."
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "Saved. Reopen ProsperoEden to use this folder."
+msgstr ""
+
+#. Button hint: choose the highlighted item (not the Select button).
+#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Select"
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "Select a game"
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "Select a game to begin"
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "Select a readable game to configure its mode."
+msgstr ""
+
+#. Select is a button's name (unchanged).
+#: pe/ui/settings.cpp
+msgid "Select is the touchpad button on PS5."
+msgstr ""
+
+#. Heading: the language highlighted in the list.
+#: pe/ui/browse.cpp
+msgid "SELECTED"
+msgstr ""
+
+#: pe/ui/home.cpp, pe/ui/settings.cpp
+msgid "Settings"
+msgstr ""
+
+#. Label: whether keys and firmware are in place.
+#: pe/ui/settings.cpp
+msgid "SETUP"
+msgstr ""
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Setup required"
+msgstr ""
+
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Setup required: {0} Open Settings, Game files to choose the folder that holds your keys, firmware and roms folders (or add the files to {1}), then reopen ProsperoEden."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Setup status and detailed logs."
+msgstr ""
+
+#: eden_services.cpp
+msgid "Setup validation failed. Check that firmware and key files are readable and valid."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Shortcuts during a game, and vibration."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Show or hide the FPS overlay"
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "SIZE"
+msgstr ""
+
+#: settings_store.h
+msgid "Spanish"
+msgstr ""
+
+#: settings_store.h
+msgid "Spanish (Latin America)"
+msgstr ""
+
+#. Shown over a game's cover while it starts.
+#: pe/ui/launcher.cpp
+msgid "STARTING"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "Supply your own files"
+msgstr ""
+
+#: eden_services.cpp
+msgid "Taiwan"
+msgstr ""
+
+#: settings_store.h
+msgid "Thai"
+msgstr ""
+
+#. Heading of the acknowledgements.
+#: pe/ui/browse.cpp
+msgid "THANKS"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make ProsperoEden possible."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "The folder that holds your keys, firmware and games."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "The language games use when they offer it."
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "THIS FOLDER"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "This folder cannot be opened."
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "This game's settings cannot be saved (no title ID)."
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "Unavailable"
+msgstr ""
+
+#. Short tag on the 'Parent folder' row.
+#: pe/ui/browse.cpp
+msgid "UP"
+msgstr ""
+
+#. A game update; {0} is its version, for example 1.2.0.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Update {0}"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "UPDATES, DLC"
+msgstr ""
+
+#: pe/ui/library.cpp, pe/ui/settings.cpp
+msgid "Upscaling filter"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "UPSCALING FILTER"
+msgstr ""
+
+#: eden_services.cpp
+msgid "USA"
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "Use extracted firmware NCA files. Choose the folder in Settings, Game files; restart the app after changing it."
+msgstr ""
+
+#: pe/ui/browse.cpp
+msgid "Use this folder"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "VIBRATION"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Vibration"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Vibration off"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Vibration on"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Video"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "VIDEO"
+msgstr ""
+
+#: pe/ui/home.cpp
+msgid "VIEW ALL GAMES"
+msgstr ""
+
+#. Vulkan is a name (unchanged).
+#: pe/ui/settings.cpp
+msgid "Vulkan (recommended)"
+msgstr ""
+
+#: pe/ui/library.cpp
+msgid "Your games"
+msgstr ""
+
+#. Headline when no game has been played yet.
+#: pe/ui/home.cpp
+msgid "Your next adventure"
+msgstr ""
+
+#. {0} is how many DLC (add-on content) a game has installed.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "{0} DLC"
+msgstr ""
+
+#. Exactly one game. In a language with more than two plural forms, word it so that it reads well with any number (Games: {0}).
+#: pe/ui/browse.cpp
+msgid "{0} game"
+msgstr ""
+
+#. Exactly one game. See '{0} game'.
+#: eden_services.cpp
+msgid "{0} game installed"
+msgstr ""
+
+#. Any number of games other than one (also 0). See '{0} game'.
+#: pe/ui/browse.cpp
+msgid "{0} games"
+msgstr ""
+
+#. Any number of games other than one. See '{0} game'.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "{0} games installed"
+msgstr ""
+
+#. Exactly one file. See '{0} game'.
+#: pe/ui/browse.cpp
+msgid "{0} NCA file"
+msgstr ""
+
+#. Any number of files other than one. See '{0} game'.
+#: pe/ui/browse.cpp
+msgid "{0} NCA files"
+msgstr ""
+
+#. {0} is a language name. Shown beside a game that lacks that language.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "{0} not available"
+msgstr ""
+
+#. Position in a list: 3 OF 12.
+#: pe/ui/widgets.cpp
+msgid "{0} OF {1}"
+msgstr ""
+
+#. {0} is a folder; NSP and XCI are file types.
+#: pe/ui/browse.cpp
+msgid "{0}/ (NSP or XCI)"
+msgstr ""

@@ -20,8 +20,11 @@ constexpr Rect kListPanel{108.0f, 188.0f, 820.0f, 720.0f};
 constexpr Rect kDetailPanel{980.0f, 188.0f, 820.0f, 720.0f};
 constexpr Rect kDialog{550.0f, 180.0f, 820.0f, 720.0f};
 constexpr float kRowsTop = 264.0f;
-constexpr const char *kCategories[] = {TR("Video"), TR("Audio"), TR("Controls"), TR("Diagnostics"), TR("Game files"),
-                                       TR("Language")};
+constexpr const char *kCategories[] = {TR("Video"),       TR("Audio"),      TR("Controls"),
+                                       TR("Diagnostics"), TR("Game files"), TR("Language")};
+// The same as headings: capitals differ by language, so each is its own text.
+constexpr const char *kHeadings[] = {TR("VIDEO"),       TR("AUDIO"),      TR("CONTROLS"),
+                                     TR("DIAGNOSTICS"), TR("GAME FILES"), TR("LANGUAGE")};
 
 const char *on_off(bool value)
 {
@@ -112,11 +115,12 @@ void Launcher::draw_settings(Canvas &c)
     for (int row = 0; row < 6; ++row)
     {
         const Rect r = row_rect(row);
-        text(c, tr(kCategories[row]), r.x + 36.0f, baseline(r.y, 94.0f, theme::kText24), theme::kText24,
-             theme::kValue);
         // What the category is set to, then a chevron: there is more behind the row.
-        text_fit(c, summaries[row], r.x + r.w - 62.0f, baseline(r.y, 94.0f, theme::kSmall),
-                 theme::kSmall, theme::kMeta, 330.0f, Align::right);
+        const float summary =
+            text_shrink(c, summaries[row], r.x + r.w - 62.0f, baseline(r.y, 94.0f, theme::kSmall),
+                        theme::kSmall, theme::kMeta, 330.0f, Align::right);
+        text_shrink(c, tr(kCategories[row]), r.x + 36.0f, baseline(r.y, 94.0f, theme::kText24),
+                    theme::kText24, theme::kValue, r.w - 36.0f - 62.0f - summary - 24.0f);
         const float cx = r.x + r.w - 34.0f;
         const float cy = r.y + 47.0f;
         const Color ink = theme::kLimePale.with_alpha(row == settings_.selected ? 0.95f : 0.4f);
@@ -129,11 +133,11 @@ void Launcher::draw_settings(Canvas &c)
           theme::kPanelEdge.with_alpha(0.55f));
     text(c, tr("ON THIS CONSOLE"), 1016.0f, baseline(210.0f, 28.0f, theme::kSmall), theme::kSmall,
          theme::kLimePale, Align::left, 3.0f);
-    text(c, tr("Make it yours."), 1016.0f, baseline(258.0f, 54.0f, theme::kLead), theme::kLead,
-         theme::kTitle);
+    text_shrink(c, tr("Make it yours."), 1016.0f, baseline(258.0f, 54.0f, theme::kLead),
+                theme::kLead, theme::kTitle, 748.0f);
     text_block(c, tr("Adjust the essentials without leaving your library behind."), 1016.0f,
                baseline(332.0f, 36.0f, theme::kText24), theme::kText24, 36.0f, theme::kCopy, 748.0f,
-               2);
+               2, kShrink);
     list.rounded_rect({1016.0f, 432.0f, 748.0f, 1.0f}, 0.0f, theme::kRule);
 
     struct Line
@@ -186,20 +190,17 @@ void Launcher::draw_settings(Canvas &c)
     const float shown = tween::clamp01(section_.value);
     list.push_opacity(shown);
     list.push_transform(1.0f, 0.0f, 0.0f, 0.0f, (1.0f - shown) * 10.0f);
-    std::string heading = tr(kCategories[settings_.selected]);
-    for (char &letter : heading)
-        if (letter >= 'a' && letter <= 'z')
-            letter = static_cast<char>(letter - 'a' + 'A');
-    text(c, heading, 1016.0f, baseline(458.0f, 30.0f, theme::kSmall), theme::kSmall, theme::kLime,
-         Align::left, 3.0f);
-    text_fit(c, about, 1016.0f, baseline(494.0f, 32.0f, 22.0f), 22.0f, theme::kCopy, 748.0f);
+    text(c, tr(kHeadings[settings_.selected]), 1016.0f, baseline(458.0f, 30.0f, theme::kSmall),
+         theme::kSmall, theme::kLime, Align::left, 3.0f);
+    text_shrink(c, about, 1016.0f, baseline(494.0f, 32.0f, 22.0f), 22.0f, theme::kCopy, 748.0f);
     for (std::size_t i = 0; i < lines.size(); ++i)
     {
         const float top = 562.0f + 62.0f * static_cast<float>(i);
-        text(c, lines[i].label, 1016.0f, baseline(top, 36.0f, theme::kSmall), theme::kSmall,
-             theme::kLabel, Align::left, 2.0f);
-        text_fit(c, lines[i].value, 1764.0f, baseline(top, 36.0f, theme::kText24), theme::kText24,
-                 theme::kValue, 470.0f, Align::right);
+        const float value =
+            text_fit(c, lines[i].value, 1764.0f, baseline(top, 36.0f, theme::kText24),
+                     theme::kText24, theme::kValue, 470.0f, Align::right);
+        text_shrink(c, lines[i].label, 1016.0f, baseline(top, 36.0f, theme::kSmall), theme::kSmall,
+                    theme::kLabel, 748.0f - value - 24.0f, Align::left, 2.0f);
         list.rounded_rect({1016.0f, top + 48.0f, 748.0f, 1.0f}, 0.0f, theme::kRule.with_alpha(0.45f));
     }
     list.pop_transform();
@@ -346,50 +347,53 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         copy = tr("Detailed logs apply to the next game launch.");
         break;
     }
-    text(c, title, 592.0f, baseline(218.0f, 62.0f, theme::kDisplay), theme::kDisplay, theme::kTitle);
-    text(c, copy, 592.0f, baseline(291.0f, 32.0f, theme::kSmall), theme::kSmall,
-         Color::rgb(0xbecbb9));
+    text_shrink(c, title, 592.0f, baseline(218.0f, 62.0f, theme::kDisplay), theme::kDisplay,
+                theme::kTitle, 736.0f);
+    text_shrink(c, copy, 592.0f, baseline(291.0f, 32.0f, theme::kSmall), theme::kSmall,
+                Color::rgb(0xbecbb9), 736.0f);
 
     const int rows = dialog_rows(modal);
     for (int row = 0; row < rows; ++row)
         plate_rest(c, kRowPlate, {592.0f, dialog_row_top(modal, row), 736.0f, 94.0f});
     plate_focus(c, kRowPlate, {592.0f, option_cursor_.value, 736.0f, 94.0f}, 1.0f);
 
-    const auto label = [&](int row, const char *value)
+    // A row's name takes what its control (`taken` wide, at the right) leaves of the row.
+    const auto label = [&](int row, const char *value, float taken)
     {
-        text(c, value, 628.0f, baseline(dialog_row_top(modal, row), 94.0f, theme::kText24),
-             theme::kText24, theme::kValue);
+        text_shrink(c, value, 628.0f, baseline(dialog_row_top(modal, row), 94.0f, theme::kText24),
+                    theme::kText24, theme::kValue, 664.0f - taken - 28.0f);
     };
     const auto choice = [&](int row, const std::string &value)
     {
-        chooser(c, value, 1296.0f, baseline(dialog_row_top(modal, row), 94.0f, theme::kText24),
-                row == option_ ? 1.0f : 0.0f, theme::kLimePale);
+        return chooser(c, value, 1296.0f,
+                       baseline(dialog_row_top(modal, row), 94.0f, theme::kText24),
+                       row == option_ ? 1.0f : 0.0f, theme::kLimePale);
     };
+    constexpr float kToggle = 64.0f;
+    constexpr float kLevel = 356.0f; // the bar and the number beside it
     const auto row_centre = [&](int row) { return dialog_row_top(modal, row) + 47.0f; };
     const float knob = tween::clamp01(switches_[0].value);
 
     switch (modal)
     {
     case Modal::video:
-        label(0, tr("Renderer"));
-        choice(0, prefs_.renderer != 0 ? tr("Vulkan (recommended)") : "OpenGL");
-        label(1, tr("Resolution"));
-        choice(1, pick(services_.resolution_labels(), prefs_.resolution));
-        label(2, tr("Upscaling filter"));
-        choice(2, pick(services_.filter_labels(), prefs_.filter));
-        label(3, tr("FPS overlay"));
+        label(0, tr("Renderer"),
+              choice(0, prefs_.renderer != 0 ? tr("Vulkan (recommended)") : "OpenGL"));
+        label(1, tr("Resolution"), choice(1, pick(services_.resolution_labels(), prefs_.resolution)));
+        label(2, tr("Upscaling filter"), choice(2, pick(services_.filter_labels(), prefs_.filter)));
+        label(3, tr("FPS overlay"), kToggle);
         toggle(c, 1292.0f, row_centre(3), knob);
         break;
     case Modal::audio:
-        label(0, tr("Game volume"));
+        label(0, tr("Game volume"), kLevel);
         text(c, percent(prefs_.volume), 1292.0f,
              baseline(dialog_row_top(modal, 0), 94.0f, theme::kText24), theme::kText24,
              theme::kLimePale, Align::right);
         level_bar(c, 1196.0f, row_centre(0), 260.0f, static_cast<float>(prefs_.volume) / 100.0f,
                   option_ == 0 ? 1.0f : 0.0f);
-        label(1, tr("Mute"));
+        label(1, tr("Mute"), kToggle);
         toggle(c, 1292.0f, row_centre(1), knob);
-        label(2, tr("Menu sounds"));
+        label(2, tr("Menu sounds"), kLevel);
         text(c, prefs_.menu_volume > 0 ? percent(prefs_.menu_volume) : tr("Off"), 1292.0f,
              baseline(dialog_row_top(modal, 2), 94.0f, theme::kText24), theme::kText24,
              theme::kLimePale, Align::right);
@@ -414,37 +418,38 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
                                1.0f, theme::kRowEdge.with_alpha(0.6f));
             text(c, kShortcuts[i].keys, 685.0f, baseline(top, 54.0f, theme::kSmall), theme::kSmall,
                  theme::kLimePale, Align::center);
-            text(c, tr(kShortcuts[i].action), 802.0f, baseline(top, 54.0f, 22.0f), 22.0f, theme::kBody);
+            text_shrink(c, tr(kShortcuts[i].action), 802.0f, baseline(top, 54.0f, 22.0f), 22.0f,
+                        theme::kBody, 526.0f);
         }
-        text(c, tr("Select is the touchpad button on PS5."), 592.0f,
-             baseline(540.0f, 36.0f, theme::kSmall), theme::kSmall, theme::kMeta);
-        label(0, tr("Vibration"));
+        text_shrink(c, tr("Select is the touchpad button on PS5."), 592.0f,
+                    baseline(540.0f, 36.0f, theme::kSmall), theme::kSmall, theme::kMeta, 736.0f);
+        label(0, tr("Vibration"), kToggle);
         toggle(c, 1292.0f, row_centre(0), knob);
         break;
     }
     default:
         text_block(c, services_.setup_details(), 592.0f, baseline(364.0f, 40.0f, theme::kText24),
                    theme::kText24, 40.0f, theme::kBody, 736.0f, 7);
-        label(0, tr("Detailed logging"));
+        label(0, tr("Detailed logging"), kToggle);
         toggle(c, 1292.0f, row_centre(0), knob);
         break;
     }
 
     if (!message_.empty())
     {
-        text_fit(c, message_, 592.0f, 818.0f, theme::kSmall,
-                 message_warning_ ? theme::kWarning : theme::kLimePale, 736.0f);
+        text_shrink(c, message_, 592.0f, 818.0f, theme::kSmall,
+                    message_warning_ ? theme::kWarning : theme::kLimePale, 736.0f);
     }
     else if (rows > 1)
     {
         static constexpr Hint kHints[] = {
             {Pad::updown, TR("Select")}, {Pad::leftright, TR("Change")}, {Pad::circle, TR("Back")}};
-        draw_hints(c, kHints, 3, 592.0f, 811.0f, theme::kCopy);
+        draw_hints(c, kHints, 3, 592.0f, 811.0f, theme::kCopy, 736.0f);
     }
     else
     {
         static constexpr Hint kHints[] = {{Pad::cross, TR("Change")}, {Pad::circle, TR("Back")}};
-        draw_hints(c, kHints, 2, 592.0f, 811.0f, theme::kCopy);
+        draw_hints(c, kHints, 2, 592.0f, 811.0f, theme::kCopy, 736.0f);
     }
     list.pop_transform();
     list.pop_opacity();

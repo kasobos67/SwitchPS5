@@ -5,10 +5,12 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <initializer_list>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 // Marks English text that is translated where it is used (in tables that cannot call tr()).
 // tools/launcher/strings.py collects it for the catalogs.
@@ -49,6 +51,10 @@ class Catalog
 
 // The catalog every tr() reads. Load it before the first screen is built.
 Catalog &catalog();
+
+// The catalogs to try for a system language tag, the best first: the tag itself, then the same
+// language as written elsewhere ("fr-CA": fr-CA, fr-FR). English ("en-US", "en-GB") needs none.
+std::vector<std::string> catalog_candidates(std::string_view tag);
 
 // The text in the player's language. The pointer is the catalog's (or english itself): it stays
 // valid until the catalog is loaded again.

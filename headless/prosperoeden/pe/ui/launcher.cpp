@@ -213,14 +213,16 @@ void Launcher::draw_screen(Canvas &c, Screen screen)
 
 void Launcher::draw_frame(Canvas &c, const char *title, const char *copy)
 {
-    text(c, title, 108.0f, baseline(62.0f, 64.0f, theme::kDisplay), theme::kDisplay, theme::kTitle);
-    text(c, copy, 110.0f, baseline(130.0f, 30.0f, theme::kSmall), theme::kSmall, theme::kCopy);
+    text_shrink(c, title, 108.0f, baseline(62.0f, 64.0f, theme::kDisplay), theme::kDisplay,
+                theme::kTitle, 1704.0f);
+    text_shrink(c, copy, 110.0f, baseline(130.0f, 30.0f, theme::kSmall), theme::kSmall, theme::kCopy,
+                1700.0f);
 }
 
 void Launcher::draw_footer(Canvas &c, const Hint *hints, int count)
 {
     c.list.rounded_rect({108.0f, 955.0f, 1704.0f, 1.0f}, 0.0f, Color::rgb(0x586d5a, 0.9f));
-    draw_hints(c, hints, count, 108.0f, 987.0f, theme::kCopy);
+    draw_hints(c, hints, count, 108.0f, 987.0f, theme::kCopy, 1704.0f);
 }
 
 void Launcher::draw_launch(Canvas &c)

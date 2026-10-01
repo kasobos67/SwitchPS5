@@ -16,6 +16,7 @@ namespace
 {
 
 constexpr float kTau = 6.28318530718f;
+FitReport fit_report = nullptr;
 const Color kWhite{1.0f, 1.0f, 1.0f, 1.0f};
 const Color kBlack{0.0f, 0.0f, 0.0f, 1.0f};
 
@@ -115,10 +116,40 @@ float text_fit(Canvas &c, std::string_view value, float x, float baseline, float
     return text(c, c.fonts.font->fit(value, size, max_width), x, baseline, size, color, align);
 }
 
-void text_block(Canvas &c, std::string_view value, float x, float first_baseline, float size,
-                float line_height, Color color, float max_width, int max_lines)
+void set_fit_report(FitReport report)
 {
-    const std::vector<std::string> lines = c.fonts.font->wrap(value, size, max_width);
+    fit_report = report;
+}
+
+float text_shrink(Canvas &c, std::string_view value, float x, float baseline, float size,
+                  Color color, float max_width, Align align, float tracking, float least)
+{
+    const gfx::Font &font = *c.fonts.font;
+    const float width = font.measure(value, size, tracking);
+    if (width <= max_width)
+        return text(c, value, x, baseline, size, color, align, tracking);
+    const float scale = std::max(least, max_width / width);
+    if (fit_report != nullptr)
+        fit_report(value, scale, width * scale > max_width + 0.5f);
+    return text(c, font.fit(value, size * scale, max_width + 0.5f, tracking * scale), x, baseline,
+                size * scale, color, align, tracking * scale);
+}
+
+void text_block(Canvas &c, std::string_view value, float x, float first_baseline, float size,
+                float line_height, Color color, float max_width, int max_lines, float least)
+{
+    const gfx::Font &font = *c.fonts.font;
+    std::vector<std::string> lines = font.wrap(value, size, max_width);
+    // A step smaller at a time, until the text fits its lines or the letters are as small as
+    // allowed.
+    const float smallest = size * least;
+    while (static_cast<int>(lines.size()) > max_lines && size > smallest + 0.01f)
+    {
+        size = std::max(smallest, size * 0.94f);
+        lines = font.wrap(value, size, max_width);
+        if (fit_report != nullptr)
+            fit_report(value, size / (smallest / least), static_cast<int>(lines.size()) > max_lines);
+    }
     const int count = std::min(static_cast<int>(lines.size()), max_lines);
     for (int line = 0; line < count; ++line)
     {
@@ -128,6 +159,15 @@ void text_block(Canvas &c, std::string_view value, float x, float first_baseline
         text_fit(c, content, x, first_baseline + line_height * static_cast<float>(line), size,
                  color, max_width);
     }
+}
+
+float value_column(Canvas &c, std::initializer_list<std::string_view> labels, float left,
+                   float column, float size, float tracking)
+{
+    float widest = 0.0f;
+    for (const std::string_view label : labels)
+        widest = std::max(widest, c.fonts.font->measure(label, size, tracking));
+    return std::max(column, left + widest + 24.0f);
 }
 
 // ---------------------------------------------------------------- surfaces
@@ -283,14 +323,14 @@ void level_bar(Canvas &c, float right, float cy, float width, float level, float
     c.list.circle(track.x + (level > 0.0f ? filled : 0.0f), cy, knob, theme::kTitle);
 }
 
-void chooser(Canvas &c, std::string_view value, float right, float baseline, float focus,
-             Color color)
+float chooser(Canvas &c, std::string_view value, float right, float baseline, float focus,
+              Color color)
 {
     const float size = theme::kText24;
     const float arrow = 26.0f * focus; // room the chevrons take when focused
     const float width = text(c, value, right - arrow, baseline, size, color, Align::right);
     if (focus <= 0.01f)
-        return;
+        return width;
     const float cy = baseline - size * 0.35f;
     const Color ink = theme::kLimePale.with_alpha(focus);
     const float rx = right - 4.0f;
@@ -299,6 +339,7 @@ void chooser(Canvas &c, std::string_view value, float right, float baseline, flo
     const float lx = right - arrow - width - 16.0f;
     c.list.line(lx + 7.0f, cy - 8.0f, lx, cy, 2.2f, ink);
     c.list.line(lx, cy, lx + 7.0f, cy + 8.0f, 2.2f, ink);
+    return width + arrow + 16.0f;
 }
 
 // ---------------------------------------------------------------- controller hints
@@ -395,30 +436,47 @@ void draw_pad(Canvas &c, Pad button, float x, float cy, float size, float alpha)
     }
 }
 
-float draw_hints(Canvas &c, const Hint *hints, int count, float x, float cy, Color color)
+float draw_hints(Canvas &c, const Hint *hints, int count, float x, float cy, Color color,
+                 float max_width)
 {
     constexpr float kSize = 28.0f;
     constexpr float kIconGap = 10.0f;
     constexpr float kPairGap = 6.0f;
     constexpr float kItemGap = 34.0f;
-    float cursor = x;
-    for (int i = 0; i < count; ++i)
+    // Laid out once to measure, once to draw.
+    const auto run = [&](bool draw)
     {
-        const Hint &hint = hints[i];
-        draw_pad(c, hint.button, cursor, cy, kSize);
-        cursor += pad_width(hint.button, kSize);
-        if (hint.second != Pad::none)
+        float cursor = x;
+        for (int i = 0; i < count; ++i)
         {
-            cursor += kPairGap;
-            draw_pad(c, hint.second, cursor, cy, kSize);
-            cursor += pad_width(hint.second, kSize);
+            const Hint &hint = hints[i];
+            if (draw)
+                draw_pad(c, hint.button, cursor, cy, kSize);
+            cursor += pad_width(hint.button, kSize);
+            if (hint.second != Pad::none)
+            {
+                cursor += kPairGap;
+                if (draw)
+                    draw_pad(c, hint.second, cursor, cy, kSize);
+                cursor += pad_width(hint.second, kSize);
+            }
+            cursor += kIconGap;
+            cursor += draw ? text(c, tr(hint.label), cursor, cy + theme::kSmall * 0.35f,
+                                  theme::kSmall, color) :
+                             c.fonts.font->measure(tr(hint.label), theme::kSmall);
+            if (i + 1 < count)
+                cursor += kItemGap;
         }
-        cursor += kIconGap;
-        cursor += text(c, tr(hint.label), cursor, cy + theme::kSmall * 0.35f, theme::kSmall, color);
-        if (i + 1 < count)
-            cursor += kItemGap;
-    }
-    return cursor - x;
+        return cursor - x;
+    };
+    const float width = run(false);
+    if (max_width <= 0.0f || width <= max_width)
+        return run(true);
+    const float scale = max_width / width;
+    c.list.push_transform(scale, x, cy, 0.0f, 0.0f);
+    run(true);
+    c.list.pop_transform();
+    return max_width;
 }
 
 // ---------------------------------------------------------------- lists

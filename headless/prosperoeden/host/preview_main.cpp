@@ -20,12 +20,16 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <initializer_list>
+#include <map>
 #include <memory>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 namespace
@@ -290,6 +294,54 @@ void tour(Stage &s)
 
 } // namespace
 
+namespace
+{
+
+// Text that did not fit its place at full size, and how it was fitted (the smallest scale seen).
+std::map<std::string, std::pair<float, bool>> fits;
+
+void note_fit(std::string_view text, float scale, bool cut)
+{
+    auto [entry, added] = fits.try_emplace(std::string{text}, scale, cut);
+    if (!added)
+    {
+        entry->second.first = std::min(entry->second.first, scale);
+        entry->second.second = entry->second.second || cut;
+    }
+}
+
+// The catalog reader, the pattern filler and the choice of catalog, checked before anything is drawn.
+bool strings_check()
+{
+    pe::Catalog catalog;
+    const std::size_t count = catalog.load("\xef\xbb\xbf# comment\n"
+                                           "msgid \"\"\nmsgstr \"Language: xx\\n\"\n\n"
+                                           "#. note\n#: file.cpp\n"
+                                           "msgid \"Back\"\r\nmsgstr \"Voltar\"\r\n\n"
+                                           "msgid \"Say \\\"{0}\\\" twice\"\n"
+                                           "msgstr \"\"\n\"Diga \\\"{0}\\\" \"\n\"duas vezes\"\n\n"
+                                           "msgid \"Untranslated\"\nmsgstr \"\"\n");
+    const auto same = [](const std::vector<std::string> &left, std::initializer_list<const char *> right)
+    { return std::equal(left.begin(), left.end(), right.begin(), right.end(),
+                        [](const std::string &a, const char *b) { return a == b; }); };
+    const bool ok =
+        count == 2 && catalog.find("Back") == "Voltar" &&
+        catalog.find("Say \"{0}\" twice") == "Diga \"{0}\" duas vezes" &&
+        catalog.find("Untranslated") == "Untranslated" && catalog.find("Missing") == "Missing" &&
+        pe::fill("{0} OF {1}", {"3", "12"}) == "3 OF 12" && pe::fill("{1}{0}{2}", {"a", "b"}) == "ba" &&
+        pe::fill("{x} {0", {"a"}) == "{x} {0" &&
+        same(pe::catalog_candidates("fr-CA"), {"fr-CA", "fr-FR"}) &&
+        same(pe::catalog_candidates("pt-PT"), {"pt-PT", "pt-BR"}) &&
+        same(pe::catalog_candidates("es-419"), {"es-419", "es-ES"}) &&
+        same(pe::catalog_candidates("de-DE"), {"de-DE"}) && pe::catalog_candidates("en-GB").empty() &&
+        pe::catalog_candidates("en-US").empty() && pe::catalog_candidates("").empty();
+    if (!ok)
+        std::fprintf(stderr, "error: the launcher's text functions fail their check\n");
+    return ok;
+}
+
+} // namespace
+
 int main(int argc, char **argv)
 {
     if (argc < 3)
@@ -316,19 +368,25 @@ int main(int argc, char **argv)
                  reinterpret_cast<const char *>(glGetString(GL_RENDERER)));
     pe::gfx::set_glsl_prefix("#version 450 core\n");
 
-    // PE_LANG=<code>: the launcher in that language, as on a console set to it.
+    if (!strings_check())
+        return 1;
+    // PE_LANG=<tag>: the launcher in that language, as on a console set to it.
     if (const char *language = std::getenv("PE_LANG"); language != nullptr && language[0] != 0)
     {
-        std::string catalog;
-        const std::string path = assets + "/lang/" + language + ".po";
-        if (!pe::read_file(path, &catalog) || pe::catalog().load(catalog) == 0)
+        std::string used;
+        for (const std::string &candidate : pe::catalog_candidates(language))
         {
-            std::fprintf(stderr, "cannot load the catalog %s
-", path.c_str());
-            return 1;
+            std::string catalog;
+            if (pe::read_file(assets + "/lang/" + candidate + ".po", &catalog) &&
+                pe::catalog().load(catalog) > 0)
+            {
+                used = candidate;
+                break;
+            }
         }
-        std::fprintf(stderr, "language %s: %zu texts
-", language, pe::catalog().size());
+        std::fprintf(stderr, "language %s: catalog %s, %zu texts\n", language,
+                     used.empty() ? "none (English)" : used.c_str(), pe::catalog().size());
+        pe::ui::set_fit_report(note_fit);
     }
 
     pe::gfx::Font font;
@@ -369,5 +427,7 @@ int main(int argc, char **argv)
     else
         pictures(stage);
     std::fprintf(stderr, "cues heard: %zu\n", stage.heard.size());
+    for (const auto &[text, fit] : fits)
+        std::fprintf(stderr, "%s %.2f: %s\n", fit.second ? "cut" : "shrunk", fit.first, text.c_str());
     return stage.ok ? 0 : 1;
 }

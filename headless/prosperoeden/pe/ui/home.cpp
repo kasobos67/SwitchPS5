@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <string>
+#include <string_view>
 
 namespace pe::ui
 {
@@ -19,14 +20,13 @@ namespace
 const Color kWhite{1.0f, 1.0f, 1.0f, 1.0f};
 
 constexpr Rect kHero{120.0f, 200.0f, 1680.0f, 480.0f};
-constexpr Rect kContinue{560.0f, 504.0f, 272.0f, 72.0f};
-constexpr Rect kDetails{848.0f, 504.0f, 272.0f, 72.0f};
-constexpr Rect kViewAll{1496.0f, 708.0f, 304.0f, 40.0f};
-
-Rect nav_rect(int index)
-{
-    return {1056.0f + 144.0f * static_cast<float>(index), 80.0f, 136.0f, 64.0f};
-}
+// Header tabs, hero buttons and "view all" are as wide as their words need in the language shown;
+// these are their sizes in English and the edges they keep.
+constexpr float kNavRight = 1480.0f;
+constexpr float kNavWidth = 136.0f;
+constexpr float kButtonWidth = 272.0f;
+constexpr float kButtonWidest = 390.0f;
+constexpr float kViewAllWidth = 304.0f;
 
 Rect tile_rect(int index)
 {
@@ -216,6 +216,8 @@ void Launcher::draw_home(Canvas &c)
     const bool ready = home_.setup_ready;
     const bool continue_ready = ready && home_.last_exists;
     const auto focus = [&](int index) { return home_springs_[static_cast<std::size_t>(index)].value; };
+    const auto measure = [&](std::string_view value, float size, float tracking = 0.0f)
+    { return c.fonts.font->measure(value, size, tracking); };
     // Each band of the screen arrives a moment after the one above it.
     const auto arrive = [&](int band)
     { return tween::cubic_out((intro_ - 0.12f - 0.08f * static_cast<float>(band)) / 0.55f); };
@@ -247,9 +249,17 @@ void Launcher::draw_home(Canvas &c)
     text(c, fill(tr("PS5 EDITION  /  {0}"), {version_}), 216.0f, baseline(120.0f, 28.0f, theme::kSmall),
          theme::kSmall, Color::rgb(0x9fac9e), Align::left, 1.0f);
     static constexpr const char *kNav[] = {TR("Library"), TR("Settings"), TR("About")};
+    Rect nav[3];
+    float nav_right = kNavRight;
+    for (int i = 2; i >= 0; --i)
+    {
+        const float width = std::max(kNavWidth, measure(tr(kNav[i]), theme::kText24) + 48.0f);
+        nav[i] = {nav_right - width, 80.0f, width, 64.0f};
+        nav_right -= width + 8.0f;
+    }
     for (int i = 0; i < 3; ++i)
     {
-        const Rect r = nav_rect(i);
+        const Rect r = nav[i];
         const float f = focus(1 + i);
         list.push_opacity(i == 0 && !ready ? 0.4f : 1.0f);
         plate(c, kNavPlate, r, f);
@@ -271,33 +281,33 @@ void Launcher::draw_home(Canvas &c)
     text_block(c, home_.last_file.empty() ? tr("Your next adventure") : home_.last_title, 560.0f,
                baseline(312.0f, 56.0f, theme::kDisplay), theme::kDisplay, 56.0f, theme::kText,
                1120.0f, 2);
-    text_fit(c, home_.last_file.empty() ? tr("Choose a game from your library.") : home_.last_caption,
-             560.0f, baseline(424.0f, 36.0f, theme::kText24), theme::kText24, Color::rgb(0xabb8ae),
-             1040.0f);
-    text_fit(c, home_.last_info, 560.0f, baseline(462.0f, 30.0f, theme::kSmall), theme::kSmall,
-             home_.last_info_warning ? theme::kWarning : Color::rgb(0xabb8ae), 960.0f);
+    text_shrink(c, home_.last_file.empty() ? tr("Choose a game from your library.") : home_.last_caption,
+                560.0f, baseline(424.0f, 36.0f, theme::kText24), theme::kText24,
+                Color::rgb(0xabb8ae), 1040.0f);
+    // The line under it ends before the controllers' label.
+    const float info_width =
+        kPadsRight - measure(tr("CONTROLLERS"), theme::kSmall, 3.0f) - 48.0f - 560.0f;
+    text_shrink(c, home_.last_info, 560.0f, baseline(462.0f, 30.0f, theme::kSmall), theme::kSmall,
+                home_.last_info_warning ? theme::kWarning : Color::rgb(0xabb8ae), info_width);
+    const char *first = continue_ready ? tr("Launch game") : tr("Open library");
+    const char *second = tr("Game details");
+    const float button = std::clamp(
+        std::max(measure(first, theme::kText24), measure(second, theme::kText24)) + 64.0f,
+        kButtonWidth, kButtonWidest);
+    const Rect continue_rect{560.0f, 504.0f, button, 72.0f};
+    const Rect details_rect{560.0f + button + 16.0f, 504.0f, button, 72.0f};
+    const auto hero_button = [&](const Rect &r, const char *label, float f, bool enabled)
     {
-        const float f = focus(0);
-        list.push_opacity(ready ? 1.0f : 0.4f);
-        begin_lift(kContinue, f, 0.035f);
-        plate(c, kButtonPlate, kContinue, f);
-        text(c, continue_ready ? tr("Launch game") : tr("Open library"), kContinue.x + kContinue.w * 0.5f,
-             baseline(kContinue.y, 70.0f, theme::kText24), theme::kText24, theme::kText,
-             Align::center);
+        list.push_opacity(enabled ? 1.0f : 0.4f);
+        begin_lift(r, f, 0.035f);
+        plate(c, kButtonPlate, r, f);
+        text_shrink(c, label, r.x + r.w * 0.5f, baseline(r.y, 70.0f, theme::kText24),
+                    theme::kText24, theme::kText, r.w - 32.0f, Align::center);
         list.pop_transform();
         list.pop_opacity();
-    }
-    {
-        const float f = focus(4);
-        list.push_opacity(continue_ready ? 1.0f : 0.4f);
-        begin_lift(kDetails, f, 0.035f);
-        plate(c, kButtonPlate, kDetails, f);
-        text(c, tr("Game details"), kDetails.x + kDetails.w * 0.5f,
-             baseline(kDetails.y, 70.0f, theme::kText24), theme::kText24, theme::kText,
-             Align::center);
-        list.pop_transform();
-        list.pop_opacity();
-    }
+    };
+    hero_button(continue_rect, first, focus(0), ready);
+    hero_button(details_rect, second, focus(4), continue_ready);
     text(c, tr("Eden emulator for PlayStation 5"), 560.0f, baseline(616.0f, 30.0f, theme::kSmall),
          theme::kSmall, theme::kFaint);
     draw_controllers(c);
@@ -312,7 +322,7 @@ void Launcher::draw_home(Canvas &c)
         glass(c, panel, 10.0f, Color::rgb(0x0a1611, 0.62f), kWhite.with_alpha(0.08f), 0.6f);
         list.rounded_rect({panel.x, panel.y + 10.0f, 4.0f, panel.h - 20.0f}, 2.0f, accent);
         text_block(c, home_.status, 148.0f, baseline(752.0f, 36.0f, theme::kText24),
-                   theme::kText24, 36.0f, theme::kText, 1624.0f, 3);
+                   theme::kText24, 36.0f, theme::kText, 1624.0f, 3, kShrink);
     }
     else
     {
@@ -320,10 +330,12 @@ void Launcher::draw_home(Canvas &c)
              Color::rgb(0xc6d2c7), Align::left, 3.0f);
         {
             const float f = focus(9);
-            plate(c, kNavPlate, kViewAll, f);
-            text(c, tr("VIEW ALL GAMES"), kViewAll.x + 280.0f,
-                 baseline(kViewAll.y, 40.0f, theme::kSmall), theme::kSmall,
-                 gfx::mix(Color::rgb(0xafbbaf), theme::kLime, f), Align::right);
+            const float width =
+                std::max(kViewAllWidth, measure(tr("VIEW ALL GAMES"), theme::kSmall) + 48.0f);
+            const Rect r{1800.0f - width, 708.0f, width, 40.0f};
+            plate(c, kNavPlate, r, f);
+            text(c, tr("VIEW ALL GAMES"), r.x + r.w - 24.0f, baseline(r.y, 40.0f, theme::kSmall),
+                 theme::kSmall, gfx::mix(Color::rgb(0xafbbaf), theme::kLime, f), Align::right);
         }
         if (home_.recents.empty())
             text(c, tr("Games you launch will appear here."), 120.0f,
@@ -349,9 +361,9 @@ void Launcher::draw_home(Canvas &c)
     list.rounded_rect({120.0f, 952.0f, 1680.0f, 1.0f}, 0.0f, theme::kText.with_alpha(0.10f));
     static constexpr Hint kHints[] = {
         {Pad::cross, TR("Select")}, {Pad::triangle, TR("Details")}, {Pad::dpad, TR("Navigate")}};
-    draw_hints(c, kHints, 3, 120.0f, 982.0f, theme::kMuted);
-    text(c, home_.system_status, 1800.0f, 989.0f, theme::kSmall, Color::rgb(0x9eac9f),
-         Align::right);
+    const float status_width = text(c, home_.system_status, 1800.0f, 989.0f, theme::kSmall,
+                                    Color::rgb(0x9eac9f), Align::right);
+    draw_hints(c, kHints, 3, 120.0f, 982.0f, theme::kMuted, 1680.0f - status_width - 48.0f);
     end_band();
 }
 

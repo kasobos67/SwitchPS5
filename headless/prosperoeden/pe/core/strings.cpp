@@ -101,6 +101,23 @@ Catalog &catalog()
     return instance;
 }
 
+std::vector<std::string> catalog_candidates(std::string_view tag)
+{
+    // The same language as written in another place, when its own catalog is missing.
+    static constexpr std::string_view kRelated[][2] = {
+        {"fr-CA", "fr-FR"},  {"fr-FR", "fr-CA"}, {"es-419", "es-ES"},
+        {"es-ES", "es-419"}, {"pt-PT", "pt-BR"}, {"pt-BR", "pt-PT"},
+    };
+    std::vector<std::string> result;
+    if (tag.empty() || tag.substr(0, 2) == "en")
+        return result;
+    result.emplace_back(tag);
+    for (const auto &pair : kRelated)
+        if (pair[0] == tag)
+            result.emplace_back(pair[1]);
+    return result;
+}
+
 const char *tr(const char *english)
 {
     const std::string_view text = catalog().find(english);

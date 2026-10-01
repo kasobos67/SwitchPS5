@@ -11,6 +11,7 @@
 
 #include <array>
 #include <cstdint>
+#include <initializer_list>
 #include <string>
 #include <string_view>
 
@@ -56,9 +57,26 @@ float text(Canvas &c, std::string_view value, float x, float baseline, float siz
 // One line, ending in an ellipsis when it would pass max_width.
 float text_fit(Canvas &c, std::string_view value, float x, float baseline, float size, Color color,
                float max_width, Align align = Align::left);
-// Up to max_lines wrapped lines; the last one ends in an ellipsis when text remains.
+// How far the letters of translated text may shrink to fit their place.
+constexpr float kShrink = 0.78f;
+// One line of the launcher's own text: a translation longer than max_width gets smaller letters
+// (down to `least` of size) before an ellipsis cuts it.
+float text_shrink(Canvas &c, std::string_view value, float x, float baseline, float size,
+                  Color color, float max_width, Align align = Align::left, float tracking = 0.0f,
+                  float least = kShrink);
+// Up to max_lines wrapped lines; the last one ends in an ellipsis when text remains. With `least`
+// under 1 the letters shrink that far first (pass kShrink for the launcher's own text).
 void text_block(Canvas &c, std::string_view value, float x, float first_baseline, float size,
-                float line_height, Color color, float max_width, int max_lines);
+                float line_height, Color color, float max_width, int max_lines, float least = 1.0f);
+// Where the values of a group of labelled lines start: `column`, or further right when one of
+// the labels (drawn from `left`) is longer than the English one.
+float value_column(Canvas &c, std::initializer_list<std::string_view> labels, float left,
+                   float column, float size, float tracking = 0.0f);
+
+// For the PC preview: told of every line of the launcher's own text that had to shrink (scale
+// under 1) or was cut short, so a translation that does not fit its place shows up.
+using FitReport = void (*)(std::string_view text, float scale, bool cut);
+void set_fit_report(FitReport report);
 
 // ---- surfaces ----
 // A panel of frosted glass: soft shadow, the blurred art behind it, a tint and a hairline edge.
@@ -97,9 +115,9 @@ void controller_icon(Canvas &c, const Rect &r, float lit);
 void toggle(Canvas &c, float right, float cy, float position);
 // A level bar ending at `right`: `level` 0..1.
 void level_bar(Canvas &c, float right, float cy, float width, float level, float focus);
-// "< value >" for an option row; the chevrons appear with focus.
-void chooser(Canvas &c, std::string_view value, float right, float baseline, float focus,
-             Color color);
+// "< value >" for an option row; the chevrons appear with focus. Returns the width it took.
+float chooser(Canvas &c, std::string_view value, float right, float baseline, float focus,
+              Color color);
 
 // ---- controller hints ----
 enum class Pad : std::uint8_t
@@ -123,8 +141,10 @@ struct Hint
 };
 float pad_width(Pad button, float size);
 void draw_pad(Canvas &c, Pad button, float x, float cy, float size, float alpha = 1.0f);
-// Hints left to right from x with their icons centred on cy; returns the width used.
-float draw_hints(Canvas &c, const Hint *hints, int count, float x, float cy, Color color);
+// Hints left to right from x with their icons centred on cy; returns the width used. They are
+// drawn smaller when they would pass max_width (0: no limit).
+float draw_hints(Canvas &c, const Hint *hints, int count, float x, float cy, Color color,
+                 float max_width = 0.0f);
 
 // "3 OF 12" under a list.
 std::string list_position(int selected, int count);

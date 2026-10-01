@@ -277,8 +277,9 @@ void Launcher::draw_library(Canvas &c)
     cover(c, game != nullptr ? game->cover : std::string{}, {1016.0f, 372.0f, 288.0f, 288.0f},
           14.0f, 0.9f);
     if (game == nullptr || game->cover.empty())
-        text(c, game == nullptr ? tr("Select a game") : tr("No cover art"), 1160.0f,
-             baseline(676.0f, 30.0f, theme::kSmall), theme::kSmall, theme::kMeta, Align::center);
+        text_shrink(c, game == nullptr ? tr("Select a game") : tr("No cover art"), 1160.0f,
+                    baseline(676.0f, 30.0f, theme::kSmall), theme::kSmall, theme::kMeta, 288.0f,
+                    Align::center);
     struct Field
     {
         const char *label;
@@ -296,13 +297,15 @@ void Launcher::draw_library(Canvas &c)
     for (int i = 0; i < 4; ++i)
     {
         const float line = baseline(384.0f + 42.0f * static_cast<float>(i), 30.0f, theme::kSmall);
-        text(c, fields[i].label, 1336.0f, line, theme::kSmall, theme::kLabel);
-        text_fit(c, fields[i].value, 1776.0f, line, theme::kSmall, fields[i].color, 286.0f,
-                 Align::right);
+        // The name keeps its size up to 200 wide; the value has the rest of the line.
+        const float label =
+            text_shrink(c, fields[i].label, 1336.0f, line, theme::kSmall, theme::kLabel, 200.0f);
+        text_shrink(c, fields[i].value, 1776.0f, line, theme::kSmall, fields[i].color,
+                    440.0f - label - 16.0f, Align::right);
     }
     if (game != nullptr && !game->language_note.empty())
-        text_fit(c, game->language_note, 1776.0f, baseline(544.0f, 28.0f, 18.0f), 18.0f,
-                 theme::kWarning, 440.0f, Align::right);
+        text_shrink(c, game->language_note, 1776.0f, baseline(544.0f, 28.0f, 18.0f), 18.0f,
+                    theme::kWarning, 440.0f, Align::right);
     text(c, tr("FILE"), 1336.0f, baseline(582.0f, 30.0f, theme::kSmall), theme::kSmall, theme::kLabel);
     text_block(c, game != nullptr ? game->file : "-", 1336.0f,
                baseline(622.0f, 30.0f, theme::kSmall), theme::kSmall, 30.0f, theme::kValue, 440.0f,
@@ -313,8 +316,9 @@ void Launcher::draw_library(Canvas &c)
     // ---- console mode ----
     const bool can_configure = game != nullptr && game->title_id != 0;
     plate_rest(c, kRowPlate, kModeRow);
-    text(c, tr("Console mode"), kModeRow.x + 26.0f, baseline(kModeRow.y, 94.0f, theme::kText24),
-         theme::kText24, can_configure ? theme::kValue : theme::kMeta);
+    text_shrink(c, tr("Console mode"), kModeRow.x + 26.0f,
+                baseline(kModeRow.y, 94.0f, theme::kText24), theme::kText24,
+                can_configure ? theme::kValue : theme::kMeta, 256.0f);
     if (can_configure)
     {
         const Rect track{1322.0f, 753.0f, 420.0f, 64.0f};
@@ -328,26 +332,27 @@ void Launcher::draw_library(Canvas &c)
         const Color handheld =
             gfx::mix(theme::kValue.with_alpha(0.45f), theme::kLimePale, mode_.value);
         draw_docked(c, track.x + 26.0f, cy, docked);
-        text(c, tr("Docked"), track.x + 78.0f, baseline(track.y, track.h, theme::kText24),
-             theme::kText24, docked);
+        text_shrink(c, tr("Docked"), track.x + 78.0f, baseline(track.y, track.h, theme::kText24),
+                    theme::kText24, docked, half - 78.0f - 10.0f, Align::left, 0.0f, 0.7f);
         draw_handheld(c, track.x + half + 18.0f, cy, handheld);
-        text(c, tr("Handheld"), track.x + half + 72.0f, baseline(track.y, track.h, theme::kText24),
-             theme::kText24, handheld);
+        text_shrink(c, tr("Handheld"), track.x + half + 72.0f,
+                    baseline(track.y, track.h, theme::kText24), theme::kText24, handheld,
+                    half - 72.0f - 10.0f, Align::left, 0.0f, 0.7f);
     }
     else
     {
-        text(c, tr("Unavailable"), kModeRow.x + kModeRow.w - 26.0f,
-             baseline(kModeRow.y, 94.0f, theme::kText24), theme::kText24, theme::kMeta,
-             Align::right);
+        text_shrink(c, tr("Unavailable"), kModeRow.x + kModeRow.w - 26.0f,
+                    baseline(kModeRow.y, 94.0f, theme::kText24), theme::kText24, theme::kMeta,
+                    400.0f, Align::right);
     }
     draw_pad(c, Pad::leftright, 1022.0f, 865.0f, 26.0f);
     const std::string hint = !message_.empty() ? message_ :
                              can_configure ? tr("Change mode. Saved per game.") :
                                              tr("Select a readable game to configure its mode.");
-    text_fit(c, hint, 1060.0f, 872.0f, theme::kSmall,
-             !message_.empty() ? (message_warning_ ? theme::kWarning : theme::kLimePale) :
-                                 theme::kMeta,
-             690.0f);
+    text_shrink(c, hint, 1060.0f, 872.0f, theme::kSmall,
+                !message_.empty() ? (message_warning_ ? theme::kWarning : theme::kLimePale) :
+                                    theme::kMeta,
+                700.0f);
 
     static constexpr Hint kHints[] = {{Pad::cross, TR("Select")},
                                       {Pad::circle, TR("Back")},
@@ -433,8 +438,8 @@ void Launcher::draw_game(Canvas &c, float open)
     list.push_transform(0.97f + 0.03f * open, 960.0f, 540.0f, 0.0f, (1.0f - open) * 26.0f);
     glass(c, kDialog, 26.0f, theme::kPanel.with_alpha(0.97f), theme::kPanelEdge.with_alpha(0.66f),
           1.6f);
-    text(c, tr("Game settings"), 592.0f, baseline(218.0f, 62.0f, theme::kDisplay), theme::kDisplay,
-         theme::kTitle);
+    text_shrink(c, tr("Game settings"), 592.0f, baseline(218.0f, 62.0f, theme::kDisplay),
+                theme::kDisplay, theme::kTitle, 736.0f);
     const Game *game = games_.empty() ? nullptr : &games_[static_cast<std::size_t>(library_.selected)];
     text_fit(c, game != nullptr ? game->name : std::string{}, 592.0f,
              baseline(291.0f, 32.0f, theme::kSmall), theme::kSmall, Color::rgb(0xbecbb9), 736.0f);
@@ -468,21 +473,22 @@ void Launcher::draw_game(Canvas &c, float open)
     {
         const float top = dialog_row_top(Modal::game, row);
         const float focus = row == option_ ? 1.0f : 0.0f;
-        text(c, tr(kLabels[row]), 628.0f, baseline(top, 94.0f, theme::kText24), theme::kText24,
-             theme::kValue);
-        if (row == 4)
-            text_fit(c, values[row], 1292.0f, baseline(top, 94.0f, theme::kSmall), theme::kSmall,
-                     import_found_ ? theme::kLimePale : theme::kMeta, 440.0f, Align::right);
-        else
-            chooser(c, values[row], 1296.0f, baseline(top, 94.0f, theme::kText24), focus,
-                    theme::kLimePale);
+        // The value first: the row's name takes what it leaves.
+        const float taken =
+            row == 4 ? text_shrink(c, values[row], 1292.0f, baseline(top, 94.0f, theme::kSmall),
+                                   theme::kSmall, import_found_ ? theme::kLimePale : theme::kMeta,
+                                   400.0f, Align::right) :
+                       chooser(c, values[row], 1296.0f, baseline(top, 94.0f, theme::kText24), focus,
+                               theme::kLimePale);
+        text_shrink(c, tr(kLabels[row]), 628.0f, baseline(top, 94.0f, theme::kText24),
+                    theme::kText24, theme::kValue, 664.0f - taken - 28.0f);
     }
 
     const float hint_y = rows > 4 ? 848.0f : 811.0f;
     if (!message_.empty())
     {
-        text_fit(c, message_, 592.0f, hint_y + 7.0f, theme::kSmall,
-                 message_warning_ ? theme::kWarning : theme::kLimePale, 736.0f);
+        text_shrink(c, message_, 592.0f, hint_y + 7.0f, theme::kSmall,
+                    message_warning_ ? theme::kWarning : theme::kLimePale, 736.0f);
     }
     else if (option_ == 4)
     {
@@ -490,19 +496,19 @@ void Launcher::draw_game(Canvas &c, float open)
         {
             static constexpr Hint kImport[] = {{Pad::cross, TR("Import it (the current save is backed up)")},
                                                {Pad::circle, TR("Back")}};
-            draw_hints(c, kImport, 2, 592.0f, hint_y, theme::kCopy);
+            draw_hints(c, kImport, 2, 592.0f, hint_y, theme::kCopy, 736.0f);
         }
         else
         {
-            text_fit(c, tr("Copy a Ryujinx data folder into ryujinx/ next to roms/."), 592.0f,
-                     hint_y + 7.0f, theme::kSmall, theme::kCopy, 736.0f);
+            text_shrink(c, tr("Copy a Ryujinx data folder into ryujinx/ next to roms/."), 592.0f,
+                        hint_y + 7.0f, theme::kSmall, theme::kCopy, 736.0f);
         }
     }
     else
     {
         static constexpr Hint kHints[] = {
             {Pad::updown, TR("Select")}, {Pad::leftright, TR("Change")}, {Pad::circle, TR("Back")}};
-        draw_hints(c, kHints, 3, 592.0f, hint_y, theme::kCopy);
+        draw_hints(c, kHints, 3, 592.0f, hint_y, theme::kCopy, 736.0f);
     }
     list.pop_transform();
     list.pop_opacity();

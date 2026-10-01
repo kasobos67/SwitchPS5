@@ -10,11 +10,13 @@
 #include "eden_services.h"
 #include "pe/audio/sounds.hpp"
 #include "pe/core/file.hpp"
+#include "pe/core/strings.hpp"
 #include "pe/gfx/gl_batch.hpp"
 #include "pe/platform/audio_out.hpp"
 #include "pe/platform/display_egl.hpp"
 #include "pe/ui/launcher.hpp"
 #include "radio_input.h"
+#include "ps5_system_language.hpp"
 #ifdef EDEN_DEV_ROM_ID
 #include "development_input.h"
 #include <fstream>
@@ -57,6 +59,33 @@ long long Milliseconds(Clock::duration value) {
 float MenuGain(int volume) {
     const float level = static_cast<float>(std::clamp(volume, 0, 100)) / 100.0f;
     return level * level;
+}
+
+// The launcher speaks the console's language when the app has a catalog for it
+// (ui/lang/<tag>.po, tags as in third_party/ps5_system_language.hpp), and English otherwise.
+// language.txt in the app's folder, holding a tag, chooses another one ("en-US": English).
+void LoadLanguage() {
+    static bool loaded = false;
+    if (std::exchange(loaded, true)) return;
+    int system_language = -1;
+    const int rc = sceSystemServiceParamGetInt(ps5::i18n::kSystemLanguageParameter, &system_language);
+    std::string tag{rc == 0 ? ps5::i18n::language_tag(system_language) : ps5::i18n::kFallbackLanguage};
+    std::string chosen;
+    if (pe::read_file(Eden::AppFile("language.txt"), &chosen, 64)) {
+        while (!chosen.empty() && static_cast<unsigned char>(chosen.back()) <= ' ') chosen.pop_back();
+        if (!chosen.empty()) tag = chosen;
+    }
+    std::string catalog = "none";
+    std::size_t texts = 0;
+    for (const std::string& candidate : pe::catalog_candidates(tag)) {
+        std::string po;
+        if (!pe::read_file(Eden::AppFile("ui/lang/" + candidate + ".po"), &po, 1u << 20)) continue;
+        texts = pe::catalog().load(po);
+        catalog = candidate;
+        break;
+    }
+    std::fprintf(stderr, "EDEN_LANGUAGE system=%d rc=0x%x tag=%s catalog=%s texts=%zu\n", system_language,
+                 static_cast<unsigned>(rc), tag.c_str(), catalog.c_str(), texts);
 }
 
 #ifdef EDEN_DEV_ROM_ID
@@ -128,6 +157,7 @@ std::string RunApp(const std::string& launch_error, bool first_start) {
         std::uint32_t font_texture = batch.create_font_texture(font);
         const pe::ui::Fonts fonts{&font, font_texture};
 
+        LoadLanguage();
         Eden::Report("setup", "Checking supplied keys and firmware");
         EdenServices services(launch_error);
         pe::ui::Textures textures(batch, services);

@@ -44,15 +44,18 @@ std::vector<int> codepoints()
     const int ranges[][2] = {{0x20, 0x7e},     // Basic Latin
                              {0xa0, 0xff},     // Latin-1 Supplement
                              {0x100, 0x17f},   // Latin Extended-A
+                             {0x1a0, 0x1b0},   // Vietnamese horn letters
                              {0x218, 0x21b},   // Romanian comma letters
                              {0x400, 0x45f},   // Cyrillic
+                             {0x490, 0x491},   // Ukrainian ghe with upturn
+                             {0x1ea0, 0x1ef9}, // Vietnamese
                              {0x2190, 0x2193}}; // arrows
     for (const auto &range : ranges)
         for (int c = range[0]; c <= range[1]; ++c)
             result.push_back(c);
-    // Dashes, quotes, bullet, ellipsis, euro, trade mark.
-    const int extra[] = {0x2013, 0x2014, 0x2018, 0x2019, 0x201a, 0x201c, 0x201d,
-                         0x201e, 0x2022, 0x2026, 0x20ac, 0x2122};
+    // Dashes, quotes, bullet, ellipsis, angle quotes, euro, numero, trade mark.
+    const int extra[] = {0x2013, 0x2014, 0x2018, 0x2019, 0x201a, 0x201c, 0x201d, 0x201e,
+                         0x2022, 0x2026, 0x2039, 0x203a, 0x20ac, 0x2116, 0x2122};
     result.insert(result.end(), std::begin(extra), std::end(extra));
     return result;
 }
