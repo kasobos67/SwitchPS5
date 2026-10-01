@@ -22,6 +22,7 @@
 #ifdef EDEN_DEV_ROM_ID
 #include "crash_trigger.h"
 #include "development_input.h"
+#include "stop_limit.h"
 #include <fstream>
 #endif
 
@@ -262,6 +263,13 @@ std::string RunApp(const std::string& launch_error, bool first_start) {
                 }
                 // The runner's crash request, to test the crash report in the launcher.
                 Eden::Crash::DevelopmentRequest(Eden::AppFile("crash-app.txt"));
+                // The check of what a stop that runs into its limit does (stop_limit.h): the app
+                // starts again, here from an idle launcher.
+                if (std::remove(Eden::AppFile("restart-app.txt").c_str()) == 0) {
+                    std::fprintf(stderr, "EDEN_DEV_RESTART requested=1\n");
+                    Eden::StopLimit::RestartNow();
+                    std::fprintf(stderr, "EDEN_DEV_RESTART refused=1\n");
+                }
             }
             if (!development_input.active) radio_input_poll();
             if (const auto sample = development_input.Sample(now)) {

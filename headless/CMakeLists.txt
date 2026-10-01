@@ -2112,7 +2112,7 @@ void Initialize() {
     endif()
     add_executable(eden-headless "${EDEN_PORT_DIR}/main.cpp" "${PORT_ROOT}/src/aligned_alloc.c"
         "${EDEN_PORT_DIR}/heap_pages.cpp" "${EDEN_PORT_DIR}/performance.cpp"
-        "${EDEN_PORT_DIR}/crash_report.cpp"
+        "${EDEN_PORT_DIR}/crash_report.cpp" "${EDEN_PORT_DIR}/stop_limit.cpp"
         "${EDEN_PORT_DIR}/elevation/elevation.cpp"
         "${eden_app_crt}" "${PORT_ROOT}/src/lifecycle.c"
         "${PORT_BUILD_DIR}/app_heap.c")
@@ -2127,7 +2127,8 @@ void Initialize() {
     endif()
     target_compile_definitions(common PRIVATE PS5_NATIVE=1)
 else()
-    add_executable(eden-headless "${EDEN_PORT_DIR}/main.cpp" "${PORT_ROOT}/src/aligned_alloc.c")
+    add_executable(eden-headless "${EDEN_PORT_DIR}/main.cpp" "${PORT_ROOT}/src/aligned_alloc.c"
+        "${EDEN_PORT_DIR}/stop_limit.cpp")
     target_link_options(eden-headless PRIVATE -Wl,--wrap=aligned_alloc)
     add_executable(eden-romfs-check "${EDEN_PORT_DIR}/romfs_check.cpp")
     target_include_directories(eden-romfs-check PRIVATE "${PROJECT_SOURCE_DIR}/src")

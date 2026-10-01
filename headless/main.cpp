@@ -89,9 +89,13 @@ extern "C" std::int64_t sceKernelGetDirectMemorySize();
 extern "C" bool eden_jit_shared;  // headless/dynarmic/jit_group_support.inc
 #endif
 #include "video_core/gpu.h"
+#include "stop_limit.h"
 namespace Common {
 bool SparseTablesAvailable() noexcept; // src/memory_pages.cpp
 }
+#if defined(EDEN_DEV_PROFILE) || defined(EDEN_DEV_ROM_ID)
+static bool dev_stop_hang = false; // dev-settings stop_hang=on
+#endif
 
 class HeadlessWindow final : public Core::Frontend::EmuWindow {
 public:
@@ -233,6 +237,13 @@ int main(int argc, char** argv) {
         // Whether Eden's large tables can be sparse on this console (src/memory_pages.cpp),
         // decided now: every session's log says it, with or without a game.
         (void)Common::SparseTablesAvailable();
+        {
+            // A game that would not stop made the app start again (stop_limit.h): this log says so.
+            const std::string note = Eden::LogFile("stop-limit.txt");
+            if (std::remove(note.c_str()) == 0)
+                Eden::Report("exit", "The last game did not stop in time, so ProsperoEden started again");
+            Eden::StopLimit::Start(note);
+        }
         report = std::fopen(Eden::LogFile("result.tsv").c_str(), "w");
         if (!report) { report = stdout; return 2; }
         std::puts("[headless-startup] directories_ready");
@@ -324,6 +335,7 @@ int main(int argc, char** argv) {
 #endif
 #endif
         for (;;) {
+        Eden::StopLimit::End();  // whatever game ran before is gone
 #ifdef EDEN_PS5_OPENGL
         std::error_code trim_error;
         const auto cache_entries = Eden::ReadNativeDirectory(native_shader_cache, trim_error);
@@ -626,6 +638,8 @@ int main(int argc, char** argv) {
                 } else if (entry == "large_pages=off" || entry == "sparse_tables=off" || entry == "heap=whole") {
                     // Read directly by the page allocator (src/memory_pages.cpp) before this parse:
                     // 16 KiB pages only; Eden's large tables dense; the heap's 3 GiB taken at start.
+                } else if (entry == "stop_hang=on") {
+                    dev_stop_hang = true;
                 } else if (entry == "graphics_usage=driver") {
                     // The caches' "memory in use" as the driver counts it (performance.h).
                     Eden::Performance::graphics_usage_from_pool = false;
@@ -1262,6 +1276,8 @@ int main(int argc, char** argv) {
                         (void)pad->TakeHudToggle();
 #endif
                         if (pad->TakeReturnToMenu()) {
+                            // From here the player is waiting to leave (stop_limit.h).
+                            Eden::StopLimit::Begin();
                             std::lock_guard lock(completion->mutex);
                             completion->return_to_menu = true;
                             completion->wake.notify_one();
@@ -1381,10 +1397,19 @@ int main(int argc, char** argv) {
                     const auto neutral = ps5::pad::neutral_data();
                     pad->Consume({&neutral, 1});
                 }
+                // A game that ended itself or failed is being stopped too (stop_limit.h).
+                Eden::StopLimit::Begin();
                 jit_list.Finish();  // while the JITs still exist: their block list is saved
                 // Shutdown requests cancellation before suspending cores; Pause can
                 // block while a CPU producer is waiting on a full GPU queue.
                 Eden::ReportStep("shutdown", "Stopping the game");
+#if defined(EDEN_DEV_PROFILE) || defined(EDEN_DEV_ROM_ID)
+                if (dev_stop_hang) {
+                    // dev-settings stop_hang=on: a stop that never finishes, to check its limit.
+                    Eden::Report("shutdown", "Development: holding the stop to check its limit");
+                    for (;;) std::this_thread::sleep_for(std::chrono::seconds(1));
+                }
+#endif
                 system.ShutdownMainProcess();
                 Eden::Report("shutdown", "Game stopped; releasing renderer");
 #ifndef PS5_NATIVE
