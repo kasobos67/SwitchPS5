@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "devices.h"
+#include "controller_applet.h"
 #include "mock_devices.h"
 #include <algorithm>
 #include <cmath>
@@ -69,6 +70,32 @@ template<class F> void Reject(F&& f) {
     bool rejected = false;
     try { f(); } catch (const std::exception&) { rejected = true; }
     CHECK(rejected);
+}
+
+// A game's "connect controllers" screen: every combination it may allow gets a controller, except
+// the two with no answer (nothing allowed, or only the handheld while docked).
+void CheckControllerStyle() {
+    using Core::HID::NpadStyleIndex;
+    Core::Frontend::ControllerParameters allowed{};
+    CHECK(!Eden::ControllerStyle(allowed, 0, true) && !Eden::ControllerStyle(allowed, 0, false));
+    allowed.allow_handheld = true;
+    CHECK(!Eden::ControllerStyle(allowed, 0, true));
+    CHECK(Eden::ControllerStyle(allowed, 0, false) == NpadStyleIndex::Handheld);
+    CHECK(!Eden::ControllerStyle(allowed, 1, false));
+    allowed.allow_right_joycon = true;
+    CHECK(Eden::ControllerStyle(allowed, 0, true) == NpadStyleIndex::JoyconRight);
+    CHECK(Eden::ControllerStyle(allowed, 0, false) == NpadStyleIndex::JoyconRight);
+    allowed.allow_right_joycon = false; allowed.allow_left_joycon = true;
+    CHECK(Eden::ControllerStyle(allowed, 1, true) == NpadStyleIndex::JoyconLeft);
+    allowed.allow_right_joycon = true;
+    CHECK(Eden::ControllerStyle(allowed, 0, true) == NpadStyleIndex::JoyconLeft);
+    CHECK(Eden::ControllerStyle(allowed, 1, true) == NpadStyleIndex::JoyconRight);
+    CHECK(Eden::ControllerStyle(allowed, 2, true) == NpadStyleIndex::JoyconLeft);
+    allowed.allow_dual_joycons = true;
+    CHECK(Eden::ControllerStyle(allowed, 1, true) == NpadStyleIndex::JoyconDual);
+    allowed.allow_pro_controller = true;
+    CHECK(Eden::ControllerStyle(allowed, 3, false) == NpadStyleIndex::Fullkey);
+    std::puts("Controller applet styles: pro, pair, single Joy-Cons, handheld, and the two unanswerable requests PASS");
 }
 
 void CheckPad() {
@@ -446,7 +473,7 @@ void CheckResampling() {
 int main() {
     Common::FS::CreateEdenPaths(); Common::Log::Initialize(); Common::Log::Start();
     int status = 0;
-    try { CheckResampling(); CheckVoiceFlags(); CheckPad(); CheckAudio(); }
+    try { CheckResampling(); CheckVoiceFlags(); CheckControllerStyle(); CheckPad(); CheckAudio(); }
     catch (const std::exception& error) { std::fprintf(stderr, "%s\n", error.what()); status = 1; }
     Common::Log::Stop();
     return status;
