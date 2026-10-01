@@ -20,6 +20,11 @@ extern "C" int sceUserServiceGetLoginUserIdList(LoginUserIdList* list);
 namespace Eden {
 // Look for newly signed-in (or signed-out) users about once a second at the 4 ms poll interval.
 constexpr unsigned kPollsPerScan = 250;
+// The touchpad is Select (the guest's Minus) as well as the shortcut key. So that a shortcut
+// never reaches the game as a press of Minus, a tap presses Minus when the touchpad is released
+// (for about 100 ms), and a press held this long (about a quarter of a second) holds Minus.
+constexpr unsigned kSelectTapPolls = 25;
+constexpr unsigned kSelectHoldPolls = 60;
 
 PadEngine::PadEngine(std::string name) : InputEngine(std::move(name)) {
     for (std::size_t player = 0; player < kPlayers; ++player) PreSetController(Identifier(player));
@@ -242,10 +247,15 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
         {kButtonTriangle, Button::ButtonX}, {kButtonSquare, Button::ButtonY},
         {kButtonL3, Button::StickL}, {kButtonR3, Button::StickR},
         {kButtonL1, Button::TriggerL}, {kButtonR1, Button::TriggerR},
-        {kButtonOptions, Button::ButtonPlus}, {kButtonCreate, Button::ButtonMinus},
+        {kButtonOptions, Button::ButtonPlus},
         {kButtonLeft, Button::ButtonLeft}, {kButtonUp, Button::ButtonUp},
         {kButtonRight, Button::ButtonRight}, {kButtonDown, Button::ButtonDown},
-        {kButtonTouchPad, Button::ButtonCapture},
+    };
+    auto& slot = slots[player];
+    // The guest's Minus: the Create button, or the touchpad as Select.
+    const auto set_minus = [&](u32 pressed) {
+        engine->SetButtonState(player, Button::ButtonMinus,
+            (pressed & kButtonCreate) != 0 || slot.select_held || slot.select_pulse > 0);
     };
     const auto axis = [this](u8 raw) {
         const float x = (static_cast<int>(raw) - 128) / (raw < 128 ? 128.0f : 127.0f);
@@ -267,9 +277,30 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
             hud_toggle = true;
         if ((pressed & menu_chord) == menu_chord || (pressed & hud_chord) == hud_chord)
             sample.buttons &= ~(kButtonTouchPad | kButtonL1 | kButtonR1);
+        // The touchpad on its own: see kSelectTapPolls.
+        const bool touch = (pressed & kButtonTouchPad) != 0;
+        const bool touched = (last_buttons & kButtonTouchPad) != 0;
+        if (touch && !touched) {
+            slot.touch_chord = false;
+            slot.touch_polls = 0;
+        }
+        if (touch && (pressed & (kButtonL1 | kButtonR1)) != 0) {
+            slot.touch_chord = true;
+            slot.select_held = false;
+        }
+        if (!touch && touched) {
+            if (!slot.touch_chord && !slot.select_held) slot.select_pulse = kSelectTapPolls + 1;
+            slot.select_held = false;
+        }
+        if (!is_usable(raw)) {
+            // A controller that went away neither tapped nor holds anything.
+            slot.select_pulse = 0;
+            slot.select_held = false;
+        }
         last_buttons = pressed;
         for (const auto [mask, button] : buttons)
             engine->SetButtonState(player, button, (sample.buttons & mask) != 0);
+        set_minus(sample.buttons);
         // Guest ZL/ZR are digital; normalize the physical analog triggers first.
         const float left = sample.triggers.l2 / 255.0f;
         const float right = sample.triggers.r2 / 255.0f;
@@ -295,5 +326,11 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
             }
         }
     }
+    // Once per poll: a touchpad held long enough becomes a held Minus, and a tap's press runs out.
+    if ((last_buttons & kButtonTouchPad) != 0 && !slot.touch_chord && !slot.select_held &&
+        ++slot.touch_polls >= kSelectHoldPolls)
+        slot.select_held = true;
+    if (slot.select_pulse > 0) --slot.select_pulse;
+    set_minus(last_buttons);
 }
 }

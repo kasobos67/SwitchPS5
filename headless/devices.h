@@ -77,6 +77,11 @@ private:
         int handle = -1;
         u32 last_buttons = 0;
         u64 last_motion_us = 0;
+        // The touchpad as Select (the guest's Minus), see Consume.
+        bool touch_chord = false;  // this press was part of a shortcut
+        bool select_held = false;  // a long press: Minus stays down until the release
+        unsigned touch_polls = 0;  // polls the touchpad has been down
+        unsigned select_pulse = 0; // polls left of a tap's Minus press
     };
     void Rescan();
     void OpenSlot(std::size_t player, int user);

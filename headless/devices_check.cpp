@@ -85,7 +85,6 @@ void CheckPad() {
             {kButtonL3, 4}, {kButtonR3, 5}, {kButtonL1, 6}, {kButtonR1, 7},
             {kButtonL2, 8}, {kButtonR2, 9}, {kButtonOptions, 10}, {kButtonCreate, 11},
             {kButtonLeft, 12}, {kButtonUp, 13}, {kButtonRight, 14}, {kButtonDown, 15},
-            {kButtonTouchPad, 19},
         };
         for (auto [mask, button] : mapping) {
             sample.buttons = mask; consume();
@@ -99,15 +98,49 @@ void CheckPad() {
         CHECK(pad.Engine().GetAxis({}, 0) == 0); CHECK(pad.Engine().GetAxis({}, 1) == 0);
         CHECK(!pad.Engine().GetButton({}, 8)); CHECK(pad.Engine().GetButton({}, 9));
 
+        const auto none_pressed = [&] {
+            for (int i = 0; i < 22; ++i) if (pad.Engine().GetButton({}, i)) return false;
+            return true;
+        };
+        sample.triggers = {};
         sample.buttons = kButtonTouchPad | kButtonL1; consume();
         CHECK(pad.TakeReturnToMenu()); CHECK(!pad.TakeReturnToMenu());
-        CHECK(!pad.Engine().GetButton({}, 6)); CHECK(!pad.Engine().GetButton({}, 19));
+        CHECK(none_pressed());
         consume(); CHECK(!pad.TakeReturnToMenu());
         sample.buttons = 0; consume();
         sample.buttons = kButtonTouchPad | kButtonR1; consume();
         CHECK(pad.TakeHudToggle()); CHECK(!pad.TakeHudToggle());
-        CHECK(!pad.Engine().GetButton({}, 7)); CHECK(!pad.Engine().GetButton({}, 19));
+        CHECK(none_pressed());
         sample.buttons = 0; consume();
+        // A shortcut is never a press of Minus, however long its keys take to come up.
+        for (int i = 0; i < 80; ++i) { consume(); CHECK(none_pressed()); }
+
+        // The touchpad as Select: a tap presses Minus (11) on release, for about 100 ms...
+        sample.buttons = kButtonTouchPad; consume(); CHECK(none_pressed());
+        for (int i = 0; i < 20; ++i) { consume(); CHECK(none_pressed()); }
+        sample.buttons = 0; consume();
+        for (int i = 0; i < 24; ++i) { CHECK(pad.Engine().GetButton({}, 11)); consume(); }
+        consume(); CHECK(none_pressed());
+        // ...a long press holds it until the release...
+        sample.buttons = kButtonTouchPad;
+        for (int i = 0; i < 59; ++i) { consume(); CHECK(none_pressed()); }
+        consume(); CHECK(pad.Engine().GetButton({}, 11));
+        for (int i = 0; i < 30; ++i) { consume(); CHECK(pad.Engine().GetButton({}, 11)); }
+        sample.buttons = 0; consume(); CHECK(none_pressed());
+        for (int i = 0; i < 30; ++i) { consume(); CHECK(none_pressed()); }
+        // ...a shortcut started slowly gives none, and a controller that goes away is not a tap.
+        sample.buttons = kButtonTouchPad; consume(); consume();
+        sample.buttons = kButtonTouchPad | kButtonR1; consume(); CHECK(pad.TakeHudToggle());
+        sample.buttons = kButtonTouchPad; consume();
+        sample.buttons = 0; consume(); CHECK(none_pressed());
+        sample.buttons = kButtonTouchPad; consume();
+        sample.connected = 0; consume(); CHECK(none_pressed());
+        sample.connected = 1; sample.buttons = 0; consume(); CHECK(none_pressed());
+        // Create is Minus directly, also while the touchpad is down.
+        sample.buttons = kButtonCreate | kButtonTouchPad; consume(); CHECK(pad.Engine().GetButton({}, 11));
+        sample.buttons = kButtonTouchPad; consume(); CHECK(none_pressed());
+        sample.buttons = kButtonTouchPad | kButtonL1; consume(); CHECK(pad.TakeReturnToMenu());
+        sample.buttons = 0; consume(); CHECK(none_pressed());
 
         // Motion: Eden's SDL mapping of a DualSense (G, turns per second, microsecond deltas).
         constexpr float pi = std::numbers::pi_v<float>;
