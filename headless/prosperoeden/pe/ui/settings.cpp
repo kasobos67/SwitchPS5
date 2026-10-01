@@ -254,7 +254,8 @@ int Launcher::dialog_rows(Modal modal) const
     case Modal::accessibility:
         return 3;
     case Modal::game:
-        return services_.save_transfer_available() ? 5 : 4;
+        // Console mode, renderer, resolution, filter, mods; save data in builds that move saves.
+        return services_.save_transfer_available() ? 6 : 5;
     default:
         return 1;
     }

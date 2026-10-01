@@ -27,6 +27,24 @@ constexpr float kRowHeight = 78.0f;
 constexpr Rect kModeRow{1022.0f, 738.0f, 736.0f, 94.0f};
 constexpr Rect kDialog{550.0f, 180.0f, 820.0f, 720.0f};
 
+// The game settings dialog's rows, and the window that shows five of them (also the Mods list's).
+enum GameRow : int
+{
+    row_mode,
+    row_renderer,
+    row_resolution,
+    row_filter,
+    row_mods,
+    row_save, // in builds that move saves
+};
+constexpr float kDialogRowsTop = 334.0f;
+constexpr float kDialogRowPitch = 96.0f;
+constexpr float kDialogRowHeight = 94.0f;
+constexpr int kDialogRowsShown = 5;
+constexpr Rect kDialogWindow{592.0f, kDialogRowsTop, 736.0f,
+                             kDialogRowPitch * (kDialogRowsShown - 1) + kDialogRowHeight};
+constexpr float kDialogHints = 848.0f;
+
 // Console mode marks, drawn from lines: a screen on its stand, and a handheld.
 void draw_docked(Canvas &c, float x, float cy, Color ink)
 {
@@ -195,7 +213,11 @@ void Launcher::press_library(Key key)
         import_source_ = services_.save_transfer_available() ?
                              services_.save_import_source(game->title_id) : SaveSource::none;
         import_armed_ = false;
+        mods_ = services_.mods(game->title_id);
         open_modal(Modal::game);
+        game_rows_.visible = kDialogRowsShown;
+        game_rows_.pitch = kDialogRowPitch;
+        game_rows_.reset(dialog_rows(Modal::game), 0);
         return;
     case Key::cross:
         if (game == nullptr || !home_.setup_ready)
@@ -348,7 +370,7 @@ void Launcher::draw_library(Canvas &c)
     }
     draw_pad(c, Pad::leftright, 1022.0f, 865.0f, 26.0f);
     // A message said while Game settings is open belongs to that dialog.
-    const bool said = !message_.empty() && modal_shown_ != Modal::game;
+    const bool said = !message_.empty() && modal_shown_ != Modal::game && modal_shown_ != Modal::mods;
     const std::string hint = said ? message_ :
                              can_configure ? tr("Change mode. Saved per game.") :
                                              tr("Select a readable game to configure its mode.");
@@ -369,7 +391,6 @@ void Launcher::draw_library(Canvas &c)
 void Launcher::press_game(Key key)
 {
     const Game &game = games_[static_cast<std::size_t>(library_.selected)];
-    const int rows = dialog_rows(Modal::game);
     switch (key)
     {
     case Key::circle:
@@ -378,13 +399,16 @@ void Launcher::press_game(Key key)
         return;
     case Key::up:
     case Key::down:
-        option_ = (option_ + (key == Key::down ? 1 : rows - 1)) % rows;
-        message_.clear();
-        import_armed_ = false;
-        cue(Cue::focus);
+        if (game_rows_.move(key == Key::down ? 1 : -1))
+        {
+            option_ = game_rows_.selected;
+            message_.clear();
+            import_armed_ = false;
+            cue(Cue::focus);
+        }
         return;
     case Key::square:
-        if (option_ != 4)
+        if (option_ != row_save)
             return;
         break;
     case Key::left:
@@ -394,7 +418,22 @@ void Launcher::press_game(Key key)
     default:
         return;
     }
-    if (option_ == 4)
+    if (option_ == row_mods)
+    {
+        // The game's mods have their own list. It is read again: mods may have been copied in
+        // since this dialog opened.
+        if (key != Key::cross)
+            return;
+        mods_ = services_.mods(game.title_id);
+        mod_rows_.visible = kDialogRowsShown;
+        mod_rows_.pitch = kDialogRowPitch;
+        mod_rows_.reset(static_cast<int>(mods_.size()), 0);
+        modal_ = modal_shown_ = Modal::mods;
+        message_.clear();
+        cue(Cue::open);
+        return;
+    }
+    if (option_ == row_save)
     {
         // Save data: Square copies the game's save out, Cross (twice) copies one in.
         std::string result;
@@ -428,7 +467,7 @@ void Launcher::press_game(Key key)
     }
     const int step = key == Key::left ? -1 : 1;
     bool saved = false;
-    if (option_ == 0)
+    if (option_ == row_mode)
     {
         saved = services_.set_docked(game.title_id, !game_docked_);
         if (saved)
@@ -440,12 +479,12 @@ void Launcher::press_game(Key key)
         const auto cycle = [step](int value, int count)
         { return (value + 1 + step + count + 1) % (count + 1) - 1; };
         GameSettings next = game_settings_;
-        if (option_ == 1)
+        if (option_ == row_renderer)
             next.renderer = cycle(next.renderer, 2);
-        if (option_ == 2)
+        if (option_ == row_resolution)
             next.resolution =
                 cycle(next.resolution, static_cast<int>(services_.resolution_labels().size()));
-        if (option_ == 3)
+        if (option_ == row_filter)
             next.filter = cycle(next.filter, static_cast<int>(services_.filter_labels().size()));
         saved = services_.set_game_settings(game.title_id, next);
         if (saved)
@@ -489,51 +528,210 @@ void Launcher::draw_game(Canvas &c, float open)
             fill(tr("Default ({0})"), {short_resolution(pick(resolutions, prefs_.resolution))}),
         game_settings_.filter >= 0 ? pick(filters, game_settings_.filter) :
             fill(tr("Default ({0})"), {pick(filters, prefs_.filter)}),
+        mods_.empty() ? std::string{tr("No mods")} :
+            fill(tr("{0} of {1} on"),
+                 {std::to_string(std::count_if(mods_.begin(), mods_.end(),
+                                               [](const Mod &mod) { return mod.enabled; })),
+                  std::to_string(mods_.size())}),
         import_source_ == SaveSource::ryujinx ? tr("Ryujinx save found") :
         import_source_ == SaveSource::folder ? tr("Save folder found") : tr("Nothing to import"),
     };
     static constexpr const char *kLabels[] = {TR("Console mode"), TR("Renderer"), TR("Resolution"),
-                                              TR("Upscaling filter"), TR("Save data")};
-    const int rows = dialog_rows(Modal::game);
-    for (int row = 0; row < rows; ++row)
-        plate_rest(c, kRowPlate, {592.0f, dialog_row_top(Modal::game, row), 736.0f, 94.0f});
-    plate_focus(c, kRowPlate, {592.0f, option_cursor_.value, 736.0f, 94.0f}, 1.0f);
-    for (int row = 0; row < rows; ++row)
+                                              TR("Upscaling filter"), TR("Mods"), TR("Save data")};
+    // Five rows show; the list scrolls to the others.
+    list.push_clip({kDialogWindow.x - 24.0f, kDialogWindow.y - 6.0f, kDialogWindow.w + 48.0f,
+                    kDialogWindow.h + 12.0f});
+    const auto row_top = [&](int row)
+    { return kDialogRowsTop + static_cast<float>(row) * kDialogRowPitch - game_rows_.scroll(); };
+    for (int row = game_rows_.first_row(); row <= game_rows_.last_row(); ++row)
     {
-        const float top = dialog_row_top(Modal::game, row);
-        const float focus = row == option_ ? 1.0f : 0.0f;
-        // The value first: the row's name takes what it leaves.
-        const float taken =
-            row == 4 ? text_shrink(c, values[row], 1292.0f, baseline(top, 94.0f, theme::kSmall),
-                                   theme::kSmall,
-                                   import_source_ != SaveSource::none ? theme::kLimePale : theme::kMeta,
-                                   320.0f, Align::right) :
-                       chooser(c, values[row], 1296.0f, baseline(top, 94.0f, theme::kText24), focus,
-                               theme::kLimePale);
-        text_shrink(c, tr(kLabels[row]), 628.0f, baseline(top, 94.0f, theme::kText24),
-                    theme::kText24, theme::kValue, 664.0f - taken - 28.0f);
+        list.push_opacity(game_rows_.row_alpha(row, kDialogRowHeight));
+        plate_rest(c, kRowPlate, {592.0f, row_top(row), 736.0f, kDialogRowHeight});
+        list.pop_opacity();
     }
+    plate_focus(c, kRowPlate,
+                {592.0f, kDialogRowsTop + game_rows_.cursor() - game_rows_.scroll(), 736.0f,
+                 kDialogRowHeight},
+                1.0f);
+    for (int row = game_rows_.first_row(); row <= game_rows_.last_row(); ++row)
+    {
+        const float top = row_top(row);
+        const float focus = row == option_ ? 1.0f : 0.0f;
+        list.push_opacity(game_rows_.row_alpha(row, kDialogRowHeight));
+        // The value first: the row's name takes what it leaves. Mods and Save data say what is
+        // there; the others are choices.
+        const bool there = row == row_mods ? !mods_.empty() : import_source_ != SaveSource::none;
+        const float taken =
+            row >= row_mods ?
+                text_shrink(c, values[row], 1292.0f, baseline(top, kDialogRowHeight, theme::kSmall),
+                            theme::kSmall, there ? theme::kLimePale : theme::kMeta, 320.0f,
+                            Align::right) :
+                chooser(c, values[row], 1296.0f, baseline(top, kDialogRowHeight, theme::kText24),
+                        focus, theme::kLimePale);
+        text_shrink(c, tr(kLabels[row]), 628.0f, baseline(top, kDialogRowHeight, theme::kText24),
+                    theme::kText24, theme::kValue, 664.0f - taken - 28.0f);
+        list.pop_opacity();
+    }
+    list.pop_clip();
+    scrollbar(c, game_rows_, 1340.0f, kDialogWindow.y, kDialogWindow.h);
 
-    const float hint_y = rows > 4 ? 848.0f : 811.0f;
     if (!message_.empty())
     {
         // Up to two lines: what Save data answers is longer than a "Saved".
-        notice_block(c, message_, 592.0f, hint_y - (rows > 4 ? 6.0f : -7.0f), theme::kSmall, 26.0f,
+        notice_block(c, message_, 592.0f, kDialogHints - 6.0f, theme::kSmall, 26.0f,
                      message_warning_ ? theme::kWarning : theme::kLimePale, 736.0f, 2,
                      message_warning_);
     }
-    else if (option_ == 4)
+    else if (option_ == row_save)
     {
         static constexpr Hint kTransfer[] = {{Pad::cross, TR("Import")},
                                              {Pad::square, TR("Export a copy")},
                                              {Pad::circle, TR("Back")}};
-        draw_hints(c, kTransfer, 3, 592.0f, hint_y, theme::kCopy, 736.0f);
+        draw_hints(c, kTransfer, 3, 592.0f, kDialogHints, theme::kCopy, 736.0f);
+    }
+    else if (option_ == row_mods)
+    {
+        static constexpr Hint kOpen[] = {{Pad::cross, TR("Open")}, {Pad::circle, TR("Back")}};
+        draw_hints(c, kOpen, 2, 592.0f, kDialogHints, theme::kCopy, 736.0f);
     }
     else
     {
         static constexpr Hint kHints[] = {
             {Pad::updown, TR("Select")}, {Pad::leftright, TR("Change")}, {Pad::circle, TR("Back")}};
-        draw_hints(c, kHints, 3, 592.0f, hint_y, theme::kCopy, 736.0f);
+        draw_hints(c, kHints, 3, 592.0f, kDialogHints, theme::kCopy, 736.0f);
+    }
+    list.pop_transform();
+    list.pop_opacity();
+}
+
+// ---------------------------------------------------------------- a game's mods
+
+void Launcher::press_mods(Key key)
+{
+    const Game &game = games_[static_cast<std::size_t>(library_.selected)];
+    switch (key)
+    {
+    case Key::circle:
+        // Back to the game's settings, on its Mods row.
+        modal_ = modal_shown_ = Modal::game;
+        message_.clear();
+        cue(Cue::back);
+        return;
+    case Key::up:
+    case Key::down:
+        if (mod_rows_.move(key == Key::down ? 1 : -1))
+        {
+            message_.clear();
+            cue(Cue::focus);
+        }
+        return;
+    case Key::square:
+    {
+        // With no mods yet: the folder they go in, named after the game's ID, is made on request.
+        if (!mods_.empty())
+            return;
+        const bool made = services_.make_mods_folder(game.title_id);
+        say(made ? fill(tr("Created {0}. Copy each mod's folder into it."),
+                        {services_.mods_folder(game.title_id)}) :
+                   tr("Could not create the folder. Check that the game files folder can be written."),
+            !made);
+        cue(made ? Cue::saved : Cue::error);
+        return;
+    }
+    case Key::cross:
+    case Key::left:
+    case Key::right:
+    {
+        if (mods_.empty())
+            return;
+        Mod &mod = mods_[static_cast<std::size_t>(mod_rows_.selected)];
+        const bool saved = services_.set_mod_enabled(game.title_id, mod.name, !mod.enabled);
+        if (saved)
+            mod.enabled = !mod.enabled;
+        say(saved ? tr("Saved for this game. Applies on next launch.") :
+                    tr("Could not save. Please try again."),
+            !saved);
+        cue(saved ? Cue::toggle : Cue::error);
+        return;
+    }
+    default:
+        return;
+    }
+}
+
+void Launcher::draw_mods(Canvas &c, float open)
+{
+    gfx::DrawList &list = c.list;
+    list.push_opacity(open);
+    list.push_transform(1.0f - 0.03f * (1.0f - open) * motion(), 960.0f, 540.0f, 0.0f,
+                        (1.0f - open) * 26.0f * motion());
+    glass(c, kDialog, 26.0f, theme::kPanel.with_alpha(0.97f), theme::kPanelEdge.with_alpha(0.66f),
+          1.6f);
+    text_shrink(c, tr("Mods"), 592.0f, baseline(218.0f, 62.0f, theme::kDisplay), theme::kDisplay,
+                theme::kTitle, 736.0f);
+    const Game *game = games_.empty() ? nullptr : &games_[static_cast<std::size_t>(library_.selected)];
+    text_fit(c, game != nullptr ? game->name : std::string{}, 592.0f,
+             baseline(291.0f, 32.0f, theme::kSmall), theme::kSmall, Color::rgb(0xbecbb9), 736.0f);
+
+    if (mods_.empty())
+    {
+        text_block(c,
+                   fill(tr("No mods for this game yet. Copy each mod's folder to {0}, next to roms/."),
+                        {game != nullptr ? services_.mods_folder(game->title_id) : std::string{}}),
+                   592.0f, baseline(364.0f, 40.0f, theme::kText24), theme::kText24, 40.0f,
+                   theme::kBody, 736.0f, 5, kShrink);
+    }
+    else
+    {
+        list.push_clip({kDialogWindow.x - 24.0f, kDialogWindow.y - 6.0f, kDialogWindow.w + 48.0f,
+                        kDialogWindow.h + 12.0f});
+        const auto row_top = [&](int row)
+        { return kDialogRowsTop + static_cast<float>(row) * kDialogRowPitch - mod_rows_.scroll(); };
+        for (int row = mod_rows_.first_row(); row <= mod_rows_.last_row(); ++row)
+        {
+            list.push_opacity(mod_rows_.row_alpha(row, kDialogRowHeight));
+            plate_rest(c, kRowPlate, {592.0f, row_top(row), 736.0f, kDialogRowHeight});
+            list.pop_opacity();
+        }
+        plate_focus(c, kRowPlate,
+                    {592.0f, kDialogRowsTop + mod_rows_.cursor() - mod_rows_.scroll(), 736.0f,
+                     kDialogRowHeight},
+                    1.0f);
+        for (int row = mod_rows_.first_row(); row <= mod_rows_.last_row(); ++row)
+        {
+            const Mod &mod = mods_[static_cast<std::size_t>(row)];
+            const float top = row_top(row);
+            list.push_opacity(mod_rows_.row_alpha(row, kDialogRowHeight));
+            // Its name as the player's folder has it, what it changes under it, its switch.
+            text_fit(c, mod.name, 628.0f, baseline(top + 14.0f, 38.0f, theme::kText24),
+                     theme::kText24, mod.enabled ? theme::kValue : theme::kMeta, 560.0f);
+            text_shrink(c, mod.kind, 628.0f, baseline(top + 52.0f, 28.0f, theme::kSmall),
+                        theme::kSmall, theme::kMeta, 560.0f);
+            toggle(c, 1292.0f, top + kDialogRowHeight * 0.5f, mod.enabled ? 1.0f : 0.0f);
+            list.pop_opacity();
+        }
+        list.pop_clip();
+        scrollbar(c, mod_rows_, 1340.0f, kDialogWindow.y, kDialogWindow.h);
+    }
+
+    if (!message_.empty())
+    {
+        notice_block(c, message_, 592.0f, kDialogHints - 6.0f, theme::kSmall, 26.0f,
+                     message_warning_ ? theme::kWarning : theme::kLimePale, 736.0f, 2,
+                     message_warning_);
+    }
+    else if (mods_.empty())
+    {
+        static constexpr Hint kEmpty[] = {{Pad::square, TR("Create the folder")},
+                                          {Pad::circle, TR("Back")}};
+        draw_hints(c, kEmpty, 2, 592.0f, kDialogHints, theme::kCopy, 736.0f);
+    }
+    else
+    {
+        static constexpr Hint kHints[] = {{Pad::updown, TR("Select")},
+                                          {Pad::cross, TR("Turn on or off")},
+                                          {Pad::circle, TR("Back")}};
+        draw_hints(c, kHints, 3, 592.0f, kDialogHints, theme::kCopy, 736.0f);
     }
     list.pop_transform();
     list.pop_opacity();

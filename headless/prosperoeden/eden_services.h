@@ -48,6 +48,11 @@ public:
     bool save_import(std::uint64_t title_id, std::string* message) override;
     bool save_export(std::uint64_t title_id, std::string* message) override;
 
+    std::vector<pe::ui::Mod> mods(std::uint64_t title_id) override;
+    bool set_mod_enabled(std::uint64_t title_id, const std::string& name, bool enabled) override;
+    std::string mods_folder(std::uint64_t title_id) override;
+    bool make_mods_folder(std::uint64_t title_id) override;
+
     bool load_image(const std::string& path, pe::gfx::Image* image) override;
 
 private:

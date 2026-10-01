@@ -128,6 +128,11 @@ msgstr "變更"
 msgid "Change mode. Saved per game."
 msgstr "變更模式。依遊戲分別儲存。"
 
+#. What a mod is made of: cheat codes.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Cheats"
+msgstr "金手指"
+
 #: eden_services.cpp
 msgid "China"
 msgstr "中國"
@@ -182,6 +187,10 @@ msgid "CONTROLS"
 msgstr "操作"
 
 #: pe/ui/library.cpp
+msgid "Could not create the folder. Check that the game files folder can be written."
+msgstr "無法建立資料夾。請確認遊戲檔案的資料夾可以寫入。"
+
+#: pe/ui/library.cpp
 msgid "Could not save console mode. Please try again."
 msgstr "無法儲存主機模式。請再試一次。"
 
@@ -196,6 +205,16 @@ msgstr "無法儲存資料夾。請再試一次。"
 #: pe/ui/browse.cpp, pe/ui/library.cpp
 msgid "Could not save. Please try again."
 msgstr "無法儲存。請再試一次。"
+
+#. Button hint: make the folder a game's mods go in.
+#: pe/ui/library.cpp
+msgid "Create the folder"
+msgstr "建立資料夾"
+
+#. {0} is a folder.
+#: pe/ui/library.cpp
+msgid "Created {0}. Copy each mod's folder into it."
+msgstr "已建立 {0}。請將每個模組的資料夾複製到其中。"
 
 #: pe/ui/browse.cpp
 msgid "Credits and setup"
@@ -297,6 +316,11 @@ msgstr "已匯出至 {0}。"
 
 #: pe/ui/library.cpp
 msgid "FILE"
+msgstr "檔案"
+
+#. What a mod is made of: files that replace the game's own.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Files"
 msgstr "檔案"
 
 #: pe/ui/settings.cpp
@@ -555,6 +579,11 @@ msgstr "選單音效"
 msgid "Missing or empty keys/prod.keys in {0}."
 msgstr "{0} 中缺少 keys/prod.keys，或該檔案是空的。"
 
+#. Changes to a game that the player added: patches, replaced files, cheats. Keep the word 'mod' if the language uses it.
+#: pe/ui/library.cpp
+msgid "Mods"
+msgstr "模組"
+
 #: pe/ui/settings.cpp
 msgid "MUTE"
 msgstr "靜音"
@@ -607,6 +636,16 @@ msgstr "在 {0} 中找不到韌體 NCA。"
 msgid "No folders here."
 msgstr "這裡沒有資料夾。"
 
+#. Shown on the Mods row of a game that has none.
+#: pe/ui/library.cpp
+msgid "No mods"
+msgstr "沒有模組"
+
+#. {0} is a folder; roms/ is a folder name (unchanged).
+#: pe/ui/library.cpp
+msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
+msgstr "此遊戲尚無模組。請將每個模組的資料夾複製到 roms/ 旁邊的 {0}。"
+
 #: pe/ui/library.cpp
 msgid "No ROM files found."
 msgstr "找不到 ROM 檔案。"
@@ -649,7 +688,7 @@ msgid "OPEN"
 msgstr "開啟"
 
 #. Button hint: open the highlighted folder.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/library.cpp
 msgid "Open"
 msgstr "開啟"
 
@@ -665,6 +704,11 @@ msgstr "翻頁"
 #: pe/ui/browse.cpp
 msgid "Parent folder"
 msgstr "上層資料夾"
+
+#. What a mod is made of: a change to the game's program (not a game update).
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Patch"
+msgstr "修補檔"
 
 #: settings_store.h
 msgid "Polish"
@@ -958,6 +1002,11 @@ msgstr "無法儲存此遊戲的設定（沒有遊戲 ID）。"
 msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
 msgstr "若要匯入，請將 Ryujinx 資料夾複製到 ryujinx/，或將存檔複製到 save-import/{0}/（與 roms/ 同層）。"
 
+#. Button hint: switch the highlighted mod on or off.
+#: pe/ui/library.cpp
+msgid "Turn on or off"
+msgstr "開啟或關閉"
+
 #: pe/ui/library.cpp
 msgid "Unavailable"
 msgstr "無法使用"
@@ -1082,6 +1131,11 @@ msgstr "{0}無法使用"
 #: pe/ui/widgets.cpp
 msgid "{0} OF {1}"
 msgstr "{0} / {1}"
+
+#. How many of a game's mods are switched on: 2 of 3 on.
+#: pe/ui/library.cpp
+msgid "{0} of {1} on"
+msgstr "已開啟 {0}/{1}"
 
 #. A percentage (a volume): write it as the language does, for example with a space before the sign.
 #: pe/ui/settings.cpp

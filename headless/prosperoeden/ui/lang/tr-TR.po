@@ -128,6 +128,11 @@ msgstr "Değiştir"
 msgid "Change mode. Saved per game."
 msgstr "Modu değiştirin. Oyuna özel kaydedilir."
 
+#. What a mod is made of: cheat codes.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Cheats"
+msgstr "Hileler"
+
 #: eden_services.cpp
 msgid "China"
 msgstr "Çin"
@@ -182,6 +187,10 @@ msgid "CONTROLS"
 msgstr "KONTROLLER"
 
 #: pe/ui/library.cpp
+msgid "Could not create the folder. Check that the game files folder can be written."
+msgstr "Klasör oluşturulamadı. Oyun dosyaları klasörüne yazılabildiğini kontrol edin."
+
+#: pe/ui/library.cpp
 msgid "Could not save console mode. Please try again."
 msgstr "Konsol modu kaydedilemedi. Lütfen tekrar deneyin."
 
@@ -196,6 +205,16 @@ msgstr "Klasör kaydedilemedi. Lütfen tekrar deneyin."
 #: pe/ui/browse.cpp, pe/ui/library.cpp
 msgid "Could not save. Please try again."
 msgstr "Kaydedilemedi. Lütfen tekrar deneyin."
+
+#. Button hint: make the folder a game's mods go in.
+#: pe/ui/library.cpp
+msgid "Create the folder"
+msgstr "Klasörü oluştur"
+
+#. {0} is a folder.
+#: pe/ui/library.cpp
+msgid "Created {0}. Copy each mod's folder into it."
+msgstr "{0} oluşturuldu. Her modun klasörünü içine kopyalayın."
 
 #: pe/ui/browse.cpp
 msgid "Credits and setup"
@@ -298,6 +317,11 @@ msgstr "{0} konumuna dışa aktarıldı."
 #: pe/ui/library.cpp
 msgid "FILE"
 msgstr "DOSYA"
+
+#. What a mod is made of: files that replace the game's own.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Files"
+msgstr "Dosyalar"
 
 #: pe/ui/settings.cpp
 msgid "Fine-tune your experience"
@@ -555,6 +579,11 @@ msgstr "Menü sesleri"
 msgid "Missing or empty keys/prod.keys in {0}."
 msgstr "{0} içinde keys/prod.keys eksik veya boş."
 
+#. Changes to a game that the player added: patches, replaced files, cheats. Keep the word 'mod' if the language uses it.
+#: pe/ui/library.cpp
+msgid "Mods"
+msgstr "Modlar"
+
 #: pe/ui/settings.cpp
 msgid "MUTE"
 msgstr "SESSİZE AL"
@@ -607,6 +636,16 @@ msgstr "{0} içinde firmware NCA dosyası bulunamadı."
 msgid "No folders here."
 msgstr "Burada klasör yok."
 
+#. Shown on the Mods row of a game that has none.
+#: pe/ui/library.cpp
+msgid "No mods"
+msgstr "Mod yok"
+
+#. {0} is a folder; roms/ is a folder name (unchanged).
+#: pe/ui/library.cpp
+msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
+msgstr "Bu oyun için henüz mod yok. Her modun klasörünü roms/ klasörünün yanındaki {0} konumuna kopyalayın."
+
 #: pe/ui/library.cpp
 msgid "No ROM files found."
 msgstr "ROM dosyası bulunamadı."
@@ -649,7 +688,7 @@ msgid "OPEN"
 msgstr "AÇ"
 
 #. Button hint: open the highlighted folder.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/library.cpp
 msgid "Open"
 msgstr "Aç"
 
@@ -665,6 +704,11 @@ msgstr "Sayfa"
 #: pe/ui/browse.cpp
 msgid "Parent folder"
 msgstr "Üst klasör"
+
+#. What a mod is made of: a change to the game's program (not a game update).
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Patch"
+msgstr "Yama"
 
 #: settings_store.h
 msgid "Polish"
@@ -958,6 +1002,11 @@ msgstr "Bu oyunun ayarları kaydedilemiyor (oyun kimliği yok)."
 msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
 msgstr "İçe aktarmak için roms/ yanındaki ryujinx/ içine bir Ryujinx klasörü veya save-import/{0}/ içine bir kayıt kopyalayın."
 
+#. Button hint: switch the highlighted mod on or off.
+#: pe/ui/library.cpp
+msgid "Turn on or off"
+msgstr "Aç veya kapat"
+
 #: pe/ui/library.cpp
 msgid "Unavailable"
 msgstr "Kullanılamıyor"
@@ -1082,6 +1131,11 @@ msgstr "{0} mevcut değil"
 #: pe/ui/widgets.cpp
 msgid "{0} OF {1}"
 msgstr "{0} / {1}"
+
+#. How many of a game's mods are switched on: 2 of 3 on.
+#: pe/ui/library.cpp
+msgid "{0} of {1} on"
+msgstr "{0}/{1} açık"
 
 #. A percentage (a volume): write it as the language does, for example with a space before the sign.
 #: pe/ui/settings.cpp

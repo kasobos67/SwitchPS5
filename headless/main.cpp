@@ -31,6 +31,7 @@
 #include "devices.h"
 #include "diagnostics.h"
 #include "log_pipe.h"
+#include "mods.h"
 #include "controller_applet.h"
 #include "error_applet.h"
 #include "preferences.h"
@@ -202,7 +203,7 @@ int main(int argc, char** argv) {
                 " app=" + Eden::AppDir() + " data=" + Eden::UserDir() + " game_files=" + Eden::AssetsDir();
             Eden::Report("filesystem access", access.c_str());
             if (Eden::FilesystemAccess() && Eden::AssetsDir() == Eden::kDefaultAssetsDir)
-                for (const char* folder : {"/keys", "/firmware", "/roms", "/updates", "/ryujinx"})
+                for (const char* folder : {"/keys", "/firmware", "/roms", "/updates", "/mods", "/ryujinx"})
                     (void)mkdir((std::string{Eden::kDefaultAssetsDir} + folder).c_str(), 0777);
             // RADV's shader cache is kept with the app's data (its own default is /app0), so it also
             // works when the app is installed as a read-only package image. The cache an earlier
@@ -489,6 +490,10 @@ int main(int argc, char** argv) {
         Common::FS::CreateEdenPaths();
 #ifdef PS5_NATIVE
         Common::FS::SetEdenPath(Common::FS::EdenPath::KeysDir, Eden::AssetsPath("keys"));
+        // Mods come from the game files folder's mods/ (mods.h). Without that folder Eden's own
+        // load folder stays, where nothing is expected.
+        if (const std::string mods = Eden::AssetsPath("mods"); Eden::DirectoryExists(mods))
+            Common::FS::SetEdenPath(Common::FS::EdenPath::LoadDir, mods);
 #endif
 #ifdef PS5_NATIVE
         if (Common::FS::GetEdenPath(Common::FS::EdenPath::EdenDir) != user_dir) return 2;
@@ -726,9 +731,17 @@ int main(int argc, char** argv) {
             char title_id[20];
             std::snprintf(title_id, sizeof(title_id), "%016llx",
                           static_cast<unsigned long long>(eden_game_title_id(guest)));
+            // The game's mods, minus those switched off in the launcher (Library > Game settings >
+            // Mods): Eden's patch manager skips the names in this list.
+            const u64 title = eden_game_title_id(guest);
+            const auto mods_off = Eden::LoadDisabledMods(title);
+            const std::string mods = Eden::Mods::Summary(Eden::Mods::List(Eden::AssetsPath("mods"), title), mods_off);
+            Settings::values.disabled_addons[title] = mods_off;
+            Eden::Report("launch", ("Mods: " + mods).c_str());
             Eden::Crash::SetSession("game " + std::filesystem::path(guest).filename().string() + " (" + title_id +
                                     "), " + Eden::BackendName(backend) + ", resolution " +
-                                    Eden::kResolutionKeys[resolution] + ", " + Eden::kUpscalingFilterLabels[filter],
+                                    Eden::kResolutionKeys[resolution] + ", " + Eden::kUpscalingFilterLabels[filter] +
+                                    ", mods: " + mods,
                                     true);
         }
 #endif

@@ -67,6 +67,7 @@ class Launcher
         accessibility,
         diagnostics,
         game,
+        mods, // a game's mods, opened from its settings
     };
 
     // ---- shell (launcher.cpp) ----
@@ -109,6 +110,8 @@ class Launcher
     void refresh_selected_game();
     void press_game(Key key);
     void draw_game(Canvas &c, float open);
+    void press_mods(Key key);
+    void draw_mods(Canvas &c, float open);
 
     // ---- settings and its dialogs (settings.cpp) ----
     void press_settings(Key key);
@@ -191,6 +194,9 @@ class Launcher
     bool game_docked_ = true;
     SaveSource import_source_ = SaveSource::none; // what Save data could import for the game
     bool import_armed_ = false;                   // Cross was pressed once: the next one imports
+    ListView game_rows_;                          // the game dialog's rows (more than it shows)
+    std::vector<Mod> mods_;                       // the game's mods, read when its dialog opens
+    ListView mod_rows_;
 
     // game files
     std::string browse_dir_;

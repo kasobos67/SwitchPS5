@@ -916,9 +916,10 @@ if(PS5_NATIVE)
                  static_cast<unsigned>(last_segment_it->bss_size));
     Kernel::CodeSet codeset;
     const auto name = nso_file.GetName();
-    const bool full_image = pm && (pm->HasNSOPatch(nso_header.build_id, name) || Settings::values.dump_nso);
+    // A mod's patch changes code and data, which are here whole; only a dump wants the BSS too.
+    const bool patched = pm && pm->HasNSOPatch(nso_header.build_id, name);
+    const bool full_image = pm && Settings::values.dump_nso;
     // BSS belongs in guest memory, not a second almost-2-GiB heap buffer.
-    // Patches/dumps retain the original full-image representation.
     codeset.memory.reserve(full_image ? final_size : initialized_size + argument_size);
     codeset.memory.resize(initialized_size);]=])
     string(FIND "${nso_source}" "${old_nso_image}" nso_offset)
@@ -928,7 +929,7 @@ if(PS5_NATIVE)
     string(REPLACE "${old_nso_image}" "${new_nso_image}" nso_source "${nso_source}")
     string(REPLACE "    codeset.memory.resize(image_size);" "    if (full_image) codeset.memory.resize(image_size);" nso_source "${nso_source}")
     string(REPLACE "    const auto name = nso_file.GetName();\n    if (pm && (pm->HasNSOPatch(nso_header.build_id, name) || Settings::values.dump_nso)) {"
-        "    if (full_image) {" nso_source "${nso_source}")
+        "    if (patched || full_image) {" nso_source "${nso_source}")
     string(REPLACE "    // Load codeset for current process"
         "    // Initialize BSS and page padding directly, including reused guest pages.\n    if (codeset.memory.size() < image_size &&\n        !process.GetMemory().ZeroBlock(load_base + codeset.memory.size(), image_size - codeset.memory.size()))\n        return std::nullopt;\n\n    // Load codeset for current process" nso_source "${nso_source}")
     set(old_nso_decode [=[        std::vector<u8> decompressed_size(std::ranges::max_element(nso_header.segments, [](auto const& a, auto const& b) {
@@ -961,6 +962,89 @@ write_derived("${PORT_BUILD_DIR}/fsmitm_romfsbuild.cpp" "${romfs_source}")
 get_target_property(core_sources core SOURCES)
 list(REMOVE_ITEM core_sources file_sys/fsmitm_romfsbuild.cpp)
 list(APPEND core_sources "${PORT_BUILD_DIR}/fsmitm_romfsbuild.cpp")
+set_property(TARGET core PROPERTY SOURCES "${core_sources}")
+
+# One change to a pinned Eden source; the build stops when the text it replaces is gone.
+function(eden_patch source old new)
+    string(FIND "${${source}}" "${old}" patch_at)
+    if(patch_at LESS 0)
+        message(FATAL_ERROR "Pinned Eden source changed; not found: ${old}")
+    endif()
+    string(REPLACE "${old}" "${new}" patched "${${source}}")
+    set(${source} "${patched}" PARENT_SCOPE)
+endfunction()
+
+# Mods (headless/mods.h). The pinned patch code cannot apply an .ips patch (it looks for the
+# patch's magic in the game's code, and its end marker test never passes) and writes zeros for
+# the text of a .pchtxt string patch, whose record also had a fixed size that a long line
+# overran. Eden fixed these after this pin; the same fixes are made here
+# (headless/mods_check.cpp checks them).
+file(READ "${PROJECT_SOURCE_DIR}/src/core/file_sys/ips_layer.cpp" ips_source)
+eden_patch(ips_source "magic.size() > 3 &&" "magic.size() >= 3 &&")
+eden_patch(ips_source "magic.size() > 4 &&" "magic.size() >= 4 &&")
+eden_patch(ips_source
+    "    auto in_data = in->ReadAllBytes();\n    auto const type = IdentifyMagic(in_data);\n    if (type == IPSFileType::Error)\n        return nullptr;"
+    "    auto const type = IdentifyMagic(ips->ReadBytes(0x5));\n    if (type == IPSFileType::Error)\n        return nullptr;\n    auto in_data = in->ReadAllBytes();\n    if (in_data.empty())\n        return nullptr;")
+eden_patch(ips_source
+    "struct IPSwitchRecord {\n    std::array<uint8_t, 256 - sizeof(size_t)> data;\n    size_t count;\n};"
+    "struct IPSwitchRecord {\n    std::vector<uint8_t> data;\n};")
+set(ips_escape_begin "static IPSwitchRecord EscapeStringSequences(std::string_view sv) {")
+set(ips_escape_end "void IPSwitchCompiler::Parse(")
+string(FIND "${ips_source}" "${ips_escape_begin}" ips_escape_at)
+string(FIND "${ips_source}" "${ips_escape_end}" ips_parse_at)
+if(ips_escape_at LESS 0 OR ips_parse_at LESS ips_escape_at)
+    message(FATAL_ERROR "Pinned IPSwitch text parsing changed")
+endif()
+string(SUBSTRING "${ips_source}" 0 ${ips_escape_at} ips_before)
+string(SUBSTRING "${ips_source}" ${ips_parse_at} -1 ips_after)
+set(ips_escape [=[static IPSwitchRecord EscapeStringSequences(std::string_view sv) {
+    IPSwitchRecord r{};
+    for (auto it = sv.cbegin(); it < sv.cend(); ) {
+        if (*it == '\\' && it + 1 < sv.cend()) {
+            switch (it[1]) {
+            case 'a': r.data.push_back('\a'); break;
+            case 'b': r.data.push_back('\b'); break;
+            case 'e': r.data.push_back('\x1b'); break;
+            case 'f': r.data.push_back('\f'); break;
+            case 'n': r.data.push_back('\n'); break;
+            case 'r': r.data.push_back('\r'); break;
+            case 't': r.data.push_back('\t'); break;
+            case 'v': r.data.push_back('\v'); break;
+            default: r.data.push_back(static_cast<uint8_t>(it[1])); break;
+            }
+            it += 2;
+        } else {
+            r.data.push_back(static_cast<uint8_t>(*it));
+            ++it;
+        }
+    }
+    return r;
+}
+
+]=])
+set(ips_source "${ips_before}${ips_escape}${ips_after}")
+eden_patch(ips_source
+    "                    std::memcpy(r.data.data(), hs.data(), hs.size());\n                    r.count = hs.size();"
+    "                    r.data.assign(hs.begin(), hs.end());")
+eden_patch(ips_source "auto replace_size = record.second.count;" "auto replace_size = record.second.data.size();")
+write_derived("${PORT_BUILD_DIR}/ips_layer.cpp" "${ips_source}")
+# The patch manager: a missing mod root must never enter its sorting and dereference loops, and an
+# .ips patch is named after the build ID in either case.
+file(READ "${PROJECT_SOURCE_DIR}/src/core/file_sys/patch_manager.cpp" patch_source)
+eden_patch(patch_source "std::vector<VirtualDir> patch_dirs = {sdmc_load_dir};"
+    "std::vector<VirtualDir> patch_dirs;\n    if (sdmc_load_dir) patch_dirs.push_back(sdmc_load_dir);")
+eden_patch(patch_source
+    "    std::vector<VirtualDir> patch_dirs = load_dir->GetSubdirectories();\n    if (std::find(disabled.cbegin(), disabled.cend(), \"SDMC\") == disabled.cend()) {"
+    "    std::vector<VirtualDir> patch_dirs;\n    if (load_dir != nullptr) patch_dirs = load_dir->GetSubdirectories();\n    if (sdmc_load_dir != nullptr && std::find(disabled.cbegin(), disabled.cend(), \"SDMC\") == disabled.cend()) {")
+eden_patch(patch_source
+    "const auto this_build_id = fmt::format(\"{:0<64}\", name.substr(0, name.find('.')));"
+    "const auto this_build_id = fmt::format(\"{:0<64}\", Common::ToUpper(name.substr(0, name.find('.'))));")
+# A game without a mods folder is the usual case here, not an error to log for each of its modules.
+eden_patch(patch_source "        LOG_ERROR(Loader, \"Cannot load mods for invalid title_id={:016X}\", title_id);\n" "")
+write_derived("${PORT_BUILD_DIR}/patch_manager.cpp" "${patch_source}")
+get_target_property(core_sources core SOURCES)
+list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
+list(APPEND core_sources "${PORT_BUILD_DIR}/ips_layer.cpp" "${PORT_BUILD_DIR}/patch_manager.cpp")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 
 # Nvdrv sessions borrow process memory until their final handles are unmapped.
@@ -1775,6 +1859,12 @@ ${paths_source}")
     string(REPLACE "VirtualDir dump_root_)" "VirtualDir dump_root_, VirtualDir firmware_root)" bis_source "${bis_source}")
     string(REPLACE "GetOrCreateDirectoryRelative(nand_root, \"/system/Contents/registered\")"
         "firmware_root ? std::move(firmware_root) : GetOrCreateDirectoryRelative(nand_root, \"/system/Contents/registered\")" bis_source "${bis_source}")
+    # A game's mods folder is the player's (headless/mods.h): found whatever the case of its name,
+    # and never created here (Eden makes one for every game that starts).
+    eden_patch(bis_source
+        "    return GetOrCreateDirectoryRelative(load_root, fmt::format(\"/{:016X}\", title_id));\n}\n\nVirtualDir BISFactory::GetModificationDumpRoot"
+        "    const auto wanted = fmt::format(\"{:016X}\", title_id);\n    if (load_root != nullptr)\n        for (const auto& folder : load_root->GetSubdirectories())\n            if (Common::ToUpper(folder->GetName()) == wanted) return folder;\n    return nullptr;\n}\n\nVirtualDir BISFactory::GetModificationDumpRoot")
+    string(PREPEND bis_source "#include \"common/string_util.h\"\n")
     write_derived("${PORT_BUILD_DIR}/bis_factory.cpp" "${bis_source}")
     list(REMOVE_ITEM core_sources file_sys/bis_factory.cpp)
     list(APPEND core_sources "${PORT_BUILD_DIR}/bis_factory.cpp")
@@ -1787,13 +1877,6 @@ ${fs_service}")
     write_derived("${PORT_BUILD_DIR}/filesystem.cpp" "${fs_service}")
     list(REMOVE_ITEM core_sources hle/service/filesystem/filesystem.cpp)
     list(APPEND core_sources "${PORT_BUILD_DIR}/filesystem.cpp")
-    # Missing optional mod roots must never enter sorting/dereference loops.
-    file(READ "${PROJECT_SOURCE_DIR}/src/core/file_sys/patch_manager.cpp" patch_source)
-    string(REPLACE "std::vector<VirtualDir> patch_dirs = {sdmc_load_dir};"
-        "std::vector<VirtualDir> patch_dirs;\n    if (sdmc_load_dir) patch_dirs.push_back(sdmc_load_dir);" patch_source "${patch_source}")
-    write_derived("${PORT_BUILD_DIR}/patch_manager.cpp" "${patch_source}")
-    list(REMOVE_ITEM core_sources file_sys/patch_manager.cpp)
-    list(APPEND core_sources "${PORT_BUILD_DIR}/patch_manager.cpp")
     list(REMOVE_ITEM core_sources internal_network/network.cpp)
     file(READ "${PROJECT_SOURCE_DIR}/src/core/internal_network/network.cpp" network_source)
     string(REPLACE "namespace Network {" "namespace Network {\n#ifndef IPPROTO_DCCP\nconstexpr int IPPROTO_DCCP = 33;\n#endif" network_source "${network_source}")
@@ -1950,6 +2033,10 @@ else()
     target_link_libraries(eden-memory-check PRIVATE dynarmic common)
     target_compile_options(eden-scalar-check PRIVATE -fno-rtti)
     add_executable(eden-ryujinx-check "${EDEN_PORT_DIR}/ryujinx_check.cpp")
+    add_executable(eden-mods-check "${EDEN_PORT_DIR}/mods_check.cpp")
+    target_include_directories(eden-mods-check PRIVATE "${PROJECT_SOURCE_DIR}/src")
+    target_link_libraries(eden-mods-check PRIVATE core)
+    target_compile_options(eden-mods-check PRIVATE -fno-rtti)
     add_executable(eden-devices-check "${EDEN_PORT_DIR}/devices_check.cpp")
     target_link_libraries(eden-devices-check PRIVATE core eden-pad eden-device-mock)
     target_compile_options(eden-devices-check PRIVATE -fno-rtti)

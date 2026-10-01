@@ -5,6 +5,7 @@
 #include "crash_report.h"
 #include "diagnostics.h"
 #include "metadata_bridge.h"
+#include "mods.h"
 #include "native_directory.h"
 #include "pe/core/strings.hpp"
 #include "radio_input.h"
@@ -600,6 +601,42 @@ pe::ui::SaveSource EdenServices::save_import_source(std::uint64_t) { return pe::
 bool EdenServices::save_import(std::uint64_t, std::string*) { return false; }
 bool EdenServices::save_export(std::uint64_t, std::string*) { return false; }
 #endif
+
+// Mods (headless/mods.h): what the game files folder's mods/<title ID>/ holds for a game, and
+// which of them are switched off (settings_store.h).
+std::vector<pe::ui::Mod> EdenServices::mods(std::uint64_t title_id) {
+    std::vector<pe::ui::Mod> result;
+    const auto off = Eden::LoadDisabledMods(title_id);
+    for (const Eden::Mods::Mod& mod : Eden::Mods::List(Eden::AssetsPath("mods"), title_id)) {
+        std::string kind;
+        const auto add = [&kind](const char* text) {
+            if (!kind.empty()) kind += ", ";
+            kind += tr(text);
+        };
+        if (mod.kinds & Eden::Mods::kCode) add(TR("Patch"));
+        if (mod.kinds & Eden::Mods::kFiles) add(TR("Files"));
+        if (mod.kinds & Eden::Mods::kCheats) add(TR("Cheats"));
+        result.push_back({mod.name, kind, std::find(off.begin(), off.end(), mod.name) == off.end()});
+    }
+    return result;
+}
+
+bool EdenServices::set_mod_enabled(std::uint64_t title_id, const std::string& name, bool enabled) {
+    const bool saved = Eden::SaveModEnabled(title_id, name, enabled);
+    if (!saved) Eden::Report("settings", "Could not write the game's mods");
+    return saved;
+}
+
+std::string EdenServices::mods_folder(std::uint64_t title_id) {
+    return "mods/" + Eden::Mods::TitleName(title_id) + "/";
+}
+
+bool EdenServices::make_mods_folder(std::uint64_t title_id) {
+    const std::string root = Eden::AssetsPath("mods");
+    if (!Eden::Mods::TitleFolder(root, title_id).empty()) return true;
+    (void)mkdir(root.c_str(), 0777);
+    return mkdir(Eden::Mods::TitleFolderToCreate(root, title_id).c_str(), 0777) == 0;
+}
 
 bool EdenServices::load_image(const std::string& path, pe::gfx::Image* image) {
     // Covers have full paths; the launcher's own art is named from its ui folder.

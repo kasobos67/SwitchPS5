@@ -128,6 +128,11 @@ msgstr "Zmień"
 msgid "Change mode. Saved per game."
 msgstr "Zmień tryb. Zapisywany osobno dla każdej gry."
 
+#. What a mod is made of: cheat codes.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Cheats"
+msgstr "Kody"
+
 #: eden_services.cpp
 msgid "China"
 msgstr "Chiny"
@@ -182,6 +187,10 @@ msgid "CONTROLS"
 msgstr "STEROWANIE"
 
 #: pe/ui/library.cpp
+msgid "Could not create the folder. Check that the game files folder can be written."
+msgstr "Nie udało się utworzyć folderu. Sprawdź, czy w folderze plików gier można zapisywać."
+
+#: pe/ui/library.cpp
 msgid "Could not save console mode. Please try again."
 msgstr "Nie udało się zapisać trybu konsoli. Spróbuj ponownie."
 
@@ -196,6 +205,16 @@ msgstr "Nie udało się zapisać folderu. Spróbuj ponownie."
 #: pe/ui/browse.cpp, pe/ui/library.cpp
 msgid "Could not save. Please try again."
 msgstr "Nie udało się zapisać. Spróbuj ponownie."
+
+#. Button hint: make the folder a game's mods go in.
+#: pe/ui/library.cpp
+msgid "Create the folder"
+msgstr "Utwórz folder"
+
+#. {0} is a folder.
+#: pe/ui/library.cpp
+msgid "Created {0}. Copy each mod's folder into it."
+msgstr "Utworzono {0}. Skopiuj tam folder każdego moda."
 
 #: pe/ui/browse.cpp
 msgid "Credits and setup"
@@ -298,6 +317,11 @@ msgstr "Wyeksportowano do {0}."
 #: pe/ui/library.cpp
 msgid "FILE"
 msgstr "PLIK"
+
+#. What a mod is made of: files that replace the game's own.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Files"
+msgstr "Pliki"
 
 #: pe/ui/settings.cpp
 msgid "Fine-tune your experience"
@@ -555,6 +579,11 @@ msgstr "Dźwięki menu"
 msgid "Missing or empty keys/prod.keys in {0}."
 msgstr "Brak pliku keys/prod.keys w {0} lub plik jest pusty."
 
+#. Changes to a game that the player added: patches, replaced files, cheats. Keep the word 'mod' if the language uses it.
+#: pe/ui/library.cpp
+msgid "Mods"
+msgstr "Mody"
+
 #: pe/ui/settings.cpp
 msgid "MUTE"
 msgstr "WYCISZENIE"
@@ -607,6 +636,16 @@ msgstr "Nie znaleziono plików NCA firmware'u w {0}."
 msgid "No folders here."
 msgstr "Nie ma tu folderów."
 
+#. Shown on the Mods row of a game that has none.
+#: pe/ui/library.cpp
+msgid "No mods"
+msgstr "Brak modów"
+
+#. {0} is a folder; roms/ is a folder name (unchanged).
+#: pe/ui/library.cpp
+msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
+msgstr "Ta gra nie ma jeszcze modów. Skopiuj folder każdego moda do {0}, obok roms/."
+
 #: pe/ui/library.cpp
 msgid "No ROM files found."
 msgstr "Nie znaleziono plików ROM."
@@ -649,7 +688,7 @@ msgid "OPEN"
 msgstr "OTWÓRZ"
 
 #. Button hint: open the highlighted folder.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/library.cpp
 msgid "Open"
 msgstr "Otwórz"
 
@@ -665,6 +704,11 @@ msgstr "Strona"
 #: pe/ui/browse.cpp
 msgid "Parent folder"
 msgstr "Folder nadrzędny"
+
+#. What a mod is made of: a change to the game's program (not a game update).
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Patch"
+msgstr "Łatka"
 
 #: settings_store.h
 msgid "Polish"
@@ -958,6 +1002,11 @@ msgstr "Nie można zapisać ustawień tej gry (brak ID tytułu)."
 msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
 msgstr "Aby zaimportować, skopiuj folder Ryujinx do ryujinx/ albo zapis do save-import/{0}/, obok roms/."
 
+#. Button hint: switch the highlighted mod on or off.
+#: pe/ui/library.cpp
+msgid "Turn on or off"
+msgstr "Włącz lub wyłącz"
+
 #: pe/ui/library.cpp
 msgid "Unavailable"
 msgstr "Niedostępny"
@@ -1082,6 +1131,11 @@ msgstr "{0} niedostępny"
 #: pe/ui/widgets.cpp
 msgid "{0} OF {1}"
 msgstr "{0} Z {1}"
+
+#. How many of a game's mods are switched on: 2 of 3 on.
+#: pe/ui/library.cpp
+msgid "{0} of {1} on"
+msgstr "Włączone: {0} z {1}"
 
 #. A percentage (a volume): write it as the language does, for example with a space before the sign.
 #: pe/ui/settings.cpp

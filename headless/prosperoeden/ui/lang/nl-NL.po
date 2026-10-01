@@ -128,6 +128,11 @@ msgstr "Wijzigen"
 msgid "Change mode. Saved per game."
 msgstr "Modus wijzigen. Opgeslagen per game."
 
+#. What a mod is made of: cheat codes.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Cheats"
+msgstr "Cheats"
+
 #: eden_services.cpp
 msgid "China"
 msgstr "China"
@@ -182,6 +187,10 @@ msgid "CONTROLS"
 msgstr "BESTURING"
 
 #: pe/ui/library.cpp
+msgid "Could not create the folder. Check that the game files folder can be written."
+msgstr "De map kon niet worden aangemaakt. Controleer of de map met gamebestanden beschrijfbaar is."
+
+#: pe/ui/library.cpp
 msgid "Could not save console mode. Please try again."
 msgstr "Kan de consolemodus niet opslaan. Probeer het opnieuw."
 
@@ -196,6 +205,16 @@ msgstr "Kan de map niet opslaan. Probeer het opnieuw."
 #: pe/ui/browse.cpp, pe/ui/library.cpp
 msgid "Could not save. Please try again."
 msgstr "Opslaan mislukt. Probeer het opnieuw."
+
+#. Button hint: make the folder a game's mods go in.
+#: pe/ui/library.cpp
+msgid "Create the folder"
+msgstr "Map aanmaken"
+
+#. {0} is a folder.
+#: pe/ui/library.cpp
+msgid "Created {0}. Copy each mod's folder into it."
+msgstr "{0} aangemaakt. Kopieer de map van elke mod erin."
 
 #: pe/ui/browse.cpp
 msgid "Credits and setup"
@@ -298,6 +317,11 @@ msgstr "Geëxporteerd naar {0}."
 #: pe/ui/library.cpp
 msgid "FILE"
 msgstr "BESTAND"
+
+#. What a mod is made of: files that replace the game's own.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Files"
+msgstr "Bestanden"
 
 #: pe/ui/settings.cpp
 msgid "Fine-tune your experience"
@@ -555,6 +579,11 @@ msgstr "Menugeluiden"
 msgid "Missing or empty keys/prod.keys in {0}."
 msgstr "Het bestand keys/prod.keys ontbreekt of is leeg in {0}."
 
+#. Changes to a game that the player added: patches, replaced files, cheats. Keep the word 'mod' if the language uses it.
+#: pe/ui/library.cpp
+msgid "Mods"
+msgstr "Mods"
+
 #: pe/ui/settings.cpp
 msgid "MUTE"
 msgstr "DEMPEN"
@@ -607,6 +636,16 @@ msgstr "Geen firmware-NCA's gevonden in {0}."
 msgid "No folders here."
 msgstr "Geen mappen hier."
 
+#. Shown on the Mods row of a game that has none.
+#: pe/ui/library.cpp
+msgid "No mods"
+msgstr "Geen mods"
+
+#. {0} is a folder; roms/ is a folder name (unchanged).
+#: pe/ui/library.cpp
+msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
+msgstr "Nog geen mods voor deze game. Kopieer de map van elke mod naar {0}, naast roms/."
+
 #: pe/ui/library.cpp
 msgid "No ROM files found."
 msgstr "Geen ROM-bestanden gevonden."
@@ -649,7 +688,7 @@ msgid "OPEN"
 msgstr "OPENEN"
 
 #. Button hint: open the highlighted folder.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/library.cpp
 msgid "Open"
 msgstr "Openen"
 
@@ -665,6 +704,11 @@ msgstr "Pagina"
 #: pe/ui/browse.cpp
 msgid "Parent folder"
 msgstr "Bovenliggende map"
+
+#. What a mod is made of: a change to the game's program (not a game update).
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Patch"
+msgstr "Patch"
 
 #: settings_store.h
 msgid "Polish"
@@ -958,6 +1002,11 @@ msgstr "Kan de instellingen van deze game niet opslaan (geen titel-ID)."
 msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
 msgstr "Kopieer om te importeren een Ryujinx-map naar ryujinx/ of opgeslagen data naar save-import/{0}/, naast roms/."
 
+#. Button hint: switch the highlighted mod on or off.
+#: pe/ui/library.cpp
+msgid "Turn on or off"
+msgstr "In- of uitschakelen"
+
 #: pe/ui/library.cpp
 msgid "Unavailable"
 msgstr "Niet beschikbaar"
@@ -1082,6 +1131,11 @@ msgstr "{0} niet beschikbaar"
 #: pe/ui/widgets.cpp
 msgid "{0} OF {1}"
 msgstr "{0} VAN {1}"
+
+#. How many of a game's mods are switched on: 2 of 3 on.
+#: pe/ui/library.cpp
+msgid "{0} of {1} on"
+msgstr "{0} van {1} aan"
 
 #. A percentage (a volume): write it as the language does, for example with a space before the sign.
 #: pe/ui/settings.cpp

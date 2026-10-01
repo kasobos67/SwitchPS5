@@ -128,6 +128,11 @@ msgstr "변경"
 msgid "Change mode. Saved per game."
 msgstr "모드를 변경합니다. 게임별로 저장됩니다."
 
+#. What a mod is made of: cheat codes.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Cheats"
+msgstr "치트"
+
 #: eden_services.cpp
 msgid "China"
 msgstr "중국"
@@ -182,6 +187,10 @@ msgid "CONTROLS"
 msgstr "조작"
 
 #: pe/ui/library.cpp
+msgid "Could not create the folder. Check that the game files folder can be written."
+msgstr "폴더를 만들지 못했습니다. 게임 파일 폴더에 쓸 수 있는지 확인하세요."
+
+#: pe/ui/library.cpp
 msgid "Could not save console mode. Please try again."
 msgstr "본체 모드를 저장하지 못했습니다. 다시 시도해 주세요."
 
@@ -196,6 +205,16 @@ msgstr "폴더를 저장하지 못했습니다. 다시 시도해 주세요."
 #: pe/ui/browse.cpp, pe/ui/library.cpp
 msgid "Could not save. Please try again."
 msgstr "저장하지 못했습니다. 다시 시도해 주세요."
+
+#. Button hint: make the folder a game's mods go in.
+#: pe/ui/library.cpp
+msgid "Create the folder"
+msgstr "폴더 만들기"
+
+#. {0} is a folder.
+#: pe/ui/library.cpp
+msgid "Created {0}. Copy each mod's folder into it."
+msgstr "{0}을(를) 만들었습니다. 각 모드의 폴더를 그 안에 복사하세요."
 
 #: pe/ui/browse.cpp
 msgid "Credits and setup"
@@ -297,6 +316,11 @@ msgstr "{0}에 내보냈습니다."
 
 #: pe/ui/library.cpp
 msgid "FILE"
+msgstr "파일"
+
+#. What a mod is made of: files that replace the game's own.
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Files"
 msgstr "파일"
 
 #: pe/ui/settings.cpp
@@ -555,6 +579,11 @@ msgstr "메뉴 효과음"
 msgid "Missing or empty keys/prod.keys in {0}."
 msgstr "{0}에 keys/prod.keys가 없거나 비어 있습니다."
 
+#. Changes to a game that the player added: patches, replaced files, cheats. Keep the word 'mod' if the language uses it.
+#: pe/ui/library.cpp
+msgid "Mods"
+msgstr "모드"
+
 #: pe/ui/settings.cpp
 msgid "MUTE"
 msgstr "음소거"
@@ -607,6 +636,16 @@ msgstr "{0}에서 펌웨어 NCA를 찾을 수 없습니다."
 msgid "No folders here."
 msgstr "여기에는 폴더가 없습니다."
 
+#. Shown on the Mods row of a game that has none.
+#: pe/ui/library.cpp
+msgid "No mods"
+msgstr "모드 없음"
+
+#. {0} is a folder; roms/ is a folder name (unchanged).
+#: pe/ui/library.cpp
+msgid "No mods for this game yet. Copy each mod's folder to {0}, next to roms/."
+msgstr "이 게임에는 아직 모드가 없습니다. 각 모드의 폴더를 roms/ 옆의 {0}에 복사하세요."
+
 #: pe/ui/library.cpp
 msgid "No ROM files found."
 msgstr "ROM 파일을 찾을 수 없습니다."
@@ -649,7 +688,7 @@ msgid "OPEN"
 msgstr "열기"
 
 #. Button hint: open the highlighted folder.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/library.cpp
 msgid "Open"
 msgstr "열기"
 
@@ -665,6 +704,11 @@ msgstr "페이지"
 #: pe/ui/browse.cpp
 msgid "Parent folder"
 msgstr "상위 폴더"
+
+#. What a mod is made of: a change to the game's program (not a game update).
+#: eden_services.cpp, host/fake_services.cpp
+msgid "Patch"
+msgstr "패치"
 
 #: settings_store.h
 msgid "Polish"
@@ -958,6 +1002,11 @@ msgstr "이 게임의 설정을 저장할 수 없습니다(타이틀 ID 없음).
 msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
 msgstr "가져오려면 Ryujinx 폴더를 ryujinx/에, 또는 세이브 데이터를 save-import/{0}/에 복사하세요(roms/ 옆)."
 
+#. Button hint: switch the highlighted mod on or off.
+#: pe/ui/library.cpp
+msgid "Turn on or off"
+msgstr "켜기/끄기"
+
 #: pe/ui/library.cpp
 msgid "Unavailable"
 msgstr "사용할 수 없음"
@@ -1082,6 +1131,11 @@ msgstr "{0} 사용 불가"
 #: pe/ui/widgets.cpp
 msgid "{0} OF {1}"
 msgstr "{0} / {1}"
+
+#. How many of a game's mods are switched on: 2 of 3 on.
+#: pe/ui/library.cpp
+msgid "{0} of {1} on"
+msgstr "{1}개 중 {0}개 켜짐"
 
 #. A percentage (a volume): write it as the language does, for example with a space before the sign.
 #: pe/ui/settings.cpp

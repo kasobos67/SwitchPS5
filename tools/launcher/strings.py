@@ -88,6 +88,18 @@ NOTES = {
     "Bicubic": "An upscaling filter.",
     "Vulkan (recommended)": "Vulkan is a name (unchanged).",
     "Game could not start: {0} Details: {1}": "{0} is the reason, a sentence in English; {1} is a file.",
+    "Mods": "Changes to a game that the player added: patches, replaced files, cheats. Keep the word "
+            "'mod' if the language uses it.",
+    "No mods": "Shown on the Mods row of a game that has none.",
+    "{0} of {1} on": "How many of a game's mods are switched on: 2 of 3 on.",
+    "Patch": "What a mod is made of: a change to the game's program (not a game update).",
+    "Files": "What a mod is made of: files that replace the game's own.",
+    "Cheats": "What a mod is made of: cheat codes.",
+    "No mods for this game yet. Copy each mod's folder to {0}, next to roms/.":
+        "{0} is a folder; roms/ is a folder name (unchanged).",
+    "Turn on or off": "Button hint: switch the highlighted mod on or off.",
+    "Create the folder": "Button hint: make the folder a game's mods go in.",
+    "Created {0}. Copy each mod's folder into it.": "{0} is a folder.",
     "ProsperoEden stopped because of an error. A report was saved to {0}.":
         "Shown on the home screen after the app crashed and started again; {0} is a file.",
     "Sandboxed (code {0}): app folder only": "The app can read only its own folder; {0} is a number.",

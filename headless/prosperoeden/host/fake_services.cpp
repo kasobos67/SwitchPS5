@@ -282,6 +282,28 @@ bool FakeServices::folders(const std::string &directory, std::vector<std::string
     return true;
 }
 
+std::vector<ui::Mod> FakeServices::mods(std::uint64_t)
+{
+    if (!has_mods)
+        return {};
+    std::vector<ui::Mod> mods = {
+        {"60 FPS", tr("Patch"), true},
+        {"Sharper textures", tr("Files"), true},
+        {"Starter pack", std::string(tr("Files")) + ", " + tr("Cheats"), true},
+    };
+    for (ui::Mod &mod : mods)
+        mod.enabled = std::find(mods_off_.begin(), mods_off_.end(), mod.name) == mods_off_.end();
+    return mods;
+}
+
+bool FakeServices::set_mod_enabled(std::uint64_t, const std::string &name, bool enabled)
+{
+    mods_off_.erase(std::remove(mods_off_.begin(), mods_off_.end(), name), mods_off_.end());
+    if (!enabled)
+        mods_off_.push_back(name);
+    return true;
+}
+
 ui::FolderInfo FakeServices::folder_info(const std::string &directory)
 {
     ui::FolderInfo info;

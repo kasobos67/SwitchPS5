@@ -117,6 +117,18 @@ class FakeServices final : public ui::Services
         *message = fill(tr("Exported to {0}."), {"save-export/0100A00B00003000-20261001-213000"});
         return true;
     }
+    // Sample mods: three, the second switched off; none when has_mods is cleared.
+    bool has_mods = true;
+    std::vector<ui::Mod> mods(std::uint64_t) override;
+    bool set_mod_enabled(std::uint64_t, const std::string &name, bool enabled) override;
+    std::string mods_folder(std::uint64_t) override
+    {
+        return "mods/0100A00B00003000/";
+    }
+    bool make_mods_folder(std::uint64_t) override
+    {
+        return true;
+    }
     bool load_image(const std::string &path, gfx::Image *image) override
     {
         return gfx::load_tga(path, image);
@@ -128,6 +140,7 @@ class FakeServices final : public ui::Services
     ui::GameSettings game_settings_;
     ui::Preferences preferences_;
     std::string saved_folder_;
+    std::vector<std::string> mods_off_{"Sharper textures"};
 };
 
 } // namespace pe::host

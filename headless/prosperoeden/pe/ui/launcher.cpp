@@ -139,6 +139,8 @@ void Launcher::press(Key key)
         return; // a game is starting
     if (modal_ == Modal::game)
         return press_game(key);
+    if (modal_ == Modal::mods)
+        return press_mods(key);
     if (modal_ != Modal::none)
         return press_dialog(key);
     switch (screen_)
@@ -188,6 +190,8 @@ void Launcher::update(float dt)
     settings_.update(dt);
     files_.update(dt);
     language_.update(dt);
+    game_rows_.update(dt);
+    mod_rows_.update(dt);
     mode_.target = selected_docked_ ? 0.0f : 1.0f;
     mode_.update(dt, 22.0f);
     detail_.target = 1.0f;
@@ -311,6 +315,8 @@ void Launcher::draw(gfx::DrawList &list)
         list.rounded_rect(kScreen, 0.0f, theme::kScrim.with_alpha(0.69f * opened));
         if (modal_shown_ == Modal::game)
             draw_game(c, opened);
+        else if (modal_shown_ == Modal::mods)
+            draw_mods(c, opened);
         else
             draw_dialog(c, modal_shown_, opened);
     }

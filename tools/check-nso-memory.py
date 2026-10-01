@@ -74,7 +74,7 @@ int main(){
  assert(std::string((char*)image.data()+8196+sizeof(NSOArgumentHeader),5)=="hello");
  memory.address=memory.length=0;
  assert(load(h,f,true,true,PatchManager{true})==0x105000);
- assert(staging_size==20480 && memory.length==0); // Patches get complete image.
+ assert(staging_size==8196+4096 && memory.address==0x103004); // A patch works on the initialized image; BSS stays in guest memory.
  Settings::values.dump_nso=true;
  assert(load(h,f,true,true,PatchManager{})==0x105000 && staging_size==20480);
 }

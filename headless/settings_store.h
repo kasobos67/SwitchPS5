@@ -13,7 +13,8 @@
 //     "game_files": "/mnt/ext1/eden",
 //     "library": { "last_game": "Game [id].nsp", "recent": ["Game [id].nsp"] },
 //     "games": { "0100000000010000": { "console_mode": "handheld", "renderer": "opengl",
-//                                      "resolution": "0.75x", "upscaling_filter": "fsr" } }
+//                                      "resolution": "0.75x", "upscaling_filter": "fsr",
+//                                      "mods_off": ["A mod's folder name"] } }
 //   }
 //
 // Missing or mistyped values read as their defaults. Writes replace the file atomically. The
@@ -307,6 +308,36 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
     store("renderer", value.renderer, kRendererKeys);
     store("resolution", value.resolution, kResolutionKeys);
     store("upscaling_filter", value.upscaling_filter, kUpscalingFilterKeys);
+    return Settings::Write(document, file);
+}
+
+// Library > Game settings > Mods: the names of the game's mods that are switched off (mods.h). A
+// mod is on unless it is listed, so one added later is used without a visit to the launcher.
+inline std::vector<std::string> LoadDisabledMods(uint64_t title_id, const std::string& file = SettingsFile()) {
+    std::vector<std::string> names;
+    if (!title_id) return names;
+    using Settings::Json;
+    const Json document = Settings::Load(file);
+    const Json::json_pointer at("/games/" + Settings::TitleKey(title_id) + "/mods_off");
+    if (!document.contains(at) || !document.at(at).is_array()) return names;
+    for (const auto& entry : document.at(at))
+        if (entry.is_string() && std::find(names.begin(), names.end(), entry.get<std::string>()) == names.end())
+            names.push_back(entry.get<std::string>());
+    return names;
+}
+
+inline bool SaveModEnabled(uint64_t title_id, std::string_view name, bool enabled,
+                           const std::string& file = SettingsFile()) {
+    if (!title_id || name.empty() || name.size() > 255) return false;
+    auto names = LoadDisabledMods(title_id, file);
+    names.erase(std::remove(names.begin(), names.end(), name), names.end());
+    if (!enabled) names.emplace_back(name);
+    Settings::Json document = Settings::Load(file);
+    document["version"] = 1;
+    auto& game = document["games"][Settings::TitleKey(title_id)];
+    if (!game.is_object()) game = Settings::Json::object();
+    if (names.empty()) game.erase("mods_off");
+    else game["mods_off"] = names;
     return Settings::Write(document, file);
 }
 

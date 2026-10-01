@@ -174,7 +174,25 @@ void pictures(Stage &s)
     s.press({Key::down, Key::right});
     s.wait(0.6f);
     s.shoot("10-game-settings-changed");
+    // The game's mods: the row, the list, one switched on, and a game that has none.
     s.press({Key::down, Key::down, Key::down});
+    s.wait(0.6f);
+    s.shoot("35-game-mods-row");
+    s.press({Key::cross});
+    s.wait(0.6f);
+    s.shoot("36-mods");
+    s.press({Key::down, Key::cross});
+    s.wait(0.4f);
+    s.shoot("37-mods-switched");
+    s.services.has_mods = false;
+    s.press({Key::circle, Key::cross});
+    s.wait(0.6f);
+    s.shoot("38-mods-none");
+    s.press({Key::square});
+    s.wait(0.4f);
+    s.shoot("39-mods-folder-made");
+    s.services.has_mods = true;
+    s.press({Key::circle, Key::down});
     s.wait(0.6f);
     s.shoot("32-game-save-data");
     s.press({Key::cross});

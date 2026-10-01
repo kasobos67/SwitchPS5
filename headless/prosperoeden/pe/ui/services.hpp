@@ -93,6 +93,14 @@ struct GameSettings
     int filter = -1;
 };
 
+// A mod of one game, from the game files folder's mods/<title ID>/.
+struct Mod
+{
+    std::string name;    // its folder's name
+    std::string kind;    // what it is made of: "Patch", "Files", "Cheats"
+    bool enabled = true; // used when the game starts
+};
+
 // Where a save to import was found, in the game files folder.
 enum class SaveSource : std::uint8_t
 {
@@ -169,6 +177,26 @@ class Services
         return false;
     }
     virtual bool save_export(std::uint64_t, std::string *)
+    {
+        return false;
+    }
+
+    // ---- mods: patches, replacement files and cheats the player added for a game ----
+    virtual std::vector<Mod> mods(std::uint64_t)
+    {
+        return {};
+    }
+    virtual bool set_mod_enabled(std::uint64_t, const std::string &, bool)
+    {
+        return false;
+    }
+    // Where a game's mods go, as the player would write it: "mods/0100.../".
+    virtual std::string mods_folder(std::uint64_t)
+    {
+        return {};
+    }
+    // Makes that folder; false when it cannot be made.
+    virtual bool make_mods_folder(std::uint64_t)
     {
         return false;
     }
