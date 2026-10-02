@@ -84,6 +84,15 @@ msgid "Another language"
 msgstr "Jiný jazyk"
 
 #: pe/ui/settings.cpp
+msgid "ASYNCHRONOUS SHADERS"
+msgstr "ASYNCHRONNÍ SHADERY"
+
+#. A switch. A shader is a small graphics program; keep the word the language's players use for it.
+#: pe/ui/settings.cpp
+msgid "Asynchronous shaders"
+msgstr "Asynchronní shadery"
+
+#: pe/ui/settings.cpp
 msgid "Audio"
 msgstr "Zvuk"
 
@@ -169,6 +178,19 @@ msgstr "Vyber složku, ve které jsou klíče, firmware a hry"
 #: pe/ui/browse.cpp
 msgid "Choose the language games use"
 msgstr "Zvol jazyk, který hry používají"
+
+#: pe/ui/settings.cpp
+msgid "COMPILE AHEAD"
+msgstr "KOMPILACE PŘEDEM"
+
+#. A switch: the program code a game used in earlier sessions is prepared (compiled) while the game starts. Keep it short.
+#: pe/ui/settings.cpp
+msgid "Compile ahead"
+msgstr "Kompilace předem"
+
+#: pe/ui/settings.cpp
+msgid "Compiles the code a game used before as it starts, so new areas stutter less."
+msgstr "Při startu zkompiluje kód, který hra už použila, takže se nové oblasti méně zadrhávají."
 
 #: pe/ui/library.cpp
 msgid "Console mode"
@@ -276,6 +298,10 @@ msgid "Docked"
 msgstr "V doku"
 
 #: pe/ui/settings.cpp
+msgid "Draws an effect once its shader is ready instead of pausing. Things can be missing for a moment."
+msgstr "Efekt vykreslí, až je jeho shader připraven, místo pozastavení hry. Něco může chvíli chybět."
+
+#: pe/ui/settings.cpp
 msgid "Draws the menu's small text larger."
 msgstr "Zvětší malé písmo v nabídce."
 
@@ -321,6 +347,37 @@ msgstr "Export se nezdařil. Zkontroluj, zda lze do složky herních souborů za
 #: eden_services.cpp, host/fake_services.hpp
 msgid "Exported to {0}."
 msgstr "Exportováno do {0}."
+
+#: pe/ui/settings.cpp
+msgid "FASTER CPU EMULATION"
+msgstr "RYCHLEJŠÍ EMULACE CPU"
+
+#. A switch: the emulated processor's floating-point math is less exact and faster. CPU stays.
+#: pe/ui/settings.cpp
+msgid "Faster CPU emulation"
+msgstr "Rychlejší emulace CPU"
+
+#: pe/ui/settings.cpp
+msgid "FASTER DMA"
+msgstr "RYCHLEJŠÍ DMA"
+
+#. A switch: memory transfers to the emulated graphics processor are less exact and faster. DMA is a name (unchanged).
+#: pe/ui/settings.cpp
+msgid "Faster DMA"
+msgstr "Rychlejší DMA"
+
+#: pe/ui/settings.cpp
+msgid "Faster games, at some cost in accuracy."
+msgstr "Rychlejší hry za cenu menší přesnosti."
+
+#: pe/ui/settings.cpp
+msgid "FASTER GPU EMULATION"
+msgstr "RYCHLEJŠÍ EMULACE GPU"
+
+#. A switch: the emulated graphics processor is less exact and faster. GPU stays.
+#: pe/ui/settings.cpp
+msgid "Faster GPU emulation"
+msgstr "Rychlejší emulace GPU"
 
 #: pe/ui/library.cpp
 msgid "FILE"
@@ -507,6 +564,10 @@ msgstr "Japonština"
 msgid "Keep keys, firmware and roms folders together. TRIANGLE uses the folder shown."
 msgstr "Složky keys, firmware a roms měj pohromadě. Tlačítko TROJÚHELNÍK použije zobrazenou složku."
 
+#: pe/ui/settings.cpp
+msgid "Keeps what a game reads back from the GPU exact. Off is faster, and some effects break."
+msgstr "Udržuje přesné to, co hra čte zpět z GPU. Vypnuté je rychlejší, některé efekty se ale rozbijí."
+
 #. Label: the encryption keys file (prod.keys).
 #: pe/ui/browse.cpp
 msgid "KEYS"
@@ -554,6 +615,14 @@ msgstr "Naposledy spuštěná hra"
 msgid "Launch game"
 msgstr "Spustit hru"
 
+#: pe/ui/settings.cpp
+msgid "Less exact floating-point math: faster, and a few games misbehave."
+msgstr "Méně přesné výpočty s plovoucí čárkou: rychlejší, několik her se ale chová špatně."
+
+#: pe/ui/settings.cpp
+msgid "Less exact memory transfers to the GPU: faster, and a few games show wrong graphics."
+msgstr "Méně přesné přenosy paměti do GPU: rychlejší, několik her ale zobrazuje chybnou grafiku."
+
 #: pe/ui/home.cpp
 msgid "Library"
 msgstr "Knihovna"
@@ -561,6 +630,10 @@ msgstr "Knihovna"
 #: pe/ui/library.cpp
 msgid "LIBRARY"
 msgstr "KNIHOVNA"
+
+#: pe/ui/settings.cpp
+msgid "Lowest GPU accuracy: faster in demanding games, and graphics can be wrong."
+msgstr "Nejnižší přesnost GPU: rychlejší v náročných hrách, grafika ale může být chybná."
 
 #. Headline of the Settings screen.
 #: pe/ui/settings.cpp
@@ -733,6 +806,15 @@ msgstr "Nadřazená složka"
 msgid "Patch"
 msgstr "Patch"
 
+#. A settings category: options that make games run faster, at some cost in accuracy.
+#: pe/ui/settings.cpp
+msgid "Performance"
+msgstr "Výkon"
+
+#: pe/ui/settings.cpp
+msgid "PERFORMANCE"
+msgstr "VÝKON"
+
 #: settings_store.h
 msgid "Polish"
 msgstr "Polština"
@@ -797,6 +879,15 @@ msgstr "EDICE PS5"
 #: pe/ui/home.cpp
 msgid "PS5 EDITION  /  {0}"
 msgstr "EDICE PS5  /  {0}"
+
+#: pe/ui/settings.cpp
+msgid "REACTIVE FLUSHING"
+msgstr "REAKTIVNÍ FLUSHOVÁNÍ"
+
+#. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
+#: pe/ui/settings.cpp
+msgid "Reactive flushing"
+msgstr "Reaktivní flushování"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -958,6 +1049,19 @@ msgstr "Zobrazit nebo skrýt počítadlo FPS"
 #: pe/ui/library.cpp
 msgid "SIZE"
 msgstr "VELIKOST"
+
+#: pe/ui/settings.cpp
+msgid "SKIP CPU INVALIDATION"
+msgstr "PŘESKOČIT INVALIDACI CPU"
+
+#. A switch: fewer checks when a game changes memory the graphics processor uses. CPU stays.
+#: pe/ui/settings.cpp
+msgid "Skip CPU invalidation"
+msgstr "Přeskočit invalidaci CPU"
+
+#: pe/ui/settings.cpp
+msgid "Skips some checks when a game changes memory the GPU uses: faster, and textures can be stale."
+msgstr "Přeskočí některé kontroly, když hra změní paměť používanou GPU: rychlejší, textury ale mohou být zastaralé."
 
 #: pe/ui/settings.cpp
 msgid "Solid panels, brighter text and an outlined highlight."

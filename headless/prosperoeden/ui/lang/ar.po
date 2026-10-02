@@ -84,6 +84,15 @@ msgid "Another language"
 msgstr "لغة أخرى"
 
 #: pe/ui/settings.cpp
+msgid "ASYNCHRONOUS SHADERS"
+msgstr "مظللات غير متزامنة"
+
+#. A switch. A shader is a small graphics program; keep the word the language's players use for it.
+#: pe/ui/settings.cpp
+msgid "Asynchronous shaders"
+msgstr "مظللات غير متزامنة"
+
+#: pe/ui/settings.cpp
 msgid "Audio"
 msgstr "الصوت"
 
@@ -169,6 +178,19 @@ msgstr "اختر المجلد الذي يحتوي على المفاتيح وال
 #: pe/ui/browse.cpp
 msgid "Choose the language games use"
 msgstr "اختر اللغة التي تستخدمها الألعاب"
+
+#: pe/ui/settings.cpp
+msgid "COMPILE AHEAD"
+msgstr "التجميع المسبق"
+
+#. A switch: the program code a game used in earlier sessions is prepared (compiled) while the game starts. Keep it short.
+#: pe/ui/settings.cpp
+msgid "Compile ahead"
+msgstr "التجميع المسبق"
+
+#: pe/ui/settings.cpp
+msgid "Compiles the code a game used before as it starts, so new areas stutter less."
+msgstr "يجمّع عند بدء اللعبة الشيفرة التي استخدمتها من قبل، فتقل التقطعات في المناطق الجديدة."
 
 #: pe/ui/library.cpp
 msgid "Console mode"
@@ -276,6 +298,10 @@ msgid "Docked"
 msgstr "تلفاز"
 
 #: pe/ui/settings.cpp
+msgid "Draws an effect once its shader is ready instead of pausing. Things can be missing for a moment."
+msgstr "يرسم المؤثر عندما يصبح مظلله جاهزًا بدل إيقاف اللعبة. قد تغيب بعض العناصر للحظة."
+
+#: pe/ui/settings.cpp
 msgid "Draws the menu's small text larger."
 msgstr "يعرض النص الصغير في القائمة بحجم أكبر."
 
@@ -321,6 +347,37 @@ msgstr "فشل التصدير. تأكد من إمكانية الكتابة في 
 #: eden_services.cpp, host/fake_services.hpp
 msgid "Exported to {0}."
 msgstr "تم التصدير إلى {0}."
+
+#: pe/ui/settings.cpp
+msgid "FASTER CPU EMULATION"
+msgstr "محاكاة CPU أسرع"
+
+#. A switch: the emulated processor's floating-point math is less exact and faster. CPU stays.
+#: pe/ui/settings.cpp
+msgid "Faster CPU emulation"
+msgstr "محاكاة CPU أسرع"
+
+#: pe/ui/settings.cpp
+msgid "FASTER DMA"
+msgstr "DMA أسرع"
+
+#. A switch: memory transfers to the emulated graphics processor are less exact and faster. DMA is a name (unchanged).
+#: pe/ui/settings.cpp
+msgid "Faster DMA"
+msgstr "DMA أسرع"
+
+#: pe/ui/settings.cpp
+msgid "Faster games, at some cost in accuracy."
+msgstr "ألعاب أسرع مقابل دقة أقل قليلًا."
+
+#: pe/ui/settings.cpp
+msgid "FASTER GPU EMULATION"
+msgstr "محاكاة GPU أسرع"
+
+#. A switch: the emulated graphics processor is less exact and faster. GPU stays.
+#: pe/ui/settings.cpp
+msgid "Faster GPU emulation"
+msgstr "محاكاة GPU أسرع"
 
 #: pe/ui/library.cpp
 msgid "FILE"
@@ -507,6 +564,10 @@ msgstr "اليابانية"
 msgid "Keep keys, firmware and roms folders together. TRIANGLE uses the folder shown."
 msgstr "أبقِ مجلدات keys و firmware و roms معًا. زر المثلث يستخدم المجلد المعروض."
 
+#: pe/ui/settings.cpp
+msgid "Keeps what a game reads back from the GPU exact. Off is faster, and some effects break."
+msgstr "يبقي ما تقرؤه اللعبة من GPU دقيقًا. إيقافه أسرع، لكن بعض المؤثرات تتعطل."
+
 #. Label: the encryption keys file (prod.keys).
 #: pe/ui/browse.cpp
 msgid "KEYS"
@@ -554,6 +615,14 @@ msgstr "آخر لعبة فُتحت"
 msgid "Launch game"
 msgstr "تشغيل اللعبة"
 
+#: pe/ui/settings.cpp
+msgid "Less exact floating-point math: faster, and a few games misbehave."
+msgstr "حسابات الفاصلة العائمة أقل دقة: أسرع، لكن بعض الألعاب تعمل بشكل خاطئ."
+
+#: pe/ui/settings.cpp
+msgid "Less exact memory transfers to the GPU: faster, and a few games show wrong graphics."
+msgstr "نقل الذاكرة إلى GPU أقل دقة: أسرع، لكن بعض الألعاب تعرض رسومًا خاطئة."
+
 #: pe/ui/home.cpp
 msgid "Library"
 msgstr "المكتبة"
@@ -561,6 +630,10 @@ msgstr "المكتبة"
 #: pe/ui/library.cpp
 msgid "LIBRARY"
 msgstr "المكتبة"
+
+#: pe/ui/settings.cpp
+msgid "Lowest GPU accuracy: faster in demanding games, and graphics can be wrong."
+msgstr "أدنى دقة لـ GPU: أسرع في الألعاب المتطلبة، لكن الرسوم قد تظهر بشكل خاطئ."
 
 #. Headline of the Settings screen.
 #: pe/ui/settings.cpp
@@ -733,6 +806,15 @@ msgstr "المجلد الأعلى"
 msgid "Patch"
 msgstr "رقعة"
 
+#. A settings category: options that make games run faster, at some cost in accuracy.
+#: pe/ui/settings.cpp
+msgid "Performance"
+msgstr "الأداء"
+
+#: pe/ui/settings.cpp
+msgid "PERFORMANCE"
+msgstr "الأداء"
+
 #: settings_store.h
 msgid "Polish"
 msgstr "البولندية"
@@ -797,6 +879,15 @@ msgstr "إصدار PS5"
 #: pe/ui/home.cpp
 msgid "PS5 EDITION  /  {0}"
 msgstr "إصدار PS5  /  {0}"
+
+#: pe/ui/settings.cpp
+msgid "REACTIVE FLUSHING"
+msgstr "التفريغ التفاعلي"
+
+#. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
+#: pe/ui/settings.cpp
+msgid "Reactive flushing"
+msgstr "التفريغ التفاعلي"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -958,6 +1049,19 @@ msgstr "إظهار عدّاد FPS أو إخفاؤه"
 #: pe/ui/library.cpp
 msgid "SIZE"
 msgstr "الحجم"
+
+#: pe/ui/settings.cpp
+msgid "SKIP CPU INVALIDATION"
+msgstr "تخطي إبطال CPU"
+
+#. A switch: fewer checks when a game changes memory the graphics processor uses. CPU stays.
+#: pe/ui/settings.cpp
+msgid "Skip CPU invalidation"
+msgstr "تخطي إبطال CPU"
+
+#: pe/ui/settings.cpp
+msgid "Skips some checks when a game changes memory the GPU uses: faster, and textures can be stale."
+msgstr "يتخطى بعض الفحوص عندما تغيّر اللعبة ذاكرة يستخدمها GPU: أسرع، لكن الخامات قد تكون قديمة."
 
 #: pe/ui/settings.cpp
 msgid "Solid panels, brighter text and an outlined highlight."

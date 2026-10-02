@@ -20,10 +20,11 @@ constexpr Rect kListPanel{108.0f, 188.0f, 820.0f, 720.0f};
 constexpr Rect kDetailPanel{980.0f, 188.0f, 820.0f, 720.0f};
 constexpr Rect kDialog{550.0f, 180.0f, 820.0f, 720.0f};
 constexpr float kRowsTop = 264.0f;
-constexpr float kRowHeight = 80.0f;
+constexpr float kRowHeight = 72.0f;
 enum Category
 {
     kVideo,
+    kPerformance,
     kAudio,
     kControls,
     kAccessibility,
@@ -33,12 +34,12 @@ enum Category
     kCategoryCount,
 };
 constexpr const char *kCategories[kCategoryCount] = {
-    TR("Video"), TR("Audio"), TR("Controls"), TR("Accessibility"), TR("Diagnostics"), TR("Game files"),
-    TR("Language")};
+    TR("Video"), TR("Performance"), TR("Audio"), TR("Controls"), TR("Accessibility"), TR("Diagnostics"),
+    TR("Game files"), TR("Language")};
 // The same as headings: capitals differ by language, so each is its own text.
 constexpr const char *kHeadings[kCategoryCount] = {
-    TR("VIDEO"), TR("AUDIO"), TR("CONTROLS"), TR("ACCESSIBILITY"), TR("DIAGNOSTICS"), TR("GAME FILES"),
-    TR("LANGUAGE")};
+    TR("VIDEO"), TR("PERFORMANCE"), TR("AUDIO"), TR("CONTROLS"), TR("ACCESSIBILITY"), TR("DIAGNOSTICS"),
+    TR("GAME FILES"), TR("LANGUAGE")};
 
 // The Video dialog's rows, and the window that shows five of them (placed as a game's settings
 // are).
@@ -58,6 +59,22 @@ constexpr float kVideoRowHeight = 94.0f;
 constexpr int kVideoRowsShown = 5;
 constexpr Rect kVideoWindow{592.0f, kVideoRowsTop, 736.0f,
                             kVideoRowPitch * (kVideoRowsShown - 1) + kVideoRowHeight};
+// The Performance dialog's switches, and the window that shows four of them over what the
+// highlighted one does.
+enum PerformanceRow : int
+{
+    speed_block_list,
+    speed_async_shaders,
+    speed_fast_gpu,
+    speed_unsafe_cpu,
+    speed_unsafe_dma,
+    speed_reactive_flushing,
+    speed_skip_invalidation,
+    kPerformanceRows,
+};
+constexpr int kPerformanceRowsShown = 4;
+constexpr Rect kPerformanceWindow{592.0f, kVideoRowsTop, 736.0f,
+                                  kVideoRowPitch * (kPerformanceRowsShown - 1) + kVideoRowHeight};
 // The sizes of Preferences::output, as every language writes them.
 constexpr const char *kOutputs[] = {"1080p", "1440p", "2160p"};
 
@@ -124,6 +141,12 @@ void Launcher::press_settings(Key key)
             video_rows_.pitch = kVideoRowPitch;
             video_rows_.reset(kVideoRows, 0);
             break;
+        case kPerformance:
+            open_modal(Modal::performance);
+            performance_rows_.visible = kPerformanceRowsShown;
+            performance_rows_.pitch = kVideoRowPitch;
+            performance_rows_.reset(kPerformanceRows, 0);
+            break;
         case kAudio:
             open_modal(Modal::audio);
             break;
@@ -159,6 +182,8 @@ void Launcher::draw_settings(Canvas &c)
     plate_focus(c, kRowPlate, {150.0f, kRowsTop + settings_.cursor(), 736.0f, kRowHeight}, 1.0f);
     const std::string summaries[kCategoryCount] = {
         prefs_.renderer != 0 ? "Vulkan" : "OpenGL",
+        prefs_.async_shaders || prefs_.fast_gpu || prefs_.unsafe_cpu || prefs_.unsafe_dma ||
+                !prefs_.reactive_flushing || prefs_.skip_invalidation ? tr("On") : "",
         prefs_.mute ? tr("Muted") : percent(prefs_.volume),
         prefs_.vibration ? tr("Vibration on") : tr("Vibration off"),
         prefs_.large_text || prefs_.high_contrast || prefs_.reduce_motion ? tr("On") : "",
@@ -214,6 +239,16 @@ void Launcher::draw_settings(Canvas &c)
                  {tr("REFRESH RATE"), hertz(prefs_.refresh)},
                  {tr("FPS OVERLAY"), on_off(prefs_.hud)}};
         break;
+    case kPerformance:
+        about = tr("Faster games, at some cost in accuracy.");
+        lines = {{tr("COMPILE AHEAD"), on_off(prefs_.block_list)},
+                 {tr("ASYNCHRONOUS SHADERS"), on_off(prefs_.async_shaders)},
+                 {tr("FASTER GPU EMULATION"), on_off(prefs_.fast_gpu)},
+                 {tr("FASTER CPU EMULATION"), on_off(prefs_.unsafe_cpu)},
+                 {tr("FASTER DMA"), on_off(prefs_.unsafe_dma)},
+                 {tr("REACTIVE FLUSHING"), on_off(prefs_.reactive_flushing)},
+                 {tr("SKIP CPU INVALIDATION"), on_off(prefs_.skip_invalidation)}};
+        break;
     case kAudio:
         about = tr("Game volume, and the sounds of this menu.");
         lines = {{tr("GAME VOLUME"), percent(prefs_.volume)},
@@ -255,8 +290,9 @@ void Launcher::draw_settings(Canvas &c)
     text(c, tr(kHeadings[settings_.selected]), 1016.0f, baseline(458.0f, 30.0f, theme::kSmall),
          theme::kSmall, theme::kLime, Align::left, 3.0f);
     text_shrink(c, about, 1016.0f, baseline(494.0f, 32.0f, 22.0f), 22.0f, theme::kCopy, 748.0f);
-    // Five lines sit 62 apart; Video's six move closer to stay inside the panel.
-    const float pitch = lines.size() > 5 ? 52.0f : 62.0f;
+    // Five lines sit 62 apart; Video's six and Performance's seven move closer to stay inside
+    // the panel.
+    const float pitch = lines.size() > 6 ? 46.0f : lines.size() > 5 ? 52.0f : 62.0f;
     for (std::size_t i = 0; i < lines.size(); ++i)
     {
         const float top = 562.0f + pitch * static_cast<float>(i);
@@ -283,6 +319,8 @@ int Launcher::dialog_rows(Modal modal) const
     {
     case Modal::video:
         return kVideoRows;
+    case Modal::performance:
+        return kPerformanceRows;
     case Modal::audio:
     case Modal::accessibility:
         return 3;
@@ -302,6 +340,8 @@ float Launcher::dialog_row_top(Modal modal, int row) const
     case Modal::audio:
     case Modal::accessibility:
         return 370.0f + 102.0f * static_cast<float>(row);
+    case Modal::performance: // four of its rows show; the list scrolls to the others
+        return kVideoRowsTop + kVideoRowPitch * static_cast<float>(row) - performance_rows_.scroll();
     case Modal::video: // five of its rows show; the list scrolls to the others
         return kVideoRowsTop + kVideoRowPitch * static_cast<float>(row) - video_rows_.scroll();
     case Modal::game:
@@ -322,11 +362,12 @@ void Launcher::press_dialog(Key key)
         close_modal();
         return;
     }
-    if ((key == Key::up || key == Key::down) && modal_ == Modal::video)
+    if ((key == Key::up || key == Key::down) && (modal_ == Modal::video || modal_ == Modal::performance))
     {
-        if (video_rows_.move(key == Key::down ? 1 : -1))
+        ListView &rows_view = modal_ == Modal::video ? video_rows_ : performance_rows_;
+        if (rows_view.move(key == Key::down ? 1 : -1))
         {
-            option_ = video_rows_.selected;
+            option_ = rows_view.selected;
             message_.clear();
             cue(Cue::focus);
         }
@@ -388,6 +429,15 @@ void Launcher::press_dialog(Key key)
             sound = Cue::slider;
         }
         break;
+    case Modal::performance:
+    {
+        bool *const switches[kPerformanceRows] = {
+            &prefs_.block_list, &prefs_.async_shaders,     &prefs_.fast_gpu, &prefs_.unsafe_cpu,
+            &prefs_.unsafe_dma, &prefs_.reactive_flushing, &prefs_.skip_invalidation};
+        bool &value = *switches[std::clamp(option_, 0, kPerformanceRows - 1)];
+        value = !value;
+        break;
+    }
     case Modal::controls:
         prefs_.vibration = !prefs_.vibration;
         break;
@@ -437,6 +487,10 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         title = tr("Video");
         copy = tr("How games are drawn and scaled to your TV.");
         break;
+    case Modal::performance:
+        title = tr("Performance");
+        copy = tr("Faster games, at some cost in accuracy.");
+        break;
     case Modal::audio:
         title = tr("Audio");
         copy = tr("Game audio; PS5 system-menu music is unchanged.");
@@ -460,22 +514,24 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
                 Color::rgb(0xbecbb9), 736.0f);
 
     const int rows = dialog_rows(modal);
-    // Video's rows scroll in a window of five; the other dialogs show all of theirs.
-    const bool scrolls = modal == Modal::video;
-    const int first = scrolls ? video_rows_.first_row() : 0;
-    const int last = scrolls ? video_rows_.last_row() : rows - 1;
+    // Video's rows scroll in a window of five and Performance's in one of four; the other dialogs
+    // show all of theirs.
+    const bool scrolls = modal == Modal::video || modal == Modal::performance;
+    const ListView &rows_view = modal == Modal::performance ? performance_rows_ : video_rows_;
+    const Rect &window = modal == Modal::performance ? kPerformanceWindow : kVideoWindow;
+    const int first = scrolls ? rows_view.first_row() : 0;
+    const int last = scrolls ? rows_view.last_row() : rows - 1;
     if (scrolls)
-        list.push_clip({kVideoWindow.x - 24.0f, kVideoWindow.y - 6.0f, kVideoWindow.w + 48.0f,
-                        kVideoWindow.h + 12.0f});
+        list.push_clip({window.x - 24.0f, window.y - 6.0f, window.w + 48.0f, window.h + 12.0f});
     for (int row = first; row <= last; ++row)
     {
-        list.push_opacity(scrolls ? video_rows_.row_alpha(row, kVideoRowHeight) : 1.0f);
+        list.push_opacity(scrolls ? rows_view.row_alpha(row, kVideoRowHeight) : 1.0f);
         plate_rest(c, kRowPlate, {592.0f, dialog_row_top(modal, row), 736.0f, 94.0f});
         list.pop_opacity();
     }
     plate_focus(c, kRowPlate,
                 {592.0f,
-                 scrolls ? kVideoRowsTop + video_rows_.cursor() - video_rows_.scroll() :
+                 scrolls ? kVideoRowsTop + rows_view.cursor() - rows_view.scroll() :
                            option_cursor_.value,
                  736.0f, 94.0f},
                 1.0f);
@@ -574,6 +630,22 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         toggle(c, 1292.0f, row_centre(0), knob);
         break;
     }
+    case Modal::performance:
+    {
+        static constexpr const char *kNames[kPerformanceRows] = {
+            TR("Compile ahead"),        TR("Asynchronous shaders"), TR("Faster GPU emulation"),
+            TR("Faster CPU emulation"), TR("Faster DMA"),           TR("Reactive flushing"),
+            TR("Skip CPU invalidation")};
+        for (int row = first; row <= last; ++row)
+        {
+            list.push_opacity(rows_view.row_alpha(row, kVideoRowHeight));
+            label(row, tr(kNames[row]), kToggle);
+            toggle(c, 1292.0f, row_centre(row),
+                   tween::clamp01(switches_[static_cast<std::size_t>(row)].value));
+            list.pop_opacity();
+        }
+        break;
+    }
     case Modal::accessibility:
     {
         static constexpr const char *kNames[] = {TR("Larger text"), TR("High contrast"),
@@ -606,11 +678,30 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     if (scrolls)
     {
         list.pop_clip();
-        scrollbar(c, video_rows_, 1340.0f, kVideoWindow.y, kVideoWindow.h);
+        scrollbar(c, rows_view, 1340.0f, window.y, window.h);
+    }
+    if (modal == Modal::performance)
+    {
+        // What the highlighted switch does, under the window.
+        static constexpr const char *kAbout[kPerformanceRows] = {
+            TR("Compiles the code a game used before as it starts, so new areas stutter less."),
+            TR("Draws an effect once its shader is ready instead of pausing. Things can be missing "
+               "for a moment."),
+            TR("Lowest GPU accuracy: faster in demanding games, and graphics can be wrong."),
+            TR("Less exact floating-point math: faster, and a few games misbehave."),
+            TR("Less exact memory transfers to the GPU: faster, and a few games show wrong graphics."),
+            TR("Keeps what a game reads back from the GPU exact. Off is faster, and some effects "
+               "break."),
+            TR("Skips some checks when a game changes memory the GPU uses: faster, and textures "
+               "can be stale.")};
+        text_block(c, tr(kAbout[std::clamp(option_, 0, kPerformanceRows - 1)]), 592.0f,
+                   baseline(window.y + window.h + 22.0f, 30.0f, theme::kSmall), theme::kSmall, 30.0f,
+                   theme::kMeta, 736.0f, 2, kShrink);
     }
 
-    // Under the rows: Video's five end lower than the other dialogs' three.
-    const float foot = modal == Modal::video ? 848.0f : 811.0f;
+    // Under the rows: Video's five, and Performance's four with their line of text, end lower
+    // than the other dialogs' three.
+    const float foot = scrolls ? 848.0f : 811.0f;
     if (!message_.empty())
     {
         notice(c, message_, 592.0f, foot + 7.0f, theme::kSmall,

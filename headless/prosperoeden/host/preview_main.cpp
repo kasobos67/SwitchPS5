@@ -14,6 +14,7 @@
 #include "pe/gfx/system_fonts.hpp"
 #include "pe/ui/launcher.hpp"
 
+#include <array>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <GL/glcorearb.h>
@@ -244,6 +245,44 @@ void pictures(Stage &s)
     s.press({Key::down});
     s.wait(0.6f);
     s.shoot("43-video-overlay");
+    // Performance: seven switches, five of them showing. Compiling ahead and reactive flushing
+    // start on, the others off, and a press on each one reaches the settings.
+    s.press({Key::circle, Key::down, Key::cross});
+    s.wait(0.8f);
+    s.shoot("46-performance");
+    {
+        const auto states = [&s]
+        {
+            const pe::ui::Preferences p = s.services.preferences();
+            return std::array<bool, 7>{p.block_list, p.async_shaders, p.fast_gpu, p.unsafe_cpu,
+                                       p.unsafe_dma, p.reactive_flushing, p.skip_invalidation};
+        };
+        const std::array<bool, 7> start = states();
+        bool reached = start == std::array<bool, 7>{true, false, false, false, false, true, false};
+        for (std::size_t row = 0; row < start.size(); ++row)
+        {
+            if (row != 0)
+                s.press({Key::down});
+            s.press({Key::cross});
+            std::array<bool, 7> expected = start;
+            for (std::size_t changed = 0; changed <= row; ++changed)
+                expected[changed] = !start[changed];
+            reached = reached && states() == expected;
+            if (row == 2)
+            {
+                s.wait(0.6f);
+                s.shoot("47-performance-changed");
+            }
+        }
+        // The seventh row: the list scrolled to it.
+        s.wait(0.6f);
+        s.shoot("48-performance-scrolled");
+        if (!reached)
+        {
+            std::fprintf(stderr, "error: the Performance switches did not reach the settings\n");
+            s.ok = false;
+        }
+    }
     s.press({Key::circle, Key::down, Key::cross});
     s.wait(0.8f);
     s.shoot("16-audio");

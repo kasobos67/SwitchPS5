@@ -547,7 +547,6 @@ int main(int argc, char** argv) {
         Settings::values.vulkan_device = recovery_mode == "init-failure" && !recovery_opengl ?
             0xffffffffu : 0u;
 #endif
-        Settings::values.use_asynchronous_shaders = false;
         Settings::values.renderer_debug = false;
         // RADV presents the console's 12 GiB of direct memory as an integrated GPU, for which
         // Eden budgets 4 GiB: a game using ~4.4 GB of Vulkan memory then ran the texture GC
@@ -761,6 +760,31 @@ int main(int argc, char** argv) {
                                     Eden::kUpscalingFilterLabels[filter] + ", output " +
                                     Eden::kOutputKeys[video.output] + ", " + Eden::kRefreshKeys[refresh] +
                                     " Hz").c_str());
+            // Speed against accuracy ("performance" in the settings file, settings_store.h): each
+            // one is off unless chosen there, for every game or for this one.
+            const auto speed = Eden::LoadPerformance(eden_game_title_id(guest));
+            Settings::values.use_asynchronous_shaders = speed.async_shaders;
+            if (speed.fast_gpu) {
+                // Nothing calls UpdateGPUAccuracy() here; set the live value too.
+                Settings::values.gpu_accuracy.SetValue(Settings::GpuAccuracy::Low);
+                Settings::values.current_gpu_accuracy = Settings::GpuAccuracy::Low;
+            }
+            if (speed.unsafe_cpu) Settings::values.cpu_accuracy = Settings::CpuAccuracy::Unsafe;
+            if (speed.unsafe_dma) Settings::values.dma_accuracy.SetValue(Settings::DmaAccuracy::Unsafe);
+            Settings::values.use_reactive_flushing.SetValue(speed.reactive_flushing);
+            Settings::values.skip_cpu_inner_invalidation.SetValue(speed.skip_invalidation);
+#ifndef EDEN_DEV_PROFILE
+            // The block list is on unless the settings turn it off (a development build keeps its
+            // dev-settings jit_list switch).
+            Eden::JitList::enabled = speed.block_list;
+#endif
+            Eden::Report("launch", (std::string("Performance: block list ") + (speed.block_list ? "on" : "off") +
+                                    ", async shaders " + (speed.async_shaders ? "on" : "off") +
+                                    ", fast GPU " + (speed.fast_gpu ? "on" : "off") +
+                                    ", unsafe CPU " + (speed.unsafe_cpu ? "on" : "off") +
+                                    ", unsafe DMA " + (speed.unsafe_dma ? "on" : "off") +
+                                    ", reactive flushing " + (speed.reactive_flushing ? "on" : "off") +
+                                    ", skip invalidation " + (speed.skip_invalidation ? "on" : "off")).c_str());
             // What a crash report says was running.
             char title_id[20];
             std::snprintf(title_id, sizeof(title_id), "%016llx",

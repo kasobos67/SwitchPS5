@@ -84,6 +84,15 @@ msgid "Another language"
 msgstr "ภาษาอื่น"
 
 #: pe/ui/settings.cpp
+msgid "ASYNCHRONOUS SHADERS"
+msgstr "เชเดอร์แบบอะซิงโครนัส"
+
+#. A switch. A shader is a small graphics program; keep the word the language's players use for it.
+#: pe/ui/settings.cpp
+msgid "Asynchronous shaders"
+msgstr "เชเดอร์แบบอะซิงโครนัส"
+
+#: pe/ui/settings.cpp
 msgid "Audio"
 msgstr "เสียง"
 
@@ -169,6 +178,19 @@ msgstr "เลือก​โฟลเดอร์​ที่​เก็บ​
 #: pe/ui/browse.cpp
 msgid "Choose the language games use"
 msgstr "เลือก​ภาษา​ที่​เกม​ใช้"
+
+#: pe/ui/settings.cpp
+msgid "COMPILE AHEAD"
+msgstr "คอมไพล์ล่วงหน้า"
+
+#. A switch: the program code a game used in earlier sessions is prepared (compiled) while the game starts. Keep it short.
+#: pe/ui/settings.cpp
+msgid "Compile ahead"
+msgstr "คอมไพล์ล่วงหน้า"
+
+#: pe/ui/settings.cpp
+msgid "Compiles the code a game used before as it starts, so new areas stutter less."
+msgstr "คอมไพล์โค้ดที่เกมเคยใช้ขณะเริ่มเกม พื้นที่ใหม่จึงกระตุกน้อยลง"
 
 #: pe/ui/library.cpp
 msgid "Console mode"
@@ -276,6 +298,10 @@ msgid "Docked"
 msgstr "โหมด TV"
 
 #: pe/ui/settings.cpp
+msgid "Draws an effect once its shader is ready instead of pausing. Things can be missing for a moment."
+msgstr "วาดเอฟเฟกต์เมื่อเชเดอร์พร้อมแทนการหยุดเกม บางอย่างอาจหายไปชั่วครู่"
+
+#: pe/ui/settings.cpp
 msgid "Draws the menu's small text larger."
 msgstr "แสดง​ตัวอักษร​ขนาดเล็ก​ของ​เมนู​ให้​ใหญ่ขึ้น"
 
@@ -321,6 +347,37 @@ msgstr "ส่งออก​ไม่สำเร็จ ตรวจสอบ�
 #: eden_services.cpp, host/fake_services.hpp
 msgid "Exported to {0}."
 msgstr "ส่งออก​ไปยัง {0} ​แล้ว"
+
+#: pe/ui/settings.cpp
+msgid "FASTER CPU EMULATION"
+msgstr "จำลอง CPU เร็วขึ้น"
+
+#. A switch: the emulated processor's floating-point math is less exact and faster. CPU stays.
+#: pe/ui/settings.cpp
+msgid "Faster CPU emulation"
+msgstr "จำลอง CPU เร็วขึ้น"
+
+#: pe/ui/settings.cpp
+msgid "FASTER DMA"
+msgstr "DMA เร็วขึ้น"
+
+#. A switch: memory transfers to the emulated graphics processor are less exact and faster. DMA is a name (unchanged).
+#: pe/ui/settings.cpp
+msgid "Faster DMA"
+msgstr "DMA เร็วขึ้น"
+
+#: pe/ui/settings.cpp
+msgid "Faster games, at some cost in accuracy."
+msgstr "เกมเร็วขึ้น โดยแลกกับความแม่นยำบางส่วน"
+
+#: pe/ui/settings.cpp
+msgid "FASTER GPU EMULATION"
+msgstr "จำลอง GPU เร็วขึ้น"
+
+#. A switch: the emulated graphics processor is less exact and faster. GPU stays.
+#: pe/ui/settings.cpp
+msgid "Faster GPU emulation"
+msgstr "จำลอง GPU เร็วขึ้น"
 
 #: pe/ui/library.cpp
 msgid "FILE"
@@ -507,6 +564,10 @@ msgstr "ญี่ปุ่น"
 msgid "Keep keys, firmware and roms folders together. TRIANGLE uses the folder shown."
 msgstr "เก็บ​โฟลเดอร์ keys, firmware ​และ roms ​ไว้​ด้วยกัน ปุ่ม​สามเหลี่ยม​จะ​ใช้​โฟลเดอร์​ที่​แสดง​อยู่"
 
+#: pe/ui/settings.cpp
+msgid "Keeps what a game reads back from the GPU exact. Off is faster, and some effects break."
+msgstr "รักษาความถูกต้องของข้อมูลที่เกมอ่านกลับจาก GPU ปิดแล้วเร็วขึ้น แต่เอฟเฟกต์บางอย่างเสีย"
+
 #. Label: the encryption keys file (prod.keys).
 #: pe/ui/browse.cpp
 msgid "KEYS"
@@ -554,6 +615,14 @@ msgstr "เกมที่เปิดล่าสุด"
 msgid "Launch game"
 msgstr "เริ่มเกม"
 
+#: pe/ui/settings.cpp
+msgid "Less exact floating-point math: faster, and a few games misbehave."
+msgstr "คำนวณทศนิยมแม่นยำน้อยลง: เร็วขึ้น แต่บางเกมทำงานผิดพลาด"
+
+#: pe/ui/settings.cpp
+msgid "Less exact memory transfers to the GPU: faster, and a few games show wrong graphics."
+msgstr "การถ่ายโอนหน่วยความจำไปยัง GPU แม่นยำน้อยลง: เร็วขึ้น แต่บางเกมแสดงกราฟิกผิด"
+
 #: pe/ui/home.cpp
 msgid "Library"
 msgstr "คลังเกม"
@@ -561,6 +630,10 @@ msgstr "คลังเกม"
 #: pe/ui/library.cpp
 msgid "LIBRARY"
 msgstr "คลังเกม"
+
+#: pe/ui/settings.cpp
+msgid "Lowest GPU accuracy: faster in demanding games, and graphics can be wrong."
+msgstr "ความแม่นยำ GPU ต่ำสุด: เร็วขึ้นในเกมหนัก แต่กราฟิกอาจผิดเพี้ยน"
 
 #. Headline of the Settings screen.
 #: pe/ui/settings.cpp
@@ -733,6 +806,15 @@ msgstr "โฟลเดอร์แม่"
 msgid "Patch"
 msgstr "แพตช์"
 
+#. A settings category: options that make games run faster, at some cost in accuracy.
+#: pe/ui/settings.cpp
+msgid "Performance"
+msgstr "ประสิทธิภาพ"
+
+#: pe/ui/settings.cpp
+msgid "PERFORMANCE"
+msgstr "ประสิทธิภาพ"
+
 #: settings_store.h
 msgid "Polish"
 msgstr "โปแลนด์"
@@ -797,6 +879,15 @@ msgstr "รุ่น PS5"
 #: pe/ui/home.cpp
 msgid "PS5 EDITION  /  {0}"
 msgstr "รุ่น PS5  /  {0}"
+
+#: pe/ui/settings.cpp
+msgid "REACTIVE FLUSHING"
+msgstr "รีแอกทีฟฟลัชชิง"
+
+#. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
+#: pe/ui/settings.cpp
+msgid "Reactive flushing"
+msgstr "รีแอกทีฟฟลัชชิง"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -958,6 +1049,19 @@ msgstr "แสดง​หรือ​ซ่อน​ตัวแสดง FPS"
 #: pe/ui/library.cpp
 msgid "SIZE"
 msgstr "ขนาด"
+
+#: pe/ui/settings.cpp
+msgid "SKIP CPU INVALIDATION"
+msgstr "ข้ามการยกเลิกแคชจาก CPU"
+
+#. A switch: fewer checks when a game changes memory the graphics processor uses. CPU stays.
+#: pe/ui/settings.cpp
+msgid "Skip CPU invalidation"
+msgstr "ข้ามการยกเลิกแคชจาก CPU"
+
+#: pe/ui/settings.cpp
+msgid "Skips some checks when a game changes memory the GPU uses: faster, and textures can be stale."
+msgstr "ข้ามการตรวจสอบบางอย่างเมื่อเกมเปลี่ยนหน่วยความจำที่ GPU ใช้: เร็วขึ้น แต่เท็กซ์เจอร์อาจไม่อัปเดต"
 
 #: pe/ui/settings.cpp
 msgid "Solid panels, brighter text and an outlined highlight."

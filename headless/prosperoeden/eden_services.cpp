@@ -470,6 +470,15 @@ pe::ui::Preferences EdenServices::preferences() {
     result.large_text = saved.large_text;
     result.high_contrast = saved.high_contrast;
     result.reduce_motion = saved.reduce_motion;
+    // Settings > Performance: the general values (settings_store.h).
+    const Eden::PerformanceSettings speed = Eden::LoadPerformance(0);
+    result.block_list = speed.block_list;
+    result.async_shaders = speed.async_shaders;
+    result.fast_gpu = speed.fast_gpu;
+    result.unsafe_cpu = speed.unsafe_cpu;
+    result.unsafe_dma = speed.unsafe_dma;
+    result.reactive_flushing = speed.reactive_flushing;
+    result.skip_invalidation = speed.skip_invalidation;
     return result;
 }
 
@@ -490,7 +499,15 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.large_text = preferences.large_text;
     value.high_contrast = preferences.high_contrast;
     value.reduce_motion = preferences.reduce_motion;
-    const bool saved = Eden::SavePreferences(value);
+    Eden::PerformanceSettings speed = Eden::LoadPerformance(0);
+    speed.block_list = preferences.block_list;
+    speed.async_shaders = preferences.async_shaders;
+    speed.fast_gpu = preferences.fast_gpu;
+    speed.unsafe_cpu = preferences.unsafe_cpu;
+    speed.unsafe_dma = preferences.unsafe_dma;
+    speed.reactive_flushing = preferences.reactive_flushing;
+    speed.skip_invalidation = preferences.skip_invalidation;
+    const bool saved = Eden::SavePreferences(value) && Eden::SavePerformance(0, speed);
     if (!saved) Eden::Report("settings", "Could not write preferences");
     return saved;
 }

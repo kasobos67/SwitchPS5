@@ -11,13 +11,17 @@
 //     "system": { "language": "en-US" },
 //     "accessibility": { "large_text": false, "high_contrast": false, "reduce_motion": false },
 //     "diagnostics": { "detailed_logging": false },
+//     "performance": { "block_list": true, "async_shaders": false, "fast_gpu": false,
+//                      "unsafe_cpu": false, "unsafe_dma": false, "reactive_flushing": true,
+//                      "skip_invalidation": false },
 //     "game_files": "/mnt/ext1/eden",
 //     "library": { "last_game": "Game [id].nsp", "recent": ["Game [id].nsp"] },
 //     "games": { "0100000000010000": { "console_mode": "handheld", "renderer": "opengl",
 //                                      "resolution": "0.75x", "upscaling_filter": "fsr",
 //                                      "refresh_rate": "120", "mods": false,
 //                                      "mods_off": ["A mod's folder name"],
-//                                      "cheats_on": ["A mod's folder name#A cheat's name"] } }
+//                                      "cheats_on": ["A mod's folder name#A cheat's name"],
+//                                      "performance": { "fast_gpu": true } } }
 //   }
 //
 // Missing or mistyped values read as their defaults. Writes replace the file atomically. The
@@ -337,6 +341,54 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
     store("resolution", value.resolution, kResolutionKeys);
     store("upscaling_filter", value.upscaling_filter, kUpscalingFilterKeys);
     store("refresh_rate", value.refresh, kRefreshKeys);
+    return Settings::Write(document, file);
+}
+
+// Speed against accuracy, for every game ("performance") and for one ("games/<title>/performance",
+// whose values go before the general ones, one value at a time). Settings > Performance has
+// a switch for each general value; a game's own are written in the settings file.
+struct PerformanceSettings {
+    bool block_list = true;      // compile the blocks of earlier sessions ahead (jit_list.h)
+    bool async_shaders = false;  // draw before a new shader is ready: no pause, things missing meanwhile
+    bool fast_gpu = false;       // Eden's lowest GPU accuracy
+    bool unsafe_cpu = false;     // dynarmic's inexact floating-point shortcuts
+    bool unsafe_dma = false;     // Eden's unsafe DMA accuracy
+    bool reactive_flushing = true;   // Eden's reactive flushing: off is faster, some effects break
+    bool skip_invalidation = false;  // Eden's skip_cpu_inner_invalidation: fewer cache invalidations
+};
+
+inline PerformanceSettings LoadPerformance(uint64_t title_id, const std::string& file = SettingsFile()) {
+    using Settings::Json;
+    const Json document = Settings::Load(file);
+    PerformanceSettings result;
+    const auto read = [&](const std::string& base) {
+        const auto value = [&](const char* name, bool& out) {
+            out = Settings::Bool(document, Json::json_pointer(base + "/performance/" + name), out);
+        };
+        value("block_list", result.block_list);
+        value("async_shaders", result.async_shaders);
+        value("fast_gpu", result.fast_gpu);
+        value("unsafe_cpu", result.unsafe_cpu);
+        value("unsafe_dma", result.unsafe_dma);
+        value("reactive_flushing", result.reactive_flushing);
+        value("skip_invalidation", result.skip_invalidation);
+    };
+    read("");
+    if (title_id) read("/games/" + Settings::TitleKey(title_id));
+    return result;
+}
+
+// Title 0 saves the general values.
+inline bool SavePerformance(uint64_t title_id, const PerformanceSettings& value,
+                            const std::string& file = SettingsFile()) {
+    Settings::Json document = Settings::Load(file);
+    document["version"] = 1;
+    auto& owner = title_id ? document["games"][Settings::TitleKey(title_id)] : document;
+    if (!owner.is_object()) owner = Settings::Json::object();
+    owner["performance"] = {{"block_list", value.block_list}, {"async_shaders", value.async_shaders},
+                            {"fast_gpu", value.fast_gpu}, {"unsafe_cpu", value.unsafe_cpu},
+                            {"unsafe_dma", value.unsafe_dma}, {"reactive_flushing", value.reactive_flushing},
+                            {"skip_invalidation", value.skip_invalidation}};
     return Settings::Write(document, file);
 }
 

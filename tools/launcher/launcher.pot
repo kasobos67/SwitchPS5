@@ -84,6 +84,15 @@ msgid "Another language"
 msgstr ""
 
 #: pe/ui/settings.cpp
+msgid "ASYNCHRONOUS SHADERS"
+msgstr ""
+
+#. A switch. A shader is a small graphics program; keep the word the language's players use for it.
+#: pe/ui/settings.cpp
+msgid "Asynchronous shaders"
+msgstr ""
+
+#: pe/ui/settings.cpp
 msgid "Audio"
 msgstr ""
 
@@ -168,6 +177,19 @@ msgstr ""
 
 #: pe/ui/browse.cpp
 msgid "Choose the language games use"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "COMPILE AHEAD"
+msgstr ""
+
+#. A switch: the program code a game used in earlier sessions is prepared (compiled) while the game starts. Keep it short.
+#: pe/ui/settings.cpp
+msgid "Compile ahead"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Compiles the code a game used before as it starts, so new areas stutter less."
 msgstr ""
 
 #: pe/ui/library.cpp
@@ -276,6 +298,10 @@ msgid "Docked"
 msgstr ""
 
 #: pe/ui/settings.cpp
+msgid "Draws an effect once its shader is ready instead of pausing. Things can be missing for a moment."
+msgstr ""
+
+#: pe/ui/settings.cpp
 msgid "Draws the menu's small text larger."
 msgstr ""
 
@@ -320,6 +346,37 @@ msgstr ""
 #. {0} is a folder.
 #: eden_services.cpp, host/fake_services.hpp
 msgid "Exported to {0}."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "FASTER CPU EMULATION"
+msgstr ""
+
+#. A switch: the emulated processor's floating-point math is less exact and faster. CPU stays.
+#: pe/ui/settings.cpp
+msgid "Faster CPU emulation"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "FASTER DMA"
+msgstr ""
+
+#. A switch: memory transfers to the emulated graphics processor are less exact and faster. DMA is a name (unchanged).
+#: pe/ui/settings.cpp
+msgid "Faster DMA"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Faster games, at some cost in accuracy."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "FASTER GPU EMULATION"
+msgstr ""
+
+#. A switch: the emulated graphics processor is less exact and faster. GPU stays.
+#: pe/ui/settings.cpp
+msgid "Faster GPU emulation"
 msgstr ""
 
 #: pe/ui/library.cpp
@@ -507,6 +564,10 @@ msgstr ""
 msgid "Keep keys, firmware and roms folders together. TRIANGLE uses the folder shown."
 msgstr ""
 
+#: pe/ui/settings.cpp
+msgid "Keeps what a game reads back from the GPU exact. Off is faster, and some effects break."
+msgstr ""
+
 #. Label: the encryption keys file (prod.keys).
 #: pe/ui/browse.cpp
 msgid "KEYS"
@@ -554,12 +615,24 @@ msgstr ""
 msgid "Launch game"
 msgstr ""
 
+#: pe/ui/settings.cpp
+msgid "Less exact floating-point math: faster, and a few games misbehave."
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Less exact memory transfers to the GPU: faster, and a few games show wrong graphics."
+msgstr ""
+
 #: pe/ui/home.cpp
 msgid "Library"
 msgstr ""
 
 #: pe/ui/library.cpp
 msgid "LIBRARY"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Lowest GPU accuracy: faster in demanding games, and graphics can be wrong."
 msgstr ""
 
 #. Headline of the Settings screen.
@@ -733,6 +806,15 @@ msgstr ""
 msgid "Patch"
 msgstr ""
 
+#. A settings category: options that make games run faster, at some cost in accuracy.
+#: pe/ui/settings.cpp
+msgid "Performance"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "PERFORMANCE"
+msgstr ""
+
 #: settings_store.h
 msgid "Polish"
 msgstr ""
@@ -796,6 +878,15 @@ msgstr ""
 #. {0} is the version, for example v1.000.030.
 #: pe/ui/home.cpp
 msgid "PS5 EDITION  /  {0}"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "REACTIVE FLUSHING"
+msgstr ""
+
+#. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
+#: pe/ui/settings.cpp
+msgid "Reactive flushing"
 msgstr ""
 
 #: pe/ui/settings.cpp
@@ -957,6 +1048,19 @@ msgstr ""
 
 #: pe/ui/library.cpp
 msgid "SIZE"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "SKIP CPU INVALIDATION"
+msgstr ""
+
+#. A switch: fewer checks when a game changes memory the graphics processor uses. CPU stays.
+#: pe/ui/settings.cpp
+msgid "Skip CPU invalidation"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Skips some checks when a game changes memory the GPU uses: faster, and textures can be stale."
 msgstr ""
 
 #: pe/ui/settings.cpp

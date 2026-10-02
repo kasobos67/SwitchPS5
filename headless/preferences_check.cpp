@@ -147,6 +147,46 @@ int main() {
     assert(Eden::SaveGameSettings(racer, {-1, 4, -1, -1}, file) && Eden::LoadGameSettings(racer, file).refresh == -1);
     assert(!Eden::SaveGameSettings(racer, {-1, -1, -1, 2}, file));
 
+    // Performance ("performance", and one per title): the block list on and the trade-offs off
+    // unless chosen. A title's own values go before the general ones, one value at a time.
+    auto speed = Eden::LoadPerformance(racer, file);
+    assert(speed.block_list && !speed.async_shaders && !speed.fast_gpu && !speed.unsafe_cpu && !speed.unsafe_dma);
+    assert(Eden::SavePerformance(0, {false, true, false, false, false}, file));  // title 0: general
+    speed = Eden::LoadPerformance(racer, file);
+    assert(!speed.block_list && speed.async_shaders && !speed.fast_gpu);
+    assert(Read(file).find("\"async_shaders\": true") != std::string::npos);
+    assert(Eden::SavePerformance(racer, {true, false, true, true, true}, file));
+    speed = Eden::LoadPerformance(racer, file);
+    assert(speed.block_list && !speed.async_shaders && speed.fast_gpu && speed.unsafe_cpu && speed.unsafe_dma);
+    speed = Eden::LoadPerformance(quest, file);  // another title keeps the general values
+    assert(!speed.block_list && speed.async_shaders && !speed.fast_gpu && !speed.unsafe_cpu && !speed.unsafe_dma);
+    assert(Eden::LoadPerformance(0, file).async_shaders);
+    assert(Eden::LoadGameSettings(racer, file).resolution == 4);  // the title's other settings stay
+    // A file written by hand: a title names one value, the rest are the general ones; a value of
+    // the wrong type reads as if it were absent.
+    const std::string by_hand = std::string(directory) + "/performance.json";
+    std::ofstream(by_hand) << R"({"performance": {"fast_gpu": true, "unsafe_cpu": "yes"},
+        "games": {"0100000000010000": {"performance": {"block_list": false}}}})";
+    speed = Eden::LoadPerformance(racer, by_hand);
+    assert(!speed.block_list && speed.fast_gpu && !speed.unsafe_cpu && !speed.async_shaders);
+    assert(Eden::LoadPerformance(quest, by_hand).block_list);
+    // Reactive flushing is on and skipping the CPU's invalidation off unless chosen; both are
+    // saved with the rest and a title can have its own.
+    speed = Eden::LoadPerformance(quest, by_hand);
+    assert(speed.reactive_flushing && !speed.skip_invalidation);
+    speed.reactive_flushing = false;
+    speed.skip_invalidation = true;
+    assert(Eden::SavePerformance(0, speed, by_hand));
+    speed = Eden::LoadPerformance(quest, by_hand);
+    assert(!speed.reactive_flushing && speed.skip_invalidation && speed.fast_gpu);
+    assert(Read(by_hand).find("\"reactive_flushing\": false") != std::string::npos);
+    assert(Read(by_hand).find("\"skip_invalidation\": true") != std::string::npos);
+    std::ofstream(by_hand) << R"({"performance": {"skip_invalidation": true},
+        "games": {"0100000000010000": {"performance": {"skip_invalidation": false, "reactive_flushing": false}}}})";
+    speed = Eden::LoadPerformance(racer, by_hand);
+    assert(!speed.skip_invalidation && !speed.reactive_flushing);
+    assert(Eden::LoadPerformance(quest, by_hand).skip_invalidation && Eden::LoadPerformance(quest, by_hand).reactive_flushing);
+
     // Game files folder.
     assert(Eden::LoadSavedAssetsDir(file).empty());
     assert(Eden::SaveAssetsDir("/mnt/ext1/eden", file));

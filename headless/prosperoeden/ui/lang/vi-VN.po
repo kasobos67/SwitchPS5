@@ -84,6 +84,15 @@ msgid "Another language"
 msgstr "Ngôn ngữ khác"
 
 #: pe/ui/settings.cpp
+msgid "ASYNCHRONOUS SHADERS"
+msgstr "SHADER BẤT ĐỒNG BỘ"
+
+#. A switch. A shader is a small graphics program; keep the word the language's players use for it.
+#: pe/ui/settings.cpp
+msgid "Asynchronous shaders"
+msgstr "Shader bất đồng bộ"
+
+#: pe/ui/settings.cpp
 msgid "Audio"
 msgstr "Âm thanh"
 
@@ -169,6 +178,19 @@ msgstr "Chọn thư mục chứa khóa, firmware và trò chơi của bạn"
 #: pe/ui/browse.cpp
 msgid "Choose the language games use"
 msgstr "Chọn ngôn ngữ dùng trong trò chơi"
+
+#: pe/ui/settings.cpp
+msgid "COMPILE AHEAD"
+msgstr "BIÊN DỊCH TRƯỚC"
+
+#. A switch: the program code a game used in earlier sessions is prepared (compiled) while the game starts. Keep it short.
+#: pe/ui/settings.cpp
+msgid "Compile ahead"
+msgstr "Biên dịch trước"
+
+#: pe/ui/settings.cpp
+msgid "Compiles the code a game used before as it starts, so new areas stutter less."
+msgstr "Biên dịch mã trò chơi đã dùng trước đó khi khởi động, để khu vực mới ít bị giật hơn."
 
 #: pe/ui/library.cpp
 msgid "Console mode"
@@ -276,6 +298,10 @@ msgid "Docked"
 msgstr "TV"
 
 #: pe/ui/settings.cpp
+msgid "Draws an effect once its shader is ready instead of pausing. Things can be missing for a moment."
+msgstr "Vẽ hiệu ứng khi shader đã sẵn sàng thay vì tạm dừng. Một số thứ có thể thiếu trong chốc lát."
+
+#: pe/ui/settings.cpp
 msgid "Draws the menu's small text larger."
 msgstr "Hiển thị chữ nhỏ trong menu lớn hơn."
 
@@ -321,6 +347,37 @@ msgstr "Xuất thất bại. Hãy kiểm tra xem có ghi được vào thư mụ
 #: eden_services.cpp, host/fake_services.hpp
 msgid "Exported to {0}."
 msgstr "Đã xuất ra {0}."
+
+#: pe/ui/settings.cpp
+msgid "FASTER CPU EMULATION"
+msgstr "GIẢ LẬP CPU NHANH HƠN"
+
+#. A switch: the emulated processor's floating-point math is less exact and faster. CPU stays.
+#: pe/ui/settings.cpp
+msgid "Faster CPU emulation"
+msgstr "Giả lập CPU nhanh hơn"
+
+#: pe/ui/settings.cpp
+msgid "FASTER DMA"
+msgstr "DMA NHANH HƠN"
+
+#. A switch: memory transfers to the emulated graphics processor are less exact and faster. DMA is a name (unchanged).
+#: pe/ui/settings.cpp
+msgid "Faster DMA"
+msgstr "DMA nhanh hơn"
+
+#: pe/ui/settings.cpp
+msgid "Faster games, at some cost in accuracy."
+msgstr "Trò chơi nhanh hơn, đổi lại kém chính xác hơn một chút."
+
+#: pe/ui/settings.cpp
+msgid "FASTER GPU EMULATION"
+msgstr "GIẢ LẬP GPU NHANH HƠN"
+
+#. A switch: the emulated graphics processor is less exact and faster. GPU stays.
+#: pe/ui/settings.cpp
+msgid "Faster GPU emulation"
+msgstr "Giả lập GPU nhanh hơn"
 
 #: pe/ui/library.cpp
 msgid "FILE"
@@ -507,6 +564,10 @@ msgstr "Tiếng Nhật"
 msgid "Keep keys, firmware and roms folders together. TRIANGLE uses the folder shown."
 msgstr "Hãy để các thư mục keys, firmware và roms cùng một chỗ. TAM GIÁC dùng thư mục đang hiển thị."
 
+#: pe/ui/settings.cpp
+msgid "Keeps what a game reads back from the GPU exact. Off is faster, and some effects break."
+msgstr "Giữ chính xác những gì trò chơi đọc lại từ GPU. Tắt thì nhanh hơn, nhưng một số hiệu ứng bị hỏng."
+
 #. Label: the encryption keys file (prod.keys).
 #: pe/ui/browse.cpp
 msgid "KEYS"
@@ -554,6 +615,14 @@ msgstr "Trò chơi mở gần nhất"
 msgid "Launch game"
 msgstr "Mở trò chơi"
 
+#: pe/ui/settings.cpp
+msgid "Less exact floating-point math: faster, and a few games misbehave."
+msgstr "Phép tính dấu phẩy động kém chính xác hơn: nhanh hơn, nhưng một vài trò chơi chạy sai."
+
+#: pe/ui/settings.cpp
+msgid "Less exact memory transfers to the GPU: faster, and a few games show wrong graphics."
+msgstr "Truyền bộ nhớ tới GPU kém chính xác hơn: nhanh hơn, nhưng một vài trò chơi hiển thị đồ họa sai."
+
 #: pe/ui/home.cpp
 msgid "Library"
 msgstr "Thư viện"
@@ -561,6 +630,10 @@ msgstr "Thư viện"
 #: pe/ui/library.cpp
 msgid "LIBRARY"
 msgstr "THƯ VIỆN"
+
+#: pe/ui/settings.cpp
+msgid "Lowest GPU accuracy: faster in demanding games, and graphics can be wrong."
+msgstr "Độ chính xác GPU thấp nhất: nhanh hơn trong trò chơi nặng, nhưng đồ họa có thể bị sai."
 
 #. Headline of the Settings screen.
 #: pe/ui/settings.cpp
@@ -733,6 +806,15 @@ msgstr "Thư mục cha"
 msgid "Patch"
 msgstr "Bản vá"
 
+#. A settings category: options that make games run faster, at some cost in accuracy.
+#: pe/ui/settings.cpp
+msgid "Performance"
+msgstr "Hiệu năng"
+
+#: pe/ui/settings.cpp
+msgid "PERFORMANCE"
+msgstr "HIỆU NĂNG"
+
 #: settings_store.h
 msgid "Polish"
 msgstr "Tiếng Ba Lan"
@@ -797,6 +879,15 @@ msgstr "PHIÊN BẢN PS5"
 #: pe/ui/home.cpp
 msgid "PS5 EDITION  /  {0}"
 msgstr "PHIÊN BẢN PS5  /  {0}"
+
+#: pe/ui/settings.cpp
+msgid "REACTIVE FLUSHING"
+msgstr "XẢ PHẢN ỨNG"
+
+#. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
+#: pe/ui/settings.cpp
+msgid "Reactive flushing"
+msgstr "Xả phản ứng"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -958,6 +1049,19 @@ msgstr "Hiện hoặc ẩn bộ đếm FPS"
 #: pe/ui/library.cpp
 msgid "SIZE"
 msgstr "DUNG LƯỢNG"
+
+#: pe/ui/settings.cpp
+msgid "SKIP CPU INVALIDATION"
+msgstr "BỎ QUA VÔ HIỆU HÓA CPU"
+
+#. A switch: fewer checks when a game changes memory the graphics processor uses. CPU stays.
+#: pe/ui/settings.cpp
+msgid "Skip CPU invalidation"
+msgstr "Bỏ qua vô hiệu hóa CPU"
+
+#: pe/ui/settings.cpp
+msgid "Skips some checks when a game changes memory the GPU uses: faster, and textures can be stale."
+msgstr "Bỏ qua một số kiểm tra khi trò chơi thay đổi bộ nhớ GPU đang dùng: nhanh hơn, nhưng texture có thể bị cũ."
 
 #: pe/ui/settings.cpp
 msgid "Solid panels, brighter text and an outlined highlight."

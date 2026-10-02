@@ -72,6 +72,7 @@ class Launcher
     {
         none,
         video,
+        performance,
         audio,
         controls,
         accessibility,
@@ -97,7 +98,7 @@ class Launcher
     // quiet: a change that shows at once needs no "Saved" line.
     bool save_preferences(bool quiet = false);
     // The switches of a dialog as the preferences have them, in the order of its rows.
-    std::array<bool, 3> switch_states(Modal modal) const;
+    std::array<bool, 7> switch_states(Modal modal) const;
     // Shows the launcher as the preferences' accessibility switches say.
     void apply_look();
 
@@ -212,8 +213,9 @@ class Launcher
     tween::Spring section_;
     int option_ = 0;
     tween::Spring option_cursor_; // highlight position in pixels
-    std::array<tween::Spring, 4> switches_{};
+    std::array<tween::Spring, 7> switches_{};
     ListView video_rows_; // the Video dialog's rows (more than it shows)
+    ListView performance_rows_; // the Performance dialog's rows (more than it shows)
     GameSettings game_settings_;
     bool game_docked_ = true;
     SaveSource import_source_ = SaveSource::none; // what Save data could import for the game

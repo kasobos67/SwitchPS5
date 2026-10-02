@@ -29,9 +29,9 @@ Launcher::Launcher(Services &services, Textures &textures, const Fonts &fonts, b
     const bool continue_ready = home_.setup_ready && home_.last_exists;
     home_focus_ = continue_ready ? 0 : home_.setup_ready ? 1 : 2;
     home_springs_[static_cast<std::size_t>(home_focus_)].snap(1.0f);
-    settings_.visible = 7;
-    settings_.pitch = 88.0f;
-    settings_.reset(7, 0);
+    settings_.visible = 8;
+    settings_.pitch = 79.0f;
+    settings_.reset(8, 0);
     section_.snap(1.0f);
     detail_.snap(1.0f);
     cue(home_.launch_failed ? Cue::notify : first_start ? Cue::welcome : Cue::resume);
@@ -76,18 +76,21 @@ void Launcher::open_modal(Modal modal)
     option_cursor_.snap(dialog_row_top(modal, 0));
     message_.clear();
     // Switches show their state at once; they only animate when changed.
-    const std::array<bool, 3> states = switch_states(modal);
+    const std::array<bool, 7> states = switch_states(modal);
     for (std::size_t i = 0; i < states.size(); ++i)
         switches_[i].snap(states[i] ? 1.0f : 0.0f);
     cue(Cue::modal_open);
 }
 
-std::array<bool, 3> Launcher::switch_states(Modal modal) const
+std::array<bool, 7> Launcher::switch_states(Modal modal) const
 {
     switch (modal)
     {
     case Modal::video:
         return {prefs_.hud, false, false};
+    case Modal::performance:
+        return {prefs_.block_list,  prefs_.async_shaders,     prefs_.fast_gpu, prefs_.unsafe_cpu,
+                prefs_.unsafe_dma,  prefs_.reactive_flushing, prefs_.skip_invalidation};
     case Modal::audio:
         return {prefs_.mute, false, false};
     case Modal::controls:
@@ -191,6 +194,7 @@ void Launcher::update(float dt)
     files_.update(dt);
     language_.update(dt);
     video_rows_.update(dt);
+    performance_rows_.update(dt);
     game_rows_.update(dt);
     mod_rows_.update(dt);
     mode_.target = selected_docked_ ? 0.0f : 1.0f;
@@ -206,7 +210,7 @@ void Launcher::update(float dt)
     if (modal_ != Modal::none)
         option_cursor_.target = dialog_row_top(modal_, option_);
     option_cursor_.update(dt, theme::kCursorSpring);
-    const std::array<bool, 3> states = switch_states(modal_shown_);
+    const std::array<bool, 7> states = switch_states(modal_shown_);
     for (std::size_t i = 0; i < states.size(); ++i)
     {
         switches_[i].target = states[i] ? 1.0f : 0.0f;

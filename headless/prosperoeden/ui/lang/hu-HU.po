@@ -84,6 +84,15 @@ msgid "Another language"
 msgstr "Másik nyelv"
 
 #: pe/ui/settings.cpp
+msgid "ASYNCHRONOUS SHADERS"
+msgstr "ASZINKRON SHADEREK"
+
+#. A switch. A shader is a small graphics program; keep the word the language's players use for it.
+#: pe/ui/settings.cpp
+msgid "Asynchronous shaders"
+msgstr "Aszinkron shaderek"
+
+#: pe/ui/settings.cpp
 msgid "Audio"
 msgstr "Hang"
 
@@ -169,6 +178,19 @@ msgstr "Válaszd ki a kulcsokat, a firmware-t és a játékokat tartalmazó mapp
 #: pe/ui/browse.cpp
 msgid "Choose the language games use"
 msgstr "Válaszd ki a játékok nyelvét"
+
+#: pe/ui/settings.cpp
+msgid "COMPILE AHEAD"
+msgstr "ELŐRE FORDÍTÁS"
+
+#. A switch: the program code a game used in earlier sessions is prepared (compiled) while the game starts. Keep it short.
+#: pe/ui/settings.cpp
+msgid "Compile ahead"
+msgstr "Előre fordítás"
+
+#: pe/ui/settings.cpp
+msgid "Compiles the code a game used before as it starts, so new areas stutter less."
+msgstr "Indításkor lefordítja a játék által korábban használt kódot, így az új területek kevésbé akadoznak."
 
 #: pe/ui/library.cpp
 msgid "Console mode"
@@ -276,6 +298,10 @@ msgid "Docked"
 msgstr "Dokkolt"
 
 #: pe/ui/settings.cpp
+msgid "Draws an effect once its shader is ready instead of pausing. Things can be missing for a moment."
+msgstr "Az effektet akkor rajzolja ki, amikor a shadere elkészült, szüneteltetés helyett. Valami egy pillanatra hiányozhat."
+
+#: pe/ui/settings.cpp
 msgid "Draws the menu's small text larger."
 msgstr "Megnöveli a menü apró szövegeit."
 
@@ -321,6 +347,37 @@ msgstr "Az exportálás sikertelen. Ellenőrizd, hogy írható-e a játékfájlo
 #: eden_services.cpp, host/fake_services.hpp
 msgid "Exported to {0}."
 msgstr "Exportálva ide: {0}."
+
+#: pe/ui/settings.cpp
+msgid "FASTER CPU EMULATION"
+msgstr "GYORSABB CPU-EMULÁCIÓ"
+
+#. A switch: the emulated processor's floating-point math is less exact and faster. CPU stays.
+#: pe/ui/settings.cpp
+msgid "Faster CPU emulation"
+msgstr "Gyorsabb CPU-emuláció"
+
+#: pe/ui/settings.cpp
+msgid "FASTER DMA"
+msgstr "GYORSABB DMA"
+
+#. A switch: memory transfers to the emulated graphics processor are less exact and faster. DMA is a name (unchanged).
+#: pe/ui/settings.cpp
+msgid "Faster DMA"
+msgstr "Gyorsabb DMA"
+
+#: pe/ui/settings.cpp
+msgid "Faster games, at some cost in accuracy."
+msgstr "Gyorsabb játékok, némi pontosság árán."
+
+#: pe/ui/settings.cpp
+msgid "FASTER GPU EMULATION"
+msgstr "GYORSABB GPU-EMULÁCIÓ"
+
+#. A switch: the emulated graphics processor is less exact and faster. GPU stays.
+#: pe/ui/settings.cpp
+msgid "Faster GPU emulation"
+msgstr "Gyorsabb GPU-emuláció"
 
 #: pe/ui/library.cpp
 msgid "FILE"
@@ -507,6 +564,10 @@ msgstr "Japán"
 msgid "Keep keys, firmware and roms folders together. TRIANGLE uses the folder shown."
 msgstr "Tartsd egy helyen a keys, firmware és roms mappát. A HÁROMSZÖG a megjelenített mappát használja."
 
+#: pe/ui/settings.cpp
+msgid "Keeps what a game reads back from the GPU exact. Off is faster, and some effects break."
+msgstr "Pontosan tartja, amit a játék visszaolvas a GPU-ról. Kikapcsolva gyorsabb, de egyes effektek elromlanak."
+
 #. Label: the encryption keys file (prod.keys).
 #: pe/ui/browse.cpp
 msgid "KEYS"
@@ -554,6 +615,14 @@ msgstr "Legutóbb megnyitott játék"
 msgid "Launch game"
 msgstr "Játék indítása"
 
+#: pe/ui/settings.cpp
+msgid "Less exact floating-point math: faster, and a few games misbehave."
+msgstr "Kevésbé pontos lebegőpontos számítás: gyorsabb, de néhány játék hibásan működik."
+
+#: pe/ui/settings.cpp
+msgid "Less exact memory transfers to the GPU: faster, and a few games show wrong graphics."
+msgstr "Kevésbé pontos memóriaátvitel a GPU-ra: gyorsabb, de néhány játék grafikája hibás lesz."
+
 #: pe/ui/home.cpp
 msgid "Library"
 msgstr "Játéktár"
@@ -561,6 +630,10 @@ msgstr "Játéktár"
 #: pe/ui/library.cpp
 msgid "LIBRARY"
 msgstr "JÁTÉKTÁR"
+
+#: pe/ui/settings.cpp
+msgid "Lowest GPU accuracy: faster in demanding games, and graphics can be wrong."
+msgstr "Legalacsonyabb GPU-pontosság: gyorsabb az igényes játékokban, de a grafika hibás lehet."
 
 #. Headline of the Settings screen.
 #: pe/ui/settings.cpp
@@ -733,6 +806,15 @@ msgstr "Szülőmappa"
 msgid "Patch"
 msgstr "Patch"
 
+#. A settings category: options that make games run faster, at some cost in accuracy.
+#: pe/ui/settings.cpp
+msgid "Performance"
+msgstr "Teljesítmény"
+
+#: pe/ui/settings.cpp
+msgid "PERFORMANCE"
+msgstr "TELJESÍTMÉNY"
+
 #: settings_store.h
 msgid "Polish"
 msgstr "Lengyel"
@@ -797,6 +879,15 @@ msgstr "PS5-KIADÁS"
 #: pe/ui/home.cpp
 msgid "PS5 EDITION  /  {0}"
 msgstr "PS5-KIADÁS  /  {0}"
+
+#: pe/ui/settings.cpp
+msgid "REACTIVE FLUSHING"
+msgstr "REAKTÍV ÜRÍTÉS"
+
+#. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
+#: pe/ui/settings.cpp
+msgid "Reactive flushing"
+msgstr "Reaktív ürítés"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -958,6 +1049,19 @@ msgstr "FPS-kijelző be- vagy kikapcsolása"
 #: pe/ui/library.cpp
 msgid "SIZE"
 msgstr "MÉRET"
+
+#: pe/ui/settings.cpp
+msgid "SKIP CPU INVALIDATION"
+msgstr "CPU-ÉRVÉNYTELENÍTÉS KIHAGYÁSA"
+
+#. A switch: fewer checks when a game changes memory the graphics processor uses. CPU stays.
+#: pe/ui/settings.cpp
+msgid "Skip CPU invalidation"
+msgstr "CPU-érvénytelenítés kihagyása"
+
+#: pe/ui/settings.cpp
+msgid "Skips some checks when a game changes memory the GPU uses: faster, and textures can be stale."
+msgstr "Kihagy néhány ellenőrzést, amikor a játék a GPU által használt memóriát módosítja: gyorsabb, de a textúrák elavultak lehetnek."
 
 #: pe/ui/settings.cpp
 msgid "Solid panels, brighter text and an outlined highlight."

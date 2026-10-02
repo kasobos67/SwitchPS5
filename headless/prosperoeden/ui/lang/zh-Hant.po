@@ -84,6 +84,15 @@ msgid "Another language"
 msgstr "其他語言"
 
 #: pe/ui/settings.cpp
+msgid "ASYNCHRONOUS SHADERS"
+msgstr "非同步著色器"
+
+#. A switch. A shader is a small graphics program; keep the word the language's players use for it.
+#: pe/ui/settings.cpp
+msgid "Asynchronous shaders"
+msgstr "非同步著色器"
+
+#: pe/ui/settings.cpp
 msgid "Audio"
 msgstr "音訊"
 
@@ -169,6 +178,19 @@ msgstr "選擇存放金鑰、韌體和遊戲的資料夾"
 #: pe/ui/browse.cpp
 msgid "Choose the language games use"
 msgstr "選擇遊戲使用的語言"
+
+#: pe/ui/settings.cpp
+msgid "COMPILE AHEAD"
+msgstr "預先編譯"
+
+#. A switch: the program code a game used in earlier sessions is prepared (compiled) while the game starts. Keep it short.
+#: pe/ui/settings.cpp
+msgid "Compile ahead"
+msgstr "預先編譯"
+
+#: pe/ui/settings.cpp
+msgid "Compiles the code a game used before as it starts, so new areas stutter less."
+msgstr "在遊戲啟動時編譯它先前用過的程式碼，讓新區域的卡頓更少。"
 
 #: pe/ui/library.cpp
 msgid "Console mode"
@@ -276,6 +298,10 @@ msgid "Docked"
 msgstr "TV模式"
 
 #: pe/ui/settings.cpp
+msgid "Draws an effect once its shader is ready instead of pausing. Things can be missing for a moment."
+msgstr "著色器準備好後才繪製效果，而不暫停遊戲。部分內容可能短暫缺少。"
+
+#: pe/ui/settings.cpp
 msgid "Draws the menu's small text larger."
 msgstr "將選單中的小字放大顯示。"
 
@@ -321,6 +347,37 @@ msgstr "匯出失敗。請確認遊戲檔案的資料夾可以寫入。"
 #: eden_services.cpp, host/fake_services.hpp
 msgid "Exported to {0}."
 msgstr "已匯出至 {0}。"
+
+#: pe/ui/settings.cpp
+msgid "FASTER CPU EMULATION"
+msgstr "更快的 CPU 模擬"
+
+#. A switch: the emulated processor's floating-point math is less exact and faster. CPU stays.
+#: pe/ui/settings.cpp
+msgid "Faster CPU emulation"
+msgstr "更快的 CPU 模擬"
+
+#: pe/ui/settings.cpp
+msgid "FASTER DMA"
+msgstr "更快的 DMA"
+
+#. A switch: memory transfers to the emulated graphics processor are less exact and faster. DMA is a name (unchanged).
+#: pe/ui/settings.cpp
+msgid "Faster DMA"
+msgstr "更快的 DMA"
+
+#: pe/ui/settings.cpp
+msgid "Faster games, at some cost in accuracy."
+msgstr "以少許精確度換取更快的遊戲速度。"
+
+#: pe/ui/settings.cpp
+msgid "FASTER GPU EMULATION"
+msgstr "更快的 GPU 模擬"
+
+#. A switch: the emulated graphics processor is less exact and faster. GPU stays.
+#: pe/ui/settings.cpp
+msgid "Faster GPU emulation"
+msgstr "更快的 GPU 模擬"
 
 #: pe/ui/library.cpp
 msgid "FILE"
@@ -507,6 +564,10 @@ msgstr "日文"
 msgid "Keep keys, firmware and roms folders together. TRIANGLE uses the folder shown."
 msgstr "請將 keys、firmware 與 roms 資料夾放在一起。按△鍵使用目前顯示的資料夾。"
 
+#: pe/ui/settings.cpp
+msgid "Keeps what a game reads back from the GPU exact. Off is faster, and some effects break."
+msgstr "讓遊戲從 GPU 讀回的內容保持精確。關閉後更快，但部分效果會失效。"
+
 #. Label: the encryption keys file (prod.keys).
 #: pe/ui/browse.cpp
 msgid "KEYS"
@@ -554,6 +615,14 @@ msgstr "上次開啟的遊戲"
 msgid "Launch game"
 msgstr "啟動遊戲"
 
+#: pe/ui/settings.cpp
+msgid "Less exact floating-point math: faster, and a few games misbehave."
+msgstr "浮點運算精確度較低：更快，但少數遊戲執行異常。"
+
+#: pe/ui/settings.cpp
+msgid "Less exact memory transfers to the GPU: faster, and a few games show wrong graphics."
+msgstr "向 GPU 傳輸記憶體的精確度較低：更快，但少數遊戲畫面出錯。"
+
 #: pe/ui/home.cpp
 msgid "Library"
 msgstr "遊戲庫"
@@ -561,6 +630,10 @@ msgstr "遊戲庫"
 #: pe/ui/library.cpp
 msgid "LIBRARY"
 msgstr "遊戲庫"
+
+#: pe/ui/settings.cpp
+msgid "Lowest GPU accuracy: faster in demanding games, and graphics can be wrong."
+msgstr "最低 GPU 精確度：在要求高的遊戲中更快，但畫面可能出錯。"
 
 #. Headline of the Settings screen.
 #: pe/ui/settings.cpp
@@ -733,6 +806,15 @@ msgstr "上層資料夾"
 msgid "Patch"
 msgstr "修補檔"
 
+#. A settings category: options that make games run faster, at some cost in accuracy.
+#: pe/ui/settings.cpp
+msgid "Performance"
+msgstr "效能"
+
+#: pe/ui/settings.cpp
+msgid "PERFORMANCE"
+msgstr "效能"
+
 #: settings_store.h
 msgid "Polish"
 msgstr "波蘭文"
@@ -797,6 +879,15 @@ msgstr "PS5 版"
 #: pe/ui/home.cpp
 msgid "PS5 EDITION  /  {0}"
 msgstr "PS5 版  /  {0}"
+
+#: pe/ui/settings.cpp
+msgid "REACTIVE FLUSHING"
+msgstr "反應式刷新"
+
+#. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
+#: pe/ui/settings.cpp
+msgid "Reactive flushing"
+msgstr "反應式刷新"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -958,6 +1049,19 @@ msgstr "顯示或隱藏 FPS"
 #: pe/ui/library.cpp
 msgid "SIZE"
 msgstr "大小"
+
+#: pe/ui/settings.cpp
+msgid "SKIP CPU INVALIDATION"
+msgstr "略過 CPU 失效處理"
+
+#. A switch: fewer checks when a game changes memory the graphics processor uses. CPU stays.
+#: pe/ui/settings.cpp
+msgid "Skip CPU invalidation"
+msgstr "略過 CPU 失效處理"
+
+#: pe/ui/settings.cpp
+msgid "Skips some checks when a game changes memory the GPU uses: faster, and textures can be stale."
+msgstr "遊戲修改 GPU 使用的記憶體時略過部分檢查：更快，但紋理可能不是最新的。"
 
 #: pe/ui/settings.cpp
 msgid "Solid panels, brighter text and an outlined highlight."

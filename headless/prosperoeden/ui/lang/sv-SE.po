@@ -84,6 +84,15 @@ msgid "Another language"
 msgstr "Annat språk"
 
 #: pe/ui/settings.cpp
+msgid "ASYNCHRONOUS SHADERS"
+msgstr "ASYNKRONA SHADERS"
+
+#. A switch. A shader is a small graphics program; keep the word the language's players use for it.
+#: pe/ui/settings.cpp
+msgid "Asynchronous shaders"
+msgstr "Asynkrona shaders"
+
+#: pe/ui/settings.cpp
 msgid "Audio"
 msgstr "Ljud"
 
@@ -169,6 +178,19 @@ msgstr "Välj mappen med dina nycklar, firmware och spel"
 #: pe/ui/browse.cpp
 msgid "Choose the language games use"
 msgstr "Välj språket som spelen använder"
+
+#: pe/ui/settings.cpp
+msgid "COMPILE AHEAD"
+msgstr "KOMPILERA I FÖRVÄG"
+
+#. A switch: the program code a game used in earlier sessions is prepared (compiled) while the game starts. Keep it short.
+#: pe/ui/settings.cpp
+msgid "Compile ahead"
+msgstr "Kompilera i förväg"
+
+#: pe/ui/settings.cpp
+msgid "Compiles the code a game used before as it starts, so new areas stutter less."
+msgstr "Kompilerar koden ett spel har använt tidigare när det startar, så att nya områden hackar mindre."
 
 #: pe/ui/library.cpp
 msgid "Console mode"
@@ -276,6 +298,10 @@ msgid "Docked"
 msgstr "Dockat"
 
 #: pe/ui/settings.cpp
+msgid "Draws an effect once its shader is ready instead of pausing. Things can be missing for a moment."
+msgstr "Ritar en effekt när dess shader är klar i stället för att pausa. Något kan saknas en stund."
+
+#: pe/ui/settings.cpp
 msgid "Draws the menu's small text larger."
 msgstr "Gör menyns små texter större."
 
@@ -321,6 +347,37 @@ msgstr "Exporten misslyckades. Kontrollera att det går att skriva till mappen m
 #: eden_services.cpp, host/fake_services.hpp
 msgid "Exported to {0}."
 msgstr "Exporterat till {0}."
+
+#: pe/ui/settings.cpp
+msgid "FASTER CPU EMULATION"
+msgstr "SNABBARE CPU-EMULERING"
+
+#. A switch: the emulated processor's floating-point math is less exact and faster. CPU stays.
+#: pe/ui/settings.cpp
+msgid "Faster CPU emulation"
+msgstr "Snabbare CPU-emulering"
+
+#: pe/ui/settings.cpp
+msgid "FASTER DMA"
+msgstr "SNABBARE DMA"
+
+#. A switch: memory transfers to the emulated graphics processor are less exact and faster. DMA is a name (unchanged).
+#: pe/ui/settings.cpp
+msgid "Faster DMA"
+msgstr "Snabbare DMA"
+
+#: pe/ui/settings.cpp
+msgid "Faster games, at some cost in accuracy."
+msgstr "Snabbare spel, på bekostnad av noggrannhet."
+
+#: pe/ui/settings.cpp
+msgid "FASTER GPU EMULATION"
+msgstr "SNABBARE GPU-EMULERING"
+
+#. A switch: the emulated graphics processor is less exact and faster. GPU stays.
+#: pe/ui/settings.cpp
+msgid "Faster GPU emulation"
+msgstr "Snabbare GPU-emulering"
 
 #: pe/ui/library.cpp
 msgid "FILE"
@@ -507,6 +564,10 @@ msgstr "Japanska"
 msgid "Keep keys, firmware and roms folders together. TRIANGLE uses the folder shown."
 msgstr "Håll mapparna keys, firmware och roms samlade. TRIANGEL använder mappen som visas."
 
+#: pe/ui/settings.cpp
+msgid "Keeps what a game reads back from the GPU exact. Off is faster, and some effects break."
+msgstr "Håller det ett spel läser tillbaka från GPU:n exakt. Av är snabbare, men vissa effekter går sönder."
+
 #. Label: the encryption keys file (prod.keys).
 #: pe/ui/browse.cpp
 msgid "KEYS"
@@ -554,6 +615,14 @@ msgstr "Senast öppnade spel"
 msgid "Launch game"
 msgstr "Starta spelet"
 
+#: pe/ui/settings.cpp
+msgid "Less exact floating-point math: faster, and a few games misbehave."
+msgstr "Mindre exakt flyttalsräkning: snabbare, men enstaka spel beter sig fel."
+
+#: pe/ui/settings.cpp
+msgid "Less exact memory transfers to the GPU: faster, and a few games show wrong graphics."
+msgstr "Mindre exakta minnesöverföringar till GPU:n: snabbare, men enstaka spel visar fel grafik."
+
 #: pe/ui/home.cpp
 msgid "Library"
 msgstr "Bibliotek"
@@ -561,6 +630,10 @@ msgstr "Bibliotek"
 #: pe/ui/library.cpp
 msgid "LIBRARY"
 msgstr "BIBLIOTEK"
+
+#: pe/ui/settings.cpp
+msgid "Lowest GPU accuracy: faster in demanding games, and graphics can be wrong."
+msgstr "Lägsta GPU-noggrannhet: snabbare i krävande spel, men grafiken kan bli fel."
 
 #. Headline of the Settings screen.
 #: pe/ui/settings.cpp
@@ -733,6 +806,15 @@ msgstr "Överordnad mapp"
 msgid "Patch"
 msgstr "Patch"
 
+#. A settings category: options that make games run faster, at some cost in accuracy.
+#: pe/ui/settings.cpp
+msgid "Performance"
+msgstr "Prestanda"
+
+#: pe/ui/settings.cpp
+msgid "PERFORMANCE"
+msgstr "PRESTANDA"
+
 #: settings_store.h
 msgid "Polish"
 msgstr "Polska"
@@ -797,6 +879,15 @@ msgstr "PS5-UTGÅVA"
 #: pe/ui/home.cpp
 msgid "PS5 EDITION  /  {0}"
 msgstr "PS5-UTGÅVA  /  {0}"
+
+#: pe/ui/settings.cpp
+msgid "REACTIVE FLUSHING"
+msgstr "REAKTIV FLUSHING"
+
+#. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
+#: pe/ui/settings.cpp
+msgid "Reactive flushing"
+msgstr "Reaktiv flushing"
 
 #: pe/ui/settings.cpp
 msgid "Ready"
@@ -958,6 +1049,19 @@ msgstr "Visa eller dölj FPS-räknaren"
 #: pe/ui/library.cpp
 msgid "SIZE"
 msgstr "STORLEK"
+
+#: pe/ui/settings.cpp
+msgid "SKIP CPU INVALIDATION"
+msgstr "HOPPA ÖVER CPU-INVALIDERING"
+
+#. A switch: fewer checks when a game changes memory the graphics processor uses. CPU stays.
+#: pe/ui/settings.cpp
+msgid "Skip CPU invalidation"
+msgstr "Hoppa över CPU-invalidering"
+
+#: pe/ui/settings.cpp
+msgid "Skips some checks when a game changes memory the GPU uses: faster, and textures can be stale."
+msgstr "Hoppar över vissa kontroller när ett spel ändrar minne som GPU:n använder: snabbare, men texturer kan vara inaktuella."
 
 #: pe/ui/settings.cpp
 msgid "Solid panels, brighter text and an outlined highlight."

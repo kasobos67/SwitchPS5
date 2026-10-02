@@ -98,6 +98,14 @@ struct Preferences
     bool large_text = false;
     bool high_contrast = false;
     bool reduce_motion = false;
+    // Performance: speed against accuracy, for every game.
+    bool block_list = true;     // compile the code of earlier sessions ahead
+    bool async_shaders = false; // draw before a new shader is ready
+    bool fast_gpu = false;      // the emulator's lowest GPU accuracy
+    bool unsafe_cpu = false;    // inexact floating-point shortcuts
+    bool unsafe_dma = false;    // unsafe DMA accuracy
+    bool reactive_flushing = true;  // off is faster; some effects break
+    bool skip_invalidation = false; // fewer invalidations of what the GPU caches hold
 };
 
 // One game's overrides; -1 uses Settings > Video.

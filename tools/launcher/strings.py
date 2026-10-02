@@ -152,6 +152,20 @@ NOTES = {
     "Start any game once before importing a save.": "The app creates its user the first time a game runs.",
     "Selected ROM is no longer available": "Why a game did not start (the file is gone).",
     "PS5 controller initialization failed": "Why a game did not start.",
+    "Performance": "A settings category: options that make games run faster, at some cost in accuracy.",
+    "Compile ahead": "A switch: the program code a game used in earlier sessions is prepared (compiled) "
+                     "while the game starts. Keep it short.",
+    "Asynchronous shaders": "A switch. A shader is a small graphics program; keep the word the language's "
+                            "players use for it.",
+    "Faster GPU emulation": "A switch: the emulated graphics processor is less exact and faster. GPU stays.",
+    "Faster CPU emulation": "A switch: the emulated processor's floating-point math is less exact and faster. "
+                            "CPU stays.",
+    "Faster DMA": "A switch: memory transfers to the emulated graphics processor are less exact and faster. "
+                  "DMA is a name (unchanged).",
+    "Reactive flushing": "A switch, on by default: what a game reads back from the graphics processor is kept "
+                         "exact. Keep the term the language's emulator players use, or translate it plainly.",
+    "Skip CPU invalidation": "A switch: fewer checks when a game changes memory the graphics processor uses. "
+                             "CPU stays.",
     "{0}%": "A percentage (a volume): write it as the language does, for example with a space before the sign.",
     "The game ran out of graphics memory. Lower the resolution in Settings, Video (or in the game's own settings) "
     "and start it again.": "Why a game stopped. 'Settings, Video' is the menu path; 'the game's own settings' is the "
