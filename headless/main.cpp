@@ -785,14 +785,18 @@ int main(int argc, char** argv) {
             // The block list is off unless the settings turn it on (block-list.txt in the app
             // folder still does, further down).
             if (!dev_block_list) Eden::JitList::enabled = speed.block_list;
-            Eden::Report("launch", (std::string("Performance: block list ") +
-                                    (Eden::JitList::enabled ? "on" : "off") +
-                                    ", async shaders " + (speed.async_shaders ? "on" : "off") +
-                                    ", fast GPU " + (speed.fast_gpu ? "on" : "off") +
-                                    ", unsafe CPU " + (speed.unsafe_cpu ? "on" : "off") +
-                                    ", unsafe DMA " + (speed.unsafe_dma ? "on" : "off") +
-                                    ", reactive flushing " + (speed.reactive_flushing ? "on" : "off") +
-                                    ", skip invalidation " + (speed.skip_invalidation ? "on" : "off")).c_str());
+            // The report reads the values back: what the emulator has, whoever set it.
+            const auto on = [](bool value) { return value ? "on" : "off"; };
+            Eden::Report("launch", (std::string("Performance: block list ") + on(Eden::JitList::enabled) +
+                                    ", async shaders " + on(Settings::values.use_asynchronous_shaders.GetValue()) +
+                                    ", fast GPU " + on(!Settings::IsGPULevelHigh()) +
+                                    ", unsafe CPU " +
+                                    on(Settings::values.cpu_accuracy.GetValue() == Settings::CpuAccuracy::Unsafe) +
+                                    ", unsafe DMA " +
+                                    on(Settings::values.dma_accuracy.GetValue() == Settings::DmaAccuracy::Unsafe) +
+                                    ", reactive flushing " + on(Settings::values.use_reactive_flushing.GetValue()) +
+                                    ", skip invalidation " +
+                                    on(Settings::values.skip_cpu_inner_invalidation.GetValue())).c_str());
             // What a crash report says was running.
             char title_id[20];
             std::snprintf(title_id, sizeof(title_id), "%016llx",
