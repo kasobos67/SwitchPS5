@@ -114,7 +114,9 @@ def extract(archive, destination, strip, only=()):
                                     for keep in only):
                     continue
                 members.append(member)
-            tar.extractall(staging, members=members, filter='data')
+            # Python 3.11.0-3.11.3 has no extraction filters; the archive's hash was checked.
+            safe = {'filter': 'data'} if hasattr(tarfile, 'data_filter') else {}
+            tar.extractall(staging, members=members, **safe)
         destination.mkdir(parents=True, exist_ok=True)
         for entry in staging.iterdir():
             target = destination / entry.name
