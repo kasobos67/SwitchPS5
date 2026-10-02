@@ -26,10 +26,11 @@
 // compiled 426 blocks during play instead of 138,262, and the 5-second window in which gameplay
 // starts ran at 30.0 FPS instead of 22.3.
 //
-// On unless "block_list" is false under "performance" in the settings file (settings_store.h); a
-// file named block-list.txt in the app folder turns it on whatever the settings say, and a
-// development build uses dev-settings jit_list instead. It has run in one game on the console so far. Only for 64-bit games: the shared JIT the list hangs
-// on does not cover 32-bit ones.
+// Off unless "block_list" is true under "performance" in the settings file (Settings >
+// Performance > Compile ahead; settings_store.h) or a file named block-list.txt is in the app
+// folder; in a development build dev-settings jit_list=on/off goes before the settings. It has
+// run in one game on the console so far. Only for 64-bit games: the shared JIT the list hangs on
+// does not cover 32-bit ones.
 #pragma once
 #include <algorithm>
 #include <array>

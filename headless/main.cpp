@@ -563,6 +563,8 @@ int main(int argc, char** argv) {
         Settings::values.current_gpu_accuracy = Settings::GpuAccuracy::High;
         Settings::values.dma_accuracy.SetValue(Settings::DmaAccuracy::Default);
         Settings::values.memory_layout_mode = Settings::MemoryLayout::Memory_4Gb;
+        // A development run that names jit_list in dev-settings decides the block list by itself.
+        [[maybe_unused]] bool dev_block_list = false;  // read where a session applies its settings
 #ifdef EDEN_DEV_PROFILE
         // One-run A/B switches written by the development runner; absent = defaults.
         {
@@ -602,8 +604,9 @@ int main(int argc, char** argv) {
                     // Eden's default library applets: several run from the firmware as guest programs.
                     Eden::Performance::firmware_applets = true;
                 } else if (entry == "jit_list=on" || entry == "jit_list=off") {
-                    // The saved block list (jit_list.h): off unless asked for.
+                    // The saved block list (jit_list.h), whatever the settings file says.
                     Eden::JitList::enabled = entry.ends_with("on");
+                    dev_block_list = true;
                 } else if (entry == "jit_shared=off") {
                     // Every guest core keeps its own compiled blocks (headless/dynarmic/jit_group.h).
                     eden_jit_shared = false;
@@ -779,12 +782,11 @@ int main(int argc, char** argv) {
             if (speed.unsafe_dma) Settings::values.dma_accuracy.SetValue(Settings::DmaAccuracy::Unsafe);
             Settings::values.use_reactive_flushing.SetValue(speed.reactive_flushing);
             Settings::values.skip_cpu_inner_invalidation.SetValue(speed.skip_invalidation);
-#ifndef EDEN_DEV_PROFILE
-            // The block list is on unless the settings turn it off (a development build keeps its
-            // dev-settings jit_list switch).
-            Eden::JitList::enabled = speed.block_list;
-#endif
-            Eden::Report("launch", (std::string("Performance: block list ") + (speed.block_list ? "on" : "off") +
+            // The block list is off unless the settings turn it on (block-list.txt in the app
+            // folder still does, further down).
+            if (!dev_block_list) Eden::JitList::enabled = speed.block_list;
+            Eden::Report("launch", (std::string("Performance: block list ") +
+                                    (Eden::JitList::enabled ? "on" : "off") +
                                     ", async shaders " + (speed.async_shaders ? "on" : "off") +
                                     ", fast GPU " + (speed.fast_gpu ? "on" : "off") +
                                     ", unsafe CPU " + (speed.unsafe_cpu ? "on" : "off") +

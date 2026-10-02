@@ -4,7 +4,7 @@
 
 headless/preferences_check.cpp checks how they are stored. This checks that the session reads
 them for the game it starts and hands each one to the emulator, outside the development-only
-dev-settings block, and that the block list is on unless the settings turn it off.
+dev-settings block, and that the block list is off unless the settings turn it on.
 """
 from pathlib import Path
 
@@ -41,8 +41,10 @@ for statement in (
 # Nothing sets the shaders back to synchronous after the setting was applied.
 assert 'Settings::values.use_asynchronous_shaders = false;' not in main
 
-# The block list: on from the settings, and block-list.txt still turns it on.
-assert 'Eden::JitList::enabled = speed.block_list;' in release
+# The block list: off unless the settings turn it on, and block-list.txt still turns it on.
+assert 'if (!dev_block_list) Eden::JitList::enabled = speed.block_list;' in release
+store = (root / 'headless/settings_store.h').read_text()
+assert 'bool block_list = false;' in store and 'bool block_list = true;' not in store
 assert 'if (std::filesystem::exists(Eden::AppFile("block-list.txt"))) Eden::JitList::enabled = true;' in release
 
 # Settings > Performance in the launcher: its seven switches are the general values.

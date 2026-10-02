@@ -11,7 +11,7 @@
 //     "system": { "language": "en-US" },
 //     "accessibility": { "large_text": false, "high_contrast": false, "reduce_motion": false },
 //     "diagnostics": { "detailed_logging": false },
-//     "performance": { "block_list": true, "async_shaders": false, "fast_gpu": false,
+//     "performance": { "block_list": false, "async_shaders": false, "fast_gpu": false,
 //                      "unsafe_cpu": false, "unsafe_dma": false, "reactive_flushing": true,
 //                      "skip_invalidation": false },
 //     "game_files": "/mnt/ext1/eden",
@@ -348,7 +348,7 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
 // whose values go before the general ones, one value at a time). Settings > Performance has
 // a switch for each general value; a game's own are written in the settings file.
 struct PerformanceSettings {
-    bool block_list = true;      // compile the blocks of earlier sessions ahead (jit_list.h)
+    bool block_list = false;     // compile the blocks of earlier sessions ahead (jit_list.h)
     bool async_shaders = false;  // draw before a new shader is ready: no pause, things missing meanwhile
     bool fast_gpu = false;       // Eden's lowest GPU accuracy
     bool unsafe_cpu = false;     // dynarmic's inexact floating-point shortcuts

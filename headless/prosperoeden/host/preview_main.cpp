@@ -245,8 +245,8 @@ void pictures(Stage &s)
     s.press({Key::down});
     s.wait(0.6f);
     s.shoot("43-video-overlay");
-    // Performance: seven switches, five of them showing. Compiling ahead and reactive flushing
-    // start on, the others off, and a press on each one reaches the settings.
+    // Performance: seven switches, four of them showing. Reactive flushing starts on, the
+    // others off, and a press on each one reaches the settings.
     s.press({Key::circle, Key::down, Key::cross});
     s.wait(0.8f);
     s.shoot("46-performance");
@@ -258,7 +258,7 @@ void pictures(Stage &s)
                                        p.unsafe_dma, p.reactive_flushing, p.skip_invalidation};
         };
         const std::array<bool, 7> start = states();
-        bool reached = start == std::array<bool, 7>{true, false, false, false, false, true, false};
+        bool reached = start == std::array<bool, 7>{false, false, false, false, false, true, false};
         for (std::size_t row = 0; row < start.size(); ++row)
         {
             if (row != 0)
