@@ -64,12 +64,20 @@ step "libSceAgcDriver link stub"
 bash tools/build-agc-driver-stub.sh
 # The driver's display code carries this repository's adaptation (tools/patch-radv-wsi.py): a
 # driver built with another version of it is built again (only the changed file compiles).
+# So is a driver built from another Mesa revision than tools/deps.json pins.
 radv_release=../mihawk-vulkan-review/.deps/native/radv-release
-if [[ -f $radv_release/lib/libvulkan_radeon.ps5.a ]] &&
-   ! python3 -B tools/patch-radv-wsi.py --check "$radv_release/EDEN_WSI_SHA256"; then
-    step "RADV: the display code's adaptation changed"
-    bash tools/build-radv-dependencies.sh
-    rm -f build/radv-isolated/libvulkan_radeon.ps5.a
+mesa_pin=$(python3 -c 'import json; print(next(i["commit"] for i in json.load(open("tools/deps.json"))["items"] if i["name"] == "ps5-mesa"))')
+if [[ -f $radv_release/lib/libvulkan_radeon.ps5.a ]]; then
+    built=$(sed -n 's/^revision: //p' "$radv_release/PROVENANCE.txt" 2>/dev/null || true)
+    if [[ $built != "$mesa_pin" ]]; then
+        step "RADV: built from Mesa ${built:0:12}, pinned ${mesa_pin:0:12}"
+        bash tools/build-radv-dependencies.sh
+        rm -f build/radv-isolated/libvulkan_radeon.ps5.a
+    elif ! python3 -B tools/patch-radv-wsi.py --check "$radv_release/EDEN_WSI_SHA256"; then
+        step "RADV: the display code's adaptation changed"
+        bash tools/build-radv-dependencies.sh
+        rm -f build/radv-isolated/libvulkan_radeon.ps5.a
+    fi
 fi
 if [[ ! -f build/radv-isolated/libvulkan_radeon.ps5.a ]]; then
     if [[ ! -f $radv_release/lib/libvulkan_radeon.ps5.a ]]; then
