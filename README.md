@@ -216,6 +216,12 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 - **Controller selection screen** - some games wait forever on the screen that asks you to choose a controller. Games that take single Joy-Cons should now get past it; other cases still need a log from a game that does it.
 - **More game compatibility** - validate more games on the PS5, and fix what keeps them from running well, such as games that crash at launch.
 
+## Contributors
+
+Thank you to everyone who has contributed to ProsperoEden:
+
+- [@mihawk-99](https://github.com/mihawk-99) - the fix that lets the Vulkan driver keep its shader cache between sessions, the fix for a crash when stopping a game that has cheats, and the fix for a crash in titles without control data ([pull request 1](https://github.com/blackbearreloaded/ProsperoEden/pull/1)).
+
 ## Issues are disabled
 
 GitHub issues are turned off for this repository on purpose. ProsperoEden is a general-purpose emulator port, and the project does not host discussion of console makers, specific commercial games, compatibility reports, or where to find game files. Issue threads tend to fill up with exactly that, so there are none.

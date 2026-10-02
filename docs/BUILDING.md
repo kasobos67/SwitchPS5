@@ -65,7 +65,8 @@ Next to this repository (`../`), as git checkouts:
   (`tools/isolate-radv.py`). RADV's display code carries this repository's adaptation
   (`tools/patch-radv-wsi.py`: the output's lifetime, and the 120 Hz output a game session can ask
   for); when the adaptation changes, `make prepare` builds RADV again, which compiles only that
-  file. The three checkouts have to be at the commits `tools/build-radv-dependencies.sh` names.
+  file. The three checkouts have to be at the commits `tools/deps.json` pins; when the Mesa pin
+  changes, `make prepare` builds RADV again from the new revision.
 
 The `libSceAgcDriver` import facade both drivers link against is built from
 `tools/stubs/libSceAgcDriver.c`. Small contracts from our research repositories are in
