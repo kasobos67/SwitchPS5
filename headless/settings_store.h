@@ -16,7 +16,8 @@
 //     "games": { "0100000000010000": { "console_mode": "handheld", "renderer": "opengl",
 //                                      "resolution": "0.75x", "upscaling_filter": "fsr",
 //                                      "refresh_rate": "120", "mods": false,
-//                                      "mods_off": ["A mod's folder name"] } }
+//                                      "mods_off": ["A mod's folder name"],
+//                                      "cheats_on": ["A mod's folder name#A cheat's name"] } }
 //   }
 //
 // Missing or mistyped values read as their defaults. Writes replace the file atomically. The
@@ -386,6 +387,33 @@ inline bool SaveModsEnabled(uint64_t title_id, bool enabled, const std::string& 
     if (!game.is_object()) game = Settings::Json::object();
     if (enabled) game.erase("mods");
     else game["mods"] = false;
+    return Settings::Write(document, file);
+}
+
+// The cheats chosen for a game, each as "<mod>#<cheat>" (mods.h). A mod that lists several cheats
+// has them chosen one by one, and none runs until it is chosen.
+inline std::vector<std::string> LoadChosenCheats(uint64_t title_id, const std::string& file = SettingsFile()) {
+    std::vector<std::string> ids;
+    if (!title_id) return ids;
+    using Settings::Json;
+    const Json document = Settings::Load(file);
+    const Json::json_pointer at("/games/" + Settings::TitleKey(title_id) + "/cheats_on");
+    if (!document.contains(at) || !document.at(at).is_array()) return ids;
+    for (const auto& entry : document.at(at))
+        if (entry.is_string() && std::find(ids.begin(), ids.end(), entry.get<std::string>()) == ids.end())
+            ids.push_back(entry.get<std::string>());
+    return ids;
+}
+
+inline bool SaveChosenCheats(uint64_t title_id, const std::vector<std::string>& ids,
+                             const std::string& file = SettingsFile()) {
+    if (!title_id) return false;
+    Settings::Json document = Settings::Load(file);
+    document["version"] = 1;
+    auto& game = document["games"][Settings::TitleKey(title_id)];
+    if (!game.is_object()) game = Settings::Json::object();
+    if (ids.empty()) game.erase("cheats_on");
+    else game["cheats_on"] = ids;
     return Settings::Write(document, file);
 }
 

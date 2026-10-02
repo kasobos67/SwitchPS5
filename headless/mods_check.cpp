@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Host check for mods: Eden's patch code as this build derives it (.ips and .pchtxt patches, which
 // the pinned source could not apply: headless/CMakeLists.txt), what the launcher lists from a
-// game's mods folder (mods.h), and the names it switches off (settings_store.h).
+// game's mods folder (mods.h), the names it switches off (settings_store.h), and the cheats chosen
+// one by one (cheats.h) as Eden's own parser reads them.
 #include "mods.h"
 #include "settings_store.h"
 
@@ -13,6 +14,7 @@
 #include <vector>
 
 #include "core/file_sys/ips_layer.h"
+#include "core/memory/cheat_engine.h"
 #include "core/file_sys/vfs/vfs_vector.h"
 
 namespace {
@@ -160,6 +162,72 @@ void check_listing(const fs::path& base) {
     require(Summary({}, {}) == "none", "no mods");
 }
 
+void check_cheats(const fs::path& base) {
+    using namespace Eden::Mods;
+    using Ids = std::vector<std::string>;
+    const std::uint64_t game = 0x0100CCCC00003000ULL;
+    const std::string root = (base / "mods").string();
+    const fs::path title = base / "mods" / "0100CCCC00003000";
+    // A collection: a master code, a section title without code, two frame rates, one more.
+    const std::string text =
+        "{Master}\n580F0000 01234567\n\n[--Frame rate--]\n"
+        "[60 FPS]\n04000000 00ABCDEF 52800020\n[30 FPS]\n04000000 00ABCDEF 52800040\n"
+        "[ Moon jump ]\r\n04000000 00111111 00000384\r\n";
+    write_text(title / "Collection" / "Cheats" / "1111222233334444.txt", text);
+    // Another build's file: a cheat the first has, and one of its own.
+    write_text(title / "Collection" / "Cheats" / "5555666677778888.txt",
+               "[60 FPS]\n04000000 00ABCDEF 52800020\n[Extra]\n04000000 00222222 00000001\n");
+    write_text(title / "One cheat" / "cheats" / "1111222233334444.txt", "[Infinite]\n04000000 00222222 00000001\n");
+    write_text(title / "cheat_loose.txt", text);
+    const auto mods = List(root, game);
+    require(mods.size() == 3 && mods[0].name == "Collection" && mods[1].name == "One cheat" &&
+            mods[2].name == "cheat_loose.txt", "three mods with cheats");
+    require(mods[0].cheats.size() == 4 && mods[0].cheats[0].name == "60 FPS" && mods[0].cheats[1].name == "30 FPS" &&
+            mods[0].cheats[2].name == "Moon jump" && mods[0].cheats[3].name == "Extra" &&
+            mods[0].cheats[0].id == "Collection#60 FPS", "a collection's cheats, once per name");
+    require(mods[1].cheats.empty(), "a single cheat runs with its mod");
+    require(mods[2].cheats.size() == 3 && mods[2].cheats[1].id == "cheat_loose.txt#30 FPS", "a loose file's cheats");
+
+    // Choosing: one frame rate takes the other's place, the rest combine, per mod.
+    Ids chosen = ChooseCheat(mods[0], "60 FPS", true, {});
+    chosen = ChooseCheat(mods[0], "Moon jump", true, chosen);
+    chosen = ChooseCheat(mods[0], "30 FPS", true, chosen);
+    require(chosen == Ids({"Collection#30 FPS", "Collection#Moon jump"}), "one of a group");
+    require(ChooseCheat(mods[0], "30 FPS", true, chosen) == chosen && ChooseCheat(mods[0], "Nothing", true, chosen) == chosen,
+            "chosen twice, or not there");
+    chosen = ChooseCheat(mods[2], "60 FPS", true, chosen);
+    require(chosen.size() == 3, "another mod's frame rate stays");
+    require(ChooseCheat(mods[0], "Moon jump", false, chosen) == Ids({"Collection#30 FPS", "cheat_loose.txt#60 FPS"}),
+            "switched off");
+    require(Summary(mods, {}, chosen) == "Collection (2 of 4 cheats), One cheat, cheat_loose.txt (1 of 3 cheats)",
+            "the chosen cheats in the log");
+    const Ids off = CheatsOff(mods, chosen);
+    require(off == Ids({"Collection#60 FPS", "Collection#Extra", "cheat_loose.txt#30 FPS", "cheat_loose.txt#Moon jump"}),
+            "the cheats that stay off");
+
+    // Eden's list of the collection: master, title, 60 FPS, 30 FPS, Moon jump.
+    const Core::Memory::TextCheatParser parser;
+    const auto parsed = parser.Parse(text);
+    require(parsed.size() == 5 && parsed[0].enabled && !parsed[1].enabled && parsed[2].enabled, "Eden's parser");
+    Eden::Cheats::Off() = off;
+    std::vector<Core::Memory::CheatEntry> list;
+    Eden::Cheats::Append(list, parsed, "Collection");
+    require(list.size() == 5 && list[0].enabled && !list[1].enabled && !list[2].enabled && list[3].enabled && list[4].enabled,
+            "only the chosen cheats run, with the master code");
+    Eden::Cheats::Append(list, parsed, "One cheat");
+    require(list.size() == 10 && list[7].enabled && list[8].enabled && list[9].enabled, "another mod's cheats all run");
+    Eden::Cheats::Off().clear();
+    list.clear();
+    Eden::Cheats::Append(list, parsed, "Collection");
+    require(list[2].enabled && list[3].enabled && list[4].enabled && !list[1].enabled, "nothing off: Eden's list as it is");
+    // A name longer than Eden keeps is the same cheat on both sides.
+    const std::string name(70, 'n');
+    const auto cut = parser.Parse("[" + name + "]\n04000000 00333333 00000001\n");
+    require(cut.size() == 2 && std::string(cut[1].definition.readable_name.data()).size() == 63 &&
+            Eden::Cheats::Key("m", cut[1].definition.readable_name.data()) == Eden::Cheats::Key("m", name),
+            "a long name");
+}
+
 void check_settings(const fs::path& base) {
     const std::string settings = (base / "prosperoeden.json").string();
     const std::uint64_t game = 0x0100ABCD00001000ULL, other = 0x0100FFFF00002000ULL;
@@ -195,6 +263,15 @@ void check_settings(const fs::path& base) {
     require(text.find("\"mods\"") == std::string::npos && text.find("\"mods_off\"") != std::string::npos,
             "on is not written; the mod switched off still is");
     require(!Eden::SaveModsEnabled(0, false, settings), "no game, nothing to save");
+    // The chosen cheats, per game, beside the rest.
+    require(Eden::LoadChosenCheats(game, settings).empty(), "no cheat chosen at first");
+    require(Eden::SaveChosenCheats(game, {"Collection#60 FPS", "Collection#Moon jump"}, settings), "choosing cheats");
+    require(Eden::LoadChosenCheats(game, settings) == std::vector<std::string>({"Collection#60 FPS", "Collection#Moon jump"}) &&
+            Eden::LoadChosenCheats(other, settings).empty(), "the chosen cheats, per game");
+    require(Eden::LoadDisabledMods(game, settings) == std::vector<std::string>({"60 FPS"}) &&
+            Eden::LoadGameSettings(game, settings).resolution == 4, "the other settings stay with cheats chosen");
+    require(Eden::SaveChosenCheats(game, {}, settings) && Eden::LoadChosenCheats(game, settings).empty() &&
+            !Eden::SaveChosenCheats(0, {"x#y"}, settings), "none chosen again");
 }
 } // namespace
 
@@ -205,8 +282,9 @@ int main() {
     check_ips();
     check_pchtxt();
     check_listing(base);
+    check_cheats(base);
     check_settings(base);
     fs::remove_all(base);
     std::puts("Mods: IPS and IPS32 patches, .pchtxt hex, text and long values, the folder listing, "
-              "switching off per game, the game's Mods switch PASS");
+              "switching off per game, the game's Mods switch, cheats chosen one by one PASS");
 }

@@ -776,7 +776,10 @@ int main(int argc, char** argv) {
                     if (std::find(mods_off.begin(), mods_off.end(), mod.name) == mods_off.end())
                         mods_off.push_back(mod.name);
             }
-            const std::string mods = Eden::Mods::Summary(all_mods, mods_off);
+            // Of a mod that lists several cheats, only the ones chosen there run (cheats.h).
+            const auto cheats_on = Eden::LoadChosenCheats(title);
+            Eden::Cheats::Off() = Eden::Mods::CheatsOff(all_mods, cheats_on);
+            const std::string mods = Eden::Mods::Summary(all_mods, mods_off, cheats_on);
             Settings::values.disabled_addons[title] = mods_off;
             Eden::Report("launch", ("Mods: " + mods).c_str());
             Eden::Crash::SetSession("game " + std::filesystem::path(guest).filename().string() + " (" + title_id +

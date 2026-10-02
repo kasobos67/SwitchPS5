@@ -11,7 +11,10 @@
 //
 // Eden applies every mod of the running game, in the order of their names, except those the
 // launcher switched off (settings_store.h keeps their names per game; main.cpp hands them to
-// Eden). This header only looks: the launcher lists a game's mods with it and main.cpp names
+// Eden). A mod with one cheat runs it whenever the mod is on. A mod that lists several, as cheat
+// collections do, has each of them chosen on its own (patch_library.h reads their names; the
+// chosen ones are kept per game too, and cheats.h switches the others off in Eden's list): none
+// of them runs until it is chosen. This header only looks: the launcher lists a game's mods with it and main.cpp names
 // them in the log. The title's folder is found whatever the case of its letters (the derived
 // bis_factory.cpp does the same for Eden), and is never created behind the player's back.
 #pragma once
@@ -21,11 +24,16 @@
 #include <cstdint>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
+#include <iterator>
+#include <set>
 #include <string>
 #include <string_view>
 #include <system_error>
 #include <vector>
 
+#include "cheats.h"
+#include "patch_library.h"
 #if defined(__PROSPERO__)
 #include "native_directory.h"
 #endif
@@ -42,6 +50,8 @@ enum : unsigned {
 struct Mod {
     std::string name;  // the folder's (or cheat file's) name: what Eden's disabled list holds
     unsigned kinds = 0;
+    // Its cheats when it lists several: each is chosen on its own. Empty for a single cheat.
+    std::vector<Patches::Entry> cheats;
 };
 
 inline std::string Lower(std::string_view text) {
@@ -115,6 +125,37 @@ inline unsigned Kinds(const fs::path& mod) {
     return kinds;
 }
 
+// The cheats a mod lists (its cheats/ folder's files, one per build of the game, or a loose cheat
+// file), once per name, when there are several.
+inline std::vector<Patches::Entry> CheatList(const fs::directory_entry& mod) {
+    std::vector<fs::path> files;
+    if (!IsFolder(mod)) {
+        files.push_back(mod.path());
+    } else {
+        for (const auto& part : ListFolder(mod.path())) {
+            if (!IsFolder(part) || Lower(part.path().filename().string()) != "cheats") continue;
+            for (const auto& file : ListFolder(part.path()))
+                if (!IsFolder(file) && Lower(file.path().extension().string()) == ".txt") files.push_back(file.path());
+        }
+    }
+    std::sort(files.begin(), files.end());
+    const std::string name = mod.path().filename().string();
+    std::vector<Patches::Entry> cheats;
+    for (const auto& file : files) {
+        std::ifstream in(file, std::ios::binary);
+        const std::string text{std::istreambuf_iterator<char>(in), {}};
+        if (text.size() > (4u << 20)) continue;  // cheat files are small; anything larger is not one
+        for (auto& entry : Patches::ParseCheats(text, name)) {
+            const bool known = std::any_of(cheats.begin(), cheats.end(), [&](const Patches::Entry& other) {
+                return Eden::Cheats::Key(name, other.name) == Eden::Cheats::Key(name, entry.name);
+            });
+            if (!known) cheats.push_back(std::move(entry));
+        }
+    }
+    if (cheats.size() < 2) cheats.clear();
+    return cheats;
+}
+
 // The game's mods, in the order Eden applies them.
 inline std::vector<Mod> List(const std::string& root, uint64_t title_id) {
     std::vector<Mod> mods;
@@ -123,17 +164,40 @@ inline std::vector<Mod> List(const std::string& root, uint64_t title_id) {
     for (const auto& entry : ListFolder(folder)) {
         const std::string name = entry.path().filename().string();
         if (IsFolder(entry)) {
-            if (const unsigned kinds = Kinds(entry.path())) mods.push_back({name, kinds});
+            if (const unsigned kinds = Kinds(entry.path()))
+                mods.push_back({name, kinds, kinds & kCheats ? CheatList(entry) : std::vector<Patches::Entry>{}});
         } else if (name.starts_with("cheat_")) {
-            mods.push_back({name, kCheats});
+            mods.push_back({name, kCheats, CheatList(entry)});
         }
     }
     std::sort(mods.begin(), mods.end(), [](const Mod& a, const Mod& b) { return a.name < b.name; });
     return mods;
 }
 
-// One line for the log and the crash report: the mods in use, by name.
-inline std::string Summary(const std::vector<Mod>& mods, const std::vector<std::string>& disabled) {
+// Switching one of a mod's cheats: the game's chosen cheats after it. One of a group (two frame
+// rates) takes the other's place.
+inline std::vector<std::string> ChooseCheat(const Mod& mod, std::string_view cheat, bool on,
+                                            const std::vector<std::string>& chosen) {
+    std::set<std::string> ids(chosen.begin(), chosen.end());
+    for (std::size_t i = 0; i < mod.cheats.size(); ++i)
+        if (mod.cheats[i].name == cheat && ids.contains(mod.cheats[i].id) != on) Patches::Toggle(mod.cheats, ids, i);
+    return {ids.begin(), ids.end()};
+}
+
+// The cheats that stay off (cheats.h): of the mods that list several, those not chosen.
+inline std::vector<std::string> CheatsOff(const std::vector<Mod>& mods, const std::vector<std::string>& chosen) {
+    std::vector<std::string> off;
+    for (const Mod& mod : mods)
+        for (const auto& cheat : mod.cheats)
+            if (std::find(chosen.begin(), chosen.end(), cheat.id) == chosen.end())
+                off.push_back(Eden::Cheats::Key(mod.name, cheat.name));
+    return off;
+}
+
+// One line for the log and the crash report: the mods in use, by name, with how many of its
+// cheats are chosen after a mod that lists several.
+inline std::string Summary(const std::vector<Mod>& mods, const std::vector<std::string>& disabled,
+                           const std::vector<std::string>& chosen = {}) {
     std::string used;
     unsigned off = 0;
     for (const Mod& mod : mods) {
@@ -142,6 +206,11 @@ inline std::string Summary(const std::vector<Mod>& mods, const std::vector<std::
             continue;
         }
         used += (used.empty() ? "" : ", ") + mod.name;
+        if (mod.cheats.empty()) continue;
+        const auto on = std::count_if(mod.cheats.begin(), mod.cheats.end(), [&](const Patches::Entry& cheat) {
+            return std::find(chosen.begin(), chosen.end(), cheat.id) != chosen.end();
+        });
+        used += " (" + std::to_string(on) + " of " + std::to_string(mod.cheats.size()) + " cheats)";
     }
     if (used.empty()) used = "none";
     if (off != 0) used += " (" + std::to_string(off) + " switched off)";

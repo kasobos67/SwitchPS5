@@ -1100,6 +1100,13 @@ eden_patch(patch_source
     "const auto this_build_id = fmt::format(\"{:0<64}\", Common::ToUpper(name.substr(0, name.find('.'))));")
 # A game without a mods folder is the usual case here, not an error to log for each of its modules.
 eden_patch(patch_source "        LOG_ERROR(Loader, \"Cannot load mods for invalid title_id={:016X}\", title_id);\n" "")
+# Cheats chosen one by one (headless/cheats.h): each mod's cheat list, from its folder or from a
+# loose cheat file, goes into the game's with the cheats that were not chosen switched off.
+eden_patch(patch_source "std::copy(res->begin(), res->end(), std::back_inserter(out));"
+    "Eden::Cheats::Append(out, *res, subdir->GetName());")
+eden_patch(patch_source "std::copy(res.begin(), res.end(), std::back_inserter(out));"
+    "Eden::Cheats::Append(out, res, name);")
+string(PREPEND patch_source "#include \"${EDEN_PORT_DIR}/cheats.h\"\n")
 write_derived("${PORT_BUILD_DIR}/patch_manager.cpp" "${patch_source}")
 get_target_property(core_sources core SOURCES)
 list(REMOVE_ITEM core_sources file_sys/ips_layer.cpp file_sys/patch_manager.cpp)
@@ -2114,6 +2121,9 @@ else()
     add_executable(eden-settings-check "${EDEN_PORT_DIR}/preferences_check.cpp")
     target_link_libraries(eden-settings-check PRIVATE core)
     target_compile_options(eden-settings-check PRIVATE -UNDEBUG)
+    # So is the check of the cheat files' entries (patch_library.h).
+    add_executable(eden-patch-library-check "${EDEN_PORT_DIR}/patch_library_check.cpp")
+    target_compile_options(eden-patch-library-check PRIVATE -UNDEBUG)
     add_executable(eden-devices-check "${EDEN_PORT_DIR}/devices_check.cpp")
     target_link_libraries(eden-devices-check PRIVATE core eden-pad eden-device-mock)
     target_compile_options(eden-devices-check PRIVATE -fno-rtti)
