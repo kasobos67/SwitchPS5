@@ -28,6 +28,16 @@ for statement in (
     assert statement in release, statement
 for guard in ('if (speed.fast_gpu) {', 'if (speed.unsafe_cpu)', 'if (speed.unsafe_dma)'):
     assert guard in release, guard
+# Every session starts at the exact levels, before the settings are read: one app run starts many
+# games, and a level the game before lowered would stay for the next one.
+start = release.index('Settings::values.cpu_accuracy = Settings::CpuAccuracy::Auto;')
+read = release.index('const auto speed = Eden::LoadPerformance(eden_game_title_id(guest));')
+for statement in (
+    'Settings::values.gpu_accuracy.SetValue(Settings::GpuAccuracy::High);',
+    'Settings::values.current_gpu_accuracy = Settings::GpuAccuracy::High;',
+    'Settings::values.dma_accuracy.SetValue(Settings::DmaAccuracy::Default);',
+):
+    assert start < release.index(statement) < read, statement
 # Nothing sets the shaders back to synchronous after the setting was applied.
 assert 'Settings::values.use_asynchronous_shaders = false;' not in main
 

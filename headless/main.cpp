@@ -557,6 +557,11 @@ int main(int argc, char** argv) {
         Settings::values.renderer_backend = Settings::RendererBackend::Null;
 #endif
         Settings::values.cpu_accuracy = Settings::CpuAccuracy::Auto;
+        // The exact GPU and DMA levels too, every session: one app run starts many games, and a
+        // level the game before lowered ("performance" in the settings file, below) would stay.
+        Settings::values.gpu_accuracy.SetValue(Settings::GpuAccuracy::High);
+        Settings::values.current_gpu_accuracy = Settings::GpuAccuracy::High;
+        Settings::values.dma_accuracy.SetValue(Settings::DmaAccuracy::Default);
         Settings::values.memory_layout_mode = Settings::MemoryLayout::Memory_4Gb;
 #ifdef EDEN_DEV_PROFILE
         // One-run A/B switches written by the development runner; absent = defaults.
@@ -761,7 +766,8 @@ int main(int argc, char** argv) {
                                     Eden::kOutputKeys[video.output] + ", " + Eden::kRefreshKeys[refresh] +
                                     " Hz").c_str());
             // Speed against accuracy ("performance" in the settings file, settings_store.h): each
-            // one is off unless chosen there, for every game or for this one.
+            // one is off unless chosen there, for every game or for this one. The levels start
+            // every session at their exact values (above), so one that is not chosen is off.
             const auto speed = Eden::LoadPerformance(eden_game_title_id(guest));
             Settings::values.use_asynchronous_shaders = speed.async_shaders;
             if (speed.fast_gpu) {
