@@ -50,6 +50,7 @@ The complete ProsperoEden source is in this repository: the PS5 frontend and lau
 - **Save data in and out** - import a game's save from a folder or from a Ryujinx data folder, and export a copy (Triangle in the Library, then **Save data**).
 - **Game updates and DLC** - put update and DLC files (NSP or XCI) in the `updates` folder next to `roms`. They apply when the game starts, and each game's details show the update version and DLC count.
 - **Mods** - patches, replacement game files and cheats for a game, from a `mods` folder next to `roms`, each switched on or off in the game's settings (Triangle in the Library, then **Mods**).
+- **Performance switches** - seven switches that trade accuracy for speed (compiling a game's code ahead, asynchronous shaders, faster GPU, CPU and DMA emulation, and more) in **Settings > Performance**; see [Performance settings](#performance-settings).
 - **Shader cache** - shaders compiled in earlier sessions are loaded when a game starts, so an effect stutters only the first time it appears.
 - **In-game shortcuts** - a performance overlay (Select + R1), and Select + L1 to end the game and return to the library.
 - **Settings in one place** - a single JSON file under `/data/prosperoeden`, with game volume, mute, and detailed logging options. Logs keep the previous session.
@@ -135,6 +136,32 @@ A mod changes a game: a patch to its code (`.pchtxt` or `.ips` files in an `exef
 
 ProsperoEden does not include or download mods.
 
+### Performance settings
+
+**Settings > Performance** trades accuracy for speed, for every game. A change applies when a game starts.
+
+| Switch | In the file | Default | What it does |
+|---|---|---|---|
+| Compile ahead | `block_list` | on | The code a 64-bit game compiled in earlier sessions is compiled again on a spare CPU as it starts, so new areas stutter less. It has run in one game on the console so far; switch it off if a game misbehaves. |
+| Asynchronous shaders | `async_shaders` | off | A new effect is drawn once its shader is ready instead of pausing the game for it. Things can be missing for a moment. |
+| Faster GPU emulation | `fast_gpu` | off | The emulator's lowest GPU accuracy. Faster in demanding games; graphics can be wrong. |
+| Faster CPU emulation | `unsafe_cpu` | off | Less exact floating-point math. A few games misbehave. |
+| Faster DMA | `unsafe_dma` | off | Less exact memory transfers to the GPU. A few games show wrong graphics. |
+| Reactive flushing | `reactive_flushing` | on | Keeps what a game reads back from the GPU exact. Off is faster; some effects break. |
+| Skip CPU invalidation | `skip_invalidation` | off | Skips some checks when a game changes memory the GPU uses. Textures can be stale. |
+
+One game can have its own values, in the settings file only: close ProsperoEden, edit `/data/prosperoeden/config/prosperoeden.json`, and start it again. `"performance"` at the top level is what the switches set, and one inside a game's entry under `"games"` is for that game, whose values go first:
+
+```json
+{
+  "performance": { "block_list": true, "async_shaders": false, "fast_gpu": false, "unsafe_cpu": false,
+                   "unsafe_dma": false, "reactive_flushing": true, "skip_invalidation": false },
+  "games": { "0100000000010000": { "performance": { "fast_gpu": true } } }
+}
+```
+
+Resolution, the upscaling filter, the renderer and the refresh rate, which change speed too, are in **Settings > Video** and in a game's own settings.
+
 ### Language and accessibility
 
 The launcher follows the language the PS5 is set to: Arabic, Chinese (simplified and traditional), Czech, Danish, Dutch, Finnish, French, German, Greek, Hungarian, Indonesian, Italian, Japanese, Korean, Norwegian, Polish, Portuguese, Romanian, Russian, Spanish, Swedish, Thai, Turkish, Ukrainian and Vietnamese (with the regional variants the PS5 has for French, Portuguese and Spanish), and English otherwise. Arabic, Chinese, Greek, Japanese, Korean and Thai are drawn with the PS5's own system fonts. Arabic text runs right to left; the screens themselves are not mirrored. To use another one, put a file named `language.txt` holding its tag (for example `en-US` or `pt-BR`) in `/data/homebrew/PPSA99008`. The language *games* use is a separate setting, **Settings > Language**.
@@ -211,7 +238,7 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 ## Roadmap
 
 - **FPKG support** - install ProsperoEden as a fake package, alongside the current homebrew folder install. Each release includes a ShadowMountPlus package image (`.ffpfsc`); installing it still needs testing.
-- **More performance** - CPU and GPU work to keep demanding games at their target frame rate: the short stutter when a game reaches new areas (the block list, once it is on by default), heavy cutscenes, and games that run slower in Docked mode than in Handheld.
+- **More performance** - CPU and GPU work to keep demanding games at their target frame rate: the short stutter when a game reaches new areas (the block list is on by default now, and more games have to run with it), heavy cutscenes, and games that run slower in Docked mode than in Handheld.
 - **More reliable game loading** - fix the remaining hangs on the loading screen.
 - **Faster exit in every game** - a few games still take up to several minutes to close.
 - **Controller selection screen** - some games wait forever on the screen that asks you to choose a controller. Games that take single Joy-Cons should now get past it; other cases still need a log from a game that does it.
