@@ -868,6 +868,17 @@ if(audio_shutdown_offset LESS 0)
 endif()
 string(REPLACE "${old_audio_shutdown}"
     "        if (audio_core) audio_core->Shutdown();\n${old_audio_shutdown}" system_source "${system_source}")
+# The cheat engine's looping timing event reads HID through the service manager; it was
+# destroyed after the services, and core timing runs again during their teardown
+# (SyncPause(false)), so a game with cheats crashed on the HostTiming thread when stopped.
+# Its destructor unschedules the event and waits for a callback in progress.
+set(old_cheat_shutdown "        kernel.CloseServices();")
+string(FIND "${system_source}" "${old_cheat_shutdown}" cheat_shutdown_offset)
+if(cheat_shutdown_offset LESS 0)
+    message(FATAL_ERROR "Pinned service shutdown changed; review cheat engine lifetime.")
+endif()
+string(REPLACE "${old_cheat_shutdown}"
+    "        cheat_engine.reset();\n${old_cheat_shutdown}" system_source "${system_source}")
 # Kernel intrusive lists refer into DeviceMemory even during failed Load unwind.
 # Declare the backing first so reverse member destruction releases it last.
 string(REPLACE "    std::optional<Core::DeviceMemory> device_memory;\n" "" system_source "${system_source}")
