@@ -291,6 +291,34 @@ list(FILTER jit_sources EXCLUDE REGEX "(^|/)a64_translate\\.cpp$")
 set_property(TARGET dynarmic PROPERTY SOURCES "${jit_sources}")
 target_sources(dynarmic PRIVATE "${PORT_BUILD_DIR}/a64_translate.cpp")
 
+# Decoder tables: upstream fills 4096 lists and, for each list, parses the bit string of every
+# instruction pattern again (~640 for A64, ~260 for A32): about half a second in the first block
+# a game compiles, on the guest core that asked for it. Parse every pattern once, then fill the
+# lists from that, in the same order (tools/check-decoder-startup.py).
+foreach(decoder IN ITEMS "A64/decoder/a64" "A32/decoder/arm")
+    set(decoder_source "${PROJECT_SOURCE_DIR}/src/dynarmic/src/dynarmic/frontend/${decoder}")
+    file(READ "${decoder_source}.h" decoder_header)
+    get_filename_component(decoder_name "${decoder}" NAME)
+    set(decoder_loop "        for (size_t i = 0; i < t.size(); ++i) {\n#define INST")
+    set(decoder_match "        if ((i & make_fast_index(mask)) == make_fast_index(expect)) { \\\n            t[i].emplace_back(")
+    set(decoder_end "#include \"./${decoder_name}.inc\"\n#undef INST\n        }\n        return t;")
+    foreach(anchor IN ITEMS decoder_loop decoder_match decoder_end)
+        string(FIND "${decoder_header}" "${${anchor}}" offset)
+        if(offset LESS 0)
+            message(FATAL_ERROR "Pinned ${decoder_name} decoder table changed (${anchor})")
+        endif()
+    endforeach()
+    string(REPLACE "${decoder_loop}" "        std::vector<Handler> all;\n        {\n#define INST" decoder_header "${decoder_header}")
+    string(REPLACE "${decoder_match}" "        { \\\n            all.emplace_back(" decoder_header "${decoder_header}")
+    string(REPLACE "${decoder_end}" "#include \"${decoder_source}.inc\"\n#undef INST\n        }\n        for (size_t i = 0; i < t.size(); ++i)\n            for (auto const& e : all)\n                if ((i & make_fast_index(e.mask)) == make_fast_index(e.expect))\n                    t[i].push_back(e);\n        return t;" decoder_header "${decoder_header}")
+    # The other use of the pattern list in the header (the instruction's name).
+    string(REPLACE "#include \"./${decoder_name}.inc\"" "#include \"${decoder_source}.inc\"" decoder_header "${decoder_header}")
+    write_derived("${PORT_BUILD_DIR}/include/dynarmic/frontend/${decoder}.h" "${decoder_header}")
+endforeach()
+# The override headers shadow upstream's only by include order: a definition on the target
+# recompiles every dynarmic object that saw the upstream ones.
+target_compile_definitions(dynarmic PRIVATE EDEN_DECODER_ONE_PARSE=1)
+
 # Cancel low-lane extraction of a scalar that was just zero-extended to Q.
 # Preserve other lanes, arbitrary vectors and all floating-point operations.
 file(READ "${PROJECT_SOURCE_DIR}/src/dynarmic/src/dynarmic/ir/opt_passes.cpp" optimizer)
