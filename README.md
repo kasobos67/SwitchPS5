@@ -215,6 +215,7 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 - **More reliable game loading** - fix the remaining hangs on the loading screen.
 - **Faster exit in every game** - a few games still take up to several minutes to close.
 - **Controller selection screen** - some games wait forever on the screen that asks you to choose a controller. Games that take single Joy-Cons should now get past it; other cases still need a log from a game that does it.
+- **Button mapping** - choose which DualSense button acts as each of the game's buttons, in **Settings > Controls**.
 - **More game compatibility** - validate more games on the PS5, and fix what keeps them from running well, such as games that crash at launch.
 
 ## Issues are disabled
