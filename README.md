@@ -140,10 +140,10 @@ ProsperoEden does not include or download mods.
 
 **Settings > Performance** trades accuracy for speed, for every game. A change applies when a game starts.
 
-| Switch | In the file | Default | What it does |
+| Setting | In the file | Default | What it does |
 |---|---|---|---|
-| Compile ahead | `block_list` | on | The code a 64-bit game compiled in earlier sessions is compiled again on a spare CPU as it starts, so new areas stutter less. It has run in one game on the console so far; switch it off if a game misbehaves. |
-| Asynchronous shaders | `async_shaders` | off | A new effect is drawn once its shader is ready instead of pausing the game for it. Things can be missing for a moment. |
+| Compile ahead | `block_list` | off | The code a 64-bit game compiled in earlier sessions is compiled again on a spare CPU as it starts, so the game stutters less when it reaches that code. In the one large game it was measured in, the game loaded sooner and its first seconds of play held their frame rate, while the emulated processor worked about a tenth harder afterwards. It has run in one game on the console so far; switch it off if a game misbehaves. |
+| Asynchronous shaders | `async_shaders` | off | A new effect is drawn once its shader is ready instead of pausing the game for it. Things can be missing for a moment. With the Vulkan renderer only: the OpenGL renderer ignores it. |
 | Faster GPU emulation | `fast_gpu` | off | The emulator's lowest GPU accuracy. Faster in demanding games; graphics can be wrong. |
 | Faster CPU emulation | `unsafe_cpu` | off | Less exact floating-point math. A few games misbehave. |
 | Faster DMA | `unsafe_dma` | off | Less exact memory transfers to the GPU. A few games show wrong graphics. |
@@ -154,11 +154,13 @@ One game can have its own values, in the settings file only: close ProsperoEden,
 
 ```json
 {
-  "performance": { "block_list": true, "async_shaders": false, "fast_gpu": false, "unsafe_cpu": false,
+  "performance": { "block_list": false, "async_shaders": false, "fast_gpu": false, "unsafe_cpu": false,
                    "unsafe_dma": false, "reactive_flushing": true, "skip_invalidation": false },
   "games": { "0100000000010000": { "performance": { "fast_gpu": true } } }
 }
 ```
+
+The accuracy switches help only where a game is held back by what they relax. In the scene they were measured in on the console, a large game standing at its frame rate limit, switching all of them on changed neither the frame rate nor how busy the emulated processor and the graphics thread were. Leave them off unless a game runs under its frame rate, and switch them back off if its graphics go wrong.
 
 Resolution, the upscaling filter, the renderer and the refresh rate, which change speed too, are in **Settings > Video** and in a game's own settings.
 
@@ -238,7 +240,7 @@ Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That f
 ## Roadmap
 
 - **FPKG support** - install ProsperoEden as a fake package, alongside the current homebrew folder install. Each release includes a ShadowMountPlus package image (`.ffpfsc`); installing it still needs testing.
-- **More performance** - CPU and GPU work to keep demanding games at their target frame rate: the short stutter when a game reaches new areas (the block list is on by default now, and more games have to run with it), heavy cutscenes, and games that run slower in Docked mode than in Handheld.
+- **More performance** - CPU and GPU work to keep demanding games at their target frame rate: the short stutter when a game reaches new areas (the block list, **Compile ahead** in **Settings > Performance**, once it has run in more games and can be on by default), heavy cutscenes, and games that run slower in Docked mode than in Handheld.
 - **More reliable game loading** - fix the remaining hangs on the loading screen.
 - **Faster exit in every game** - a few games still take up to several minutes to close.
 - **Controller selection screen** - some games wait forever on the screen that asks you to choose a controller. Games that take single Joy-Cons should now get past it; other cases still need a log from a game that does it.
