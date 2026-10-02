@@ -100,9 +100,16 @@ ProsperoEden keeps its own data in `/data/prosperoeden`, separately from the gam
 └── user/                               # saves and emulator user data
 ```
 
-The app itself stays in `/data/homebrew/PPSA99008` and can be updated by copying a new release over it.
+The app itself stays in `/data/homebrew/PPSA99008`; see [Updating](#updating).
 
 ProsperoEden does not include keys, firmware, games, or other copyrighted console data. Dump these files from hardware and software you own. Do not download or redistribute them.
+
+### Updating
+
+Close ProsperoEden first. Your settings, saves, covers and logs are in `/data/prosperoeden`, outside the app, so an update keeps them. Afterwards the About screen shows the version that is running.
+
+- **Folder install.** Copy the `PPSA99008` folder from the new release ZIP over `/data/homebrew/PPSA99008`, replacing the files it has, then start ProsperoEden. Files you put there yourself, such as `language.txt`, stay.
+- **Package image (`.ffpfsc`).** Delete the old image, copy the new one to the same place, then restart ShadowMountPlus (send its payload again, or restart the console) and start ProsperoEden. ShadowMountPlus 1.6 keeps the old image mounted until it restarts; 1.7 finds a replaced image by itself at its next scan, and a restart does no harm there. Keep one image only, and no `PPSA99008` folder next to it: two copies of the app are reported as a duplicate. The image install is still untested (see the [Roadmap](#roadmap)), so these steps follow how ShadowMountPlus handles images.
 
 ### Moving save data
 
