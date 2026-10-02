@@ -195,6 +195,11 @@ void pictures(Stage &s)
     s.press({Key::down, Key::cross});
     s.wait(0.4f);
     s.shoot("37-mods-switched");
+    // A mod that lists several cheats: each has its switch, and one frame rate takes the place
+    // of the other.
+    s.press({Key::down, Key::down, Key::down, Key::cross});
+    s.wait(0.6f);
+    s.shoot("46-mods-cheats");
     s.services.has_mods = false;
     s.press({Key::circle, Key::cross});
     s.wait(0.6f);

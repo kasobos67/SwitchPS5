@@ -157,6 +157,20 @@ void Launcher::count_mods(Game &game, const std::vector<Mod> &mods)
     }
 }
 
+void Launcher::read_mods(Game &game)
+{
+    mods_ = services_.mods(game.title_id);
+    count_mods(game, mods_);
+    mod_list_.clear();
+    for (int mod = 0; mod < static_cast<int>(mods_.size()); ++mod)
+    {
+        mod_list_.push_back({mod, -1});
+        for (int cheat = 0; cheat < static_cast<int>(mods_[static_cast<std::size_t>(mod)].cheats.size());
+             ++cheat)
+            mod_list_.push_back({mod, cheat});
+    }
+}
+
 std::string Launcher::addons_line(const std::string &addons, int mods, int mods_on, bool brief)
 {
     std::string line = addons;
@@ -293,8 +307,7 @@ void Launcher::press_library(Key key)
         import_source_ = services_.save_transfer_available() ?
                              services_.save_import_source(game->title_id) : SaveSource::none;
         import_armed_ = false;
-        mods_ = services_.mods(game->title_id);
-        count_mods(games_[static_cast<std::size_t>(library_.selected)], mods_);
+        read_mods(games_[static_cast<std::size_t>(library_.selected)]);
         open_modal(Modal::game);
         game_rows_.visible = kDialogRowsShown;
         game_rows_.pitch = kDialogRowPitch;
@@ -538,11 +551,10 @@ void Launcher::press_game(Key key)
         // since this dialog opened.
         if (key != Key::cross)
             return;
-        mods_ = services_.mods(game.title_id);
-        count_mods(game, mods_);
+        read_mods(game);
         mod_rows_.visible = kDialogRowsShown;
         mod_rows_.pitch = kDialogRowPitch;
-        mod_rows_.reset(static_cast<int>(mods_.size()), 0);
+        mod_rows_.reset(static_cast<int>(mod_list_.size()), 0);
         modal_ = modal_shown_ = Modal::mods;
         message_.clear();
         cue(Cue::open);
@@ -771,10 +783,31 @@ void Launcher::press_mods(Key key)
     {
         if (mods_.empty())
             return;
-        Mod &mod = mods_[static_cast<std::size_t>(mod_rows_.selected)];
+        const ModRow at = mod_list_[static_cast<std::size_t>(mod_rows_.selected)];
+        Mod &mod = mods_[static_cast<std::size_t>(at.mod)];
         // With the game's Mods switch off (the Library's), choosing a mod turns the switch on and
         // that mod with it: nobody switches a mod in a list that is switched off.
         const bool revive = !game.mods_enabled;
+        if (at.cheat >= 0)
+        {
+            // One of the mod's cheats. Choosing it turns on what it runs behind: its mod, and the
+            // game's Mods switch. One of a group (two frame rates) takes the other's place, so
+            // the list is read again.
+            const Cheat &cheat = mod.cheats[static_cast<std::size_t>(at.cheat)];
+            const bool enabled = revive || !mod.enabled || !cheat.enabled;
+            const bool saved =
+                (!revive || services_.set_mods_enabled(game.title_id, true)) &&
+                (mod.enabled || services_.set_mod_enabled(game.title_id, mod.name, true)) &&
+                services_.set_cheat_enabled(game.title_id, mod.name, cheat.name, enabled);
+            read_mods(game);
+            if (mod_rows_.count != static_cast<int>(mod_list_.size()))
+                mod_rows_.reset(static_cast<int>(mod_list_.size()), 0);
+            say(saved ? tr("Saved for this game. Applies on next launch.") :
+                        tr("Could not save. Please try again."),
+                !saved);
+            cue(saved ? Cue::toggle : Cue::error);
+            return;
+        }
         const bool enabled = revive || !mod.enabled;
         const bool saved = (!revive || services_.set_mods_enabled(game.title_id, true)) &&
                            services_.set_mod_enabled(game.title_id, mod.name, enabled);
@@ -835,13 +868,37 @@ void Launcher::draw_mods(Canvas &c, float open)
         const bool live = game == nullptr || game->mods_enabled;
         for (int row = mod_rows_.first_row(); row <= mod_rows_.last_row(); ++row)
         {
-            const Mod &mod = mods_[static_cast<std::size_t>(row)];
+            const ModRow at = mod_list_[static_cast<std::size_t>(row)];
+            const Mod &mod = mods_[static_cast<std::size_t>(at.mod)];
             const float top = row_top(row);
             list.push_opacity(mod_rows_.row_alpha(row, kDialogRowHeight));
-            // Its name as the player's folder has it, what it changes under it, its switch.
+            if (at.cheat >= 0)
+            {
+                // One of the mod's cheats, set in under it, with its own switch: faint while its
+                // mod is off.
+                const Cheat &cheat = mod.cheats[static_cast<std::size_t>(at.cheat)];
+                const bool used = live && mod.enabled;
+                text_fit(c, cheat.name, 668.0f,
+                         baseline(top + (kDialogRowHeight - 38.0f) * 0.5f, 38.0f, theme::kText24),
+                         theme::kText24, cheat.enabled && used ? theme::kValue : theme::kMeta, 520.0f);
+                list.push_opacity(used ? 1.0f : 0.4f);
+                toggle(c, 1292.0f, top + kDialogRowHeight * 0.5f, cheat.enabled ? 1.0f : 0.0f);
+                list.pop_opacity();
+                list.pop_opacity();
+                continue;
+            }
+            // Its name as the player's folder has it, what it changes under it (with how many of
+            // its cheats are chosen when it lists several), its switch.
+            std::string kind = mod.kind;
+            if (!mod.cheats.empty())
+                kind += ", " + fill(tr("{0} of {1} on"),
+                                    {std::to_string(std::count_if(
+                                         mod.cheats.begin(), mod.cheats.end(),
+                                         [](const Cheat &cheat) { return cheat.enabled; })),
+                                     std::to_string(mod.cheats.size())});
             text_fit(c, mod.name, 628.0f, baseline(top + 14.0f, 38.0f, theme::kText24),
                      theme::kText24, mod.enabled && live ? theme::kValue : theme::kMeta, 560.0f);
-            text_shrink(c, mod.kind, 628.0f, baseline(top + 52.0f, 28.0f, theme::kSmall),
+            text_shrink(c, kind, 628.0f, baseline(top + 52.0f, 28.0f, theme::kSmall),
                         theme::kSmall, theme::kMeta, 560.0f);
             list.push_opacity(live ? 1.0f : 0.4f);
             toggle(c, 1292.0f, top + kDialogRowHeight * 0.5f, mod.enabled ? 1.0f : 0.0f);

@@ -614,11 +614,12 @@ bool EdenServices::save_import(std::uint64_t, std::string*) { return false; }
 bool EdenServices::save_export(std::uint64_t, std::string*) { return false; }
 #endif
 
-// Mods (headless/mods.h): what the game files folder's mods/<title ID>/ holds for a game, and
-// which of them are switched off (settings_store.h).
+// Mods (headless/mods.h): what the game files folder's mods/<title ID>/ holds for a game, which
+// of them are switched off and which cheats are chosen (settings_store.h).
 std::vector<pe::ui::Mod> EdenServices::mods(std::uint64_t title_id) {
     std::vector<pe::ui::Mod> result;
     const auto off = Eden::LoadDisabledMods(title_id);
+    const auto chosen = Eden::LoadChosenCheats(title_id);
     for (const Eden::Mods::Mod& mod : Eden::Mods::List(Eden::AssetsPath("mods"), title_id)) {
         std::string kind;
         const auto add = [&kind](const char* text) {
@@ -628,9 +629,23 @@ std::vector<pe::ui::Mod> EdenServices::mods(std::uint64_t title_id) {
         if (mod.kinds & Eden::Mods::kCode) add(TR("Patch"));
         if (mod.kinds & Eden::Mods::kFiles) add(TR("Files"));
         if (mod.kinds & Eden::Mods::kCheats) add(TR("Cheats"));
-        result.push_back({mod.name, kind, std::find(off.begin(), off.end(), mod.name) == off.end()});
+        result.push_back({mod.name, kind, std::find(off.begin(), off.end(), mod.name) == off.end(), {}});
+        for (const auto& cheat : mod.cheats)
+            result.back().cheats.push_back(
+                {cheat.name, std::find(chosen.begin(), chosen.end(), cheat.id) != chosen.end()});
     }
     return result;
+}
+
+bool EdenServices::set_cheat_enabled(std::uint64_t title_id, const std::string& name, const std::string& cheat,
+                                     bool enabled) {
+    bool saved = false;
+    for (const Eden::Mods::Mod& mod : Eden::Mods::List(Eden::AssetsPath("mods"), title_id))
+        if (mod.name == name)
+            saved = Eden::SaveChosenCheats(
+                title_id, Eden::Mods::ChooseCheat(mod, cheat, enabled, Eden::LoadChosenCheats(title_id)));
+    if (!saved) Eden::Report("settings", "Could not write the game's cheats");
+    return saved;
 }
 
 bool EdenServices::set_mod_enabled(std::uint64_t title_id, const std::string& name, bool enabled) {

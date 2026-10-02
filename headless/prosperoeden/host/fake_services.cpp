@@ -297,13 +297,33 @@ std::vector<ui::Mod> FakeServices::mods(std::uint64_t title_id)
     if (!has_mods || std::find(modded_.begin(), modded_.end(), title_id) == modded_.end())
         return {};
     std::vector<ui::Mod> mods = {
-        {"60 FPS", tr("Patch"), true},
-        {"Sharper textures", tr("Files"), true},
-        {"Starter pack", std::string(tr("Files")) + ", " + tr("Cheats"), true},
+        {"60 FPS", tr("Patch"), true, {}},
+        {"Sharper textures", tr("Files"), true, {}},
+        {"Starter pack", std::string(tr("Files")) + ", " + tr("Cheats"), true, {}},
     };
     for (ui::Mod &mod : mods)
         mod.enabled = std::find(mods_off_.begin(), mods_off_.end(), mod.name) == mods_off_.end();
+    for (const char *cheat : {"60 FPS", "30 FPS", "Infinite health", "All items", "Moon jump"})
+        mods.back().cheats.push_back(
+            {cheat, std::find(cheats_on_.begin(), cheats_on_.end(), cheat) != cheats_on_.end()});
     return mods;
+}
+
+bool FakeServices::set_cheat_enabled(std::uint64_t, const std::string &, const std::string &cheat,
+                                     bool enabled)
+{
+    const auto drop = [this](const std::string &name)
+    { cheats_on_.erase(std::remove(cheats_on_.begin(), cheats_on_.end(), name), cheats_on_.end()); };
+    drop(cheat);
+    if (!enabled)
+        return true;
+    if (cheat == "60 FPS" || cheat == "30 FPS")
+    {
+        drop("60 FPS");
+        drop("30 FPS");
+    }
+    cheats_on_.push_back(cheat);
+    return true;
 }
 
 bool FakeServices::set_mod_enabled(std::uint64_t, const std::string &name, bool enabled)

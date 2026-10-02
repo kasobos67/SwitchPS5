@@ -109,12 +109,20 @@ struct GameSettings
     int refresh = -1;
 };
 
+// One cheat of a mod that lists several: each is chosen on its own.
+struct Cheat
+{
+    std::string name;     // as its file names it
+    bool enabled = false; // chosen: runs when its mod is on
+};
+
 // A mod of one game, from the game files folder's mods/<title ID>/.
 struct Mod
 {
     std::string name;    // its folder's name
     std::string kind;    // what it is made of: "Patch", "Files", "Cheats"
     bool enabled = true; // used when the game starts
+    std::vector<Cheat> cheats; // its cheats when it lists several; empty for a single one
 };
 
 // Where a save to import was found, in the game files folder.
@@ -203,6 +211,12 @@ class Services
         return {};
     }
     virtual bool set_mod_enabled(std::uint64_t, const std::string &, bool)
+    {
+        return false;
+    }
+    // One cheat of a mod that lists several. Choosing one of a group (two frame rates) takes the
+    // other out: the list is read again afterwards.
+    virtual bool set_cheat_enabled(std::uint64_t, const std::string &, const std::string &, bool)
     {
         return false;
     }

@@ -118,6 +118,8 @@ class Launcher
     void read_home();
     // A game's mods as its list has them: how many, and how many are switched on.
     void count_mods(Game &game, const std::vector<Mod> &mods);
+    // Reads a game's mods for its dialogs, with the rows of the Mods list.
+    void read_mods(Game &game);
     // What a game comes with, on one line: "Update 1.2.0, 2 DLC, 2 mods"; "None" without any.
     // brief: for Game::addons_short, where the line would not fit ("v1.2.0, 2 DLC, 1/2 mods").
     static std::string addons_line(const std::string &addons, int mods, int mods_on,
@@ -218,6 +220,13 @@ class Launcher
     bool import_armed_ = false;                   // Cross was pressed once: the next one imports
     ListView game_rows_;                          // the game dialog's rows (more than it shows)
     std::vector<Mod> mods_;                       // the game's mods, read when its dialog opens
+    // The Mods list's rows: each mod, then its cheats when it lists several.
+    struct ModRow
+    {
+        int mod = 0;
+        int cheat = -1; // -1: the mod itself
+    };
+    std::vector<ModRow> mod_list_;
     ListView mod_rows_;
 
     // game files

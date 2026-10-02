@@ -50,6 +50,8 @@ public:
 
     std::vector<pe::ui::Mod> mods(std::uint64_t title_id) override;
     bool set_mod_enabled(std::uint64_t title_id, const std::string& name, bool enabled) override;
+    bool set_cheat_enabled(std::uint64_t title_id, const std::string& mod, const std::string& cheat,
+                           bool enabled) override;
     bool mods_enabled(std::uint64_t title_id) override;
     bool set_mods_enabled(std::uint64_t title_id, bool enabled) override;
     std::string mods_folder(std::uint64_t title_id) override;

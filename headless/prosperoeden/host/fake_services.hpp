@@ -117,11 +117,13 @@ class FakeServices final : public ui::Services
         *message = fill(tr("Exported to {0}."), {"save-export/0100A00B00003000-20261001-213000"});
         return true;
     }
-    // Sample mods, for two of the games: three, the second switched off; none when has_mods is
-    // cleared.
+    // Sample mods, for two of the games: three, the second switched off, the third with cheats
+    // chosen one by one (its two frame rates replace each other); none when has_mods is cleared.
     bool has_mods = true;
     std::vector<ui::Mod> mods(std::uint64_t) override;
     bool set_mod_enabled(std::uint64_t, const std::string &name, bool enabled) override;
+    bool set_cheat_enabled(std::uint64_t, const std::string &mod, const std::string &cheat,
+                           bool enabled) override;
     // One Mods switch for every sample game.
     bool mods_enabled(std::uint64_t) override
     {
@@ -153,6 +155,7 @@ class FakeServices final : public ui::Services
     std::string saved_folder_;
     std::vector<std::uint64_t> modded_; // the games that have the sample mods
     std::vector<std::string> mods_off_{"Sharper textures"};
+    std::vector<std::string> cheats_on_{"60 FPS"};
     bool mods_enabled_ = true;
 };
 
