@@ -18,6 +18,7 @@
 #include "sdk_audit.h"
 #endif
 #include <filesystem>
+#include <unistd.h>
 #include <condition_variable>
 #include <chrono>
 #include <cstdlib>
@@ -146,6 +147,12 @@ int main(int argc, char** argv) {
         // (assets_dir.h). Requested once, still single-threaded. Without it the app keeps its
         // sandbox paths.
         Eden::FilesystemAccessStatus() = static_cast<int>(elevation::request(elevation::Capability::filesystem));
+        // Elevation leaves the effective group (1) apart from the real one (0), and Mesa turns
+        // RADV's disk cache off for a process whose real and effective ids differ, so no
+        // compiled shader was ever kept between sessions. Match them; the effective user is
+        // root, which may set its group.
+        if (getegid() != getgid() && setegid(getgid()) != 0)
+            Eden::Report("filesystem access", "Could not match the effective group; RADV's disk cache stays off");
         if (Eden::FilesystemAccess()) MigrateSandboxData();
         for (const auto& folder : {Eden::UserDir(), Eden::ConfigDir(), Eden::CoversDir(), Eden::LogsDir()}) {
             std::error_code folder_error;
@@ -200,8 +207,11 @@ int main(int argc, char** argv) {
             Eden::Crash::Fail(detail);
         });
         {
+            // The ids too: Mesa's disk cache turns itself off when the effective and real ids differ.
             const std::string access = "status=" + std::to_string(Eden::FilesystemAccessStatus()) +
-                " app=" + Eden::AppDir() + " data=" + Eden::UserDir() + " game_files=" + Eden::AssetsDir();
+                " app=" + Eden::AppDir() + " data=" + Eden::UserDir() + " game_files=" + Eden::AssetsDir() +
+                " uid=" + std::to_string(getuid()) + "/" + std::to_string(geteuid()) +
+                " gid=" + std::to_string(getgid()) + "/" + std::to_string(getegid());
             Eden::Report("filesystem access", access.c_str());
             if (Eden::FilesystemAccess() && Eden::AssetsDir() == Eden::kDefaultAssetsDir)
                 for (const char* folder : {"/keys", "/firmware", "/roms", "/updates", "/mods", "/ryujinx"})
