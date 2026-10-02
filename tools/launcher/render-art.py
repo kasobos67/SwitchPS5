@@ -115,14 +115,14 @@ def main():
     ART.mkdir(parents=True, exist_ok=True)
     wanted = set(sys.argv[1:]) or {"backdrop", "brand", "controller"}
     if "backdrop" in wanted:
-        source = Image.open(ROOT / "assets/background-source.png").convert("RGB")
+        source = Image.open(ROOT / "sce_sys/background-source.png").convert("RGB")
         art = backdrop(source)
         save_tga(grain(art, .025), "backdrop.tga")
         # A quarter of the size, blurred until only light and colour remain.
         small = art.resize((512, 288), Image.Resampling.LANCZOS).filter(ImageFilter.GaussianBlur(9))
         save_tga(small, "backdrop-blur.tga")
     if "brand" in wanted:
-        icon = Image.open(ROOT / "assets/prosperoeden-icon-source.png").convert("RGBA")
+        icon = Image.open(ROOT / "sce_sys/icon-source.png").convert("RGBA")
         save_tga(icon.resize((384, 384), Image.Resampling.LANCZOS), "brand.tga")
     if "controller" in wanted:
         save_tga(controller(), "controller.tga")

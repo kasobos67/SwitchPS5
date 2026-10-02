@@ -79,7 +79,7 @@ and sounds are committed in `headless/prosperoeden/ui`, so a build does not rege
 The tools that made them are in `tools/launcher`:
 
 - `assets.sh` bakes the font (`third_party/fonts/Montserrat-Medium.ttf`) and renders the art from
-  `assets/`; it needs a host C++ compiler and Python with Pillow.
+  the source pictures in `sce_sys/`; it needs a host C++ compiler and Python with Pillow.
 - `process-sfx.py` trims and levels the raw sound effects (needs `ffmpeg` and `numpy`).
 - `bake-wordmark.py` writes the "LOADING" lettering of the loading screen
   (`headless/loading_wordmark.glsl`).
@@ -90,6 +90,10 @@ The tools that made them are in `tools/launcher`:
   fails on missing or stale text, changed placeholders and characters the font does not have.
 - `text-check.sh` compares the launcher's right-to-left text code with ICU on generated lines
   and on every translation (needs `libicu-dev`).
+
+What the PS5's home screen shows for the app is in `sce_sys/`, as it goes into the package:
+`param.json` (title, ID, version, and the 120 Hz output declaration), `icon0.png`, `pic0.dds`,
+`pic1.dds` and `snd0.at9`. The pictures' sources are beside them.
 
 ## Host tools
 
@@ -133,7 +137,8 @@ development checkout whose dependencies are reused instead of fetched.
 
 To cut a release:
 
-1. Bump the version in `headless/prosperoeden/version.h` (the launcher and the package read it).
+1. Bump `contentVersion` in `sce_sys/param.json` (the launcher is built with it, and the package
+   carries the file).
 2. Add the "Changes in" section to the README.
 3. Test the build on a console.
 4. Push a `vX.Y.Z` tag.

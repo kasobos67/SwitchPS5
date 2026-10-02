@@ -2095,6 +2095,17 @@ else()
     target_compile_options(eden-devices-check PRIVATE -fno-rtti)
 endif()
 target_include_directories(eden-headless PRIVATE "${PROJECT_SOURCE_DIR}/src")
+# The app version has one home, sce_sys/param.json (contentVersion), which the package carries as
+# it is. A header of its own, so a new version recompiles only the two files that show it.
+file(READ "${PORT_ROOT}/sce_sys/param.json" app_param)
+string(JSON app_version GET "${app_param}" contentVersion)
+if(NOT app_version MATCHES "^[0-9][0-9]\\.[0-9][0-9][0-9]\\.[0-9][0-9][0-9]$")
+    message(FATAL_ERROR "sce_sys/param.json: contentVersion must be NN.NNN.NNN, not '${app_version}'")
+endif()
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${PORT_ROOT}/sce_sys/param.json")
+write_derived("${PORT_BUILD_DIR}/version/app_version.h"
+    "// Generated from sce_sys/param.json (contentVersion).\n#pragma once\n#define EDEN_APP_VERSION \"${app_version}\"\n")
+target_include_directories(eden-headless PRIVATE "${PORT_BUILD_DIR}/version")
 target_link_libraries(eden-headless PRIVATE core eden-pad)
 add_library(eden-metadata STATIC "${EDEN_PORT_DIR}/metadata_bridge.cpp")
 target_include_directories(eden-metadata PUBLIC "${EDEN_PORT_DIR}" PRIVATE "${PROJECT_SOURCE_DIR}/src")

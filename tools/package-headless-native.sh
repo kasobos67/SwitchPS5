@@ -41,7 +41,9 @@ fi
     --companion-sdk 0x08050001 --file-name eboot.elf
 "$builder" self --sign --in "$out/eboot.elf" --out "$app/eboot.bin" --magic 0x1D3D154F
 cp "$template/runtime/libc.prx" "$app/sce_module/libc.prx"
-cp "$root/assets/"{icon0.png,pic0.dds,pic1.dds,snd0.at9} "$app/sce_sys/"
+# What the console's home screen shows for the title is in sce_sys/, as it goes into the package
+# (the source pictures beside it stay in the repository).
+cp "$root/sce_sys/"{param.json,icon0.png,pic0.dds,pic1.dds,snd0.at9} "$app/sce_sys/"
 rm -rf "$app/ui"
 cp -a "$root/headless/prosperoeden/ui" "$app/ui"
 # Filesystem access helper (headless/elevation, built for PPSA99008): elfldr runs it at startup.
@@ -49,26 +51,27 @@ make -s -C "$root/headless/elevation/helper" OUTPUT="$root/build/elevation/sandb
     PS5_PAYLOAD_SDK="${PS5_ELEVATION_SDK:-/opt/ps5-payload-sdk}"
 python3 "$root/headless/elevation/validate-helper.py" "$root/build/elevation/sandbox-elevator.elf"
 cp "$root/build/elevation/sandbox-elevator.elf" "$app/sandbox-elevator.elf"
-python3 - "$root" "$template" "$app" "${1:-}" <<'PY'
-import json, pathlib, runpy, shutil, sys
-root, template, app = map(pathlib.Path, sys.argv[1:4])
+python3 - "$root" "$scratch" "$app" "${1:-}" <<'PY'
+import json, pathlib, re, runpy, shutil, sys
+root, scratch, app = map(pathlib.Path, sys.argv[1:4])
 game = sys.argv[4] == '--game'
 integration = sys.argv[4] in ('--integration', '--game')
 if game:
     assert (app / 'game-assets.json').is_file()
     assert (app / 'assets/keys/prod.keys').is_file()
-value = json.loads((template / 'sce_sys/param.json').read_text())
-value.update(titleId='PPSA99008', conceptId='99008', contentId='UP9000-PPSA99008_00-PROSPEROEDEN0001')
-# The app version has one home: the launcher shows the same value.
-import re
-value['contentVersion'] = re.search(r'kAppVersion = "([0-9.]+)"',
-    (root / 'headless/prosperoeden/version.h').read_text()).group(1)
-value['localizedParameters']['en-US']['titleName'] = 'ProsperoEden'
-value['pubtools']['loudnessSnd0'] = '-28.00'
+value = json.loads((app / 'sce_sys/param.json').read_text())
+assert (value['titleId'], value['conceptId']) == ('PPSA99008', '99008')
+assert value['contentId'] == 'UP9000-PPSA99008_00-PROSPEROEDEN0001'
+assert value['localizedParameters']['en-US']['titleName'] == 'ProsperoEden'
+assert value['pubtools']['loudnessSnd0'] == '-28.00'
+# The app version has one home, sce_sys/param.json: the program was built with the same value.
+assert re.fullmatch(r'\d{2}\.\d{3}\.\d{3}', value['contentVersion']), value['contentVersion']
+built = re.search(r'EDEN_APP_VERSION "([0-9.]+)"',
+    (scratch / 'native-local/headless/version/app_version.h').read_text()).group(1)
+assert built == value['contentVersion'], f'the program says {built}, param.json {value["contentVersion"]}'
 # The console gives a 120 Hz output (Settings > Video, headless/display_refresh.h) only to a title
 # that declares it. Declaring it changes nothing by itself: the output stays at 60 Hz until asked.
-value['attribute3'] = int(value['attribute3']) | 0x80040
-(app / 'sce_sys/param.json').write_text(json.dumps(value, indent=2) + '\n')
+assert int(value['attribute3']) & 0x80040 == 0x80040, 'param.json no longer declares the 120 Hz output'
 runpy.run_path(str(root / 'tools/load_alignment.py'))['check_load_alignment']((app / 'eboot.bin').read_bytes())
 profile = (root / 'build/headless-native/CMakeCache.txt').read_text()
 assert sum(profile.count('EDEN_DEVICE_FRONTEND:BOOL=' + v) for v in ('ON', 'OFF')) == 1

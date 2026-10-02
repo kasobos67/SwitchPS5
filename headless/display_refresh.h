@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The output's refresh rate for a game session: what Settings > Video (or the game's own
 // settings) asks for, and what the display took. 120 Hz needs the package to declare it
-// (tools/package-headless-native.sh), a display that shows it and the console's own 120 Hz output
+// (attribute3 in sce_sys/param.json), a display that shows it and the console's own 120 Hz output
 // setting; otherwise the session presents at 60 Hz. The launcher always runs at 60 Hz.
 // Also the size of the picture a session puts out.
 #pragma once
