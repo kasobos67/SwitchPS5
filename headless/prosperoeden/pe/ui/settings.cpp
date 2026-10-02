@@ -639,7 +639,11 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         for (int row = first; row <= last; ++row)
         {
             list.push_opacity(rows_view.row_alpha(row, kVideoRowHeight));
-            label(row, tr(kNames[row]), kToggle);
+            // Asynchronous shaders act with Vulkan only: the OpenGL renderer compiles in its own
+            // context here (graphics.cpp), and Eden then leaves them off.
+            const std::string name =
+                std::string(tr(kNames[row])) + (row == speed_async_shaders ? " (Vulkan)" : "");
+            label(row, name.c_str(), kToggle);
             toggle(c, 1292.0f, row_centre(row),
                    tween::clamp01(switches_[static_cast<std::size_t>(row)].value));
             list.pop_opacity();
