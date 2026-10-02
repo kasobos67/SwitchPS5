@@ -847,6 +847,19 @@ if(EDEN_A32_FASTMEM)
     list(REMOVE_ITEM core_sources "loader/deconstructed_rom_directory.cpp")
     list(APPEND core_sources "${PORT_BUILD_DIR}/deconstructed_rom_directory.cpp")
 endif()
+# GetPseudoDeviceId read the seed through the control data without checking that there is
+# any (a game without control data, such as a homebrew NRO): seed 0 then, as for other
+# NACP fields Eden defaults when the metadata is missing.
+file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/service/am/service/application_functions.cpp" app_functions_source)
+set(app_functions_old "    auto const seed = res.first->raw.seed_for_pseudo_device_id;")
+string(FIND "${app_functions_source}" "${app_functions_old}" app_functions_at)
+if(app_functions_at LESS 0)
+    message(FATAL_ERROR "Pinned GetPseudoDeviceId changed")
+endif()
+string(REPLACE "${app_functions_old}" "    auto const seed = res.first != nullptr ? res.first->raw.seed_for_pseudo_device_id : u64_le{0};" app_functions_source "${app_functions_source}")
+write_derived("${PORT_BUILD_DIR}/application_functions.cpp" "${app_functions_source}")
+list(REMOVE_ITEM core_sources "hle/service/am/service/application_functions.cpp")
+list(APPEND core_sources "${PORT_BUILD_DIR}/application_functions.cpp")
 set_property(TARGET core PROPERTY SOURCES "${core_sources}")
 # Core's NS query service owns this implementation from frontend_common.
 target_sources(core PRIVATE "${PROJECT_SOURCE_DIR}/src/frontend_common/play_time_manager.cpp")
