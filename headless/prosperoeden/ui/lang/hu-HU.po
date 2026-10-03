@@ -997,7 +997,7 @@ msgstr "FELBONTÁS"
 msgid "Right stick press"
 msgstr "Jobb kar lenyomása"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp
 msgid "ROM missing from the game files folder"
 msgstr "A ROM hiányzik a játékfájlok mappájából"
 
@@ -1230,6 +1230,11 @@ msgstr "Nem érhető el"
 msgid "UP"
 msgstr "FEL"
 
+#. Notification title: a newer release of this app is listed (not a game update).
+#: pe/ui/launcher.cpp
+msgid "Update available"
+msgstr "Frissítés érhető el"
+
 #. A game update; {0} is its version, for example 1.2.0.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Update {0}"
@@ -1258,6 +1263,11 @@ msgstr "Kicsomagolt firmware NCA-fájlokat használj. A mappát a Beállítások
 #: pe/ui/browse.cpp
 msgid "Use this folder"
 msgstr "Mappa használata"
+
+#. {0}: the newer release's number, for example 1.000.050; homebrew.page is a site's name and stays as it is.
+#: pe/ui/launcher.cpp
+msgid "Version {0} is on homebrew.page"
+msgstr "A(z) {0} verzió elérhető: homebrew.page"
 
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Vibration"

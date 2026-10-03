@@ -6,6 +6,7 @@
 #include "diagnostics.h"
 #include "metadata_bridge.h"
 #include "mods.h"
+#include "update_notice.h"
 #include "native_directory.h"
 #include "pe/core/strings.hpp"
 #include "radio_input.h"
@@ -444,6 +445,8 @@ std::vector<pe::ui::Game> EdenServices::games() {
 }
 
 std::string EdenServices::game_path(const std::string& file) { return Eden::AssetsPath("roms/" + file); }
+
+bool EdenServices::take_update(std::string* version) { return Eden::UpdateNotice::Take(version); }
 
 bool EdenServices::game_exists(const std::string& file) {
     return Eden::ValidRomFilename(file) && IsFile(Eden::AssetsPath("roms/" + file));

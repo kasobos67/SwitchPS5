@@ -42,6 +42,8 @@ ONE = re.compile(r'"((?:[^"\\]|\\.)*)"')
 
 # What a translator cannot tell from the text alone.
 NOTES = {
+    "Update available": "Notification title: a newer release of this app is listed (not a game update).",
+    "Version {0} is on homebrew.page": "{0}: the newer release's number, for example 1.000.050; homebrew.page is a site's name and stays as it is.",
     "Select": "Button hint: choose the highlighted item (not the Select button).",
     "Back": "Button hint: go back one screen.",
     "Change": "Button hint: change the highlighted setting.",

@@ -997,7 +997,7 @@ msgstr "RESOLUSI"
 msgid "Right stick press"
 msgstr "Tekan stik kanan"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp
 msgid "ROM missing from the game files folder"
 msgstr "ROM tidak ada di folder file game"
 
@@ -1230,6 +1230,11 @@ msgstr "Tidak tersedia"
 msgid "UP"
 msgstr "NAIK"
 
+#. Notification title: a newer release of this app is listed (not a game update).
+#: pe/ui/launcher.cpp
+msgid "Update available"
+msgstr "Pembaruan tersedia"
+
 #. A game update; {0} is its version, for example 1.2.0.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Update {0}"
@@ -1258,6 +1263,11 @@ msgstr "Gunakan file NCA firmware hasil ekstraksi. Pilih folder di Pengaturan, F
 #: pe/ui/browse.cpp
 msgid "Use this folder"
 msgstr "Gunakan folder ini"
+
+#. {0}: the newer release's number, for example 1.000.050; homebrew.page is a site's name and stays as it is.
+#: pe/ui/launcher.cpp
+msgid "Version {0} is on homebrew.page"
+msgstr "Versi {0} ada di homebrew.page"
 
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Vibration"

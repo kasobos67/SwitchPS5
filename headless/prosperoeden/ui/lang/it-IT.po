@@ -997,7 +997,7 @@ msgstr "RISOLUZIONE"
 msgid "Right stick press"
 msgstr "Pressione levetta destra"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp
 msgid "ROM missing from the game files folder"
 msgstr "ROM mancante nella cartella dei file di gioco"
 
@@ -1230,6 +1230,11 @@ msgstr "Non disponibile"
 msgid "UP"
 msgstr "SU"
 
+#. Notification title: a newer release of this app is listed (not a game update).
+#: pe/ui/launcher.cpp
+msgid "Update available"
+msgstr "Aggiornamento disponibile"
+
 #. A game update; {0} is its version, for example 1.2.0.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Update {0}"
@@ -1258,6 +1263,11 @@ msgstr "Usa i file NCA estratti dal firmware. Scegli la cartella in Impostazioni
 #: pe/ui/browse.cpp
 msgid "Use this folder"
 msgstr "Usa questa cartella"
+
+#. {0}: the newer release's number, for example 1.000.050; homebrew.page is a site's name and stays as it is.
+#: pe/ui/launcher.cpp
+msgid "Version {0} is on homebrew.page"
+msgstr "La versione {0} è su homebrew.page"
 
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Vibration"

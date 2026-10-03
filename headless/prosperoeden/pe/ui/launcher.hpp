@@ -97,6 +97,8 @@ class Launcher
     void draw_frame(Canvas &c, const char *title, const char *copy);
     void draw_footer(Canvas &c, const Hint *hints, int count);
     void draw_launch(Canvas &c);
+    // The notification of a newer release, at the top right for ten seconds.
+    void draw_update_notice(Canvas &c);
     // quiet: a change that shows at once needs no "Saved" line.
     bool save_preferences(bool quiet = false);
     // The switches of a dialog as the preferences have them, in the order of its rows.
@@ -180,6 +182,9 @@ class Launcher
     float time_ = 0.0f;
     float clock_wait_ = 0.0f;
     float presence_wait_ = 0.0f; // time since the shown games' files were last looked at
+    std::string update_version_;       // the newer release being announced
+    float update_notice_left_ = 0.0f;  // seconds its notification still shows
+    tween::Spring update_notice_in_;   // 0 away .. 1 in place
     std::string clock_;
     std::string version_;
 

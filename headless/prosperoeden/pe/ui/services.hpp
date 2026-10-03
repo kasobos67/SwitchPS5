@@ -194,6 +194,12 @@ class Services
         return 1u;
     }
     virtual std::string version() = 0; // "v1.000.040"
+    // A newer release than this one is listed (asked once per launch): its name, handed over
+    // once, when the answer has come.
+    virtual bool take_update(std::string *)
+    {
+        return false;
+    }
 
     // ---- library ----
     virtual std::vector<Game> games() = 0; // reads every game file: slow

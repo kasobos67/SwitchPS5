@@ -13,6 +13,12 @@ using audio::Cue;
 
 namespace
 {
+// How long the notification of a newer release stays.
+constexpr float kUpdateNoticeSeconds = 10.0f;
+} // namespace
+
+namespace
+{
 
 constexpr Rect kScreen{0.0f, 0.0f, 1920.0f, 1080.0f};
 
@@ -241,6 +247,24 @@ void Launcher::update(float dt)
         check_games_present();
     }
 
+    // A newer release: said once, at the top right, for ten seconds.
+    if (update_notice_left_ <= 0.0f && selected_game_.empty())
+    {
+        std::string newer;
+        if (services_.take_update(&newer) && !newer.empty())
+        {
+            // "v1.000.050" and "1.000.050" both read as the number.
+            update_version_ = newer.size() > 1 && (newer[0] == 'v' || newer[0] == 'V') ? newer.substr(1) : newer;
+            update_notice_left_ = kUpdateNoticeSeconds;
+            cue(Cue::notify);
+        }
+    }
+    if (update_notice_left_ > 0.0f)
+        update_notice_left_ = std::max(0.0f, update_notice_left_ - dt);
+    // It slides away over its last moments.
+    update_notice_in_.target = update_notice_left_ > 0.4f ? 1.0f : 0.0f;
+    update_notice_in_.update(dt, 14.0f);
+
     clock_wait_ += dt;
     if (clock_wait_ >= 1.0f)
     {
@@ -287,6 +311,37 @@ void Launcher::draw_footer(Canvas &c, const Hint *hints, int count)
 {
     c.list.rounded_rect({108.0f, 955.0f, 1704.0f, 1.0f}, 0.0f, Color::rgb(0x586d5a, 0.9f));
     draw_hints(c, hints, count, 108.0f, 987.0f, theme::kCopy, 1704.0f);
+}
+
+void Launcher::draw_update_notice(Canvas &c)
+{
+    const float shown = tween::clamp01(update_notice_in_.value);
+    if (shown <= 0.01f || update_version_.empty())
+        return;
+    gfx::DrawList &list = c.list;
+    // Top right, over whatever the menu shows; it comes in from the right edge.
+    const Rect panel{1352.0f, 44.0f, 520.0f, 108.0f};
+    list.push_opacity(shown);
+    list.push_transform(1.0f, 0.0f, 0.0f, (1.0f - shown) * 72.0f * motion(), 0.0f);
+    glass(c, panel, 20.0f, theme::kPanel.with_alpha(0.97f), theme::kLime.with_alpha(0.55f), 1.4f);
+    // A mark at the left: a lime disc with an arrow up.
+    const float cx = panel.x + 48.0f;
+    const float cy = panel.y + 50.0f;
+    list.circle(cx, cy, 20.0f, theme::kLime.with_alpha(0.22f));
+    list.line(cx, cy + 9.0f, cx, cy - 9.0f, 2.6f, theme::kLime);
+    list.line(cx - 8.0f, cy - 2.0f, cx, cy - 10.0f, 2.6f, theme::kLime);
+    list.line(cx + 8.0f, cy - 2.0f, cx, cy - 10.0f, 2.6f, theme::kLime);
+    text_shrink(c, tr("Update available"), panel.x + 88.0f, baseline(panel.y + 18.0f, 34.0f, theme::kText24),
+                theme::kText24, theme::kTitle, panel.w - 112.0f);
+    text_shrink(c, fill(tr("Version {0} is on homebrew.page"), {update_version_}), panel.x + 88.0f,
+                baseline(panel.y + 54.0f, 30.0f, theme::kSmall), theme::kSmall, theme::kCopy,
+                panel.w - 112.0f);
+    // The time it has left.
+    const float left = tween::clamp01(update_notice_left_ / kUpdateNoticeSeconds);
+    list.rounded_rect({panel.x + 20.0f, panel.y + panel.h - 12.0f, (panel.w - 40.0f) * left, 3.0f}, 1.5f,
+                      theme::kLime.with_alpha(0.8f));
+    list.pop_transform();
+    list.pop_opacity();
 }
 
 void Launcher::draw_launch(Canvas &c)
@@ -358,6 +413,7 @@ void Launcher::draw(gfx::DrawList &list)
             draw_dialog(c, modal_shown_, opened);
     }
     list.pop_transform();
+    draw_update_notice(c);
     if (launching)
         draw_launch(c);
 

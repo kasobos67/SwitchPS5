@@ -253,6 +253,15 @@ void pictures(Stage &s)
     s.wait(0.32f);
     s.shoot("12-launching-late");
 
+    // A newer release is listed: the notification at the top right, for ten seconds.
+    s.restart();
+    s.wait(1.0f);
+    s.services.update_version = "v1.000.050";
+    s.wait(1.2f);
+    s.shoot("58-update-notice");
+    s.wait(9.5f);
+    s.shoot("59-update-notice-gone");
+
     // A game's file taken away while the menu shows it: within a moment it leaves the home screen
     // (another recent game takes its place) and the Library.
     s.restart();

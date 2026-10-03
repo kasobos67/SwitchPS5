@@ -997,7 +997,7 @@ msgstr "ความละเอียด"
 msgid "Right stick press"
 msgstr "กดแท่งอนาล็อกขวา"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp
 msgid "ROM missing from the game files folder"
 msgstr "ไม่มี ROM ในโฟลเดอร์ไฟล์เกม"
 
@@ -1230,6 +1230,11 @@ msgstr "ใช้ไม่ได้"
 msgid "UP"
 msgstr "ขึ้น"
 
+#. Notification title: a newer release of this app is listed (not a game update).
+#: pe/ui/launcher.cpp
+msgid "Update available"
+msgstr "มีอัปเดตใหม่"
+
 #. A game update; {0} is its version, for example 1.2.0.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Update {0}"
@@ -1258,6 +1263,11 @@ msgstr "ใช้​ไฟล์ NCA ​ของ​เฟิร์มแวร�
 #: pe/ui/browse.cpp
 msgid "Use this folder"
 msgstr "ใช้โฟลเดอร์นี้"
+
+#. {0}: the newer release's number, for example 1.000.050; homebrew.page is a site's name and stays as it is.
+#: pe/ui/launcher.cpp
+msgid "Version {0} is on homebrew.page"
+msgstr "เวอร์ชัน {0} อยู่ที่ homebrew.page"
 
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Vibration"

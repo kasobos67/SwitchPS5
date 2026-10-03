@@ -997,7 +997,7 @@ msgstr "UPPLÖSNING"
 msgid "Right stick press"
 msgstr "Tryck på höger spak"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp
 msgid "ROM missing from the game files folder"
 msgstr "ROM saknas i mappen med spelfiler"
 
@@ -1230,6 +1230,11 @@ msgstr "Inte tillgängligt"
 msgid "UP"
 msgstr "UPP"
 
+#. Notification title: a newer release of this app is listed (not a game update).
+#: pe/ui/launcher.cpp
+msgid "Update available"
+msgstr "Uppdatering tillgänglig"
+
 #. A game update; {0} is its version, for example 1.2.0.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Update {0}"
@@ -1258,6 +1263,11 @@ msgstr "Använd extraherade firmware-NCA-filer. Välj mappen i Inställningar, S
 #: pe/ui/browse.cpp
 msgid "Use this folder"
 msgstr "Använd mappen"
+
+#. {0}: the newer release's number, for example 1.000.050; homebrew.page is a site's name and stays as it is.
+#: pe/ui/launcher.cpp
+msgid "Version {0} is on homebrew.page"
+msgstr "Version {0} finns på homebrew.page"
 
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Vibration"

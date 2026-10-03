@@ -997,7 +997,7 @@ msgstr "RESOLUTIE"
 msgid "Right stick press"
 msgstr "Rechterstick indrukken"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp
 msgid "ROM missing from the game files folder"
 msgstr "ROM ontbreekt in de map met gamebestanden"
 
@@ -1230,6 +1230,11 @@ msgstr "Niet beschikbaar"
 msgid "UP"
 msgstr "OMHOOG"
 
+#. Notification title: a newer release of this app is listed (not a game update).
+#: pe/ui/launcher.cpp
+msgid "Update available"
+msgstr "Update beschikbaar"
+
 #. A game update; {0} is its version, for example 1.2.0.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Update {0}"
@@ -1258,6 +1263,11 @@ msgstr "Gebruik uitgepakte NCA-bestanden van de firmware. Kies de map via Instel
 #: pe/ui/browse.cpp
 msgid "Use this folder"
 msgstr "Deze map gebruiken"
+
+#. {0}: the newer release's number, for example 1.000.050; homebrew.page is a site's name and stays as it is.
+#: pe/ui/launcher.cpp
+msgid "Version {0} is on homebrew.page"
+msgstr "Versie {0} staat op homebrew.page"
 
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Vibration"

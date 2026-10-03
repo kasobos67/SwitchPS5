@@ -997,7 +997,7 @@ msgstr "解析度"
 msgid "Right stick press"
 msgstr "按下右類比搖桿"
 
-#: eden_services.cpp
+#: eden_services.cpp, pe/ui/launcher.cpp
 msgid "ROM missing from the game files folder"
 msgstr "遊戲檔案的資料夾中缺少 ROM"
 
@@ -1230,6 +1230,11 @@ msgstr "無法使用"
 msgid "UP"
 msgstr "上層"
 
+#. Notification title: a newer release of this app is listed (not a game update).
+#: pe/ui/launcher.cpp
+msgid "Update available"
+msgstr "有可用的更新"
+
 #. A game update; {0} is its version, for example 1.2.0.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Update {0}"
@@ -1258,6 +1263,11 @@ msgstr "請使用解開後的韌體 NCA 檔案。在「設定」的「遊戲檔�
 #: pe/ui/browse.cpp
 msgid "Use this folder"
 msgstr "使用此資料夾"
+
+#. {0}: the newer release's number, for example 1.000.050; homebrew.page is a site's name and stays as it is.
+#: pe/ui/launcher.cpp
+msgid "Version {0} is on homebrew.page"
+msgstr "版本 {0} 已在 homebrew.page 發布"
 
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Vibration"

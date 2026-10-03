@@ -43,6 +43,16 @@ class FakeServices final : public ui::Services
     {
         return "v1.000.040";
     }
+    // A newer release for the preview to announce: handed over once.
+    std::string update_version;
+    bool take_update(std::string *version) override
+    {
+        if (update_version.empty())
+            return false;
+        *version = update_version;
+        update_version.clear();
+        return true;
+    }
     // Game files the preview takes away from the folder, as a player would by deleting them.
     std::vector<std::string> removed;
     bool game_exists(const std::string &file) override
