@@ -286,6 +286,12 @@ void pictures(Stage &s)
     s.press({Key::cross});
     s.wait(0.8f);
     s.shoot("60-profiles");
+    // The highlight follows the selection (it glides: the picture is taken once it has arrived).
+    s.press({Key::down});
+    s.wait(0.6f);
+    s.shoot("60b-profiles-moved");
+    s.press({Key::up});
+    s.wait(0.2f);
     s.press({Key::down, Key::cross});
     s.wait(0.6f);
     s.shoot("61-profile-added");

@@ -222,6 +222,7 @@ void Launcher::update(float dt)
     mod_rows_.update(dt);
     option_rows_.update(dt);
     mapping_rows_.update(dt);
+    profile_rows_.update(dt);
     mode_.target = selected_docked_ ? 0.0f : 1.0f;
     mode_.update(dt, 22.0f);
     const bool mods_on = library_.selected >= 0 && library_.selected < static_cast<int>(games_.size()) &&
