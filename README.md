@@ -10,7 +10,7 @@
 
 **ProsperoEden is an unofficial PlayStation 5 port of [Eden](https://github.com/eden-emulator/mirror)** - an accurate, high-performance emulator. All credit for the emulator core belongs to the Eden project and its contributors. ProsperoEden is not affiliated with or endorsed by the Eden team or Sony.
 
-This is an early alpha. Video, audio, controller input, and saves have been confirmed working. Compatibility and performance will vary between games. The current release is **v1.000.040**.
+This is an early alpha. Video, audio, controller input, and saves have been confirmed working. Compatibility and performance will vary between games. The current release is **v1.000.050**.
 
 ## Source code
 
@@ -98,10 +98,10 @@ ProsperoEden keeps its own data in `/data/prosperoeden`, separately from the gam
 
 ```text
 /data/prosperoeden/
-├── config/prosperoeden.json            # settings, including the game files folder
+├── config/prosperoeden.json            # every profile's settings, and the game files folder
 ├── covers/                             # cached game covers
 ├── logs/                               # current and previous session logs, crash reports
-└── user/                               # saves and emulator user data
+└── user/                               # every profile's saves, and emulator user data
 ```
 
 The app itself stays in `/data/homebrew/PPSA99008`; see [Updating](#updating).
@@ -211,6 +211,24 @@ The launcher follows the language the PS5 is set to: Arabic, Chinese (simplified
 ### Upgrading from an earlier alpha
 
 Earlier versions read everything from `/data/homebrew/PPSA99008/assets/`. That folder keeps working until you choose a game files folder, and settings are migrated automatically on first launch. To move to the new layout, move `assets/keys`, `assets/firmware` and `assets/roms` into any folder, then select it in **Settings > Game files**. The release ZIP contains no user files, so copy its app files over your installation without deleting your own data.
+
+## Changes in v1.000.050
+
+- **Profiles.** **Settings > Profiles** lists the people who play on the console, up to eight. Each profile keeps its own save data, its own settings (everything under Settings, and each game's own) and its own recently played games. See [Profiles](#profiles). If you update from an earlier version, your saves, settings and games played become the first profile's, with nothing to do.
+- **Button mapping.** Choose which DualSense button presses each of the game's buttons, for every controller, in **Settings > Controls**, or for one game in its settings. See [Button mapping](#button-mapping).
+- **Settings per game.** A game's settings now have Video, Performance, Audio, Controls and Language; each value follows Settings until you choose another. See [Settings per game](#settings-per-game).
+- **Performance settings.** **Settings > Performance** has seven switches that trade accuracy for speed, for every game or for one. See [Performance settings](#performance-settings).
+- **Cheats chosen one by one.** A mod that lists several cheats shows each under it with its own switch, and only the chosen ones run. See [Mods](#mods).
+- **Update notice.** When a newer release is listed on homebrew.page, the menu says so at the top right for ten seconds. Nothing is downloaded or installed. See [Updating](#updating).
+- **Leaving a game takes ten seconds at most.** If a game has not stopped ten seconds after Touchpad + L1, or after it ended by itself, ProsperoEden starts again and opens at the menu. Some games took minutes to close.
+- **Touchpad + L1 works while a game loads.** A load that hangs can be left; before, the only way out was closing ProsperoEden.
+- **A game's controller screen always gets an answer.** A game that takes only the handheld controller gets it in Docked mode too, and a game that names no controller gets a Pro Controller. Both used to leave the game waiting.
+- **Removed games leave the menu.** A game whose file leaves the game files folder leaves Continue Playing, Recently Played and the Library within two seconds, and is not started.
+- **Touchpad by its name.** The menu and this document say Touchpad + L1 and Touchpad + R1.
+- **The graphics driver's shader cache works again**, so shaders compiled in earlier sessions load when a game starts.
+- **A crash when a game with cheats stops is fixed.**
+- **Games start a little sooner**: the instruction decoder's tables are built from one reading of each pattern.
+- The graphics driver is built from Mihawk's current PS5 Mesa and Vulkan.
 
 ## Changes in v1.000.040
 
