@@ -95,6 +95,7 @@ bool SparseTablesAvailable() noexcept; // src/memory_pages.cpp
 }
 #if defined(EDEN_DEV_PROFILE) || defined(EDEN_DEV_ROM_ID)
 static bool dev_stop_hang = false; // dev-settings stop_hang=on
+static bool dev_load_hang = false; // dev-settings load_hang=on
 #endif
 
 class HeadlessWindow final : public Core::Frontend::EmuWindow {
@@ -241,7 +242,8 @@ int main(int argc, char** argv) {
             // A game that would not stop made the app start again (stop_limit.h): this log says so.
             const std::string note = Eden::LogFile("stop-limit.txt");
             if (std::remove(note.c_str()) == 0)
-                Eden::Report("exit", "The last game did not stop in time, so ProsperoEden started again");
+                Eden::Report("exit", "The last game did not stop (or finish loading) within ten seconds of being "
+                                     "asked to, so ProsperoEden started again");
             Eden::StopLimit::Start(note);
         }
         report = std::fopen(Eden::LogFile("result.tsv").c_str(), "w");
@@ -640,6 +642,8 @@ int main(int argc, char** argv) {
                     // 16 KiB pages only; Eden's large tables dense; the heap's 3 GiB taken at start.
                 } else if (entry == "stop_hang=on") {
                     dev_stop_hang = true;
+                } else if (entry == "load_hang=on") {
+                    dev_load_hang = true;
                 } else if (entry == "graphics_usage=driver") {
                     // The caches' "memory in use" as the driver counts it (performance.h).
                     Eden::Performance::graphics_usage_from_pool = false;
@@ -1004,6 +1008,35 @@ int main(int argc, char** argv) {
                 Service::AM::FrontendAppletParameters params{
                     .applet_id = Service::AM::AppletId::Application,
                 };
+#ifdef PS5_NATIVE
+                // While a game loads nothing else reads the controller, so Touchpad + L1 did nothing
+                // until the game ran: a load that hung could only be left by closing ProsperoEden.
+                // Now it is heard here too. The stop limit starts at the press (stop_limit.h): a
+                // load that finishes within it ends as a normal stop, one that does not ends with
+                // the app starting again at the launcher.
+                std::atomic<bool> left_while_loading{false};
+                std::jthread load_watch;
+                if (pad && game) load_watch = std::jthread([&](std::stop_token stop) {
+                    while (!stop.stop_requested()) {
+                        pad->Poll();
+                        (void)pad->TakeHudToggle();
+#if defined(EDEN_DEV_PROFILE) || defined(EDEN_DEV_ROM_ID)
+                        // The runner's stand-in for the press: its input commands are read only
+                        // once the game runs.
+                        const bool asked = std::remove(Eden::AppFile("leave-loading.txt").c_str()) == 0;
+#else
+                        const bool asked = false;
+#endif
+                        if (pad->TakeReturnToMenu() || asked) {
+                            Eden::Report("exit", "Touchpad + L1 while the game loads: leaving as soon as it can be stopped");
+                            Eden::StopLimit::Begin();
+                            left_while_loading = true;
+                            break;
+                        }
+                        std::this_thread::sleep_for(std::chrono::milliseconds(8));
+                    }
+                });
+#endif
                 Core::SystemResultStatus loaded;
                 try {
                     loaded = system.Load(window, guest, params);
@@ -1031,6 +1064,13 @@ int main(int argc, char** argv) {
                 }
 #endif
                 passed(game ? "game_loaded" : "nro_loaded");
+#if defined(PS5_NATIVE) && (defined(EDEN_DEV_PROFILE) || defined(EDEN_DEV_ROM_ID))
+                if (dev_load_hang) {
+                    // dev-settings load_hang=on: a load that never finishes, to check leaving it.
+                    Eden::Report("loader", "Development: holding the load to check leaving it");
+                    for (;;) std::this_thread::sleep_for(std::chrono::seconds(1));
+                }
+#endif
                 Eden::Report("loader", "Game loaded; initializing renderer");
 #ifdef EDEN_PS5_OPENGL
                 // Retain the failure, then release CPU readiness and complete normal
@@ -1171,6 +1211,15 @@ int main(int argc, char** argv) {
 #if defined(EDEN_DEV_PROFILE) && defined(PS5_NATIVE)
                 Eden::Stall::Trace("main running");
                 Eden::Stall::Disarm();
+#endif
+#ifdef PS5_NATIVE
+                // The controller goes to the session's own reader from here.
+                load_watch.request_stop();
+                if (load_watch.joinable()) load_watch.join();
+                if (left_while_loading) {
+                    std::lock_guard lock(completion->mutex);
+                    completion->return_to_menu = true;
+                }
 #endif
                 const auto session_start = std::chrono::steady_clock::now();
                 [[maybe_unused]] double session_seconds = 0;  // guest-fault relaunch (PS5 only)

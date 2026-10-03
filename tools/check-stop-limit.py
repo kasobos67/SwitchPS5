@@ -5,7 +5,7 @@
 On the PC, with a short limit and an action that only counts: a stop that finishes in time does
 nothing, one that does not runs the action once, a second Begin keeps the first deadline, and a
 new stop gets a new one. Under the thread sanitizer. Then the source: the app arms the limit when
-the player asks to leave and when a game ends by itself, disarms it before every launcher, and
+the player asks to leave (also while a game loads) and when a game ends by itself, disarms it before every launcher, and
 the restart itself uses no stdio (the watcher may run beside a thread that is stuck holding a
 stdio lock).
 """
@@ -17,7 +17,11 @@ import tempfile
 
 root = pathlib.Path(__file__).resolve().parents[1]
 main = (root / 'headless/main.cpp').read_text()
-assert main.count('Eden::StopLimit::Begin();') == 2, 'the shortcut and the stop path arm the limit'
+assert main.count('Eden::StopLimit::Begin();') == 3, 'the shortcut (while loading and in the game) and the stop path arm the limit'
+# While the game loads: the limit is armed at the press, and the session then ends at once.
+loading = main.index('if (pad->TakeReturnToMenu() || asked) {')
+assert main.index('Eden::StopLimit::Begin();', loading) < main.index('left_while_loading = true;', loading) < main.index('loaded = system.Load(')
+assert main.index('system.Run();') < main.index('load_watch.request_stop();') < main.index('if (left_while_loading) {') < main.index('std::jthread input_worker;')
 shortcut = main.index('if (pad->TakeReturnToMenu()) {')
 assert main.index('Eden::StopLimit::Begin();', shortcut) < main.index('completion->return_to_menu = true;', shortcut)
 stop = main.index('Eden::StopLimit::Begin();', shortcut + 200)

@@ -72,30 +72,31 @@ template<class F> void Reject(F&& f) {
     CHECK(rejected);
 }
 
-// A game's "connect controllers" screen: every combination it may allow gets a controller, except
-// the two with no answer (nothing allowed, or only the handheld while docked).
+// A game's "connect controllers" screen: every request gets an answer for player 1, so no game
+// waits on that screen for a controller that never comes.
 void CheckControllerStyle() {
     using Core::HID::NpadStyleIndex;
     Core::Frontend::ControllerParameters allowed{};
-    CHECK(!Eden::ControllerStyle(allowed, 0, true) && !Eden::ControllerStyle(allowed, 0, false));
+    // A game that names none of the styles: a Pro Controller for every player.
+    CHECK(Eden::ControllerStyle(allowed, 0) == NpadStyleIndex::Fullkey);
+    CHECK(Eden::ControllerStyle(allowed, 3) == NpadStyleIndex::Fullkey);
+    // A handheld-only game: the handheld for player 1 (in either console mode), nobody else.
     allowed.allow_handheld = true;
-    CHECK(!Eden::ControllerStyle(allowed, 0, true));
-    CHECK(Eden::ControllerStyle(allowed, 0, false) == NpadStyleIndex::Handheld);
-    CHECK(!Eden::ControllerStyle(allowed, 1, false));
+    CHECK(Eden::ControllerStyle(allowed, 0) == NpadStyleIndex::Handheld);
+    CHECK(!Eden::ControllerStyle(allowed, 1));
     allowed.allow_right_joycon = true;
-    CHECK(Eden::ControllerStyle(allowed, 0, true) == NpadStyleIndex::JoyconRight);
-    CHECK(Eden::ControllerStyle(allowed, 0, false) == NpadStyleIndex::JoyconRight);
+    CHECK(Eden::ControllerStyle(allowed, 0) == NpadStyleIndex::JoyconRight);
     allowed.allow_right_joycon = false; allowed.allow_left_joycon = true;
-    CHECK(Eden::ControllerStyle(allowed, 1, true) == NpadStyleIndex::JoyconLeft);
+    CHECK(Eden::ControllerStyle(allowed, 1) == NpadStyleIndex::JoyconLeft);
     allowed.allow_right_joycon = true;
-    CHECK(Eden::ControllerStyle(allowed, 0, true) == NpadStyleIndex::JoyconLeft);
-    CHECK(Eden::ControllerStyle(allowed, 1, true) == NpadStyleIndex::JoyconRight);
-    CHECK(Eden::ControllerStyle(allowed, 2, true) == NpadStyleIndex::JoyconLeft);
+    CHECK(Eden::ControllerStyle(allowed, 0) == NpadStyleIndex::JoyconLeft);
+    CHECK(Eden::ControllerStyle(allowed, 1) == NpadStyleIndex::JoyconRight);
+    CHECK(Eden::ControllerStyle(allowed, 2) == NpadStyleIndex::JoyconLeft);
     allowed.allow_dual_joycons = true;
-    CHECK(Eden::ControllerStyle(allowed, 1, true) == NpadStyleIndex::JoyconDual);
+    CHECK(Eden::ControllerStyle(allowed, 1) == NpadStyleIndex::JoyconDual);
     allowed.allow_pro_controller = true;
-    CHECK(Eden::ControllerStyle(allowed, 3, false) == NpadStyleIndex::Fullkey);
-    std::puts("Controller applet styles: pro, pair, single Joy-Cons, handheld, and the two unanswerable requests PASS");
+    CHECK(Eden::ControllerStyle(allowed, 3) == NpadStyleIndex::Fullkey);
+    std::puts("Controller applet styles: pro, pair, single Joy-Cons, handheld in either mode, and a Pro Controller when none is named PASS");
 }
 
 void CheckPad() {

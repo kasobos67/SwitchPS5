@@ -3,7 +3,8 @@
 #include <chrono>
 #include <string>
 
-// A limit on how long a game may take to stop.
+// A limit on how long a game may take to stop, counted from the moment the player asks to leave
+// (Touchpad + L1, also while the game is still loading) or the game ends by itself.
 //
 // Stopping a game normally takes about a second. Some games take minutes: the emulator waits for
 // guest threads or services that never finish. A player who asked to leave should not sit through
