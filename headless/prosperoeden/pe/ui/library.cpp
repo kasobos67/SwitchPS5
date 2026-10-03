@@ -143,6 +143,51 @@ void Launcher::read_home()
         std::count_if(mods.begin(), mods.end(), [](const Mod &mod) { return mod.enabled; }));
 }
 
+void Launcher::check_games_present()
+{
+    // The home screen: its game, or one of its recent ones, is gone. Its focus stays where it can.
+    if (screen_ == Screen::home && modal_ == Modal::none)
+    {
+        bool gone = home_.last_exists && !services_.game_exists(home_.last_file);
+        for (const Recent &recent : home_.recents)
+            gone = gone || !services_.game_exists(recent.file);
+        if (gone)
+        {
+            read_home();
+            const int recents = static_cast<int>(home_.recents.size());
+            if (home_focus_ >= 5 && home_focus_ < 9 && home_focus_ - 5 >= recents)
+                home_focus_ = recents > 0 ? 4 + recents : 9;
+            if (home_focus_ == 4 && !home_.last_exists)
+                home_focus_ = 0;
+        }
+    }
+    // The Library's list, whatever screen shows: a game's own dialogs stay with their game.
+    if (modal_ == Modal::none)
+        drop_missing_games();
+}
+
+bool Launcher::drop_missing_games()
+{
+    if (!games_loaded_)
+        return false;
+    const std::string selected =
+        library_.selected < static_cast<int>(games_.size()) ? games_[static_cast<std::size_t>(library_.selected)].file :
+                                                              std::string{};
+    const auto gone = std::remove_if(games_.begin(), games_.end(),
+                                     [this](const Game &game) { return !services_.game_exists(game.file); });
+    if (gone == games_.end())
+        return false;
+    games_.erase(gone, games_.end());
+    // The selection stays on its game, or on the one that took its place.
+    int index = std::min(library_.selected, std::max(0, static_cast<int>(games_.size()) - 1));
+    for (int i = 0; i < static_cast<int>(games_.size()); ++i)
+        if (games_[static_cast<std::size_t>(i)].file == selected)
+            index = i;
+    library_.reset(static_cast<int>(games_.size()), index);
+    refresh_selected_game();
+    return true;
+}
+
 void Launcher::count_mods(Game &game, const std::vector<Mod> &mods)
 {
     game.mods = static_cast<int>(mods.size());
@@ -199,8 +244,10 @@ void Launcher::enter_library()
 {
     if (games_loaded_)
     {
-        // Games copied to the console since the list was read appear in a moment.
+        // Games copied to the console since the list was read appear in a moment; games taken
+        // away leave it at once.
         finish_scan(false);
+        drop_missing_games();
         start_scan();
     }
     else

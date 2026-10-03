@@ -121,6 +121,9 @@ class Launcher
     void read_home();
     // A game's mods as its list has them: how many, and how many are switched on.
     void count_mods(Game &game, const std::vector<Mod> &mods);
+    // Games whose file left the game files folder leave the home screen and the Library.
+    void check_games_present();
+    bool drop_missing_games();
     // Reads a game's mods for its dialogs, with the rows of the Mods list.
     void read_mods(Game &game);
     // What a game comes with, on one line: "Update 1.2.0, 2 DLC, 2 mods"; "None" without any.
@@ -176,6 +179,7 @@ class Launcher
     std::vector<audio::Cue> cues_;
     float time_ = 0.0f;
     float clock_wait_ = 0.0f;
+    float presence_wait_ = 0.0f; // time since the shown games' files were last looked at
     std::string clock_;
     std::string version_;
 

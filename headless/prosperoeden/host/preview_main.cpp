@@ -253,6 +253,20 @@ void pictures(Stage &s)
     s.wait(0.32f);
     s.shoot("12-launching-late");
 
+    // A game's file taken away while the menu shows it: within a moment it leaves the home screen
+    // (another recent game takes its place) and the Library.
+    s.restart();
+    s.wait(1.0f);
+    for (const pe::ui::Game &game : s.services.games())
+        if (game.name == "Echoes of the Valley")
+            s.services.removed.push_back(game.file);
+    s.wait(2.5f);
+    s.shoot("56-home-game-removed");
+    s.press({Key::up, Key::cross});
+    s.wait(1.2f);
+    s.shoot("57-library-game-removed");
+    s.services.removed.clear();
+
     // Settings and its dialogs.
     s.restart();
     s.wait(1.0f);

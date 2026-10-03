@@ -21,6 +21,7 @@ public:
 
     std::vector<pe::ui::Game> games() override;
     std::string game_path(const std::string& file) override;
+    bool game_exists(const std::string& file) override;
     bool docked(std::uint64_t title_id) override;
     bool set_docked(std::uint64_t title_id, bool docked) override;
     pe::ui::GameSettings game_settings(std::uint64_t title_id) override;

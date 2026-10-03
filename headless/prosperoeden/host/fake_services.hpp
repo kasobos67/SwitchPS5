@@ -7,6 +7,7 @@
 #include "pe/core/strings.hpp"
 #include "pe/ui/services.hpp"
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -42,9 +43,19 @@ class FakeServices final : public ui::Services
     {
         return "v1.000.040";
     }
+    // Game files the preview takes away from the folder, as a player would by deleting them.
+    std::vector<std::string> removed;
+    bool game_exists(const std::string &file) override
+    {
+        return std::find(removed.begin(), removed.end(), file) == removed.end();
+    }
     std::vector<ui::Game> games() override
     {
-        return games_;
+        std::vector<ui::Game> present;
+        for (const ui::Game &game : games_)
+            if (game_exists(game.file))
+                present.push_back(game);
+        return present;
     }
     std::string game_path(const std::string &file) override
     {

@@ -303,6 +303,17 @@ pe::ui::Home EdenServices::home() {
     }
 
     home.last_file = Eden::LoadLastGame();
+    // A game no longer in the game files folder is not offered: the most recent one that is
+    // takes its place (or none).
+    if (!home.last_file.empty() && !IsFile(Eden::AssetsPath("roms/" + home.last_file))) {
+        home.last_file.clear();
+        for (const auto& name : Eden::LoadRecentGames()) {
+            if (IsFile(Eden::AssetsPath("roms/" + name))) {
+                home.last_file = name;
+                break;
+            }
+        }
+    }
     const std::string last_path = Eden::AssetsPath("roms/" + home.last_file);
     home.last_exists = !home.last_file.empty() && IsFile(last_path);
     if (!home.last_file.empty()) {
@@ -433,6 +444,10 @@ std::vector<pe::ui::Game> EdenServices::games() {
 }
 
 std::string EdenServices::game_path(const std::string& file) { return Eden::AssetsPath("roms/" + file); }
+
+bool EdenServices::game_exists(const std::string& file) {
+    return Eden::ValidRomFilename(file) && IsFile(Eden::AssetsPath("roms/" + file));
+}
 
 bool EdenServices::docked(std::uint64_t title_id) { return Eden::LoadGameDocked(title_id); }
 
