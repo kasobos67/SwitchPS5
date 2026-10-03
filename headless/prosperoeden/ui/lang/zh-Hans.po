@@ -83,16 +83,21 @@ msgstr "AMD FSR"
 msgid "Another language"
 msgstr "其他语言"
 
-#: pe/ui/settings.cpp
-msgid "ASYNCHRONOUS SHADERS"
-msgstr "异步着色器"
+#. The button mapping has not been changed.
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "As usual"
+msgstr "照常"
 
 #. A switch. A shader is a small graphics program; keep the word the language's players use for it.
-#: pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Asynchronous shaders"
 msgstr "异步着色器"
 
 #: pe/ui/settings.cpp
+msgid "ASYNCHRONOUS SHADERS"
+msgstr "异步着色器"
+
+#: pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Audio"
 msgstr "音频"
 
@@ -105,7 +110,7 @@ msgid "Australia"
 msgstr "澳大利亚"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Back"
 msgstr "返回"
 
@@ -132,18 +137,32 @@ msgstr "浏览游戏"
 msgid "Browse settings"
 msgstr "浏览设置"
 
+#. Which controller button presses each of the game's buttons.
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Button mapping"
+msgstr "按键映射"
+
+#: pe/ui/settings.cpp
+msgid "BUTTON MAPPING"
+msgstr "按键映射"
+
 #: eden_services.cpp
 msgid "Cannot read firmware/ in {0}. Install extracted firmware NCAs."
 msgstr "无法读取 {0} 中的 firmware/。请安装解包后的固件 NCA。"
 
 #. Button hint: change the highlighted setting.
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Change"
 msgstr "更改"
 
 #: pe/ui/library.cpp
 msgid "Change mode. Saved per game."
 msgstr "更改模式。按游戏分别保存。"
+
+#. The button mapping has been changed.
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Changed"
+msgstr "已更改"
 
 #. What a mod is made of: cheat codes.
 #: eden_services.cpp, host/fake_services.cpp
@@ -179,13 +198,18 @@ msgstr "选择存放密钥、固件和游戏的文件夹"
 msgid "Choose the language games use"
 msgstr "选择游戏使用的语言"
 
-#: pe/ui/settings.cpp
-msgid "COMPILE AHEAD"
-msgstr "预先编译"
+#. A DualSense button.
+#: pe/ui/game_options.cpp
+msgid "Circle"
+msgstr "圆圈键"
 
 #. A switch: the program code a game used in earlier sessions is prepared (compiled) while the game starts. Keep it short.
-#: pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Compile ahead"
+msgstr "预先编译"
+
+#: pe/ui/settings.cpp
+msgid "COMPILE AHEAD"
 msgstr "预先编译"
 
 #: pe/ui/settings.cpp
@@ -208,7 +232,7 @@ msgstr "手柄快捷键和支持的功能。"
 msgid "CONTROLLERS"
 msgstr "手柄"
 
-#: pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Controls"
 msgstr "操作"
 
@@ -232,9 +256,14 @@ msgstr "无法保存设置。请重试。"
 msgid "Could not save the folder. Please try again."
 msgstr "无法保存文件夹。请重试。"
 
-#: pe/ui/browse.cpp, pe/ui/library.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp
 msgid "Could not save. Please try again."
 msgstr "无法保存。请重试。"
+
+#. The DualSense button labelled CREATE: keep the label if the language's players do.
+#: pe/ui/game_options.cpp
+msgid "Create"
+msgstr "CREATE"
 
 #. Button hint: make the folder a game's mods go in.
 #: pe/ui/library.cpp
@@ -250,8 +279,13 @@ msgstr "已创建 {0}。请将每个模组的文件夹复制到其中。"
 msgid "Credits and setup"
 msgstr "制作人员与设置说明"
 
+#. A DualSense button (the X-shaped one). Name the shape, not the letter.
+#: pe/ui/game_options.cpp
+msgid "Cross"
+msgstr "叉键"
+
 #. A per-game setting that follows the general setting; {0} is its value.
-#: pe/ui/library.cpp
+#: pe/ui/game_options.cpp
 msgid "Default ({0})"
 msgstr "默认（{0}）"
 
@@ -348,35 +382,35 @@ msgstr "导出失败。请确认游戏文件的文件夹可以写入。"
 msgid "Exported to {0}."
 msgstr "已导出到 {0}。"
 
-#: pe/ui/settings.cpp
-msgid "FASTER CPU EMULATION"
-msgstr "更快的 CPU 模拟"
-
 #. A switch: the emulated processor's floating-point math is less exact and faster. CPU stays.
-#: pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Faster CPU emulation"
 msgstr "更快的 CPU 模拟"
 
 #: pe/ui/settings.cpp
-msgid "FASTER DMA"
-msgstr "更快的 DMA"
+msgid "FASTER CPU EMULATION"
+msgstr "更快的 CPU 模拟"
 
 #. A switch: memory transfers to the emulated graphics processor are less exact and faster. DMA is a name (unchanged).
-#: pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Faster DMA"
+msgstr "更快的 DMA"
+
+#: pe/ui/settings.cpp
+msgid "FASTER DMA"
 msgstr "更快的 DMA"
 
 #: pe/ui/settings.cpp
 msgid "Faster games, at some cost in accuracy."
 msgstr "以少量精度换取更快的游戏速度。"
 
-#: pe/ui/settings.cpp
-msgid "FASTER GPU EMULATION"
+#. A switch: the emulated graphics processor is less exact and faster. GPU stays.
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Faster GPU emulation"
 msgstr "更快的 GPU 模拟"
 
-#. A switch: the emulated graphics processor is less exact and faster. GPU stays.
 #: pe/ui/settings.cpp
-msgid "Faster GPU emulation"
+msgid "FASTER GPU EMULATION"
 msgstr "更快的 GPU 模拟"
 
 #: pe/ui/library.cpp
@@ -412,17 +446,26 @@ msgstr "固件的 SystemVersion 数据缺失或无法读取。请安装完整的
 msgid "FOLDERS"
 msgstr "文件夹"
 
+#. A kind of setting that this game takes from the launcher's Settings menu.
+#: pe/ui/library.cpp
+msgid "Follows Settings"
+msgstr "跟随设置"
+
+#: pe/ui/game_options.cpp
+msgid "For every controller. A game can have its own."
+msgstr "适用于所有手柄。每个游戏也可有自己的映射。"
+
 #: pe/ui/library.cpp
 msgid "FORMAT"
 msgstr "格式"
 
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "FPS overlay"
+msgstr "帧率显示"
+
 #. Label: the frames-per-second counter drawn over a game.
 #: pe/ui/settings.cpp
 msgid "FPS OVERLAY"
-msgstr "帧率显示"
-
-#: pe/ui/settings.cpp
-msgid "FPS overlay"
 msgstr "帧率显示"
 
 #: settings_store.h
@@ -467,12 +510,12 @@ msgstr "游戏文件"
 msgid "Game settings"
 msgstr "游戏设置"
 
-#: pe/ui/settings.cpp
-msgid "GAME VOLUME"
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Game volume"
 msgstr "游戏音量"
 
 #: pe/ui/settings.cpp
-msgid "Game volume"
+msgid "GAME VOLUME"
 msgstr "游戏音量"
 
 #: pe/ui/settings.cpp
@@ -585,7 +628,7 @@ msgstr "韩国"
 msgid "Korean"
 msgstr "韩语"
 
-#: pe/ui/browse.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Language"
 msgstr "语言"
 
@@ -614,6 +657,11 @@ msgstr "上次打开的游戏"
 #: pe/ui/home.cpp
 msgid "Launch game"
 msgstr "启动游戏"
+
+#. Pressing the left stick down like a button.
+#: pe/ui/game_options.cpp
+msgid "Left stick press"
+msgstr "按下左摇杆"
 
 #: pe/ui/settings.cpp
 msgid "Less exact floating-point math: faster, and a few games misbehave."
@@ -670,12 +718,12 @@ msgstr "模组"
 msgid "Mods"
 msgstr "模组"
 
-#: pe/ui/settings.cpp
-msgid "MUTE"
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Mute"
 msgstr "静音"
 
 #: pe/ui/settings.cpp
-msgid "Mute"
+msgid "MUTE"
 msgstr "静音"
 
 #: pe/ui/settings.cpp
@@ -755,12 +803,12 @@ msgid "Nothing to import"
 msgstr "没有可导入的内容"
 
 #. A setting that is switched off.
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Off"
 msgstr "关"
 
 #. A setting that is switched on.
-#: pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "On"
 msgstr "开"
 
@@ -774,13 +822,18 @@ msgid "OPEN"
 msgstr "打开"
 
 #. Button hint: open the highlighted folder.
-#: pe/ui/browse.cpp, pe/ui/library.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Open"
 msgstr "打开"
 
 #: pe/ui/home.cpp
 msgid "Open library"
 msgstr "打开游戏库"
+
+#. The DualSense button labelled OPTIONS: keep the label if the language's players do.
+#: pe/ui/game_options.cpp
+msgid "Options"
+msgstr "OPTIONS"
 
 #. Label: see 'Output resolution'.
 #: pe/ui/settings.cpp
@@ -807,7 +860,7 @@ msgid "Patch"
 msgstr "补丁"
 
 #. A settings category: options that make games run faster, at some cost in accuracy.
-#: pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Performance"
 msgstr "性能"
 
@@ -880,13 +933,13 @@ msgstr "PS5 版"
 msgid "PS5 EDITION  /  {0}"
 msgstr "PS5 版  /  {0}"
 
-#: pe/ui/settings.cpp
-msgid "REACTIVE FLUSHING"
+#. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Reactive flushing"
 msgstr "反应式刷新"
 
-#. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
 #: pe/ui/settings.cpp
-msgid "Reactive flushing"
+msgid "REACTIVE FLUSHING"
 msgstr "反应式刷新"
 
 #: pe/ui/settings.cpp
@@ -907,7 +960,7 @@ msgid "Reduce motion"
 msgstr "减少动态效果"
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Refresh rate"
 msgstr "刷新率"
 
@@ -920,7 +973,7 @@ msgstr "刷新率"
 msgid "REGION"
 msgstr "地区"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Renderer"
 msgstr "渲染器"
 
@@ -928,13 +981,21 @@ msgstr "渲染器"
 msgid "RENDERER"
 msgstr "渲染器"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/game_options.cpp
+msgid "Reset"
+msgstr "重置"
+
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Resolution"
 msgstr "分辨率"
 
 #: pe/ui/settings.cpp
 msgid "RESOLUTION"
 msgstr "分辨率"
+
+#: pe/ui/game_options.cpp
+msgid "Right stick press"
+msgstr "按下右摇杆"
 
 #: eden_services.cpp
 msgid "ROM missing from the game files folder"
@@ -964,12 +1025,12 @@ msgstr "存档数据"
 msgid "Save folder found"
 msgstr "已找到存档文件夹"
 
-#: pe/ui/library.cpp
+#: pe/ui/game_options.cpp, pe/ui/library.cpp
 msgid "Saved for this game. Applies on next launch."
 msgstr "已为此游戏保存。下次启动时生效。"
 
 #. Shown after choosing 120 Hz.
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Saved. A display that cannot show 120 Hz stays at 60 Hz."
 msgstr "已保存。不支持 120 Hz 的显示设备将保持 60 Hz。"
 
@@ -982,7 +1043,7 @@ msgid "Saved. Reopen ProsperoEden to use this folder."
 msgstr "已保存。重新打开 ProsperoEden 后使用此文件夹。"
 
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Select"
 msgstr "确定"
 
@@ -997,11 +1058,6 @@ msgstr "选择一个游戏开始"
 #: pe/ui/library.cpp
 msgid "Select a readable game to configure its mode."
 msgstr "请选择一个可读取的游戏来设置其模式。"
-
-#. Select is a button's name (unchanged).
-#: pe/ui/settings.cpp
-msgid "Select is the touchpad button on PS5."
-msgstr "Select 是 PS5 上的触摸板按键。"
 
 #. Heading: the language highlighted in the list.
 #: pe/ui/browse.cpp
@@ -1039,10 +1095,6 @@ msgid "Setup validation failed. Check that firmware and key files are readable a
 msgstr "设置验证失败。请确认固件和密钥文件可以读取且有效。"
 
 #: pe/ui/settings.cpp
-msgid "Shortcuts during a game, and vibration."
-msgstr "游戏中的快捷键和振动。"
-
-#: pe/ui/settings.cpp
 msgid "Show or hide the FPS overlay"
 msgstr "显示或隐藏帧率"
 
@@ -1050,13 +1102,13 @@ msgstr "显示或隐藏帧率"
 msgid "SIZE"
 msgstr "大小"
 
-#: pe/ui/settings.cpp
-msgid "SKIP CPU INVALIDATION"
+#. A switch: fewer checks when a game changes memory the graphics processor uses. CPU stays.
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Skip CPU invalidation"
 msgstr "跳过 CPU 失效处理"
 
-#. A switch: fewer checks when a game changes memory the graphics processor uses. CPU stays.
 #: pe/ui/settings.cpp
-msgid "Skip CPU invalidation"
+msgid "SKIP CPU INVALIDATION"
 msgstr "跳过 CPU 失效处理"
 
 #: pe/ui/settings.cpp
@@ -1074,6 +1126,11 @@ msgstr "西班牙语"
 #: settings_store.h
 msgid "Spanish (Latin America)"
 msgstr "西班牙语（拉丁美洲）"
+
+#. A DualSense button.
+#: pe/ui/game_options.cpp
+msgid "Square"
+msgstr "方块键"
 
 #. The app creates its user the first time a game runs.
 #: eden_services.cpp
@@ -1131,6 +1188,11 @@ msgstr "此文件夹"
 msgid "This folder cannot be opened."
 msgstr "无法打开此文件夹。"
 
+#. The game has a button mapping of its own.
+#: pe/ui/game_options.cpp
+msgid "This game"
+msgstr "本游戏"
+
 #: eden_services.cpp
 msgid "This game has no save to export yet."
 msgstr "此游戏还没有可导出的存档。"
@@ -1143,6 +1205,16 @@ msgstr "无法保存此游戏的设置（没有游戏 ID）。"
 #: eden_services.cpp
 msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
 msgstr "要导入，请将 Ryujinx 文件夹复制到 ryujinx/，或将存档复制到 save-import/{0}/（与 roms/ 同级）。"
+
+#. The DualSense controller's touch pad, pressed as a button. Use the name players know.
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Touchpad"
+msgstr "触摸板"
+
+#. A DualSense button.
+#: pe/ui/game_options.cpp
+msgid "Triangle"
+msgstr "三角键"
 
 #. Button hint: switch the highlighted mod on or off.
 #: pe/ui/library.cpp
@@ -1167,7 +1239,7 @@ msgstr "更新 {0}"
 msgid "UPDATES, DLC"
 msgstr "更新、DLC"
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Upscaling filter"
 msgstr "缩放滤镜"
 
@@ -1187,12 +1259,12 @@ msgstr "请使用解包后的固件 NCA 文件。在“设置”的“游戏文�
 msgid "Use this folder"
 msgstr "使用此文件夹"
 
-#: pe/ui/settings.cpp
-msgid "VIBRATION"
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Vibration"
 msgstr "振动"
 
 #: pe/ui/settings.cpp
-msgid "Vibration"
+msgid "VIBRATION"
 msgstr "振动"
 
 #: pe/ui/settings.cpp
@@ -1204,6 +1276,10 @@ msgid "Vibration on"
 msgstr "振动已开启"
 
 #: pe/ui/settings.cpp
+msgid "Vibration, button mapping and the shortcuts during a game."
+msgstr "振动、按键映射和游戏中的快捷操作。"
+
+#: pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Video"
 msgstr "视频"
 
@@ -1228,6 +1304,11 @@ msgstr "你的游戏"
 #: pe/ui/home.cpp
 msgid "Your next adventure"
 msgstr "你的下一段冒险"
+
+#. How many settings of a kind this game has of its own; {0} is a number.
+#: pe/ui/library.cpp
+msgid "{0} changed"
+msgstr "已更改 {0} 项"
 
 #. {0} is how many DLC (add-on content) a game has installed.
 #: eden_services.cpp, host/fake_services.cpp
@@ -1300,7 +1381,7 @@ msgid "{0} of {1} on"
 msgstr "已开启 {0}/{1}"
 
 #. A percentage (a volume): write it as the language does, for example with a space before the sign.
-#: pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "{0}%"
 msgstr "{0}%"
 

@@ -179,15 +179,42 @@ void pictures(Stage &s)
     s.press({Key::triangle});
     s.wait(0.8f);
     s.shoot("09-game-settings");
-    s.press({Key::down, Key::right});
+    // The game's own Video: a renderer of its own, then the output's refresh rate.
+    s.press({Key::down, Key::cross});
+    s.wait(0.6f);
+    s.shoot("49-game-video");
+    s.press({Key::right});
     s.wait(0.6f);
     s.shoot("10-game-settings-changed");
-    // The output's refresh rate for this game.
     s.press({Key::down, Key::down, Key::down, Key::right, Key::right});
     s.wait(0.6f);
     s.shoot("40-game-refresh");
+    // Its own Performance: Compile ahead switched on for this game only.
+    s.press({Key::circle, Key::down, Key::cross, Key::right, Key::right});
+    s.wait(0.6f);
+    s.shoot("50-game-performance");
+    // Its own Controls: a button mapping of its own, and A moved to another button.
+    s.press({Key::circle, Key::down, Key::down, Key::cross, Key::down, Key::right});
+    s.wait(0.6f);
+    s.shoot("51-game-controls");
+    s.press({Key::cross, Key::right});
+    s.wait(0.6f);
+    s.shoot("52-game-mapping");
+    {
+        const pe::ui::GameSettings game = s.services.game_settings(0);
+        if (game.renderer != 0 || game.refresh != 1 || game.performance[0] != 1 || !game.own_mapping ||
+            game.mapping[0] != 2 || game.mapping[3] != 1)
+        {
+            std::fprintf(stderr, "error: the game's own settings did not reach the settings\n");
+            s.ok = false;
+        }
+    }
+    // Back in the game's settings: the kinds it changed say how many.
+    s.press({Key::circle, Key::circle});
+    s.wait(0.6f);
+    s.shoot("53-game-settings-changed");
     // The game's mods: the row, the list, one switched on, and a game that has none.
-    s.press({Key::down});
+    s.press({Key::down, Key::down});
     s.wait(0.6f);
     s.shoot("35-game-mods-row");
     s.press({Key::cross});
@@ -289,6 +316,23 @@ void pictures(Stage &s)
     s.press({Key::circle, Key::down, Key::cross});
     s.wait(0.8f);
     s.shoot("17-controls");
+    // The button mapping: B moved to Circle takes A's place (A gets Cross), then all back.
+    s.press({Key::down});
+    s.wait(0.4f);
+    s.shoot("54-controls-mapping-row");
+    s.press({Key::cross, Key::down, Key::right});
+    s.wait(0.6f);
+    s.shoot("55-mapping");
+    const pe::ui::ButtonMapping moved = s.services.preferences().mapping;
+    s.press({Key::square});
+    s.wait(0.4f);
+    if (moved[0] != 0 || moved[1] != 1 || s.services.preferences().mapping != pe::ui::kDefaultMapping)
+    {
+        std::fprintf(stderr, "error: the button mapping did not reach the settings\n");
+        s.ok = false;
+    }
+    s.press({Key::circle});
+    s.wait(0.4f);
     s.press({Key::circle, Key::down, Key::cross});
     s.wait(0.8f);
     s.shoot("30-accessibility");

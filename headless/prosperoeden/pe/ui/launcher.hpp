@@ -78,7 +78,9 @@ class Launcher
         accessibility,
         diagnostics,
         game,
-        mods, // a game's mods, opened from its settings
+        mods,         // a game's mods, opened from its settings
+        game_options, // one category of a game's own settings, opened from its settings
+        mapping,      // the button mapping: Settings > Controls', or a game's own
     };
 
     // ---- shell (launcher.cpp) ----
@@ -135,6 +137,19 @@ class Launcher
     void draw_game(Canvas &c, float open);
     void press_mods(Key key);
     void draw_mods(Canvas &c, float open);
+
+    // ---- a game's own settings by category, and the button mapping (game_options.cpp) ----
+    // Categories, in the order of the game settings' rows: video, performance, audio, controls,
+    // language.
+    static constexpr int kGameOptionCategories = 5;
+    void open_game_options(int category);
+    void press_game_options(Key key);
+    void draw_game_options(Canvas &c, float open);
+    // How many of a category's settings the game has of its own.
+    int game_overrides(int category) const;
+    void open_mapping(bool for_game);
+    void press_mapping(Key key);
+    void draw_mapping(Canvas &c, float open);
 
     // ---- settings and its dialogs (settings.cpp) ----
     void press_settings(Key key);
@@ -230,6 +245,10 @@ class Launcher
     };
     std::vector<ModRow> mod_list_;
     ListView mod_rows_;
+    int game_options_ = 0;          // the category a game's own settings dialog shows
+    ListView option_rows_;          // its rows
+    bool mapping_for_game_ = false; // the mapping dialog edits the game's own mapping
+    ListView mapping_rows_;
 
     // game files
     std::string browse_dir_;

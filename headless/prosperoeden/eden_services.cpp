@@ -324,7 +324,7 @@ pe::ui::Home EdenServices::home() {
     if (home.setup_ready && home.last_exists) {
         eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str());
         const uint64_t title_id = eden_game_title_id(last_path.c_str());
-        const GameLanguage language = LanguageFor(last_path, title_id, Eden::LoadPreferences().language);
+        const GameLanguage language = LanguageFor(last_path, title_id, Eden::PreferencesFor(title_id).language);
         home.last_title_id = title_id;
         home.last_addons = AddOnSummary(title_id);
         home.last_language = language.label;
@@ -379,7 +379,6 @@ std::vector<pe::ui::Game> EdenServices::games() {
     const auto entries = Eden::ReadNativeDirectory(Eden::AssetsPath("roms"), directory_error);
     if (directory_error) return games;
     eden_scan_addons(Eden::AssetsPath("updates").c_str(), Eden::AssetsPath("keys").c_str());
-    const int language_choice = Eden::LoadPreferences().language;
     for (const auto& entry : entries) {
         const std::string file = entry.path().filename().string();
         const std::size_t dot = file.find_last_of('.');
@@ -417,7 +416,8 @@ std::vector<pe::ui::Game> EdenServices::games() {
             else
                 (void)std::remove(staged.c_str());
             game.title_id = eden_game_title_id(path.c_str());
-            const GameLanguage language = LanguageFor(path, game.title_id, language_choice);
+            // The game's own language (Library > Game settings > Language) or Settings > Language.
+            const GameLanguage language = LanguageFor(path, game.title_id, Eden::PreferencesFor(game.title_id).language);
             game.addons = AddOnSummary(game.title_id);
             game.addons_short = AddOnSummary(game.title_id, true);
             game.language = language.label;
@@ -440,14 +440,43 @@ bool EdenServices::set_docked(std::uint64_t title_id, bool docked) {
     return Eden::SaveGameDocked(title_id, docked);
 }
 
+static_assert(pe::ui::kGameButtons == Eden::kGameButtons && pe::ui::kPadButtons == Eden::kPadButtons &&
+              pe::ui::kDefaultMapping == Eden::kDefaultMapping, "the launcher's button mapping differs");
+static_assert(std::tuple_size_v<decltype(pe::ui::GameSettings::performance)> == Eden::kPerformanceSwitches);
+
 pe::ui::GameSettings EdenServices::game_settings(std::uint64_t title_id) {
     const Eden::GameSettings saved = Eden::LoadGameSettings(title_id);
-    return {saved.renderer, saved.resolution, saved.upscaling_filter, saved.refresh};
+    pe::ui::GameSettings result;
+    result.renderer = saved.renderer;
+    result.resolution = saved.resolution;
+    result.filter = saved.upscaling_filter;
+    result.refresh = saved.refresh;
+    result.hud = saved.hud;
+    result.volume = saved.volume;
+    result.mute = saved.mute;
+    result.vibration = saved.vibration;
+    result.language = saved.language;
+    result.own_mapping = saved.own_mapping;
+    result.mapping = saved.mapping;
+    result.performance = saved.performance;
+    return result;
 }
 
 bool EdenServices::set_game_settings(std::uint64_t title_id, const pe::ui::GameSettings& settings) {
-    const bool saved = Eden::SaveGameSettings(
-        title_id, {settings.renderer, settings.resolution, settings.filter, settings.refresh});
+    Eden::GameSettings value;
+    value.renderer = settings.renderer;
+    value.resolution = settings.resolution;
+    value.upscaling_filter = settings.filter;
+    value.refresh = settings.refresh;
+    value.hud = settings.hud;
+    value.volume = settings.volume;
+    value.mute = settings.mute;
+    value.vibration = settings.vibration;
+    value.language = settings.language;
+    value.own_mapping = settings.own_mapping;
+    value.mapping = settings.mapping;
+    value.performance = settings.performance;
+    const bool saved = Eden::SaveGameSettings(title_id, value);
     if (!saved) Eden::Report("settings", "Could not write game settings");
     return saved;
 }
@@ -479,6 +508,7 @@ pe::ui::Preferences EdenServices::preferences() {
     result.unsafe_dma = speed.unsafe_dma;
     result.reactive_flushing = speed.reactive_flushing;
     result.skip_invalidation = speed.skip_invalidation;
+    result.mapping = saved.mapping;
     return result;
 }
 
@@ -499,6 +529,7 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.large_text = preferences.large_text;
     value.high_contrast = preferences.high_contrast;
     value.reduce_motion = preferences.reduce_motion;
+    value.mapping = preferences.mapping;
     Eden::PerformanceSettings speed = Eden::LoadPerformance(0);
     speed.block_list = preferences.block_list;
     speed.async_shaders = preferences.async_shaders;

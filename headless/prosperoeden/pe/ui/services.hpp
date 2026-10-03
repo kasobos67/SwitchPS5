@@ -6,6 +6,7 @@
 
 #include "pe/gfx/image.hpp"
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -80,6 +81,24 @@ struct Home
     std::string system_status;
 };
 
+// Button mapping: which DualSense button presses each of the game's buttons, on every controller.
+// The game's buttons: A B X Y L R ZL ZR + - and the two stick presses; the DualSense buttons:
+// Cross Circle Square Triangle L1 R1 L2 R2 L3 R3 Options Create Touchpad. A mapping never names
+// a DualSense button twice (headless/button_mapping.h).
+constexpr int kGameButtons = 12;
+constexpr int kPadButtons = 13;
+using ButtonMapping = std::array<int, kGameButtons>;
+constexpr ButtonMapping kDefaultMapping = {1, 0, 3, 2, 4, 5, 6, 7, 10, 12, 8, 9};
+// The game button takes the DualSense button; the one that had it gets this one's old one.
+inline ButtonMapping assign_button(ButtonMapping mapping, int game, int pad)
+{
+    for (int other = 0; other < kGameButtons; ++other)
+        if (other != game && mapping[static_cast<std::size_t>(other)] == pad)
+            mapping[static_cast<std::size_t>(other)] = mapping[static_cast<std::size_t>(game)];
+    mapping[static_cast<std::size_t>(game)] = pad;
+    return mapping;
+}
+
 struct Preferences
 {
     bool hud = true;
@@ -106,15 +125,27 @@ struct Preferences
     bool unsafe_dma = false;    // unsafe DMA accuracy
     bool reactive_flushing = true;  // off is faster; some effects break
     bool skip_invalidation = false; // fewer invalidations of what the GPU caches hold
+    ButtonMapping mapping = kDefaultMapping; // Settings > Controls > Button mapping
 };
 
-// One game's overrides; -1 uses Settings > Video.
+// What one game does differently from Settings (Library > Game settings). Each value is -1 while
+// the game follows Settings; switches are 0 off, 1 on.
 struct GameSettings
 {
-    int renderer = -1;
-    int resolution = -1;
-    int filter = -1;
-    int refresh = -1;
+    int renderer = -1;   // 0 OpenGL, 1 Vulkan
+    int resolution = -1; // index into Services::resolution_labels
+    int filter = -1;     // index into Services::filter_labels
+    int refresh = -1;    // 0 60 Hz, 1 120 Hz
+    int hud = -1;        // FPS overlay
+    int volume = -1;     // game volume, 0-100
+    int mute = -1;
+    int vibration = -1;
+    int language = -1;   // index into Services::language_labels
+    bool own_mapping = false; // the game has a button mapping of its own
+    ButtonMapping mapping = kDefaultMapping;
+    // The Performance switches, in the order of Preferences: block list, async shaders, fast GPU,
+    // unsafe CPU, unsafe DMA, reactive flushing, skip invalidation.
+    std::array<int, 7> performance{-1, -1, -1, -1, -1, -1, -1};
 };
 
 // One cheat of a mod that lists several: each is chosen on its own.

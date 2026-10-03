@@ -83,16 +83,21 @@ msgstr ""
 msgid "Another language"
 msgstr ""
 
-#: pe/ui/settings.cpp
-msgid "ASYNCHRONOUS SHADERS"
+#. The button mapping has not been changed.
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "As usual"
 msgstr ""
 
 #. A switch. A shader is a small graphics program; keep the word the language's players use for it.
-#: pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Asynchronous shaders"
 msgstr ""
 
 #: pe/ui/settings.cpp
+msgid "ASYNCHRONOUS SHADERS"
+msgstr ""
+
+#: pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Audio"
 msgstr ""
 
@@ -105,7 +110,7 @@ msgid "Australia"
 msgstr ""
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Back"
 msgstr ""
 
@@ -132,17 +137,31 @@ msgstr ""
 msgid "Browse settings"
 msgstr ""
 
+#. Which controller button presses each of the game's buttons.
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Button mapping"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "BUTTON MAPPING"
+msgstr ""
+
 #: eden_services.cpp
 msgid "Cannot read firmware/ in {0}. Install extracted firmware NCAs."
 msgstr ""
 
 #. Button hint: change the highlighted setting.
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Change"
 msgstr ""
 
 #: pe/ui/library.cpp
 msgid "Change mode. Saved per game."
+msgstr ""
+
+#. The button mapping has been changed.
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Changed"
 msgstr ""
 
 #. What a mod is made of: cheat codes.
@@ -179,13 +198,18 @@ msgstr ""
 msgid "Choose the language games use"
 msgstr ""
 
-#: pe/ui/settings.cpp
-msgid "COMPILE AHEAD"
+#. A DualSense button.
+#: pe/ui/game_options.cpp
+msgid "Circle"
 msgstr ""
 
 #. A switch: the program code a game used in earlier sessions is prepared (compiled) while the game starts. Keep it short.
-#: pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Compile ahead"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "COMPILE AHEAD"
 msgstr ""
 
 #: pe/ui/settings.cpp
@@ -208,7 +232,7 @@ msgstr ""
 msgid "CONTROLLERS"
 msgstr ""
 
-#: pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Controls"
 msgstr ""
 
@@ -232,8 +256,13 @@ msgstr ""
 msgid "Could not save the folder. Please try again."
 msgstr ""
 
-#: pe/ui/browse.cpp, pe/ui/library.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp
 msgid "Could not save. Please try again."
+msgstr ""
+
+#. The DualSense button labelled CREATE: keep the label if the language's players do.
+#: pe/ui/game_options.cpp
+msgid "Create"
 msgstr ""
 
 #. Button hint: make the folder a game's mods go in.
@@ -250,8 +279,13 @@ msgstr ""
 msgid "Credits and setup"
 msgstr ""
 
+#. A DualSense button (the X-shaped one). Name the shape, not the letter.
+#: pe/ui/game_options.cpp
+msgid "Cross"
+msgstr ""
+
 #. A per-game setting that follows the general setting; {0} is its value.
-#: pe/ui/library.cpp
+#: pe/ui/game_options.cpp
 msgid "Default ({0})"
 msgstr ""
 
@@ -348,35 +382,35 @@ msgstr ""
 msgid "Exported to {0}."
 msgstr ""
 
+#. A switch: the emulated processor's floating-point math is less exact and faster. CPU stays.
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Faster CPU emulation"
+msgstr ""
+
 #: pe/ui/settings.cpp
 msgid "FASTER CPU EMULATION"
 msgstr ""
 
-#. A switch: the emulated processor's floating-point math is less exact and faster. CPU stays.
-#: pe/ui/settings.cpp
-msgid "Faster CPU emulation"
+#. A switch: memory transfers to the emulated graphics processor are less exact and faster. DMA is a name (unchanged).
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Faster DMA"
 msgstr ""
 
 #: pe/ui/settings.cpp
 msgid "FASTER DMA"
 msgstr ""
 
-#. A switch: memory transfers to the emulated graphics processor are less exact and faster. DMA is a name (unchanged).
-#: pe/ui/settings.cpp
-msgid "Faster DMA"
-msgstr ""
-
 #: pe/ui/settings.cpp
 msgid "Faster games, at some cost in accuracy."
 msgstr ""
 
-#: pe/ui/settings.cpp
-msgid "FASTER GPU EMULATION"
+#. A switch: the emulated graphics processor is less exact and faster. GPU stays.
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Faster GPU emulation"
 msgstr ""
 
-#. A switch: the emulated graphics processor is less exact and faster. GPU stays.
 #: pe/ui/settings.cpp
-msgid "Faster GPU emulation"
+msgid "FASTER GPU EMULATION"
 msgstr ""
 
 #: pe/ui/library.cpp
@@ -412,17 +446,26 @@ msgstr ""
 msgid "FOLDERS"
 msgstr ""
 
+#. A kind of setting that this game takes from the launcher's Settings menu.
+#: pe/ui/library.cpp
+msgid "Follows Settings"
+msgstr ""
+
+#: pe/ui/game_options.cpp
+msgid "For every controller. A game can have its own."
+msgstr ""
+
 #: pe/ui/library.cpp
 msgid "FORMAT"
+msgstr ""
+
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "FPS overlay"
 msgstr ""
 
 #. Label: the frames-per-second counter drawn over a game.
 #: pe/ui/settings.cpp
 msgid "FPS OVERLAY"
-msgstr ""
-
-#: pe/ui/settings.cpp
-msgid "FPS overlay"
 msgstr ""
 
 #: settings_store.h
@@ -467,12 +510,12 @@ msgstr ""
 msgid "Game settings"
 msgstr ""
 
-#: pe/ui/settings.cpp
-msgid "GAME VOLUME"
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Game volume"
 msgstr ""
 
 #: pe/ui/settings.cpp
-msgid "Game volume"
+msgid "GAME VOLUME"
 msgstr ""
 
 #: pe/ui/settings.cpp
@@ -585,7 +628,7 @@ msgstr ""
 msgid "Korean"
 msgstr ""
 
-#: pe/ui/browse.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Language"
 msgstr ""
 
@@ -613,6 +656,11 @@ msgstr ""
 
 #: pe/ui/home.cpp
 msgid "Launch game"
+msgstr ""
+
+#. Pressing the left stick down like a button.
+#: pe/ui/game_options.cpp
+msgid "Left stick press"
 msgstr ""
 
 #: pe/ui/settings.cpp
@@ -670,12 +718,12 @@ msgstr ""
 msgid "Mods"
 msgstr ""
 
-#: pe/ui/settings.cpp
-msgid "MUTE"
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Mute"
 msgstr ""
 
 #: pe/ui/settings.cpp
-msgid "Mute"
+msgid "MUTE"
 msgstr ""
 
 #: pe/ui/settings.cpp
@@ -755,12 +803,12 @@ msgid "Nothing to import"
 msgstr ""
 
 #. A setting that is switched off.
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Off"
 msgstr ""
 
 #. A setting that is switched on.
-#: pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "On"
 msgstr ""
 
@@ -774,12 +822,17 @@ msgid "OPEN"
 msgstr ""
 
 #. Button hint: open the highlighted folder.
-#: pe/ui/browse.cpp, pe/ui/library.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Open"
 msgstr ""
 
 #: pe/ui/home.cpp
 msgid "Open library"
+msgstr ""
+
+#. The DualSense button labelled OPTIONS: keep the label if the language's players do.
+#: pe/ui/game_options.cpp
+msgid "Options"
 msgstr ""
 
 #. Label: see 'Output resolution'.
@@ -807,7 +860,7 @@ msgid "Patch"
 msgstr ""
 
 #. A settings category: options that make games run faster, at some cost in accuracy.
-#: pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Performance"
 msgstr ""
 
@@ -880,13 +933,13 @@ msgstr ""
 msgid "PS5 EDITION  /  {0}"
 msgstr ""
 
-#: pe/ui/settings.cpp
-msgid "REACTIVE FLUSHING"
+#. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Reactive flushing"
 msgstr ""
 
-#. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
 #: pe/ui/settings.cpp
-msgid "Reactive flushing"
+msgid "REACTIVE FLUSHING"
 msgstr ""
 
 #: pe/ui/settings.cpp
@@ -907,7 +960,7 @@ msgid "Reduce motion"
 msgstr ""
 
 #. Setting: how many times a second the TV picture is refreshed while a game runs (60 or 120 Hz).
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Refresh rate"
 msgstr ""
 
@@ -920,7 +973,7 @@ msgstr ""
 msgid "REGION"
 msgstr ""
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Renderer"
 msgstr ""
 
@@ -928,12 +981,20 @@ msgstr ""
 msgid "RENDERER"
 msgstr ""
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/game_options.cpp
+msgid "Reset"
+msgstr ""
+
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Resolution"
 msgstr ""
 
 #: pe/ui/settings.cpp
 msgid "RESOLUTION"
+msgstr ""
+
+#: pe/ui/game_options.cpp
+msgid "Right stick press"
 msgstr ""
 
 #: eden_services.cpp
@@ -964,12 +1025,12 @@ msgstr ""
 msgid "Save folder found"
 msgstr ""
 
-#: pe/ui/library.cpp
+#: pe/ui/game_options.cpp, pe/ui/library.cpp
 msgid "Saved for this game. Applies on next launch."
 msgstr ""
 
 #. Shown after choosing 120 Hz.
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Saved. A display that cannot show 120 Hz stays at 60 Hz."
 msgstr ""
 
@@ -982,7 +1043,7 @@ msgid "Saved. Reopen ProsperoEden to use this folder."
 msgstr ""
 
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Select"
 msgstr ""
 
@@ -996,11 +1057,6 @@ msgstr ""
 
 #: pe/ui/library.cpp
 msgid "Select a readable game to configure its mode."
-msgstr ""
-
-#. Select is a button's name (unchanged).
-#: pe/ui/settings.cpp
-msgid "Select is the touchpad button on PS5."
 msgstr ""
 
 #. Heading: the language highlighted in the list.
@@ -1039,10 +1095,6 @@ msgid "Setup validation failed. Check that firmware and key files are readable a
 msgstr ""
 
 #: pe/ui/settings.cpp
-msgid "Shortcuts during a game, and vibration."
-msgstr ""
-
-#: pe/ui/settings.cpp
 msgid "Show or hide the FPS overlay"
 msgstr ""
 
@@ -1050,13 +1102,13 @@ msgstr ""
 msgid "SIZE"
 msgstr ""
 
-#: pe/ui/settings.cpp
-msgid "SKIP CPU INVALIDATION"
+#. A switch: fewer checks when a game changes memory the graphics processor uses. CPU stays.
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Skip CPU invalidation"
 msgstr ""
 
-#. A switch: fewer checks when a game changes memory the graphics processor uses. CPU stays.
 #: pe/ui/settings.cpp
-msgid "Skip CPU invalidation"
+msgid "SKIP CPU INVALIDATION"
 msgstr ""
 
 #: pe/ui/settings.cpp
@@ -1073,6 +1125,11 @@ msgstr ""
 
 #: settings_store.h
 msgid "Spanish (Latin America)"
+msgstr ""
+
+#. A DualSense button.
+#: pe/ui/game_options.cpp
+msgid "Square"
 msgstr ""
 
 #. The app creates its user the first time a game runs.
@@ -1131,6 +1188,11 @@ msgstr ""
 msgid "This folder cannot be opened."
 msgstr ""
 
+#. The game has a button mapping of its own.
+#: pe/ui/game_options.cpp
+msgid "This game"
+msgstr ""
+
 #: eden_services.cpp
 msgid "This game has no save to export yet."
 msgstr ""
@@ -1142,6 +1204,16 @@ msgstr ""
 #. ryujinx/, save-import/ and roms/ are folder names (unchanged); {0} is the game's ID.
 #: eden_services.cpp
 msgid "To import, copy a Ryujinx folder to ryujinx/ or a save to save-import/{0}/, next to roms/."
+msgstr ""
+
+#. The DualSense controller's touch pad, pressed as a button. Use the name players know.
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Touchpad"
+msgstr ""
+
+#. A DualSense button.
+#: pe/ui/game_options.cpp
+msgid "Triangle"
 msgstr ""
 
 #. Button hint: switch the highlighted mod on or off.
@@ -1167,7 +1239,7 @@ msgstr ""
 msgid "UPDATES, DLC"
 msgstr ""
 
-#: pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Upscaling filter"
 msgstr ""
 
@@ -1187,12 +1259,12 @@ msgstr ""
 msgid "Use this folder"
 msgstr ""
 
-#: pe/ui/settings.cpp
-msgid "VIBRATION"
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
+msgid "Vibration"
 msgstr ""
 
 #: pe/ui/settings.cpp
-msgid "Vibration"
+msgid "VIBRATION"
 msgstr ""
 
 #: pe/ui/settings.cpp
@@ -1204,6 +1276,10 @@ msgid "Vibration on"
 msgstr ""
 
 #: pe/ui/settings.cpp
+msgid "Vibration, button mapping and the shortcuts during a game."
+msgstr ""
+
+#: pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
 msgid "Video"
 msgstr ""
 
@@ -1227,6 +1303,11 @@ msgstr ""
 #. Headline when no game has been played yet.
 #: pe/ui/home.cpp
 msgid "Your next adventure"
+msgstr ""
+
+#. How many settings of a kind this game has of its own; {0} is a number.
+#: pe/ui/library.cpp
+msgid "{0} changed"
 msgstr ""
 
 #. {0} is how many DLC (add-on content) a game has installed.
@@ -1300,7 +1381,7 @@ msgid "{0} of {1} on"
 msgstr ""
 
 #. A percentage (a volume): write it as the language does, for example with a space before the sign.
-#: pe/ui/settings.cpp
+#: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "{0}%"
 msgstr ""
 

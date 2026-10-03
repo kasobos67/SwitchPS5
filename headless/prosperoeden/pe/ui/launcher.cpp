@@ -144,6 +144,10 @@ void Launcher::press(Key key)
         return press_game(key);
     if (modal_ == Modal::mods)
         return press_mods(key);
+    if (modal_ == Modal::game_options)
+        return press_game_options(key);
+    if (modal_ == Modal::mapping)
+        return press_mapping(key);
     if (modal_ != Modal::none)
         return press_dialog(key);
     switch (screen_)
@@ -197,6 +201,8 @@ void Launcher::update(float dt)
     performance_rows_.update(dt);
     game_rows_.update(dt);
     mod_rows_.update(dt);
+    option_rows_.update(dt);
+    mapping_rows_.update(dt);
     mode_.target = selected_docked_ ? 0.0f : 1.0f;
     mode_.update(dt, 22.0f);
     const bool mods_on = library_.selected >= 0 && library_.selected < static_cast<int>(games_.size()) &&
@@ -326,6 +332,10 @@ void Launcher::draw(gfx::DrawList &list)
             draw_game(c, opened);
         else if (modal_shown_ == Modal::mods)
             draw_mods(c, opened);
+        else if (modal_shown_ == Modal::game_options)
+            draw_game_options(c, opened);
+        else if (modal_shown_ == Modal::mapping)
+            draw_mapping(c, opened);
         else
             draw_dialog(c, modal_shown_, opened);
     }
