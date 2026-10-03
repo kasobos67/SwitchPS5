@@ -57,6 +57,10 @@ msgstr ""
 msgid "ACCESSIBILITY"
 msgstr ""
 
+#: pe/ui/profiles.cpp
+msgid "Add"
+msgstr ""
+
 #. Label: a game's updates, DLC and mods.
 #: pe/ui/library.cpp
 msgid "ADD-ONS"
@@ -65,6 +69,10 @@ msgstr ""
 #. {0}: updates, DLC and mods of the game; {1}: the language it will use.
 #: pe/ui/home.cpp
 msgid "Add-ons: {0}  /  Language: {1}"
+msgstr ""
+
+#: pe/ui/profiles.cpp
+msgid "Added. Cross plays as this profile; left and right change its name."
 msgstr ""
 
 #: pe/ui/settings.cpp
@@ -110,7 +118,7 @@ msgid "Australia"
 msgstr ""
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/profiles.cpp, pe/ui/settings.cpp
 msgid "Back"
 msgstr ""
 
@@ -256,7 +264,7 @@ msgstr ""
 msgid "Could not save the folder. Please try again."
 msgstr ""
 
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/profiles.cpp
 msgid "Could not save. Please try again."
 msgstr ""
 
@@ -341,6 +349,10 @@ msgstr ""
 
 #: settings_store.h
 msgid "Dutch"
+msgstr ""
+
+#: pe/ui/profiles.cpp
+msgid "Each profile keeps its own save data and recent games."
 msgstr ""
 
 #: pe/ui/home.cpp
@@ -744,6 +756,10 @@ msgstr ""
 msgid "Needs attention"
 msgstr ""
 
+#: pe/ui/profiles.cpp
+msgid "New profile"
+msgstr ""
+
 #. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
@@ -868,6 +884,22 @@ msgstr ""
 msgid "PERFORMANCE"
 msgstr ""
 
+#: pe/ui/profiles.cpp
+msgid "Play as"
+msgstr ""
+
+#: pe/ui/profiles.cpp
+msgid "Playing"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "PLAYING"
+msgstr ""
+
+#: pe/ui/profiles.cpp
+msgid "Playing as {0}"
+msgstr ""
+
 #: settings_store.h
 msgid "Polish"
 msgstr ""
@@ -904,6 +936,14 @@ msgstr ""
 
 #: pe/ui/browse.cpp
 msgid "prod.keys missing"
+msgstr ""
+
+#: pe/ui/profiles.cpp, pe/ui/settings.cpp
+msgid "Profiles"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "PROFILES"
 msgstr ""
 
 #: pe/ui/browse.cpp
@@ -971,6 +1011,14 @@ msgstr ""
 
 #: pe/ui/browse.cpp, pe/ui/settings.cpp
 msgid "REGION"
+msgstr ""
+
+#: pe/ui/profiles.cpp
+msgid "Remove"
+msgstr ""
+
+#: pe/ui/profiles.cpp
+msgid "Rename"
 msgstr ""
 
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
@@ -1132,6 +1180,10 @@ msgstr ""
 msgid "Square"
 msgstr ""
 
+#: pe/ui/profiles.cpp
+msgid "Square again takes {0} off the list. Its save data stays on the console."
+msgstr ""
+
 #. The app creates its user the first time a game runs.
 #: eden_services.cpp
 msgid "Start any game once before importing a save."
@@ -1152,6 +1204,10 @@ msgstr ""
 
 #: eden_services.cpp
 msgid "Taiwan"
+msgstr ""
+
+#: pe/ui/profiles.cpp
+msgid "Taken off the list. Its save data stays on the console."
 msgstr ""
 
 #: settings_store.h
@@ -1178,6 +1234,10 @@ msgstr ""
 
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
+msgstr ""
+
+#: pe/ui/profiles.cpp
+msgid "The profile that is playing stays. Choose another one first."
 msgstr ""
 
 #: pe/ui/browse.cpp
@@ -1304,6 +1364,10 @@ msgstr ""
 #. Vulkan is a name (unchanged).
 #: pe/ui/settings.cpp
 msgid "Vulkan (recommended)"
+msgstr ""
+
+#: pe/ui/settings.cpp
+msgid "Who is playing. Each profile keeps its own save data."
 msgstr ""
 
 #: pe/ui/library.cpp

@@ -31,13 +31,14 @@ Launcher::Launcher(Services &services, Textures &textures, const Fonts &fonts, b
     clock_ = services_.clock();
     prefs_ = services_.preferences();
     apply_look();
+    read_profiles();
     read_home();
     const bool continue_ready = home_.setup_ready && home_.last_exists;
     home_focus_ = continue_ready ? 0 : home_.setup_ready ? 1 : 2;
     home_springs_[static_cast<std::size_t>(home_focus_)].snap(1.0f);
-    settings_.visible = 8;
-    settings_.pitch = 79.0f;
-    settings_.reset(8, 0);
+    settings_.visible = 9;
+    settings_.pitch = 70.0f;
+    settings_.reset(9, 0);
     section_.snap(1.0f);
     detail_.snap(1.0f);
     cue(home_.launch_failed ? Cue::notify : first_start ? Cue::welcome : Cue::resume);
@@ -164,6 +165,8 @@ void Launcher::press(Key key)
         return press_game_options(key);
     if (modal_ == Modal::mapping)
         return press_mapping(key);
+    if (modal_ == Modal::profiles)
+        return press_profiles(key);
     if (modal_ != Modal::none)
         return press_dialog(key);
     switch (screen_)
@@ -409,6 +412,8 @@ void Launcher::draw(gfx::DrawList &list)
             draw_game_options(c, opened);
         else if (modal_shown_ == Modal::mapping)
             draw_mapping(c, opened);
+        else if (modal_shown_ == Modal::profiles)
+            draw_profiles(c, opened);
         else
             draw_dialog(c, modal_shown_, opened);
     }

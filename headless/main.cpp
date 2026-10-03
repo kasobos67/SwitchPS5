@@ -89,6 +89,7 @@ extern "C" std::int64_t sceKernelGetDirectMemorySize();
 extern "C" bool eden_jit_shared;  // headless/dynarmic/jit_group_support.inc
 #endif
 #include "video_core/gpu.h"
+#include "profiles.h"
 #include "stop_limit.h"
 namespace Common {
 bool SparseTablesAvailable() noexcept; // src/memory_pages.cpp
@@ -952,6 +953,18 @@ int main(int argc, char** argv) {
             // system, so it is emptied before the system goes (a second launch crashed when it
             // released the first session's files after their file system).
             FileSys::ManualContentProvider game_contents;
+#ifdef PS5_NATIVE
+            if (game) {
+                // Who is playing (profiles.h): Eden opens this user of its list, and the game's
+                // save data is that user's.
+                const auto who = Eden::Profiles::Resolve();
+                Settings::values.current_user = who.current;
+                if (!who.profiles.empty())
+                    Eden::Report("launch", ("Profile: " + who.profiles[static_cast<std::size_t>(who.current)].name +
+                                            " (" + std::to_string(who.current + 1) + " of " +
+                                            std::to_string(who.profiles.size()) + ")").c_str());
+            }
+#endif
             Core::System system;
             SCOPE_EXIT { game_contents.ClearAllEntries(); };
             passed("core_constructed");

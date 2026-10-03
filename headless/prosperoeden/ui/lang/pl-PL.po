@@ -57,6 +57,10 @@ msgstr "Ułatwienia dostępu"
 msgid "ACCESSIBILITY"
 msgstr "UŁATWIENIA DOSTĘPU"
 
+#: pe/ui/profiles.cpp
+msgid "Add"
+msgstr "Dodaj"
+
 #. Label: a game's updates, DLC and mods.
 #: pe/ui/library.cpp
 msgid "ADD-ONS"
@@ -66,6 +70,10 @@ msgstr "DODATKI"
 #: pe/ui/home.cpp
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "Dodatki: {0}  /  Język: {1}"
+
+#: pe/ui/profiles.cpp
+msgid "Added. Cross plays as this profile; left and right change its name."
+msgstr "Dodano. Krzyżyk gra tym profilem; lewo i prawo zmieniają jego nazwę."
 
 #: pe/ui/settings.cpp
 msgid "Adjust the essentials without leaving your library behind."
@@ -110,7 +118,7 @@ msgid "Australia"
 msgstr "Australia"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/profiles.cpp, pe/ui/settings.cpp
 msgid "Back"
 msgstr "Wstecz"
 
@@ -256,7 +264,7 @@ msgstr "Nie udało się zapisać ustawień. Spróbuj ponownie."
 msgid "Could not save the folder. Please try again."
 msgstr "Nie udało się zapisać folderu. Spróbuj ponownie."
 
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/profiles.cpp
 msgid "Could not save. Please try again."
 msgstr "Nie udało się zapisać. Spróbuj ponownie."
 
@@ -342,6 +350,10 @@ msgstr "Powiększa drobny tekst w menu."
 #: settings_store.h
 msgid "Dutch"
 msgstr "Niderlandzki"
+
+#: pe/ui/profiles.cpp
+msgid "Each profile keeps its own save data and recent games."
+msgstr "Każdy profil ma własne zapisy i ostatnie gry."
 
 #: pe/ui/home.cpp
 msgid "Eden emulator for PlayStation 5"
@@ -744,6 +756,10 @@ msgstr "Najbliższy sąsiad"
 msgid "Needs attention"
 msgstr "Wymaga uwagi"
 
+#: pe/ui/profiles.cpp
+msgid "New profile"
+msgstr "Nowy profil"
+
 #. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
@@ -868,6 +884,22 @@ msgstr "Wydajność"
 msgid "PERFORMANCE"
 msgstr "WYDAJNOŚĆ"
 
+#: pe/ui/profiles.cpp
+msgid "Play as"
+msgstr "Graj jako"
+
+#: pe/ui/profiles.cpp
+msgid "Playing"
+msgstr "Gra"
+
+#: pe/ui/settings.cpp
+msgid "PLAYING"
+msgstr "GRA"
+
+#: pe/ui/profiles.cpp
+msgid "Playing as {0}"
+msgstr "Gra: {0}"
+
 #: settings_store.h
 msgid "Polish"
 msgstr "Polski"
@@ -905,6 +937,14 @@ msgstr "Znaleziono prod.keys"
 #: pe/ui/browse.cpp
 msgid "prod.keys missing"
 msgstr "Brak prod.keys"
+
+#: pe/ui/profiles.cpp, pe/ui/settings.cpp
+msgid "Profiles"
+msgstr "Profile"
+
+#: pe/ui/settings.cpp
+msgid "PROFILES"
+msgstr "PROFILE"
 
 #: pe/ui/browse.cpp
 msgid "PROJECT CREDITS"
@@ -972,6 +1012,14 @@ msgstr "CZĘSTOTLIWOŚĆ ODŚWIEŻANIA"
 #: pe/ui/browse.cpp, pe/ui/settings.cpp
 msgid "REGION"
 msgstr "REGION"
+
+#: pe/ui/profiles.cpp
+msgid "Remove"
+msgstr "Usuń"
+
+#: pe/ui/profiles.cpp
+msgid "Rename"
+msgstr "Zmień nazwę"
 
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Renderer"
@@ -1132,6 +1180,10 @@ msgstr "Hiszpański (Ameryka Łacińska)"
 msgid "Square"
 msgstr "Kwadrat"
 
+#: pe/ui/profiles.cpp
+msgid "Square again takes {0} off the list. Its save data stays on the console."
+msgstr "Kwadrat ponownie usuwa {0} z listy. Zapisy zostają na konsoli."
+
 #. The app creates its user the first time a game runs.
 #: eden_services.cpp
 msgid "Start any game once before importing a save."
@@ -1153,6 +1205,10 @@ msgstr "Dodaj własne pliki"
 #: eden_services.cpp
 msgid "Taiwan"
 msgstr "Tajwan"
+
+#: pe/ui/profiles.cpp
+msgid "Taken off the list. Its save data stays on the console."
+msgstr "Usunięto z listy. Zapisy zostają na konsoli."
 
 #: settings_store.h
 msgid "Thai"
@@ -1179,6 +1235,10 @@ msgstr "Grze zabrakło pamięci graficznej. Obniż rozdzielczość w menu Ustawi
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
 msgstr "Język używany w grach, jeśli go oferują."
+
+#: pe/ui/profiles.cpp
+msgid "The profile that is playing stays. Choose another one first."
+msgstr "Profil, który gra, zostaje. Najpierw wybierz inny."
 
 #: pe/ui/browse.cpp
 msgid "THIS FOLDER"
@@ -1305,6 +1365,10 @@ msgstr "ZOBACZ WSZYSTKIE GRY"
 #: pe/ui/settings.cpp
 msgid "Vulkan (recommended)"
 msgstr "Vulkan (zalecany)"
+
+#: pe/ui/settings.cpp
+msgid "Who is playing. Each profile keeps its own save data."
+msgstr "Kto gra. Każdy profil ma własne zapisy."
 
 #: pe/ui/library.cpp
 msgid "Your games"

@@ -57,6 +57,10 @@ msgstr "協助工具"
 msgid "ACCESSIBILITY"
 msgstr "協助工具"
 
+#: pe/ui/profiles.cpp
+msgid "Add"
+msgstr "新增"
+
 #. Label: a game's updates, DLC and mods.
 #: pe/ui/library.cpp
 msgid "ADD-ONS"
@@ -66,6 +70,10 @@ msgstr "附加內容"
 #: pe/ui/home.cpp
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "附加內容：{0}  /  語言：{1}"
+
+#: pe/ui/profiles.cpp
+msgid "Added. Cross plays as this profile; left and right change its name."
+msgstr "已新增。叉鍵以此檔案遊玩；左右變更名稱。"
 
 #: pe/ui/settings.cpp
 msgid "Adjust the essentials without leaving your library behind."
@@ -110,7 +118,7 @@ msgid "Australia"
 msgstr "澳洲"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/profiles.cpp, pe/ui/settings.cpp
 msgid "Back"
 msgstr "返回"
 
@@ -256,7 +264,7 @@ msgstr "無法儲存設定。請再試一次。"
 msgid "Could not save the folder. Please try again."
 msgstr "無法儲存資料夾。請再試一次。"
 
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/profiles.cpp
 msgid "Could not save. Please try again."
 msgstr "無法儲存。請再試一次。"
 
@@ -342,6 +350,10 @@ msgstr "將選單中的小字放大顯示。"
 #: settings_store.h
 msgid "Dutch"
 msgstr "荷蘭文"
+
+#: pe/ui/profiles.cpp
+msgid "Each profile keeps its own save data and recent games."
+msgstr "每個檔案都有自己的存檔和最近遊戲。"
 
 #: pe/ui/home.cpp
 msgid "Eden emulator for PlayStation 5"
@@ -744,6 +756,10 @@ msgstr "最近鄰"
 msgid "Needs attention"
 msgstr "需要處理"
 
+#: pe/ui/profiles.cpp
+msgid "New profile"
+msgstr "新增檔案"
+
 #. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
@@ -868,6 +884,22 @@ msgstr "效能"
 msgid "PERFORMANCE"
 msgstr "效能"
 
+#: pe/ui/profiles.cpp
+msgid "Play as"
+msgstr "以此遊玩"
+
+#: pe/ui/profiles.cpp
+msgid "Playing"
+msgstr "正在遊玩"
+
+#: pe/ui/settings.cpp
+msgid "PLAYING"
+msgstr "正在遊玩"
+
+#: pe/ui/profiles.cpp
+msgid "Playing as {0}"
+msgstr "以 {0} 遊玩"
+
 #: settings_store.h
 msgid "Polish"
 msgstr "波蘭文"
@@ -905,6 +937,14 @@ msgstr "已找到 prod.keys"
 #: pe/ui/browse.cpp
 msgid "prod.keys missing"
 msgstr "缺少 prod.keys"
+
+#: pe/ui/profiles.cpp, pe/ui/settings.cpp
+msgid "Profiles"
+msgstr "玩家檔案"
+
+#: pe/ui/settings.cpp
+msgid "PROFILES"
+msgstr "玩家檔案"
 
 #: pe/ui/browse.cpp
 msgid "PROJECT CREDITS"
@@ -972,6 +1012,14 @@ msgstr "更新率"
 #: pe/ui/browse.cpp, pe/ui/settings.cpp
 msgid "REGION"
 msgstr "地區"
+
+#: pe/ui/profiles.cpp
+msgid "Remove"
+msgstr "移除"
+
+#: pe/ui/profiles.cpp
+msgid "Rename"
+msgstr "重新命名"
 
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Renderer"
@@ -1132,6 +1180,10 @@ msgstr "西班牙文（拉丁美洲）"
 msgid "Square"
 msgstr "方塊鍵"
 
+#: pe/ui/profiles.cpp
+msgid "Square again takes {0} off the list. Its save data stays on the console."
+msgstr "再按方塊鍵會將 {0} 移出清單。其存檔仍保留在主機上。"
+
 #. The app creates its user the first time a game runs.
 #: eden_services.cpp
 msgid "Start any game once before importing a save."
@@ -1153,6 +1205,10 @@ msgstr "請自備檔案"
 #: eden_services.cpp
 msgid "Taiwan"
 msgstr "台灣"
+
+#: pe/ui/profiles.cpp
+msgid "Taken off the list. Its save data stays on the console."
+msgstr "已移出清單。其存檔仍保留在主機上。"
 
 #: settings_store.h
 msgid "Thai"
@@ -1179,6 +1235,10 @@ msgstr "遊戲的圖形記憶體已用盡。請在「設定」的「視訊」（
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
 msgstr "遊戲支援時使用的語言。"
+
+#: pe/ui/profiles.cpp
+msgid "The profile that is playing stays. Choose another one first."
+msgstr "正在遊玩的檔案會保留。請先選擇其他檔案。"
 
 #: pe/ui/browse.cpp
 msgid "THIS FOLDER"
@@ -1305,6 +1365,10 @@ msgstr "查看所有遊戲"
 #: pe/ui/settings.cpp
 msgid "Vulkan (recommended)"
 msgstr "Vulkan（建議）"
+
+#: pe/ui/settings.cpp
+msgid "Who is playing. Each profile keeps its own save data."
+msgstr "誰在玩。每個檔案都有自己的存檔。"
 
 #: pe/ui/library.cpp
 msgid "Your games"

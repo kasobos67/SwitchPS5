@@ -57,6 +57,10 @@ msgstr "Tilgjengelighet"
 msgid "ACCESSIBILITY"
 msgstr "TILGJENGELIGHET"
 
+#: pe/ui/profiles.cpp
+msgid "Add"
+msgstr "Legg til"
+
 #. Label: a game's updates, DLC and mods.
 #: pe/ui/library.cpp
 msgid "ADD-ONS"
@@ -66,6 +70,10 @@ msgstr "TILLEGG"
 #: pe/ui/home.cpp
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "Tillegg: {0}  /  Språk: {1}"
+
+#: pe/ui/profiles.cpp
+msgid "Added. Cross plays as this profile; left and right change its name."
+msgstr "Lagt til. Kryss spiller som denne profilen; venstre og høyre endrer navnet."
 
 #: pe/ui/settings.cpp
 msgid "Adjust the essentials without leaving your library behind."
@@ -110,7 +118,7 @@ msgid "Australia"
 msgstr "Australia"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/profiles.cpp, pe/ui/settings.cpp
 msgid "Back"
 msgstr "Tilbake"
 
@@ -256,7 +264,7 @@ msgstr "Kunne ikke lagre innstillingene. Prøv igjen."
 msgid "Could not save the folder. Please try again."
 msgstr "Kunne ikke lagre mappen. Prøv igjen."
 
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/profiles.cpp
 msgid "Could not save. Please try again."
 msgstr "Kunne ikke lagre. Prøv igjen."
 
@@ -342,6 +350,10 @@ msgstr "Gjør liten tekst i menyen større."
 #: settings_store.h
 msgid "Dutch"
 msgstr "Nederlandsk"
+
+#: pe/ui/profiles.cpp
+msgid "Each profile keeps its own save data and recent games."
+msgstr "Hver profil har egne lagrede data og nylige spill."
 
 #: pe/ui/home.cpp
 msgid "Eden emulator for PlayStation 5"
@@ -744,6 +756,10 @@ msgstr "Nærmeste"
 msgid "Needs attention"
 msgstr "Krever handling"
 
+#: pe/ui/profiles.cpp
+msgid "New profile"
+msgstr "Ny profil"
+
 #. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
@@ -868,6 +884,22 @@ msgstr "Ytelse"
 msgid "PERFORMANCE"
 msgstr "YTELSE"
 
+#: pe/ui/profiles.cpp
+msgid "Play as"
+msgstr "Spill som"
+
+#: pe/ui/profiles.cpp
+msgid "Playing"
+msgstr "Spiller"
+
+#: pe/ui/settings.cpp
+msgid "PLAYING"
+msgstr "SPILLER"
+
+#: pe/ui/profiles.cpp
+msgid "Playing as {0}"
+msgstr "Spiller som {0}"
+
 #: settings_store.h
 msgid "Polish"
 msgstr "Polsk"
@@ -905,6 +937,14 @@ msgstr "prod.keys funnet"
 #: pe/ui/browse.cpp
 msgid "prod.keys missing"
 msgstr "prod.keys mangler"
+
+#: pe/ui/profiles.cpp, pe/ui/settings.cpp
+msgid "Profiles"
+msgstr "Profiler"
+
+#: pe/ui/settings.cpp
+msgid "PROFILES"
+msgstr "PROFILER"
 
 #: pe/ui/browse.cpp
 msgid "PROJECT CREDITS"
@@ -972,6 +1012,14 @@ msgstr "OPPDATERINGSFREKVENS"
 #: pe/ui/browse.cpp, pe/ui/settings.cpp
 msgid "REGION"
 msgstr "REGION"
+
+#: pe/ui/profiles.cpp
+msgid "Remove"
+msgstr "Fjern"
+
+#: pe/ui/profiles.cpp
+msgid "Rename"
+msgstr "Gi nytt navn"
 
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Renderer"
@@ -1132,6 +1180,10 @@ msgstr "Spansk (Latin-Amerika)"
 msgid "Square"
 msgstr "Firkant"
 
+#: pe/ui/profiles.cpp
+msgid "Square again takes {0} off the list. Its save data stays on the console."
+msgstr "Firkant igjen fjerner {0} fra listen. De lagrede dataene blir på konsollen."
+
 #. The app creates its user the first time a game runs.
 #: eden_services.cpp
 msgid "Start any game once before importing a save."
@@ -1153,6 +1205,10 @@ msgstr "Bruk dine egne filer"
 #: eden_services.cpp
 msgid "Taiwan"
 msgstr "Taiwan"
+
+#: pe/ui/profiles.cpp
+msgid "Taken off the list. Its save data stays on the console."
+msgstr "Fjernet fra listen. De lagrede dataene blir på konsollen."
 
 #: settings_store.h
 msgid "Thai"
@@ -1179,6 +1235,10 @@ msgstr "Spillet gikk tom for grafikkminne. Senk oppløsningen i Innstillinger, V
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
 msgstr "Språket spillene bruker når de støtter det."
+
+#: pe/ui/profiles.cpp
+msgid "The profile that is playing stays. Choose another one first."
+msgstr "Profilen som spiller, blir. Velg en annen først."
 
 #: pe/ui/browse.cpp
 msgid "THIS FOLDER"
@@ -1305,6 +1365,10 @@ msgstr "VIS ALLE SPILL"
 #: pe/ui/settings.cpp
 msgid "Vulkan (recommended)"
 msgstr "Vulkan (anbefales)"
+
+#: pe/ui/settings.cpp
+msgid "Who is playing. Each profile keeps its own save data."
+msgstr "Hvem som spiller. Hver profil har egne lagrede data."
 
 #: pe/ui/library.cpp
 msgid "Your games"

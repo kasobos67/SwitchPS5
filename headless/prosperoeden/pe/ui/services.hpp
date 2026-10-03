@@ -99,6 +99,13 @@ inline ButtonMapping assign_button(ButtonMapping mapping, int game, int pad)
     return mapping;
 }
 
+// One of the people who play on this console.
+struct Profile
+{
+    std::string name;
+    bool playing = false; // games start as this one
+};
+
 struct Preferences
 {
     bool hud = true;
@@ -236,6 +243,35 @@ class Services
     virtual int filesystem_access() = 0; // 0: the whole filesystem
 
     // ---- save transfer: a game's save in from, or out to, a folder (not in every build) ----
+    // ---- profiles: who is playing ----
+    // Each profile keeps its own save data and its own recently played games. Empty: this build
+    // has none to choose from.
+    virtual std::vector<Profile> profiles()
+    {
+        return {};
+    }
+    // The profile games start with from now on.
+    virtual bool choose_profile(int)
+    {
+        return false;
+    }
+    // A new profile, named by itself; its place in the list, or -1 (eight is the most).
+    virtual int add_profile()
+    {
+        return -1;
+    }
+    // The next (step 1) or the one before (step -1) of the names a profile can take: the PS5
+    // users signed in, then "Player 1" to "Player 8".
+    virtual bool rename_profile(int, int)
+    {
+        return false;
+    }
+    // Takes a profile off the list; its save data stays on the console. Not the one playing.
+    virtual bool remove_profile(int)
+    {
+        return false;
+    }
+
     virtual bool save_transfer_available()
     {
         return false;

@@ -57,6 +57,10 @@ msgstr "Esteettömyys"
 msgid "ACCESSIBILITY"
 msgstr "ESTEETTÖMYYS"
 
+#: pe/ui/profiles.cpp
+msgid "Add"
+msgstr "Lisää"
+
 #. Label: a game's updates, DLC and mods.
 #: pe/ui/library.cpp
 msgid "ADD-ONS"
@@ -66,6 +70,10 @@ msgstr "LISÄOSAT"
 #: pe/ui/home.cpp
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "Lisäosat: {0}  /  Kieli: {1}"
+
+#: pe/ui/profiles.cpp
+msgid "Added. Cross plays as this profile; left and right change its name."
+msgstr "Lisätty. Risti pelaa tällä profiililla; vasen ja oikea vaihtavat nimen."
 
 #: pe/ui/settings.cpp
 msgid "Adjust the essentials without leaving your library behind."
@@ -110,7 +118,7 @@ msgid "Australia"
 msgstr "Australia"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/profiles.cpp, pe/ui/settings.cpp
 msgid "Back"
 msgstr "Takaisin"
 
@@ -256,7 +264,7 @@ msgstr "Asetuksia ei voitu tallentaa. Yritä uudelleen."
 msgid "Could not save the folder. Please try again."
 msgstr "Kansiota ei voitu tallentaa. Yritä uudelleen."
 
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/profiles.cpp
 msgid "Could not save. Please try again."
 msgstr "Tallennus epäonnistui. Yritä uudelleen."
 
@@ -342,6 +350,10 @@ msgstr "Näyttää valikon pienen tekstin suurempana."
 #: settings_store.h
 msgid "Dutch"
 msgstr "Hollanti"
+
+#: pe/ui/profiles.cpp
+msgid "Each profile keeps its own save data and recent games."
+msgstr "Jokaisella profiililla on omat tallennuksensa ja viimeisimmät pelinsä."
 
 #: pe/ui/home.cpp
 msgid "Eden emulator for PlayStation 5"
@@ -744,6 +756,10 @@ msgstr "Lähin"
 msgid "Needs attention"
 msgstr "Vaatii huomiota"
 
+#: pe/ui/profiles.cpp
+msgid "New profile"
+msgstr "Uusi profiili"
+
 #. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
@@ -868,6 +884,22 @@ msgstr "Suorituskyky"
 msgid "PERFORMANCE"
 msgstr "SUORITUSKYKY"
 
+#: pe/ui/profiles.cpp
+msgid "Play as"
+msgstr "Pelaa tällä"
+
+#: pe/ui/profiles.cpp
+msgid "Playing"
+msgstr "Pelaa"
+
+#: pe/ui/settings.cpp
+msgid "PLAYING"
+msgstr "PELAA"
+
+#: pe/ui/profiles.cpp
+msgid "Playing as {0}"
+msgstr "Pelaaja: {0}"
+
 #: settings_store.h
 msgid "Polish"
 msgstr "Puola"
@@ -905,6 +937,14 @@ msgstr "prod.keys löytyi"
 #: pe/ui/browse.cpp
 msgid "prod.keys missing"
 msgstr "prod.keys puuttuu"
+
+#: pe/ui/profiles.cpp, pe/ui/settings.cpp
+msgid "Profiles"
+msgstr "Profiilit"
+
+#: pe/ui/settings.cpp
+msgid "PROFILES"
+msgstr "PROFIILIT"
 
 #: pe/ui/browse.cpp
 msgid "PROJECT CREDITS"
@@ -972,6 +1012,14 @@ msgstr "VIRKISTYSTAAJUUS"
 #: pe/ui/browse.cpp, pe/ui/settings.cpp
 msgid "REGION"
 msgstr "ALUE"
+
+#: pe/ui/profiles.cpp
+msgid "Remove"
+msgstr "Poista"
+
+#: pe/ui/profiles.cpp
+msgid "Rename"
+msgstr "Nimeä"
 
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Renderer"
@@ -1132,6 +1180,10 @@ msgstr "Espanja (Latinalainen Amerikka)"
 msgid "Square"
 msgstr "Neliö"
 
+#: pe/ui/profiles.cpp
+msgid "Square again takes {0} off the list. Its save data stays on the console."
+msgstr "Neliö uudelleen poistaa profiilin {0} luettelosta. Tallennukset jäävät konsoliin."
+
 #. The app creates its user the first time a game runs.
 #: eden_services.cpp
 msgid "Start any game once before importing a save."
@@ -1153,6 +1205,10 @@ msgstr "Käytä omia tiedostojasi"
 #: eden_services.cpp
 msgid "Taiwan"
 msgstr "Taiwan"
+
+#: pe/ui/profiles.cpp
+msgid "Taken off the list. Its save data stays on the console."
+msgstr "Poistettu luettelosta. Tallennukset jäävät konsoliin."
 
 #: settings_store.h
 msgid "Thai"
@@ -1179,6 +1235,10 @@ msgstr "Peliltä loppui grafiikkamuisti. Pienennä resoluutiota kohdassa Asetuks
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
 msgstr "Kieli, jota pelit käyttävät, jos ne tukevat sitä."
+
+#: pe/ui/profiles.cpp
+msgid "The profile that is playing stays. Choose another one first."
+msgstr "Pelaava profiili pysyy. Valitse ensin toinen."
 
 #: pe/ui/browse.cpp
 msgid "THIS FOLDER"
@@ -1305,6 +1365,10 @@ msgstr "NÄYTÄ KAIKKI PELIT"
 #: pe/ui/settings.cpp
 msgid "Vulkan (recommended)"
 msgstr "Vulkan (suositeltu)"
+
+#: pe/ui/settings.cpp
+msgid "Who is playing. Each profile keeps its own save data."
+msgstr "Kuka pelaa. Jokaisella profiililla on omat tallennuksensa."
 
 #: pe/ui/library.cpp
 msgid "Your games"

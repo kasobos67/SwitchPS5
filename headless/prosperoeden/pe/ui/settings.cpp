@@ -20,9 +20,10 @@ constexpr Rect kListPanel{108.0f, 188.0f, 820.0f, 720.0f};
 constexpr Rect kDetailPanel{980.0f, 188.0f, 820.0f, 720.0f};
 constexpr Rect kDialog{550.0f, 180.0f, 820.0f, 720.0f};
 constexpr float kRowsTop = 264.0f;
-constexpr float kRowHeight = 72.0f;
+constexpr float kRowHeight = 64.0f;
 enum Category
 {
+    kProfiles,
     kVideo,
     kPerformance,
     kAudio,
@@ -34,12 +35,12 @@ enum Category
     kCategoryCount,
 };
 constexpr const char *kCategories[kCategoryCount] = {
-    TR("Video"), TR("Performance"), TR("Audio"), TR("Controls"), TR("Accessibility"), TR("Diagnostics"),
-    TR("Game files"), TR("Language")};
+    TR("Profiles"), TR("Video"), TR("Performance"), TR("Audio"), TR("Controls"), TR("Accessibility"),
+    TR("Diagnostics"), TR("Game files"), TR("Language")};
 // The same as headings: capitals differ by language, so each is its own text.
 constexpr const char *kHeadings[kCategoryCount] = {
-    TR("VIDEO"), TR("PERFORMANCE"), TR("AUDIO"), TR("CONTROLS"), TR("ACCESSIBILITY"), TR("DIAGNOSTICS"),
-    TR("GAME FILES"), TR("LANGUAGE")};
+    TR("PROFILES"), TR("VIDEO"), TR("PERFORMANCE"), TR("AUDIO"), TR("CONTROLS"), TR("ACCESSIBILITY"),
+    TR("DIAGNOSTICS"), TR("GAME FILES"), TR("LANGUAGE")};
 
 // The Video dialog's rows, and the window that shows five of them (placed as a game's settings
 // are).
@@ -135,6 +136,9 @@ void Launcher::press_settings(Key key)
             open(Screen::language, true);
             enter_language();
             break;
+        case kProfiles:
+            open_profiles();
+            break;
         case kVideo:
             open_modal(Modal::video);
             video_rows_.visible = kVideoRowsShown;
@@ -181,6 +185,7 @@ void Launcher::draw_settings(Canvas &c)
         plate_rest(c, kRowPlate, row_rect(row));
     plate_focus(c, kRowPlate, {150.0f, kRowsTop + settings_.cursor(), 736.0f, kRowHeight}, 1.0f);
     const std::string summaries[kCategoryCount] = {
+        playing_,
         prefs_.renderer != 0 ? "Vulkan" : "OpenGL",
         prefs_.async_shaders || prefs_.fast_gpu || prefs_.unsafe_cpu || prefs_.unsafe_dma ||
                 !prefs_.reactive_flushing || prefs_.skip_invalidation ? tr("On") : "",
@@ -230,6 +235,10 @@ void Launcher::draw_settings(Canvas &c)
     const std::string saved_folder = services_.saved_files_folder();
     switch (settings_.selected)
     {
+    case kProfiles:
+        about = tr("Who is playing. Each profile keeps its own save data.");
+        lines = {{tr("PLAYING"), playing_}, {tr("PROFILES"), std::to_string(profiles_.size())}};
+        break;
     case kVideo:
         about = tr("Graphics backend and how games are scaled to your TV.");
         lines = {{tr("RENDERER"), prefs_.renderer != 0 ? tr("Vulkan (recommended)") : "OpenGL"},

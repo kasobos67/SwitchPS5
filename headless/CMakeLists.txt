@@ -2156,6 +2156,10 @@ else()
     add_executable(eden-devices-check "${EDEN_PORT_DIR}/devices_check.cpp")
     target_link_libraries(eden-devices-check PRIVATE core eden-pad eden-device-mock)
     target_compile_options(eden-devices-check PRIVATE -fno-rtti)
+    # The player profiles (profiles.h): Eden's profile file and the choice in the settings file.
+    add_executable(eden-profiles-check "${EDEN_PORT_DIR}/profiles_check.cpp")
+    target_link_libraries(eden-profiles-check PRIVATE core)
+    target_compile_options(eden-profiles-check PRIVATE -UNDEBUG)
     # The update check's decision, without its network side (update_notice.h).
     add_executable(eden-update-check
         "${EDEN_PORT_DIR}/update_check_check.cpp" "${EDEN_PORT_DIR}/update_check/update_check.c")
@@ -2296,6 +2300,7 @@ endif()
                 "${launcher_dir}/pe/platform/display_egl.cpp"
                 "${launcher_dir}/pe/ui/browse.cpp"
                 "${launcher_dir}/pe/ui/game_options.cpp"
+                "${launcher_dir}/pe/ui/profiles.cpp"
                 "${launcher_dir}/pe/ui/home.cpp"
                 "${launcher_dir}/pe/ui/launcher.cpp"
                 "${launcher_dir}/pe/ui/library.cpp"

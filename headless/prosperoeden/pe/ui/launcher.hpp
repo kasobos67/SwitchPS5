@@ -81,6 +81,7 @@ class Launcher
         mods,         // a game's mods, opened from its settings
         game_options, // one category of a game's own settings, opened from its settings
         mapping,      // the button mapping: Settings > Controls', or a game's own
+        profiles,     // who is playing: Settings > Profiles
     };
 
     // ---- shell (launcher.cpp) ----
@@ -152,6 +153,12 @@ class Launcher
     void draw_game_options(Canvas &c, float open);
     // How many of a category's settings the game has of its own.
     int game_overrides(int category) const;
+    // ---- profiles (profiles.cpp) ----
+    void read_profiles();
+    int profile_row_count() const;
+    void open_profiles();
+    void press_profiles(Key key);
+    void draw_profiles(Canvas &c, float open);
     void open_mapping(bool for_game);
     void press_mapping(Key key);
     void draw_mapping(Canvas &c, float open);
@@ -258,6 +265,10 @@ class Launcher
     ListView option_rows_;          // its rows
     bool mapping_for_game_ = false; // the mapping dialog edits the game's own mapping
     ListView mapping_rows_;
+    std::vector<Profile> profiles_; // the people who play on this console
+    std::string playing_;           // the one games start as
+    ListView profile_rows_;
+    int profile_remove_ = -1;       // the row Square was pressed on once (asked twice)
 
     // game files
     std::string browse_dir_;

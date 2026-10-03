@@ -57,6 +57,10 @@ msgstr "Accesibilitate"
 msgid "ACCESSIBILITY"
 msgstr "ACCESIBILITATE"
 
+#: pe/ui/profiles.cpp
+msgid "Add"
+msgstr "Adaugă"
+
 #. Label: a game's updates, DLC and mods.
 #: pe/ui/library.cpp
 msgid "ADD-ONS"
@@ -66,6 +70,10 @@ msgstr "SUPLIMENTE"
 #: pe/ui/home.cpp
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "Suplimente: {0}  /  Limbă: {1}"
+
+#: pe/ui/profiles.cpp
+msgid "Added. Cross plays as this profile; left and right change its name."
+msgstr "Adăugat. Cruce joacă cu acest profil; stânga și dreapta îi schimbă numele."
 
 #: pe/ui/settings.cpp
 msgid "Adjust the essentials without leaving your library behind."
@@ -110,7 +118,7 @@ msgid "Australia"
 msgstr "Australia"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/profiles.cpp, pe/ui/settings.cpp
 msgid "Back"
 msgstr "Înapoi"
 
@@ -256,7 +264,7 @@ msgstr "Nu s-au putut salva setările. Încearcă din nou."
 msgid "Could not save the folder. Please try again."
 msgstr "Nu s-a putut salva folderul. Încearcă din nou."
 
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/profiles.cpp
 msgid "Could not save. Please try again."
 msgstr "Nu s-a putut salva. Încearcă din nou."
 
@@ -342,6 +350,10 @@ msgstr "Mărește textul mic din meniu."
 #: settings_store.h
 msgid "Dutch"
 msgstr "Olandeză"
+
+#: pe/ui/profiles.cpp
+msgid "Each profile keeps its own save data and recent games."
+msgstr "Fiecare profil are propriile salvări și jocuri recente."
 
 #: pe/ui/home.cpp
 msgid "Eden emulator for PlayStation 5"
@@ -744,6 +756,10 @@ msgstr "Cel mai apropiat"
 msgid "Needs attention"
 msgstr "Necesită atenție"
 
+#: pe/ui/profiles.cpp
+msgid "New profile"
+msgstr "Profil nou"
+
 #. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
@@ -868,6 +884,22 @@ msgstr "Performanță"
 msgid "PERFORMANCE"
 msgstr "PERFORMANȚĂ"
 
+#: pe/ui/profiles.cpp
+msgid "Play as"
+msgstr "Joacă drept"
+
+#: pe/ui/profiles.cpp
+msgid "Playing"
+msgstr "Joacă"
+
+#: pe/ui/settings.cpp
+msgid "PLAYING"
+msgstr "JOACĂ"
+
+#: pe/ui/profiles.cpp
+msgid "Playing as {0}"
+msgstr "Joacă {0}"
+
 #: settings_store.h
 msgid "Polish"
 msgstr "Poloneză"
@@ -905,6 +937,14 @@ msgstr "prod.keys găsit"
 #: pe/ui/browse.cpp
 msgid "prod.keys missing"
 msgstr "prod.keys lipsă"
+
+#: pe/ui/profiles.cpp, pe/ui/settings.cpp
+msgid "Profiles"
+msgstr "Profiluri"
+
+#: pe/ui/settings.cpp
+msgid "PROFILES"
+msgstr "PROFILURI"
 
 #: pe/ui/browse.cpp
 msgid "PROJECT CREDITS"
@@ -972,6 +1012,14 @@ msgstr "RATĂ DE REÎMPROSPĂTARE"
 #: pe/ui/browse.cpp, pe/ui/settings.cpp
 msgid "REGION"
 msgstr "REGIUNE"
+
+#: pe/ui/profiles.cpp
+msgid "Remove"
+msgstr "Elimină"
+
+#: pe/ui/profiles.cpp
+msgid "Rename"
+msgstr "Redenumește"
 
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Renderer"
@@ -1132,6 +1180,10 @@ msgstr "Spaniolă (America Latină)"
 msgid "Square"
 msgstr "Pătrat"
 
+#: pe/ui/profiles.cpp
+msgid "Square again takes {0} off the list. Its save data stays on the console."
+msgstr "Pătrat din nou scoate {0} din listă. Salvările rămân pe consolă."
+
 #. The app creates its user the first time a game runs.
 #: eden_services.cpp
 msgid "Start any game once before importing a save."
@@ -1153,6 +1205,10 @@ msgstr "Folosește propriile fișiere"
 #: eden_services.cpp
 msgid "Taiwan"
 msgstr "Taiwan"
+
+#: pe/ui/profiles.cpp
+msgid "Taken off the list. Its save data stays on the console."
+msgstr "Scos din listă. Salvările rămân pe consolă."
 
 #: settings_store.h
 msgid "Thai"
@@ -1179,6 +1235,10 @@ msgstr "Jocul a rămas fără memorie grafică. Micșorează rezoluția în Set�
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
 msgstr "Limba folosită de jocuri, atunci când o oferă."
+
+#: pe/ui/profiles.cpp
+msgid "The profile that is playing stays. Choose another one first."
+msgstr "Profilul care joacă rămâne. Alege mai întâi altul."
 
 #: pe/ui/browse.cpp
 msgid "THIS FOLDER"
@@ -1305,6 +1365,10 @@ msgstr "TOATE JOCURILE"
 #: pe/ui/settings.cpp
 msgid "Vulkan (recommended)"
 msgstr "Vulkan (recomandat)"
+
+#: pe/ui/settings.cpp
+msgid "Who is playing. Each profile keeps its own save data."
+msgstr "Cine joacă. Fiecare profil are propriile salvări."
 
 #: pe/ui/library.cpp
 msgid "Your games"

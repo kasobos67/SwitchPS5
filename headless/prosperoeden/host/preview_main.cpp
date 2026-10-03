@@ -282,7 +282,35 @@ void pictures(Stage &s)
     s.press({Key::up, Key::right, Key::cross});
     s.wait(1.0f);
     s.shoot("13-settings");
+    // Profiles, the first category: a new one, playing as it, and taking it off the list again.
     s.press({Key::cross});
+    s.wait(0.8f);
+    s.shoot("60-profiles");
+    s.press({Key::down, Key::cross});
+    s.wait(0.6f);
+    s.shoot("61-profile-added");
+    s.press({Key::cross});
+    s.wait(0.6f);
+    s.shoot("62-profile-playing");
+    {
+        const std::vector<pe::ui::Profile> people = s.services.profiles();
+        bool reached = people.size() == 2 && !people[0].playing && people[1].playing;
+        // The one that is playing cannot be taken off the list; the other one can, asked twice.
+        s.press({Key::square, Key::square});
+        reached = reached && s.services.profiles().size() == 2;
+        s.press({Key::up, Key::cross, Key::down, Key::square});
+        s.wait(0.6f);
+        s.shoot("63-profile-remove-asked");
+        reached = reached && s.services.profiles().size() == 2;
+        s.press({Key::square});
+        reached = reached && s.services.profiles().size() == 1 && s.services.profiles()[0].playing;
+        if (!reached)
+        {
+            std::fprintf(stderr, "error: the profiles did not reach the services\n");
+            s.ok = false;
+        }
+    }
+    s.press({Key::circle, Key::down, Key::cross});
     s.wait(0.8f);
     s.shoot("14-video");
     s.press({Key::down, Key::right});
@@ -380,6 +408,13 @@ void pictures(Stage &s)
              Key::down, Key::down, Key::cross});
     s.wait(0.8f);
     s.shoot("22-language-chosen");
+
+    // Two profiles: the home screen names who is playing.
+    s.services.add_profile();
+    s.restart();
+    s.wait(2.0f);
+    s.shoot("64-home-two-profiles");
+    s.services.people.resize(1);
 
     // About.
     s.restart();

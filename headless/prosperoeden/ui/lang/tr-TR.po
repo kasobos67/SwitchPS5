@@ -57,6 +57,10 @@ msgstr "Erişilebilirlik"
 msgid "ACCESSIBILITY"
 msgstr "ERİŞİLEBİLİRLİK"
 
+#: pe/ui/profiles.cpp
+msgid "Add"
+msgstr "Ekle"
+
 #. Label: a game's updates, DLC and mods.
 #: pe/ui/library.cpp
 msgid "ADD-ONS"
@@ -66,6 +70,10 @@ msgstr "EKLENTİLER"
 #: pe/ui/home.cpp
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "Eklentiler: {0}  /  Dil: {1}"
+
+#: pe/ui/profiles.cpp
+msgid "Added. Cross plays as this profile; left and right change its name."
+msgstr "Eklendi. Çarpı bu profille oynar; sol ve sağ adını değiştirir."
 
 #: pe/ui/settings.cpp
 msgid "Adjust the essentials without leaving your library behind."
@@ -110,7 +118,7 @@ msgid "Australia"
 msgstr "Avustralya"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/profiles.cpp, pe/ui/settings.cpp
 msgid "Back"
 msgstr "Geri"
 
@@ -256,7 +264,7 @@ msgstr "Ayarlar kaydedilemedi. Lütfen tekrar deneyin."
 msgid "Could not save the folder. Please try again."
 msgstr "Klasör kaydedilemedi. Lütfen tekrar deneyin."
 
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/profiles.cpp
 msgid "Could not save. Please try again."
 msgstr "Kaydedilemedi. Lütfen tekrar deneyin."
 
@@ -342,6 +350,10 @@ msgstr "Menüdeki küçük metinleri daha büyük gösterir."
 #: settings_store.h
 msgid "Dutch"
 msgstr "Felemenkçe"
+
+#: pe/ui/profiles.cpp
+msgid "Each profile keeps its own save data and recent games."
+msgstr "Her profilin kendi kayıtları ve son oyunları vardır."
 
 #: pe/ui/home.cpp
 msgid "Eden emulator for PlayStation 5"
@@ -744,6 +756,10 @@ msgstr "En yakın"
 msgid "Needs attention"
 msgstr "Dikkat gerekiyor"
 
+#: pe/ui/profiles.cpp
+msgid "New profile"
+msgstr "Yeni profil"
+
 #. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
@@ -868,6 +884,22 @@ msgstr "Performans"
 msgid "PERFORMANCE"
 msgstr "PERFORMANS"
 
+#: pe/ui/profiles.cpp
+msgid "Play as"
+msgstr "Bununla oyna"
+
+#: pe/ui/profiles.cpp
+msgid "Playing"
+msgstr "Oynuyor"
+
+#: pe/ui/settings.cpp
+msgid "PLAYING"
+msgstr "OYNUYOR"
+
+#: pe/ui/profiles.cpp
+msgid "Playing as {0}"
+msgstr "{0} oynuyor"
+
 #: settings_store.h
 msgid "Polish"
 msgstr "Lehçe"
@@ -905,6 +937,14 @@ msgstr "prod.keys bulundu"
 #: pe/ui/browse.cpp
 msgid "prod.keys missing"
 msgstr "prod.keys eksik"
+
+#: pe/ui/profiles.cpp, pe/ui/settings.cpp
+msgid "Profiles"
+msgstr "Profiller"
+
+#: pe/ui/settings.cpp
+msgid "PROFILES"
+msgstr "PROFİLLER"
 
 #: pe/ui/browse.cpp
 msgid "PROJECT CREDITS"
@@ -972,6 +1012,14 @@ msgstr "YENİLEME HIZI"
 #: pe/ui/browse.cpp, pe/ui/settings.cpp
 msgid "REGION"
 msgstr "BÖLGE"
+
+#: pe/ui/profiles.cpp
+msgid "Remove"
+msgstr "Çıkar"
+
+#: pe/ui/profiles.cpp
+msgid "Rename"
+msgstr "Yeniden adlandır"
 
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Renderer"
@@ -1132,6 +1180,10 @@ msgstr "İspanyolca (Latin Amerika)"
 msgid "Square"
 msgstr "Kare"
 
+#: pe/ui/profiles.cpp
+msgid "Square again takes {0} off the list. Its save data stays on the console."
+msgstr "Kare yeniden {0} profilini listeden çıkarır. Kayıtları konsolda kalır."
+
 #. The app creates its user the first time a game runs.
 #: eden_services.cpp
 msgid "Start any game once before importing a save."
@@ -1153,6 +1205,10 @@ msgstr "Kendi dosyalarınızı ekleyin"
 #: eden_services.cpp
 msgid "Taiwan"
 msgstr "Tayvan"
+
+#: pe/ui/profiles.cpp
+msgid "Taken off the list. Its save data stays on the console."
+msgstr "Listeden çıkarıldı. Kayıtları konsolda kalır."
 
 #: settings_store.h
 msgid "Thai"
@@ -1179,6 +1235,10 @@ msgstr "Oyunun grafik belleği tükendi. Ayarlar, Video bölümünde (veya oyunu
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
 msgstr "Oyunlar destekliyorsa kullanılacak dil."
+
+#: pe/ui/profiles.cpp
+msgid "The profile that is playing stays. Choose another one first."
+msgstr "Oynayan profil kalır. Önce başka birini seçin."
 
 #: pe/ui/browse.cpp
 msgid "THIS FOLDER"
@@ -1305,6 +1365,10 @@ msgstr "TÜM OYUNLARI GÖR"
 #: pe/ui/settings.cpp
 msgid "Vulkan (recommended)"
 msgstr "Vulkan (önerilen)"
+
+#: pe/ui/settings.cpp
+msgid "Who is playing. Each profile keeps its own save data."
+msgstr "Kim oynuyor. Her profilin kendi kayıtları vardır."
 
 #: pe/ui/library.cpp
 msgid "Your games"

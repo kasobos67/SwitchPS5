@@ -6,6 +6,7 @@
 #include "diagnostics.h"
 #include "metadata_bridge.h"
 #include "mods.h"
+#include "profiles.h"
 #include "update_notice.h"
 #include "native_directory.h"
 #include "pe/core/strings.hpp"
@@ -278,8 +279,45 @@ std::string SetupMessage(const std::string& english) {
 
 } // namespace
 
+namespace {
+// The PS5's users: who is in front, who is signed in, and their names.
+struct LoginUsers {
+    int id[4];
+};
+extern "C" int sceUserServiceInitialize(const void* parameters);
+extern "C" int sceUserServiceGetForegroundUser(int* user);
+extern "C" int sceUserServiceGetLoginUserIdList(LoginUsers* list);
+extern "C" int sceUserServiceGetUserName(int user, char* name, std::size_t size);
+
+// The names a profile can take: the signed-in PS5 users', then "Player 1" to "Player 8".
+std::vector<std::string> ProfileNames() {
+    std::vector<std::string> names;
+    LoginUsers users{{-1, -1, -1, -1}};
+    if (sceUserServiceGetLoginUserIdList(&users) >= 0) {
+        for (const int user : users.id) {
+            char name[17]{};
+            if (user < 0 || sceUserServiceGetUserName(user, name, sizeof(name)) < 0 || name[0] == '\0') continue;
+            if (std::find(names.begin(), names.end(), name) == names.end()) names.emplace_back(name);
+        }
+    }
+    for (int number = 1; number <= static_cast<int>(Eden::Profiles::kMax); ++number) {
+        const std::string name = "Player " + std::to_string(number);
+        if (std::find(names.begin(), names.end(), name) == names.end()) names.push_back(name);
+    }
+    return names;
+}
+} // namespace
+
 EdenServices::EdenServices(std::string launch_error) : launch_error_(std::move(launch_error)) {
     (void)mkdir(Eden::ConfigDir().c_str(), 0777);
+    // Who is playing (profiles.h): the profile this PS5 user chose last, else the one chosen last.
+    (void)sceUserServiceInitialize(nullptr); // already done by the controller code: refused, harmless
+    if (sceUserServiceGetForegroundUser(&user_) < 0) user_ = -1;
+    const auto who = Eden::Profiles::Resolve(user_);
+    if (!who.profiles.empty())
+        Eden::Report("profile", (who.profiles[static_cast<std::size_t>(who.current)].name + " (" +
+                                 std::to_string(who.current + 1) + " of " + std::to_string(who.profiles.size()) +
+                                 ")").c_str());
     setup_ = eden_startup_error();
     Eden::Report("setup", setup_.empty() ? "Keys and firmware startup checks passed" : setup_.c_str());
 }
@@ -447,6 +485,72 @@ std::vector<pe::ui::Game> EdenServices::games() {
 std::string EdenServices::game_path(const std::string& file) { return Eden::AssetsPath("roms/" + file); }
 
 bool EdenServices::take_update(std::string* version) { return Eden::UpdateNotice::Take(version); }
+
+std::vector<pe::ui::Profile> EdenServices::profiles() {
+    const auto who = Eden::Profiles::Resolve(user_);
+    std::vector<pe::ui::Profile> list;
+    for (std::size_t index = 0; index < who.profiles.size(); ++index)
+        list.push_back({who.profiles[index].name, static_cast<int>(index) == who.current});
+    return list;
+}
+
+bool EdenServices::choose_profile(int index) {
+    const auto who = Eden::Profiles::Resolve(user_);
+    if (index < 0 || index >= static_cast<int>(who.profiles.size())) return false;
+    const auto& profile = who.profiles[static_cast<std::size_t>(index)];
+    if (!Eden::Profiles::Choose(profile, user_)) return false;
+    Eden::Report("profile", ("Now playing: " + profile.name).c_str());
+    return true;
+}
+
+int EdenServices::add_profile() {
+    auto list = Eden::Profiles::Read();
+    if (list.empty() || list.size() >= Eden::Profiles::kMax) return -1;
+    // A signed-in PS5 user's name when no profile has it yet, else the next "Player" name.
+    std::string name = Eden::Profiles::FreeName(list);
+    for (const std::string& candidate : ProfileNames()) {
+        if (std::none_of(list.begin(), list.end(), [&](const auto& p) { return p.name == candidate; })) {
+            name = candidate;
+            break;
+        }
+    }
+    list.push_back(Eden::Profiles::Make(name));
+    if (!Eden::Profiles::Write(list)) return -1;
+    Eden::Report("profile", ("Added: " + name).c_str());
+    return static_cast<int>(list.size()) - 1;
+}
+
+bool EdenServices::rename_profile(int index, int step) {
+    auto list = Eden::Profiles::Read();
+    if (index < 0 || index >= static_cast<int>(list.size())) return false;
+    auto& profile = list[static_cast<std::size_t>(index)];
+    // The names nobody else has; this profile's own name keeps its place among them.
+    std::vector<std::string> names;
+    for (const std::string& name : ProfileNames()) {
+        const bool taken = std::any_of(list.begin(), list.end(), [&](const auto& other) {
+            return &other != &profile && other.name == name;
+        });
+        if (!taken) names.push_back(name);
+    }
+    if (names.empty()) return false;
+    const auto at = std::find(names.begin(), names.end(), profile.name);
+    const int count = static_cast<int>(names.size());
+    const int from = at == names.end() ? (step > 0 ? -1 : 0) : static_cast<int>(at - names.begin());
+    profile.name = names[static_cast<std::size_t>(((from + step) % count + count) % count)];
+    return Eden::Profiles::Write(list);
+}
+
+bool EdenServices::remove_profile(int index) {
+    const auto who = Eden::Profiles::Resolve(user_);
+    auto list = who.profiles;
+    if (list.size() < 2 || index < 0 || index >= static_cast<int>(list.size()) || index == who.current) return false;
+    const std::string name = list[static_cast<std::size_t>(index)].name;
+    list.erase(list.begin() + index);
+    if (!Eden::Profiles::Write(list)) return false;
+    // Its save data stays where it is (nand/user/save/.../<ID>): removing a name destroys nothing.
+    Eden::Report("profile", ("Removed from the list: " + name + " (its save data stays on the console)").c_str());
+    return true;
+}
 
 bool EdenServices::game_exists(const std::string& file) {
     return Eden::ValidRomFilename(file) && IsFile(Eden::AssetsPath("roms/" + file));

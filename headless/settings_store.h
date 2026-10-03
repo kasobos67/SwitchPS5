@@ -572,8 +572,19 @@ inline bool SaveChosenCheats(uint64_t title_id, const std::vector<std::string>& 
     return Settings::Write(document, file);
 }
 
+// Where the chosen profile's recently played games are kept (profiles.h). The profile that was
+// there before profiles could be chosen keeps the place they always had; the others have one each.
+inline std::string LibraryAt(const Settings::Json& document) {
+    const std::string current = Settings::String(document, Settings::Json::json_pointer("/profiles/current"));
+    const std::string first = Settings::String(document, Settings::Json::json_pointer("/profiles/first"));
+    const bool own = current.size() == 32 && current != first &&
+        std::all_of(current.begin(), current.end(), [](unsigned char c) { return std::isxdigit(c) != 0; });
+    return own ? "/library/profiles/" + current : std::string("/library");
+}
+
 inline std::string LoadLastGame(const std::string& file = SettingsFile()) {
-    const std::string name = Settings::String(Settings::Load(file), Settings::Json::json_pointer("/library/last_game"));
+    const Settings::Json document = Settings::Load(file);
+    const std::string name = Settings::String(document, Settings::Json::json_pointer(LibraryAt(document) + "/last_game"));
     return ValidRomFilename(name) ? name : std::string{};
 }
 
@@ -581,14 +592,14 @@ inline bool SaveLastGame(std::string_view name, const std::string& file = Settin
     if (!ValidRomFilename(name)) return false;
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
-    document["library"]["last_game"] = std::string(name);
+    document[Settings::Json::json_pointer(LibraryAt(document) + "/last_game")] = std::string(name);
     return Settings::Write(document, file);
 }
 
 inline std::vector<std::string> LoadRecentGames(const std::string& file = SettingsFile()) {
     using Settings::Json;
     const Json document = Settings::Load(file);
-    const Json::json_pointer at("/library/recent");
+    const Json::json_pointer at(LibraryAt(document) + "/recent");
     std::vector<std::string> recent;
     if (!document.contains(at) || !document.at(at).is_array()) return recent;
     for (const auto& entry : document.at(at)) {
@@ -608,7 +619,7 @@ inline bool SaveRecentGame(std::string_view name, const std::string& file = Sett
     if (recent.size() > 4) recent.resize(4);
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
-    document["library"]["recent"] = recent;
+    document[Settings::Json::json_pointer(LibraryAt(document) + "/recent")] = recent;
     return Settings::Write(document, file);
 }
 

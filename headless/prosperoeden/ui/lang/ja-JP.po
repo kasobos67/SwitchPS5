@@ -57,6 +57,10 @@ msgstr "アクセシビリティ"
 msgid "ACCESSIBILITY"
 msgstr "アクセシビリティ"
 
+#: pe/ui/profiles.cpp
+msgid "Add"
+msgstr "追加"
+
 #. Label: a game's updates, DLC and mods.
 #: pe/ui/library.cpp
 msgid "ADD-ONS"
@@ -66,6 +70,10 @@ msgstr "アドオン"
 #: pe/ui/home.cpp
 msgid "Add-ons: {0}  /  Language: {1}"
 msgstr "アドオン：{0}  /  言語：{1}"
+
+#: pe/ui/profiles.cpp
+msgid "Added. Cross plays as this profile; left and right change its name."
+msgstr "追加しました。バツでこのプロフィールでプレイ、左右で名前を変更。"
 
 #: pe/ui/settings.cpp
 msgid "Adjust the essentials without leaving your library behind."
@@ -110,7 +118,7 @@ msgid "Australia"
 msgstr "オーストラリア"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/settings.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/profiles.cpp, pe/ui/settings.cpp
 msgid "Back"
 msgstr "戻る"
 
@@ -256,7 +264,7 @@ msgstr "設定を保存できませんでした。もう一度お試しくださ
 msgid "Could not save the folder. Please try again."
 msgstr "フォルダーを保存できませんでした。もう一度お試しください。"
 
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/profiles.cpp
 msgid "Could not save. Please try again."
 msgstr "保存できませんでした。もう一度お試しください。"
 
@@ -342,6 +350,10 @@ msgstr "メニューの小さな文字を大きく表示します。"
 #: settings_store.h
 msgid "Dutch"
 msgstr "オランダ語"
+
+#: pe/ui/profiles.cpp
+msgid "Each profile keeps its own save data and recent games."
+msgstr "プロフィールごとにセーブデータと最近のゲームが分かれます。"
 
 #: pe/ui/home.cpp
 msgid "Eden emulator for PlayStation 5"
@@ -744,6 +756,10 @@ msgstr "ニアレスト"
 msgid "Needs attention"
 msgstr "要確認"
 
+#: pe/ui/profiles.cpp
+msgid "New profile"
+msgstr "新しいプロフィール"
+
 #. {0} is the folder used the next time the app starts.
 #: pe/ui/browse.cpp
 msgid "Next launch: {0}"
@@ -868,6 +884,22 @@ msgstr "パフォーマンス"
 msgid "PERFORMANCE"
 msgstr "パフォーマンス"
 
+#: pe/ui/profiles.cpp
+msgid "Play as"
+msgstr "これでプレイ"
+
+#: pe/ui/profiles.cpp
+msgid "Playing"
+msgstr "プレイ中"
+
+#: pe/ui/settings.cpp
+msgid "PLAYING"
+msgstr "プレイ中"
+
+#: pe/ui/profiles.cpp
+msgid "Playing as {0}"
+msgstr "{0}でプレイ"
+
 #: settings_store.h
 msgid "Polish"
 msgstr "ポーランド語"
@@ -905,6 +937,14 @@ msgstr "prod.keys あり"
 #: pe/ui/browse.cpp
 msgid "prod.keys missing"
 msgstr "prod.keys なし"
+
+#: pe/ui/profiles.cpp, pe/ui/settings.cpp
+msgid "Profiles"
+msgstr "プロフィール"
+
+#: pe/ui/settings.cpp
+msgid "PROFILES"
+msgstr "プロフィール"
 
 #: pe/ui/browse.cpp
 msgid "PROJECT CREDITS"
@@ -972,6 +1012,14 @@ msgstr "リフレッシュレート"
 #: pe/ui/browse.cpp, pe/ui/settings.cpp
 msgid "REGION"
 msgstr "地域"
+
+#: pe/ui/profiles.cpp
+msgid "Remove"
+msgstr "外す"
+
+#: pe/ui/profiles.cpp
+msgid "Rename"
+msgstr "名前変更"
 
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Renderer"
@@ -1132,6 +1180,10 @@ msgstr "スペイン語（ラテンアメリカ）"
 msgid "Square"
 msgstr "シカク"
 
+#: pe/ui/profiles.cpp
+msgid "Square again takes {0} off the list. Its save data stays on the console."
+msgstr "もう一度シカクで{0}をリストから外します。セーブデータは本体に残ります。"
+
 #. The app creates its user the first time a game runs.
 #: eden_services.cpp
 msgid "Start any game once before importing a save."
@@ -1153,6 +1205,10 @@ msgstr "ファイルはご自身で用意してください"
 #: eden_services.cpp
 msgid "Taiwan"
 msgstr "台湾"
+
+#: pe/ui/profiles.cpp
+msgid "Taken off the list. Its save data stays on the console."
+msgstr "リストから外しました。セーブデータは本体に残ります。"
 
 #: settings_store.h
 msgid "Thai"
@@ -1179,6 +1235,10 @@ msgstr "ゲームのグラフィックスメモリが不足しました。設定
 #: pe/ui/settings.cpp
 msgid "The language games use when they offer it."
 msgstr "対応しているゲームで使う言語。"
+
+#: pe/ui/profiles.cpp
+msgid "The profile that is playing stays. Choose another one first."
+msgstr "プレイ中のプロフィールは外せません。先に別のものを選んでください。"
 
 #: pe/ui/browse.cpp
 msgid "THIS FOLDER"
@@ -1305,6 +1365,10 @@ msgstr "すべてのゲームを見る"
 #: pe/ui/settings.cpp
 msgid "Vulkan (recommended)"
 msgstr "Vulkan（推奨）"
+
+#: pe/ui/settings.cpp
+msgid "Who is playing. Each profile keeps its own save data."
+msgstr "誰がプレイするか。プロフィールごとにセーブデータが分かれます。"
 
 #: pe/ui/library.cpp
 msgid "Your games"
