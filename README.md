@@ -53,7 +53,7 @@ The complete ProsperoEden source is in this repository: the PS5 frontend and lau
 - **Mods** - patches, replacement game files and cheats for a game, from a `mods` folder next to `roms`, each switched on or off in the game's settings (Triangle in the Library, then **Mods**).
 - **Performance switches** - seven switches that trade accuracy for speed (compiling a game's code ahead, asynchronous shaders, faster GPU, CPU and DMA emulation, and more) in **Settings > Performance**; see [Performance settings](#performance-settings).
 - **Shader cache** - shaders compiled in earlier sessions are loaded when a game starts, so an effect stutters only the first time it appears.
-- **In-game shortcuts** - a performance overlay (Touchpad + R1), and Touchpad + L1 to end the game and return to the library.
+- **In-game shortcuts** - a performance overlay (Touchpad + R1), and Touchpad + L1 to end the game and return to the library. Leaving takes ten seconds at most, also while a game is still loading.
 - **Settings in one place** - a single JSON file under `/data/prosperoeden`, with game volume, mute, and detailed logging options. Logs keep the previous session.
 - **Update notice** - when a newer release is listed on [homebrew.page](https://homebrew.page/ps5), the menu says so at the top right for ten seconds; see [Updating](#updating).
 - **Crash reports** - if ProsperoEden stops because of an error, it saves a report with that session's logs, starts again and shows where the report is.
@@ -267,9 +267,7 @@ The touchpad is pressed as a button. On its own, a tap of the touchpad presses t
 
 - **FPKG support** - install ProsperoEden as a fake package, alongside the current homebrew folder install. Each release includes a ShadowMountPlus package image (`.ffpfsc`); installing it still needs testing.
 - **More performance** - CPU and GPU work to keep demanding games at their target frame rate: the short stutter when a game reaches new areas (the block list, **Compile ahead** in **Settings > Performance**, once it has run in more games and can be on by default), heavy cutscenes, and games that run slower in Docked mode than in Handheld.
-- **More reliable game loading** - fix the remaining hangs on the loading screen.
-- **Faster exit in every game** - a few games still take up to several minutes to close.
-- **Controller selection screen** - some games wait forever on the screen that asks you to choose a controller. Games that take single Joy-Cons should now get past it; other cases still need a log from a game that does it.
+- **More reliable game loading** - a game that hangs while it loads can now be left with Touchpad + L1; the hangs themselves still need a log from a game that does it.
 - **DualShock 4 controllers** - use DualShock 4 controllers as players too, next to the DualSense, so multiplayer games do not need four DualSense controllers.
 - **Better OpenGL performance** - make the OpenGL renderer faster, and add tuning options for it.
 - **More game compatibility** - validate more games on the PS5, and fix what keeps them from running well, such as games that crash at launch.
