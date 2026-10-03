@@ -113,7 +113,9 @@ void Launcher::press_profiles(Key key)
             return;
         }
         read_profiles();
-        // The home screen's game and recently played games are this profile's own.
+        // Its settings, its game on the home screen and its recently played games are its own.
+        prefs_ = services_.preferences();
+        apply_look();
         read_home();
         say(fill(tr("Playing as {0}"), {playing_}));
         cue(Cue::toggle);
@@ -175,7 +177,7 @@ void Launcher::draw_profiles(Canvas &c, float open)
     glass(c, kDialog, 26.0f, theme::kPanel.with_alpha(0.97f), theme::kPanelEdge.with_alpha(0.66f), 1.6f);
     text_shrink(c, tr("Profiles"), 592.0f, baseline(218.0f, 62.0f, theme::kDisplay), theme::kDisplay,
                 theme::kTitle, 736.0f);
-    text_shrink(c, tr("Each profile keeps its own save data and recent games."), 592.0f,
+    text_shrink(c, tr("Each profile keeps its own save data, settings and recent games."), 592.0f,
                 baseline(291.0f, 32.0f, theme::kSmall), theme::kSmall, Color::rgb(0xbecbb9), 736.0f);
 
     const int count = static_cast<int>(profiles_.size());

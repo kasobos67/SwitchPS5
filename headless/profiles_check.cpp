@@ -43,13 +43,64 @@ int main() {
     assert(std::memcmp(again.data() + kHeaderBytes + kEntryBytes, entry(2), kEntryBytes) == 0);
     assert(Read(file).size() == 2);
 
-    // The settings file from before profiles could be chosen: the games played belong to the
-    // profile that was there, and stay where they were.
-    { std::ofstream(settings) << R"({"version": 1, "library": {"last_game": "First.nsp", "recent": ["First.nsp"]}})"; }
+    // Someone who used the version before profiles: a settings file as that version wrote it,
+    // with everything it could hold (Settings, a game's own values, its mods and cheats, the
+    // games played, the game files folder). The first start with profiles changes none of it:
+    // the user that was there becomes the first profile, and every value reads as before.
+    const char* const before = R"({
+      "version": 1,
+      "game_files": "/mnt/usb0/eden",
+      "video": {"renderer": "opengl", "resolution": "2x", "upscaling_filter": "fsr", "fps_overlay": false},
+      "audio": {"volume": 55, "mute": true, "menu_volume": 30},
+      "controls": {"vibration": false, "mapping": {"a": "cross", "b": "circle"}},
+      "performance": {"fast_gpu": true},
+      "diagnostics": {"detailed_logging": true},
+      "games": {"0100000000001000": {"console_mode": "handheld", "volume": 80, "mods_off": ["Big Head"],
+                                     "cheats_on": ["Trainer#Infinite"], "mods": false}},
+      "library": {"last_game": "First.nsp", "recent": ["First.nsp", "Second.nsp"]}
+    })";
+    { std::ofstream(settings) << before; }
+    const uint64_t title = 0x0100000000001000ull;
+    const Eden::Preferences old_preferences = Eden::LoadPreferences(settings);
+    const Eden::GameSettings old_game = Eden::LoadGameSettings(title, settings);
+    assert(old_preferences.volume == 55 && old_preferences.mute && !Eden::LoadGameDocked(title, settings));
+
     State state = Resolve(-1, file, settings);
     assert(state.profiles.size() == 2 && state.current == 0);
-    assert(Eden::LoadLastGame(settings) == "First.nsp");
     assert(CurrentIndex(file, settings) == 0);
+    // The file gained the profiles' own entry and nothing else moved or changed.
+    Eden::Settings::Json after = Eden::Settings::LoadWhole(settings);
+    assert(after["profiles"]["current"] == profiles[0].Key() && after["profiles"]["first"] == profiles[0].Key());
+    after.erase("profiles");
+    assert(after == Eden::Settings::Json::parse(before));
+    // And every reader gives what it gave before.
+    const Eden::Preferences new_preferences = Eden::LoadPreferences(settings);
+    assert(new_preferences.volume == 55 && new_preferences.mute && new_preferences.menu_volume == old_preferences.menu_volume);
+    assert(new_preferences.backend == Eden::GraphicsBackend::OpenGL && !new_preferences.vibration);
+    assert(new_preferences.resolution == old_preferences.resolution &&
+           new_preferences.upscaling_filter == old_preferences.upscaling_filter && !new_preferences.hud);
+    assert(new_preferences.mapping == old_preferences.mapping && new_preferences.mapping != Eden::kDefaultMapping);
+    assert(new_preferences.detailed_logging && new_preferences.detailed_logging == old_preferences.detailed_logging);
+    assert(!Eden::LoadGameDocked(title, settings) && Eden::LoadGameSettings(title, settings).volume == old_game.volume);
+    assert(Eden::LoadDisabledMods(title, settings) == std::vector<std::string>{"Big Head"});
+    assert(Eden::LoadChosenCheats(title, settings) == std::vector<std::string>{"Trainer#Infinite"});
+    assert(!Eden::LoadModsEnabled(title, settings) && Eden::LoadPerformance(title, settings).fast_gpu);
+    assert(Eden::LoadLastGame(settings) == "First.nsp");
+    assert((Eden::LoadRecentGames(settings) == std::vector<std::string>{"First.nsp", "Second.nsp"}));
+    assert(Eden::LoadSavedAssetsDir(settings) == "/mnt/usb0/eden");
+    // Its save data is where it was too: the first profile's ID is the user's that Eden had.
+    assert(state.profiles[0].Key() == "1F1E1D1C1B1A19181716151413121110" && state.profiles[0].name == "Eden");
+    // A second start changes nothing more.
+    const std::string settled = Eden::Settings::LoadWhole(settings).dump();
+    (void)Resolve(-1, file, settings);
+    assert(Eden::Settings::LoadWhole(settings).dump() == settled);
+    // The rest of this check plays with one game on the list.
+    assert(Eden::SaveRecentGame("First.nsp", settings));
+    {
+        Eden::Settings::Json trimmed = Eden::Settings::LoadWhole(settings);
+        trimmed["library"]["recent"] = {"First.nsp"};
+        assert(Eden::Settings::WriteWhole(trimmed, settings));
+    }
 
     // A new profile: its own ID, its own recently played games, and nothing of the first one's.
     profiles.push_back(Make(FreeName(profiles)));
@@ -65,12 +116,41 @@ int main() {
     assert(Eden::LoadLastGame(settings) == "First.nsp");
     assert(Eden::LoadRecentGames(settings) == std::vector<std::string>{"First.nsp"});
 
+    // Settings are each profile's own: the ones under Settings and each game's. A new profile
+    // starts with those of the one that made it, and what one changes the other never sees.
+    Eden::Preferences picture = Eden::LoadPreferences(settings);
+    picture.volume = 40;
+    assert(Eden::SavePreferences(picture, settings));               // the first profile's
+    assert(Eden::SaveGameDocked(0x0100000000001000ull, false, settings));
+    assert(Seed(profiles[2], settings) && Choose(profiles[2], 7, settings));  // made while the first plays
+    assert(Eden::LoadPreferences(settings).volume == 40);           // started from the first one's
+    assert(!Eden::LoadGameDocked(0x0100000000001000ull, settings));
+    assert(Eden::LoadLastGame(settings).empty());                   // but not its games played
+    picture.volume = 85;
+    assert(Eden::SavePreferences(picture, settings));
+    assert(Eden::SaveGameDocked(0x0100000000001000ull, true, settings));
+    assert(Eden::SaveLastGame("Other.nsp", settings));
+    assert(Eden::SaveAssetsDir("/mnt/usb0/games", settings));       // the console's, for everyone
+    assert(Choose(profiles[0], 3, settings));
+    assert(Eden::LoadPreferences(settings).volume == 40);
+    assert(!Eden::LoadGameDocked(0x0100000000001000ull, settings));
+    assert(Eden::LoadLastGame(settings) == "First.nsp");
+    assert(Eden::LoadSavedAssetsDir(settings) == "/mnt/usb0/games");
+    // The first profile's writes leave the other one's part alone.
+    assert(Eden::SavePreferences(Eden::LoadPreferences(settings), settings));
+    assert(Choose(profiles[2], 7, settings));
+    assert(Eden::LoadPreferences(settings).volume == 85 && Eden::LoadGameDocked(0x0100000000001000ull, settings));
+    assert(Choose(profiles[0], 3, settings));
+
     // The menu opens with the profile the PS5 user in front chose last, whoever played last.
     assert(Resolve(7, file, settings).current == 2);
     assert(Eden::LoadLastGame(settings) == "Other.nsp");
     assert(Resolve(3, file, settings).current == 0);
     assert(Resolve(99, file, settings).current == 0); // a user who never chose: the one chosen last
 
+    // A profile taken off the list takes its settings with it.
+    assert(Forget(profiles[2], settings));
+    assert(!Eden::Settings::LoadWhole(settings)["profile_settings"].contains(profiles[2].Key()));
     // A profile taken off the list: the choice falls back to the first, the rest keep their place.
     profiles.erase(profiles.begin());
     assert(Write(profiles, file));
@@ -94,6 +174,6 @@ int main() {
 
     std::filesystem::remove_all(folder);
     std::puts("Profiles: Eden's file read and written as it is, the first profile keeps what was there, "
-              "each profile its own recent games, the choice per PS5 user, removal and names PASS");
+              "each profile its own settings and recent games, the choice per PS5 user, removal and names PASS");
     return 0;
 }

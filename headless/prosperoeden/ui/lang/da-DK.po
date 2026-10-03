@@ -352,8 +352,8 @@ msgid "Dutch"
 msgstr "Hollandsk"
 
 #: pe/ui/profiles.cpp
-msgid "Each profile keeps its own save data and recent games."
-msgstr "Hver profil har sine egne gemte data og seneste spil."
+msgid "Each profile keeps its own save data, settings and recent games."
+msgstr "Hver profil har sine egne gemte data, indstillinger og seneste spil."
 
 #: pe/ui/home.cpp
 msgid "Eden emulator for PlayStation 5"
@@ -1367,8 +1367,8 @@ msgid "Vulkan (recommended)"
 msgstr "Vulkan (anbefales)"
 
 #: pe/ui/settings.cpp
-msgid "Who is playing. Each profile keeps its own save data."
-msgstr "Hvem der spiller. Hver profil har sine egne gemte data."
+msgid "Who is playing. Each profile keeps its own save data and settings."
+msgstr "Hvem der spiller. Hver profil har sine egne gemte data og indstillinger."
 
 #: pe/ui/library.cpp
 msgid "Your games"

@@ -236,7 +236,7 @@ void Launcher::draw_settings(Canvas &c)
     switch (settings_.selected)
     {
     case kProfiles:
-        about = tr("Who is playing. Each profile keeps its own save data.");
+        about = tr("Who is playing. Each profile keeps its own save data and settings.");
         lines = {{tr("PLAYING"), playing_}, {tr("PROFILES"), std::to_string(profiles_.size())}};
         break;
     case kVideo:

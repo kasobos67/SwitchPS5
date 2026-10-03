@@ -155,7 +155,8 @@ inline bool WriteFile(const std::string& path, std::string_view contents) {
     return false;
 }
 
-inline bool Write(const Json& document, const std::string& file) {
+// The whole file, every profile's part included: for the code that keeps the profiles (profiles.h).
+inline bool WriteWhole(const Json& document, const std::string& file) {
     return WriteFile(file, document.dump(2, ' ', false, Json::error_handler_t::replace) + "\n");
 }
 
@@ -198,8 +199,8 @@ inline Json Legacy(const std::string& folder) {
     return document;
 }
 
-// The settings document; the first read after an update builds it from the earlier text files.
-inline Json Load(const std::string& file) {
+// The whole settings file; the first read after an update builds it from the earlier text files.
+inline Json LoadWhole(const std::string& file) {
     std::string text;
     if (ReadFile(file, text)) {
         Json document = Json::parse(text, nullptr, false);
@@ -208,9 +209,61 @@ inline Json Load(const std::string& file) {
     Json document = Legacy(Folder(file));
     if (!document.empty()) {
         document["version"] = 1;
-        (void)Write(document, file);
+        (void)WriteWhole(document, file);
     }
     return document;
+}
+
+// Every profile has its own settings (profiles.h): the ones under Settings, each game's own, and
+// the recently played games. The profile that was there before profiles could be chosen keeps
+// them where they always were, at the top of the file; every other profile has the same layout
+// under "profile_settings"/<its ID>. What belongs to the console and not to a person stays at the
+// top for everyone: the game files folder and the profiles themselves.
+inline constexpr const char* kSharedKeys[] = {"version", "game_files", "profiles", "profile_settings"};
+
+// Where the chosen profile's settings are in the whole file; empty for the top of the file.
+inline std::string ProfileAt(const Json& whole) {
+    const Json::json_pointer current("/profiles/current"), first("/profiles/first");
+    if (!whole.contains(current) || !whole.at(current).is_string()) return {};
+    const std::string key = whole.at(current).get<std::string>();
+    const std::string owner = whole.contains(first) && whole.at(first).is_string() ?
+        whole.at(first).get<std::string>() : std::string{};
+    const bool own = key.size() == 32 && key != owner &&
+        std::all_of(key.begin(), key.end(), [](unsigned char c) { return std::isxdigit(c) != 0; });
+    return own ? "/profile_settings/" + key : std::string{};
+}
+
+// The settings of the profile that is playing, as one document: what every reader and writer of
+// settings below works on. For the first profile that is the file itself.
+inline Json Load(const std::string& file) {
+    Json whole = LoadWhole(file);
+    const std::string at = ProfileAt(whole);
+    if (at.empty()) return whole;
+    const Json::json_pointer pointer(at);
+    Json view = whole.contains(pointer) && whole.at(pointer).is_object() ? whole.at(pointer) : Json::object();
+    for (const char* key : kSharedKeys)
+        if (whole.contains(key)) view[key] = whole[key];
+    return view;
+}
+
+// Writes the playing profile's settings back into the file, and with them what is shared.
+inline bool Write(const Json& document, const std::string& file) {
+    Json whole = LoadWhole(file);
+    const std::string at = ProfileAt(whole);
+    if (at.empty()) {
+        // The first profile's settings are the top of the file: the other profiles' parts, which
+        // this document may be older than, are kept as the file has them.
+        Json next = document;
+        if (whole.contains("profile_settings")) next["profile_settings"] = whole["profile_settings"];
+        return WriteWhole(next, file);
+    }
+    Json own = document;
+    for (const char* key : kSharedKeys) own.erase(key);
+    whole[Json::json_pointer(at)] = std::move(own);
+    whole["version"] = 1;
+    // The game files folder is the console's: a profile that changes it changes it for everyone.
+    if (document.contains("game_files")) whole["game_files"] = document["game_files"];
+    return WriteWhole(whole, file);
 }
 
 // A button mapping as the file names it: the default with the buttons it names (button_mapping.h).
@@ -572,19 +625,9 @@ inline bool SaveChosenCheats(uint64_t title_id, const std::vector<std::string>& 
     return Settings::Write(document, file);
 }
 
-// Where the chosen profile's recently played games are kept (profiles.h). The profile that was
-// there before profiles could be chosen keeps the place they always had; the others have one each.
-inline std::string LibraryAt(const Settings::Json& document) {
-    const std::string current = Settings::String(document, Settings::Json::json_pointer("/profiles/current"));
-    const std::string first = Settings::String(document, Settings::Json::json_pointer("/profiles/first"));
-    const bool own = current.size() == 32 && current != first &&
-        std::all_of(current.begin(), current.end(), [](unsigned char c) { return std::isxdigit(c) != 0; });
-    return own ? "/library/profiles/" + current : std::string("/library");
-}
-
 inline std::string LoadLastGame(const std::string& file = SettingsFile()) {
     const Settings::Json document = Settings::Load(file);
-    const std::string name = Settings::String(document, Settings::Json::json_pointer(LibraryAt(document) + "/last_game"));
+    const std::string name = Settings::String(document, Settings::Json::json_pointer("/library/last_game"));
     return ValidRomFilename(name) ? name : std::string{};
 }
 
@@ -592,14 +635,14 @@ inline bool SaveLastGame(std::string_view name, const std::string& file = Settin
     if (!ValidRomFilename(name)) return false;
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
-    document[Settings::Json::json_pointer(LibraryAt(document) + "/last_game")] = std::string(name);
+    document["library"]["last_game"] = std::string(name);
     return Settings::Write(document, file);
 }
 
 inline std::vector<std::string> LoadRecentGames(const std::string& file = SettingsFile()) {
     using Settings::Json;
     const Json document = Settings::Load(file);
-    const Json::json_pointer at(LibraryAt(document) + "/recent");
+    const Json::json_pointer at("/library/recent");
     std::vector<std::string> recent;
     if (!document.contains(at) || !document.at(at).is_array()) return recent;
     for (const auto& entry : document.at(at)) {
@@ -619,7 +662,7 @@ inline bool SaveRecentGame(std::string_view name, const std::string& file = Sett
     if (recent.size() > 4) recent.resize(4);
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
-    document[Settings::Json::json_pointer(LibraryAt(document) + "/recent")] = recent;
+    document["library"]["recent"] = recent;
     return Settings::Write(document, file);
 }
 

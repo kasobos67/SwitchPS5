@@ -516,6 +516,8 @@ int EdenServices::add_profile() {
     }
     list.push_back(Eden::Profiles::Make(name));
     if (!Eden::Profiles::Write(list)) return -1;
+    // It starts with the settings of whoever made it; from then on they are its own.
+    (void)Eden::Profiles::Seed(list.back());
     Eden::Report("profile", ("Added: " + name).c_str());
     return static_cast<int>(list.size()) - 1;
 }
@@ -545,8 +547,10 @@ bool EdenServices::remove_profile(int index) {
     auto list = who.profiles;
     if (list.size() < 2 || index < 0 || index >= static_cast<int>(list.size()) || index == who.current) return false;
     const std::string name = list[static_cast<std::size_t>(index)].name;
+    const auto gone = list[static_cast<std::size_t>(index)];
     list.erase(list.begin() + index);
     if (!Eden::Profiles::Write(list)) return false;
+    (void)Eden::Profiles::Forget(gone);
     // Its save data stays where it is (nand/user/save/.../<ID>): removing a name destroys nothing.
     Eden::Report("profile", ("Removed from the list: " + name + " (its save data stays on the console)").c_str());
     return true;

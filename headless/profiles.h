@@ -9,11 +9,13 @@
 // are), and keeps the choice in the settings file:
 //
 //   "profiles": {"current": "<ID>", "first": "<ID>", "users": {"<PS5 user>": "<ID>"}}
+//   "profile_settings": {"<ID>": {...the settings of a profile that is not the first...}}
 //
 // "current" is the profile games start with. "users" remembers which profile each PS5 user chose
 // last; that profile is the one the menu opens with for that user. "first" is the profile that
 // existed before profiles could be chosen: everything saved until then is its own, the recently
-// played games included, so nothing moves and nothing is lost.
+// played games and the settings included, so nothing moves and nothing is lost. Every profile has
+// its own settings (settings_store.h, Settings::Load): the ones under Settings and each game's own.
 #pragma once
 #include <algorithm>
 #include <array>
@@ -170,7 +172,7 @@ inline State Resolve(int user = -1, const std::string& file = File(),
         state.profiles.push_back(Make("Player 1"));
         if (!Write(state.profiles, file)) return state;
     }
-    Settings::Json document = Settings::Load(settings);
+    Settings::Json document = Settings::LoadWhole(settings);
     const std::string saved = SettingsValue(document, "/profiles/current");
     const std::string first = SettingsValue(document, "/profiles/first");
     const std::string users = user >= 0 ? "/profiles/users/" + std::to_string(user) : std::string{};
@@ -187,24 +189,45 @@ inline State Resolve(int user = -1, const std::string& file = File(),
         document["version"] = 1;
         document["profiles"]["current"] = key;
         document["profiles"]["first"] = owner;
-        (void)Settings::Write(document, settings);
+        (void)Settings::WriteWhole(document, settings);
     }
     return state;
 }
 
 // Chooses a profile, and remembers it for the PS5 user in front.
 inline bool Choose(const Profile& profile, int user = -1, const std::string& settings = SettingsFile()) {
-    Settings::Json document = Settings::Load(settings);
+    Settings::Json document = Settings::LoadWhole(settings);
     document["version"] = 1;
     document["profiles"]["current"] = profile.Key();
     if (SettingsValue(document, "/profiles/first").empty()) document["profiles"]["first"] = profile.Key();
     if (user >= 0) document["profiles"]["users"][std::to_string(user)] = profile.Key();
-    return Settings::Write(document, settings);
+    return Settings::WriteWhole(document, settings);
+}
+
+// A new profile starts with the settings of the one that made it (its recently played games and
+// its save data stay its own): nobody has to set the picture up again.
+inline bool Seed(const Profile& profile, const std::string& settings = SettingsFile()) {
+    Settings::Json from = Settings::Load(settings);
+    for (const char* key : Settings::kSharedKeys) from.erase(key);
+    from.erase("library");
+    Settings::Json whole = Settings::LoadWhole(settings);
+    whole["version"] = 1;
+    whole["profile_settings"][profile.Key()] = std::move(from);
+    return Settings::WriteWhole(whole, settings);
+}
+
+// Its settings go with a profile that is taken off the list (its save data stays).
+inline bool Forget(const Profile& profile, const std::string& settings = SettingsFile()) {
+    Settings::Json whole = Settings::LoadWhole(settings);
+    const Settings::Json::json_pointer at("/profile_settings");
+    if (!whole.contains(at) || !whole.at(at).contains(profile.Key())) return true;
+    whole.at(at).erase(profile.Key());
+    return Settings::WriteWhole(whole, settings);
 }
 
 // The chosen profile's place in Eden's list (Settings::values.current_user), for a game start.
 inline int CurrentIndex(const std::string& file = File(), const std::string& settings = SettingsFile()) {
     const std::vector<Profile> profiles = Read(file);
-    return std::max(0, IndexOf(profiles, SettingsValue(Settings::Load(settings), "/profiles/current")));
+    return std::max(0, IndexOf(profiles, SettingsValue(Settings::LoadWhole(settings), "/profiles/current")));
 }
 } // namespace Eden::Profiles
