@@ -145,7 +145,7 @@ void CheckPad() {
         // A shortcut is never a press of Minus, however long its keys take to come up.
         for (int i = 0; i < 80; ++i) { consume(); CHECK(none_pressed()); }
 
-        // The touchpad as Select: a tap presses Minus (11) on release, for about 100 ms...
+        // The touchpad as Minus (the usual mapping): a tap presses it (11) on release, for about 100 ms...
         sample.buttons = kButtonTouchPad; consume(); CHECK(none_pressed());
         for (int i = 0; i < 20; ++i) { consume(); CHECK(none_pressed()); }
         sample.buttons = 0; consume();
@@ -171,6 +171,35 @@ void CheckPad() {
         sample.buttons = kButtonTouchPad; consume(); CHECK(none_pressed());
         sample.buttons = kButtonTouchPad | kButtonL1; consume(); CHECK(pad.TakeReturnToMenu());
         sample.buttons = 0; consume(); CHECK(none_pressed());
+
+        // A button mapping (button_mapping.h): A on Cross and B on Circle, ZL on the touchpad
+        // (tap and hold as for Minus) and Minus on L2 with its analog trigger; Create, which has
+        // no game button of its own, presses the touchpad's.
+        auto custom = Eden::Assign(Eden::kDefaultMapping, Eden::game_a, Eden::pad_cross);
+        custom = Eden::Assign(custom, Eden::game_zl, Eden::pad_touchpad);
+        CHECK(custom[Eden::game_minus] == Eden::pad_l2 && custom[Eden::game_b] == Eden::pad_circle);
+        pad.SetMapping(custom);
+        sample.buttons = kButtonCross; consume();
+        CHECK(pad.Engine().GetButton({}, 0)); CHECK(!pad.Engine().GetButton({}, 1));
+        sample.buttons = kButtonCircle; consume();
+        CHECK(pad.Engine().GetButton({}, 1)); CHECK(!pad.Engine().GetButton({}, 0));
+        sample.buttons = 0; sample.triggers = {200, 0}; consume();
+        CHECK(pad.Engine().GetButton({}, 11)); CHECK(!pad.Engine().GetButton({}, 8));
+        sample.triggers = {};
+        sample.buttons = kButtonTouchPad; consume(); CHECK(none_pressed());
+        sample.buttons = 0; consume(); CHECK(pad.Engine().GetButton({}, 8)); CHECK(!pad.Engine().GetButton({}, 11));
+        for (int i = 0; i < 30; ++i) consume();
+        CHECK(none_pressed());
+        sample.buttons = kButtonCreate; consume(); CHECK(pad.Engine().GetButton({}, 8));
+        sample.buttons = kButtonTouchPad | kButtonL1; consume(); CHECK(pad.TakeReturnToMenu());
+        sample.buttons = 0; consume(); CHECK(none_pressed());
+        // A mapping that names a button twice is not taken: the usual one stays.
+        auto twice = Eden::kDefaultMapping;
+        twice[Eden::game_x] = twice[Eden::game_y];
+        pad.SetMapping(twice);
+        sample.buttons = kButtonTriangle; consume(); CHECK(pad.Engine().GetButton({}, 2));
+        sample.buttons = 0; consume();
+        pad.SetMapping(Eden::kDefaultMapping);
 
         // Motion: Eden's SDL mapping of a DualSense (G, turns per second, microsecond deltas).
         constexpr float pi = std::numbers::pi_v<float>;
@@ -252,7 +281,7 @@ void CheckPad() {
     { Eden::Pad pad; CHECK(!pad.Open()); }
     CHECK(state.user_terminations == 3); CHECK(state.pad_closes == 2);
     state.pad_open_result = 7;
-    std::puts("Pad mappings, calibration, motion, rumble, 64-sample edges, disconnect and ownership PASS");
+    std::puts("Pad mappings, a changed button mapping, calibration, motion, rumble, 64-sample edges, disconnect and ownership PASS");
 }
 
 void CheckAudio() {

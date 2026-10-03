@@ -7,7 +7,7 @@
 //                "upscaling_filter": "bilinear", "refresh_rate": "60",
 //                "output_resolution": "1080p" },
 //     "audio": { "volume": 100, "mute": false, "menu_volume": 70 },
-//     "controls": { "vibration": true },
+//     "controls": { "vibration": true, "mapping": { "a": "cross", "b": "circle" } },
 //     "system": { "language": "en-US" },
 //     "accessibility": { "large_text": false, "high_contrast": false, "reduce_motion": false },
 //     "diagnostics": { "detailed_logging": false },
@@ -18,7 +18,10 @@
 //     "library": { "last_game": "Game [id].nsp", "recent": ["Game [id].nsp"] },
 //     "games": { "0100000000010000": { "console_mode": "handheld", "renderer": "opengl",
 //                                      "resolution": "0.75x", "upscaling_filter": "fsr",
-//                                      "refresh_rate": "120", "mods": false,
+//                                      "refresh_rate": "120", "fps_overlay": false,
+//                                      "volume": 80, "mute": false, "vibration": false,
+//                                      "language": "ja", "mapping": { "a": "cross" },
+//                                      "mods": false,
 //                                      "mods_off": ["A mod's folder name"],
 //                                      "cheats_on": ["A mod's folder name#A cheat's name"],
 //                                      "performance": { "fast_gpu": true } } }
@@ -29,6 +32,8 @@
 // game-<title>-mode.txt) are read once into the JSON file and left in place.
 #pragma once
 #include <algorithm>
+#include <array>
+#include <atomic>
 #include <cctype>
 #include <cinttypes>
 #include <cstdint>
@@ -40,6 +45,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include "button_mapping.h"
 #include "storage_paths.h"
 
 namespace Eden {
@@ -97,6 +103,7 @@ struct Preferences {
     bool large_text = false;             // Settings > Accessibility: the launcher's look
     bool high_contrast = false;
     bool reduce_motion = false;
+    ButtonMapping mapping = kDefaultMapping;  // Settings > Controls > Button mapping
 };
 
 inline int KeyIndex(const std::string& value, const char* const* keys, int count, int fallback) {
@@ -206,6 +213,27 @@ inline Json Load(const std::string& file) {
     return document;
 }
 
+// A button mapping as the file names it: the default with the buttons it names (button_mapping.h).
+// One that names a DualSense button twice, or none it knows, is the fallback.
+inline ButtonMapping Mapping(const Json& document, const Json::json_pointer& at, const ButtonMapping& fallback) {
+    if (!document.contains(at) || !document.at(at).is_object()) return fallback;
+    ButtonMapping result = kDefaultMapping;
+    for (const auto& [name, value] : document.at(at).items()) {
+        const int game = KeyIndex(name, kGameButtonKeys, kGameButtons, -1);
+        const int pad = value.is_string() ? KeyIndex(value.get<std::string>(), kPadButtonKeys, kPadButtons, -1) : -1;
+        if (game < 0 || pad < 0) return fallback;
+        result[game] = pad;
+    }
+    return ValidMapping(result) ? result : fallback;
+}
+// What differs from the default, by name.
+inline Json MappingJson(const ButtonMapping& mapping) {
+    Json result = Json::object();
+    for (int game = 0; game < kGameButtons; ++game)
+        if (mapping[game] != kDefaultMapping[game]) result[kGameButtonKeys[game]] = kPadButtonKeys[mapping[game]];
+    return result;
+}
+
 inline bool Bool(const Json& document, const Json::json_pointer& at, bool fallback) {
     return document.contains(at) && document.at(at).is_boolean() ? document.at(at).get<bool>() : fallback;
 }
@@ -246,6 +274,7 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     result.large_text = Settings::Bool(document, Json::json_pointer("/accessibility/large_text"), false);
     result.high_contrast = Settings::Bool(document, Json::json_pointer("/accessibility/high_contrast"), false);
     result.reduce_motion = Settings::Bool(document, Json::json_pointer("/accessibility/reduce_motion"), false);
+    result.mapping = Settings::Mapping(document, Json::json_pointer("/controls/mapping"), kDefaultMapping);
     return result;
 }
 
@@ -256,7 +285,8 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
         value.upscaling_filter < 0 || value.upscaling_filter >= int(std::size(kUpscalingFilterKeys)) ||
         value.refresh < 0 || value.refresh >= int(std::size(kRefreshKeys)) ||
         value.output < 0 || value.output >= int(std::size(kOutputKeys)) ||
-        value.language < 0 || value.language >= int(std::size(kLanguageKeys))) return false;
+        value.language < 0 || value.language >= int(std::size(kLanguageKeys)) ||
+        !ValidMapping(value.mapping)) return false;
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
     document["video"]["renderer"] = value.backend == GraphicsBackend::Vulkan ? "vulkan" : "opengl";
@@ -269,6 +299,8 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     document["audio"]["mute"] = value.mute;
     document["audio"]["menu_volume"] = value.menu_volume;
     document["controls"]["vibration"] = value.vibration;
+    if (value.mapping == kDefaultMapping) document["controls"].erase("mapping");
+    else document["controls"]["mapping"] = Settings::MappingJson(value.mapping);
     document["system"]["language"] = kLanguageKeys[value.language];
     document["diagnostics"]["detailed_logging"] = value.detailed_logging;
     document["accessibility"]["large_text"] = value.large_text;
@@ -299,13 +331,26 @@ inline bool SaveGameDocked(uint64_t title_id, bool docked, const std::string& fi
     return Settings::Write(document, file);
 }
 
-// Library > Game settings: renderer, resolution, upscaling filter and refresh rate for one game;
-// -1 (absent from the file) uses Settings > Video.
+// The Performance switches by name, in the order of PerformanceSettings and of the launcher.
+inline constexpr const char* kPerformanceKeys[] = {"block_list", "async_shaders", "fast_gpu", "unsafe_cpu",
+                                                   "unsafe_dma", "reactive_flushing", "skip_invalidation"};
+inline constexpr int kPerformanceSwitches = int(std::size(kPerformanceKeys));
+
+// Library > Game settings: what one game does differently from Settings. Each value is -1 (absent
+// from the file) while the game follows Settings; switches are 0 off, 1 on.
 struct GameSettings {
     int renderer = -1;          // 0 OpenGL, 1 Vulkan
     int resolution = -1;        // index into kResolutionKeys
     int upscaling_filter = -1;  // index into kUpscalingFilterKeys
     int refresh = -1;           // index into kRefreshKeys
+    int hud = -1;               // FPS overlay
+    int volume = -1;            // game volume, 0 to 100
+    int mute = -1;
+    int vibration = -1;
+    int language = -1;          // index into kLanguageKeys
+    bool own_mapping = false;   // the game has a button mapping of its own: mapping
+    ButtonMapping mapping = kDefaultMapping;
+    std::array<int, kPerformanceSwitches> performance{-1, -1, -1, -1, -1, -1, -1};  // kPerformanceKeys
 };
 inline constexpr const char* kRendererKeys[] = {"opengl", "vulkan"};
 
@@ -321,14 +366,33 @@ inline GameSettings LoadGameSettings(uint64_t title_id, const std::string& file 
     result.upscaling_filter = KeyIndex(key("upscaling_filter"), kUpscalingFilterKeys,
                                        int(std::size(kUpscalingFilterKeys)), -1);
     result.refresh = KeyIndex(key("refresh_rate"), kRefreshKeys, int(std::size(kRefreshKeys)), -1);
+    result.language = KeyIndex(key("language"), kLanguageKeys, int(std::size(kLanguageKeys)), -1);
+    const auto flag = [&](const std::string& path) {
+        const Json::json_pointer at(base + path);
+        return document.contains(at) && document.at(at).is_boolean() ? int(document.at(at).get<bool>()) : -1;
+    };
+    result.hud = flag("/fps_overlay");
+    result.mute = flag("/mute");
+    result.vibration = flag("/vibration");
+    for (int i = 0; i < kPerformanceSwitches; ++i)
+        result.performance[i] = flag(std::string("/performance/") + kPerformanceKeys[i]);
+    const int volume = Settings::Int(document, Json::json_pointer(base + "/volume"), -1);
+    result.volume = volume >= 0 && volume <= 100 ? volume : -1;
+    const Json::json_pointer mapping(base + "/mapping");
+    result.own_mapping = document.contains(mapping);
+    if (result.own_mapping) result.mapping = Settings::Mapping(document, mapping, kDefaultMapping);
     return result;
 }
 
 inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const std::string& file = SettingsFile()) {
+    const auto flag_ok = [](int flag) { return flag >= -1 && flag <= 1; };
     if (!title_id || value.renderer >= int(std::size(kRendererKeys)) ||
         value.resolution >= int(std::size(kResolutionKeys)) ||
         value.upscaling_filter >= int(std::size(kUpscalingFilterKeys)) ||
-        value.refresh >= int(std::size(kRefreshKeys))) return false;
+        value.refresh >= int(std::size(kRefreshKeys)) || value.language >= int(std::size(kLanguageKeys)) ||
+        value.volume > 100 || !flag_ok(value.hud) || !flag_ok(value.mute) || !flag_ok(value.vibration) ||
+        !std::all_of(value.performance.begin(), value.performance.end(), flag_ok) ||
+        (value.own_mapping && !ValidMapping(value.mapping))) return false;
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
     auto& game = document["games"][Settings::TitleKey(title_id)];
@@ -341,12 +405,51 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
     store("resolution", value.resolution, kResolutionKeys);
     store("upscaling_filter", value.upscaling_filter, kUpscalingFilterKeys);
     store("refresh_rate", value.refresh, kRefreshKeys);
+    store("language", value.language, kLanguageKeys);
+    const auto flag = [](Settings::Json& owner, const char* name, int value) {
+        if (value < 0) owner.erase(name);
+        else owner[name] = value == 1;
+    };
+    flag(game, "fps_overlay", value.hud);
+    flag(game, "mute", value.mute);
+    flag(game, "vibration", value.vibration);
+    if (value.volume < 0) game.erase("volume");
+    else game["volume"] = value.volume;
+    if (value.own_mapping) game["mapping"] = Settings::MappingJson(value.mapping);
+    else game.erase("mapping");
+    auto& performance = game["performance"];
+    if (!performance.is_object()) performance = Settings::Json::object();
+    for (int i = 0; i < kPerformanceSwitches; ++i) flag(performance, kPerformanceKeys[i], value.performance[i]);
+    if (performance.empty()) game.erase("performance");
     return Settings::Write(document, file);
 }
 
+// The settings a session of a game uses: Settings, with what the game does differently.
+inline Preferences PreferencesFor(uint64_t title_id, const std::string& file = SettingsFile()) {
+    Preferences result = LoadPreferences(file);
+    if (!title_id) return result;
+    const GameSettings game = LoadGameSettings(title_id, file);
+    if (game.renderer >= 0) result.backend = game.renderer == 0 ? GraphicsBackend::OpenGL : GraphicsBackend::Vulkan;
+    if (game.resolution >= 0) result.resolution = game.resolution;
+    if (game.upscaling_filter >= 0) result.upscaling_filter = game.upscaling_filter;
+    if (game.refresh >= 0) result.refresh = game.refresh;
+    if (game.hud >= 0) result.hud = game.hud == 1;
+    if (game.volume >= 0) result.volume = game.volume;
+    if (game.mute >= 0) result.mute = game.mute == 1;
+    if (game.vibration >= 0) result.vibration = game.vibration == 1;
+    if (game.language >= 0) result.language = game.language;
+    if (game.own_mapping) result.mapping = game.mapping;
+    return result;
+}
+
+// The game the running session belongs to (0 at the launcher): what the audio and the renderer
+// read their game's settings for.
+inline std::atomic<uint64_t> session_title{0};
+
 // Speed against accuracy, for every game ("performance") and for one ("games/<title>/performance",
 // whose values go before the general ones, one value at a time). Settings > Performance has
-// a switch for each general value; a game's own are written in the settings file.
+// a switch for each general value, and Library > Game settings > Performance one for each of a
+// game's own.
 struct PerformanceSettings {
     bool block_list = false;     // compile the blocks of earlier sessions ahead (jit_list.h)
     bool async_shaders = false;  // draw before a new shader is ready: no pause, things missing meanwhile

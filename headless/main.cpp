@@ -443,6 +443,13 @@ int main(int argc, char** argv) {
         const bool game = std::filesystem::is_regular_file(selected_game);
         if (!game) throw std::runtime_error("Selected ROM is no longer available");
         const char* guest = selected_game.c_str();
+        // The audio and the renderer read this game's own settings (Library > Game settings).
+#ifdef PS5_NATIVE
+        const uint64_t game_title = game ? eden_game_title_id(guest) : 0;
+#else
+        const uint64_t game_title = 0;
+#endif
+        Eden::session_title.store(game_title);
         const unsigned cycles = game ? 1 : 3;
         const bool devices = EDEN_DEVICE_FRONTEND;
         if (game) {
@@ -456,6 +463,7 @@ int main(int argc, char** argv) {
         constexpr bool shutdown_sweep = false;
 #else
         const char* guest = argc >= 2 ? argv[1] : nullptr;
+        const uint64_t game_title = 0;  // the host build has no game's own settings
         unsigned cycles = 1;
         bool devices = false;
         bool game = false;
@@ -747,15 +755,16 @@ int main(int argc, char** argv) {
             static constexpr Settings::ScalingFilter filters[] = {
                 Settings::ScalingFilter::Bilinear, Settings::ScalingFilter::Fsr, Settings::ScalingFilter::Bicubic,
                 Settings::ScalingFilter::NearestNeighbor};
-            const auto video = Eden::LoadPreferences();
-            const int resolution = game_video.resolution >= 0 ? game_video.resolution : video.resolution;
-            const int filter = game_video.upscaling_filter >= 0 ? game_video.upscaling_filter : video.upscaling_filter;
+            // Settings > Video, with what the game does differently (Library > Game settings > Video).
+            const auto video = Eden::PreferencesFor(eden_game_title_id(guest));
+            const int resolution = video.resolution;
+            const int filter = video.upscaling_filter;
             Settings::values.resolution_setup.SetValue(resolutions[resolution]);
             Settings::values.scaling_filter.SetValue(filters[filter]);
             Settings::UpdateRescalingInfo();
             // The output's refresh rate while the game runs (display_refresh.h): the renderer asks
             // for it as it opens the output.
-            const int refresh = game_video.refresh >= 0 ? game_video.refresh : video.refresh;
+            const int refresh = video.refresh;
             Eden::Display::requested_hz.store(Eden::kRefreshHz[refresh]);
             Eden::Display::output_millihertz.store(0);
             setenv(Eden::Display::kVulkanSwitch, refresh ? "1" : "0", 1);
@@ -871,7 +880,7 @@ int main(int argc, char** argv) {
             // Without them it hands the game the chosen language as it is, and a game that does not
             // know it (an older one given pt-BR) falls back to Japanese. So the game gets its own
             // closest language, the one the launcher shows for it (eden_game_language).
-            const int choice = Eden::LoadPreferences().language;
+            const int choice = Eden::PreferencesFor(game_title).language;
             int language = Eden::kLanguageSettings[choice];
 #ifdef PS5_NATIVE
             if (game && guest)
@@ -890,7 +899,13 @@ int main(int argc, char** argv) {
             pad = std::make_unique<Eden::Pad>();
             if (!pad->Open()) throw std::runtime_error("PS5 controller initialization failed");
             Settings::values.audio_output_device_id = "ps5";
-            Settings::values.vibration_enabled.SetValue(Eden::LoadPreferences().vibration);
+            // Settings > Controls, or the game's own (Library > Game settings > Controls).
+            const auto controls = Eden::PreferencesFor(game_title);
+            Settings::values.vibration_enabled.SetValue(controls.vibration);
+            pad->SetMapping(controls.mapping);
+            Eden::Report("launch", (std::string("Controls: vibration ") + (controls.vibration ? "on" : "off") +
+                                    ", buttons " + (controls.mapping == Eden::kDefaultMapping ? std::string("as usual") :
+                                    Eden::Settings::MappingJson(controls.mapping).dump())).c_str());
             // One Pro Controller per signed-in user's DualSense; later changes apply mid-game.
             const unsigned connected = pad->ConnectedPlayers();
             (void)pad->TakeConnectionChanges();
