@@ -44,6 +44,7 @@ The complete ProsperoEden source is in this repository: the PS5 frontend and lau
 - **Folder browser** - pick the game files folder in **Settings > Game files**. It shows how many keys, firmware files, and games each folder holds. Hold L1/R1 to page quickly.
 - **Library** - game covers, **Continue Playing**, and **Recently Played**, which keep working after you move your files.
 - **Launcher** - an animated interface drawn with OpenGL, with sound effects (their level is in **Settings > Audio**) and a loading screen while a game starts. The home screen shows which controllers are connected.
+- **Profiles** - everyone who plays has their own save data, settings and recently played games: **Settings > Profiles**; see [Profiles](#profiles).
 - **Settings per game** - a game can differ from Settings in its video, performance, audio, controls and language, and has its own Handheld / Docked mode (Triangle in the Library); see [Settings per game](#settings-per-game).
 - **Button mapping** - choose which DualSense button presses each of the game's buttons, for every controller, in **Settings > Controls**, or for one game in its settings; see [Button mapping](#button-mapping).
 - **Your language** - the launcher follows the language the PS5 is set to (29 languages; English otherwise).
@@ -167,6 +168,17 @@ A game can have its own values: in its settings, **Performance** (see [Settings 
 The accuracy switches help only where a game is held back by what they relax. In the scene they were measured in on the console, a large game standing at its frame rate limit, switching all of them on changed neither the frame rate nor how busy the emulated processor and the graphics thread were. Leave them off unless a game runs under its frame rate, and switch them back off if its graphics go wrong.
 
 Resolution, the upscaling filter, the renderer and the refresh rate, which change speed too, are in **Settings > Video** and in a game's own settings.
+
+### Profiles
+
+**Settings > Profiles** lists the people who play on this console, up to eight. Each profile keeps its own save data, its own settings (everything under Settings, and each game's own settings) and its own Continue Playing and Recently Played. The game files folder is the console's and is the same for everyone.
+
+- **Cross** plays as the highlighted profile. The home screen names who is playing once there is more than one profile.
+- **New profile** adds one. It starts with the settings of the profile that made it, and with no save data.
+- **Left and right** change a profile's name: the names of the PS5 users signed in, then "Player 1" to "Player 8".
+- **Square**, pressed twice, takes a profile off the list. Its save data stays on the console.
+
+The menu opens with the profile that the PS5 user in front chose last. If you used an earlier version, your saves, settings and recently played games are the first profile's, where they always were.
 
 ### Settings per game
 
