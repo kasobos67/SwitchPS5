@@ -55,6 +55,7 @@ The complete ProsperoEden source is in this repository: the PS5 frontend and lau
 - **Shader cache** - shaders compiled in earlier sessions are loaded when a game starts, so an effect stutters only the first time it appears.
 - **In-game shortcuts** - a performance overlay (Touchpad + R1), and Touchpad + L1 to end the game and return to the library.
 - **Settings in one place** - a single JSON file under `/data/prosperoeden`, with game volume, mute, and detailed logging options. Logs keep the previous session.
+- **Update notice** - when a newer release is listed on [homebrew.page](https://homebrew.page/ps5), the menu says so at the top right for ten seconds; see [Updating](#updating).
 - **Crash reports** - if ProsperoEden stops because of an error, it saves a report with that session's logs, starts again and shows where the report is.
 - **Controllers, audio, and saves** - up to four DualSense controllers (one per signed-in PS5 user) with rumble and motion controls, game audio, and save data work out of the box.
 
@@ -109,6 +110,8 @@ ProsperoEden does not include keys, firmware, games, or other copyrighted consol
 ### Updating
 
 Close ProsperoEden first. Your settings, saves, covers and logs are in `/data/prosperoeden`, outside the app, so an update keeps them. Afterwards the About screen shows the version that is running.
+
+Once each time it starts, ProsperoEden asks [homebrew.page](https://homebrew.page/ps5) which release of it is listed there. If that release is newer than the one running, the menu shows **Update available** with its version at the top right for ten seconds. The request carries the app's title ID and nothing else; nothing is downloaded or installed, so updating stays the steps below. Without a network, or without an answer, nothing is shown.
 
 - **Folder install.** Copy the `PPSA99008` folder from the new release ZIP over `/data/homebrew/PPSA99008`, replacing the files it has, then start ProsperoEden. Files you put there yourself, such as `language.txt`, stay.
 - **Package image (`.ffpfsc`).** Delete the old image, copy the new one to the same place, then restart ShadowMountPlus (send its payload again, or restart the console) and start ProsperoEden. ShadowMountPlus 1.6 keeps the old image mounted until it restarts; 1.7 finds a replaced image by itself at its next scan, and a restart does no harm there. Keep one image only, and no `PPSA99008` folder next to it: two copies of the app are reported as a duplicate. The image install is still untested (see the [Roadmap](#roadmap)), so these steps follow how ShadowMountPlus handles images.
