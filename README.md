@@ -320,6 +320,7 @@ The touchpad is pressed as a button. On its own, a tap of the touchpad presses t
 - **FPKG support** - install ProsperoEden as a fake package, alongside the current homebrew folder install. Each release includes a ShadowMountPlus package image (`.ffpfsc`); installing it still needs testing.
 - **More performance** - CPU and GPU work to keep demanding games at their target frame rate: the short stutter when a game reaches new areas (the block list, **Compile ahead** in **Settings > Performance**, once it has run in more games and can be on by default), heavy cutscenes, and games that run slower in Docked mode than in Handheld.
 - **More reliable game loading** - a game that hangs while it loads can now be left with Touchpad + L1; the hangs themselves still need a log from a game that does it.
+- **Sideways play for single Joy-Con games** - games that use one Joy-Con held sideways have the DualSense held sideways too. Turn its motion sensors to match that grip (today tilting moves the wrong way), and keep the in-game shortcuts from being pressed by accident in it: holding the controller that way, Touchpad + L1 is easy to hit and ends the game.
 - **DualShock 4 controllers** - use DualShock 4 controllers as players too, next to the DualSense, so multiplayer games do not need four DualSense controllers.
 - **Better OpenGL performance** - make the OpenGL renderer faster, and add tuning options for it.
 - **More game compatibility** - validate more games on the PS5, and fix what keeps them from running well, such as games that crash at launch.
