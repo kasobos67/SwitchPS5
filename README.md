@@ -12,7 +12,7 @@
 
 This is an early alpha. Video, audio, controller input, and saves have been confirmed working. Compatibility and performance will vary between games. The current release is **v1.000.050**.
 
-> [!IMPORTANT]
+> [!WARNING]
 > **ProsperoEden does not embed or bundle Lapy.** For normal use, load a compatible upstream
 > [PS5-Lapy-JB-Daemon](https://github.com/ArkSama/PS5-Lapy-JB-Daemon) owned-root service before
 > starting ProsperoEden. The app launches without Lapy, but remains sandboxed and cannot use its
