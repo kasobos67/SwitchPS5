@@ -308,6 +308,12 @@ GitHub issues are turned off for this repository on purpose. ProsperoEden is a g
 
 Please do not use pull requests or other channels to post that kind of content either.
 
+## Elevation credits
+
+Filesystem elevation uses [PS5-Lapy-JB-Daemon](https://github.com/ArkSama/PS5-Lapy-JB-Daemon),
+created by ArkSama. ProsperoEden follows the cooperative owned-root design and implementation
+from [mpereiraesaa's Lapy fork](https://github.com/mpereiraesaa/PS5-Lapy-JB-Daemon).
+
 ## Thanks
 
 Thank you to the people who test ProsperoEden on their own consoles and report what they find:
