@@ -12,16 +12,6 @@
 
 This is an early alpha. Video, audio, controller input, and saves have been confirmed working. Compatibility and performance will vary between games. The current release is **v1.000.070**.
 
-> [!WARNING]
-> **ProsperoEden includes an exact-title one-shot helper built from upstream
-> [PS5-Lapy-JB-Daemon](https://github.com/mpereiraesaa/PS5-Lapy-JB-Daemon).** The PS5 jailbreak
-> environment must provide a local ELF loader on TCP port 9021. If a resident Lapy service is
-> already running, ProsperoEden gives it the first bounded opportunity; otherwise it sends the
-> packaged helper over that local connection. No separate Lapy payload is required for normal use.
-> The packaged helper's corrected donor lifecycle passed five automated launch/elevate/close cycles
-> on both firmware 6.02 and 12.70. Other supported firmware remains experimental and should be
-> tested cautiously; the helper also refuses unknown runtime layouts instead of guessing.
-
 ## Source code
 
 The complete ProsperoEden source is in this repository: the PS5 frontend and launcher in `headless/`, and the build and packaging tools in `tools/`. To build it yourself, run `make` on Linux (Ubuntu 26.04; WSL works). It fetches every dependency at its pinned revision and writes the release files to `dist/`; `make help` lists the other targets. See [docs/BUILDING.md](docs/BUILDING.md).
@@ -73,11 +63,11 @@ The complete ProsperoEden source is in this repository: the PS5 frontend and lau
 ## Install
 
 > [!TIP]
-> **Use the newest ShadowMountPlus, [1.7beta4](https://github.com/drakmor/ShadowMountPlus/releases/tag/1.7beta4)**, especially on newer firmwares. It is what mounts ProsperoEden from the folder (or drive) you copy it to.
+> **Use [ShadowMountPlus 1.7beta4](https://github.com/drakmor/ShadowMountPlus/releases/tag/1.7beta4) or newer.** It mounts ProsperoEden from the folder (or drive) you copy it to, and it also mounts `/data` and USB and extended storage drives into the app's sandbox, so ProsperoEden reaches its data and your game files with nothing else to load. With an older ShadowMountPlus, ProsperoEden falls back to its bundled [Lapy](https://github.com/mpereiraesaa/PS5-Lapy-JB-Daemon) helper (see [Elevation credits](#elevation-credits)).
 
 1. Download and extract the release ZIP.
 2. Copy the included `PPSA99008` folder to `/data/homebrew/PPSA99008` on the PS5 (or to another folder ShadowMountPlus scans, such as `/mnt/usb0/homebrew/PPSA99008`).
-3. Make sure your jailbreak environment's local ELF loader is listening on TCP port 9021. ProsperoEden includes and sends its title-specific upstream Lapy helper automatically; a separately loaded resident Lapy service is optional.
+3. Make sure your jailbreak environment's local ELF loader is listening on TCP port 9021 (most setups have it). [Updates from the menu](#updating) use it, and with a ShadowMountPlus older than 1.7beta4 ProsperoEden sends its bundled Lapy helper through it.
 4. Put your own legally dumped keys, firmware, and games in a **game files folder** (layout below). It can be anywhere the PS5 can read: internal storage, an M.2 or external drive, or a USB device.
 5. Launch **ProsperoEden**, open **Settings > Game files**, browse to that folder and select it. The default is `/data/prosperoeden`.
 6. Close and reopen ProsperoEden, then open **Library**. Setup is checked when the app opens, so reopen it after changing the folder or adding keys or firmware.
