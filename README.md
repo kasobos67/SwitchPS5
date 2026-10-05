@@ -72,8 +72,11 @@ The complete ProsperoEden source is in this repository: the PS5 frontend and lau
 
 ## Install
 
+> [!TIP]
+> **Use the newest ShadowMountPlus, [1.7beta4](https://github.com/drakmor/ShadowMountPlus/releases/tag/1.7beta4)**, especially on newer firmwares. It is what mounts ProsperoEden from the folder (or drive) you copy it to.
+
 1. Download and extract the release ZIP.
-2. Copy the included `PPSA99008` folder to `/data/homebrew/PPSA99008` on the PS5.
+2. Copy the included `PPSA99008` folder to `/data/homebrew/PPSA99008` on the PS5 (or to another folder ShadowMountPlus scans, such as `/mnt/usb0/homebrew/PPSA99008`).
 3. Make sure your jailbreak environment's local ELF loader is listening on TCP port 9021. ProsperoEden includes and sends its title-specific upstream Lapy helper automatically; a separately loaded resident Lapy service is optional.
 4. Put your own legally dumped keys, firmware, and games in a **game files folder** (layout below). It can be anywhere the PS5 can read: internal storage, an M.2 or external drive, or a USB device.
 5. Launch **ProsperoEden**, open **Settings > Game files**, browse to that folder and select it. The default is `/data/prosperoeden`.
