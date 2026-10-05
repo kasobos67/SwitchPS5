@@ -99,6 +99,13 @@ Only these subfolders matter; the folder itself can have any name and location.
 ├── updates/                            # optional: update and DLC files
 │   └── Game update.nsp
 ├── mods/                               # optional: mods, one folder per title ID
+│   └── <title ID>/                     # the 16-character code in the game's file name
+│       ├── <mod name>/
+│       │   ├── exefs/                  # code patches: *.pchtxt, *.ips
+│       │   ├── romfs/                  # replacement game files
+│       │   └── cheats/
+│       │       └── <build ID>.txt      # cheats for one version of the game
+│       └── cheat_<name>.txt            # optional: cheats without a mod folder
 ├── save-import/                        # optional: saves to import, one folder per title ID
 ├── ryujinx/                            # optional: a Ryujinx data folder to import saves from
 └── save-export/                        # written by "Export a copy"
@@ -151,9 +158,10 @@ Cross imports, and asks before it replaces a save. The save it replaces is first
 A mod changes a game: a patch to its code (`.pchtxt` or `.ips` files in an `exefs` folder), replacement game files (a `romfs` folder), or cheats (a `cheats` folder). Mods made for other emulators of the same console come in this layout.
 
 - **Add a mod.** Each mod is a folder. Copy it to `mods/<title ID>/`, next to `roms/` in the game files folder, so that a patch ends up at `mods/<title ID>/<mod name>/exefs/<file>.pchtxt`. The title ID is the 16-character code in the game's file name. The Mods screen names the exact folder, and Square creates it. The About screen shows where the `mods` folder is.
+- **Add cheats.** Cheats are text files in the layout cheat collections for other emulators of the same console use: each cheat starts with its name in square brackets (`[Infinite health]`), followed by its code lines. Put the file at `mods/<title ID>/<mod name>/cheats/<build ID>.txt`, the same place as a mod (any mod folder name; a collection's own folder works as it is). A single cheats file can also go straight into the title's folder as `mods/<title ID>/cheat_<name>.txt`; it is listed as its own mod. The build ID is the code the file is named after in cheat collections: each version of a game has its own, so pick the file for the version you run (with its update in `updates/`). Folder names may be in any letter case.
 - **Switch it on or off.** In the Library, press Triangle on the game and pick **Mods**. Every mod found is listed with a switch. A mod is on unless you switch it off, and a change applies the next time the game starts.
 - **Switch all of a game's mods off or on.** In the Library, a game that has mods shows a **Mods** switch under its console mode; Square flips it. Off, the game starts without any of its mods, and each mod keeps its own switch for when you turn it back on.
-- **Choose cheats one by one.** A cheats file can hold many cheats, as the collections made for a game do. When a mod lists more than one, the Mods screen shows each cheat under the mod with its own switch, and none of them runs until you switch it on. Cheats that replace each other, such as two frame rates or two resolutions, take each other's place: switching one on switches the other off. A mod with a single cheat runs it whenever the mod is on. A cheats file is named after the build of the game it was made for (`cheats/<build ID>.txt`), so it has to match the version you run.
+- **Choose cheats one by one.** A cheats file can hold many cheats, as the collections made for a game do. When a mod lists more than one, the Mods screen shows each cheat under the mod with its own switch, and none of them runs until you switch it on. Cheats that replace each other, such as two frame rates or two resolutions, take each other's place: switching one on switches the other off. A mod with a single cheat runs it whenever the mod is on.
 - **See what a game has.** The home screen and the Library count a game's mods next to its update and DLC (`Update 1.2.0, 2 DLC, 1 mod`), and say so when some are switched off (`1 of 2 mods on`).
 - **Match the game's version.** A patch is made for one version of a game. One made for another version is ignored without a message, so check that the mod matches the update you have in `updates/`.
 - **Frame rate.** A patch that makes a 30 FPS game run at 60 FPS works on the 60 Hz output ProsperoEden uses. A patch for more than 60 FPS needs the 120 Hz output: set **Refresh rate** to 120 Hz in the game's settings (Triangle in the Library) or in **Settings > Video**. That takes a display that shows 120 Hz and the PS5's own 120 Hz output setting; without them the game runs at 60 Hz. A 60 FPS patch can gain from it too: a game that misses some frames at 60 Hz has twice as many chances to show them. A patch for more frames than the output shows (240 FPS on the 120 Hz output, 120 FPS on the 60 Hz one) still runs at its own pace: the frames the display has no refresh for are left out.
