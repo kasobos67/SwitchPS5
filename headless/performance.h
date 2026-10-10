@@ -58,6 +58,13 @@ inline Totals gpu_queue_wait, gpu_dispatch;
 // Producer-side waits outside the dispatch timer: forced fence drains on the GPU
 // thread, free presentation-frame waits, and guest pushes into a full GPU queue.
 inline Totals gpu_fence_drain, gpu_present_wait, gpu_queue_full;
+// Texture-cache GC GPU drains (RunGarbageCollector). A dirty eviction copies the image back to
+// guest memory and waits for the GPU first (Scheduler::Finish). The batched path spends one drain
+// on up to sixteen images; the unbatched path is the per-image fallback in Cleanup, which the
+// prefetch cannot take (an image larger than its byte budget, or one that arrives after the
+// lookahead stopped). calls = drains, requested_bytes = images covered: one drain per image in the
+// unbatched case is the stall to drive out.
+inline Totals gc_batched_drain, gc_unbatched_drain;
 // Guest threads entering the GPU caches: CPU writes to tracked pages and flush-area lookups.
 inline Totals guest_cpu_write, guest_cpu_read;
 // Those entries take the buffer and texture cache locks, which the GPU thread holds for one draw at

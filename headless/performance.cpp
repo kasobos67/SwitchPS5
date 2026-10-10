@@ -429,6 +429,15 @@ void ReportGpuThread(unsigned frame) {
                 load(gpu_fence_drain, true), load(gpu_fence_drain, false),
                 load(gpu_present_wait, true), load(gpu_present_wait, false),
                 load(gpu_queue_full, true), load(gpu_queue_full, false), load(rasterizer_draw, true));
+    // Texture-cache GC GPU drains since the last report. The fix these counters watch is the
+    // prefetch lookahead (vulkan_gc_downloads.inc): batched drains should cover many images and
+    // unbatched ones should be rare, as each unbatched drain is a full pipeline wait on the GPU
+    // thread for one eviction.
+    std::printf("EDEN_DEV_GC_DRAIN batched_calls=%llu batched_ns=%llu batched_images=%llu "
+                "unbatched_calls=%llu unbatched_ns=%llu\n",
+                load(gc_batched_drain, true), load(gc_batched_drain, false),
+                gc_batched_drain.requested_bytes.load(std::memory_order_relaxed),
+                load(gc_unbatched_drain, true), load(gc_unbatched_drain, false));
     std::printf("EDEN_DEV_GUEST cpu_write_calls=%llu cpu_write_ns=%llu cpu_read_calls=%llu cpu_read_ns=%llu "
                 "sync_calls=%llu sync_ns=%llu dequeue_calls=%llu dequeue_ns=%llu",
                 load(guest_cpu_write, true), load(guest_cpu_write, false),

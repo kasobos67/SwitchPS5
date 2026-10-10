@@ -23,6 +23,7 @@
             u64 usage = total_used_memory;
             // Only look ahead through independent dirty evictions. Leave all
             // deletion, alias updates and pressure-policy decisions to Cleanup.
+            // ForEachItemBelow stops when the callback returns true (common/lru_cache.h).
             lru_cache.ForEachItemBelow(frame_tick - ticks_to_destroy, [&](ImageId id) {
                 if (remaining == 0) return true;
                 --remaining;
@@ -31,9 +32,17 @@
                 const bool dirty = IsDownloadable(image) && False(image.flags & ImageFlagBits::BadOverlap);
                 if ((!aggressive_mode && True(image.flags & ImageFlagBits::CostlyLoad)) ||
                     (!DirtyEvictions() && dirty)) return false;
-                if (!dirty || !image.aliased_images.empty() || !image.overlapping_images.empty() ||
-                    image.HasScaled() || image.info.num_samples != 1 || gc_downloads.size() == 16 ||
-                    image.unswizzled_size_bytes > 32_MiB - bytes) return true;
+                // A clean image has nothing to copy back, and an image that does not fit the
+                // remaining byte budget keeps the drain it already had in Cleanup. Neither may
+                // end the lookahead: stopping here left every later dirty image to Cleanup's
+                // per-image drain, one GPU pipeline wait each, where this loop would have spent
+                // a single wait on all of them. Skip them and keep looking.
+                if (!dirty || image.unswizzled_size_bytes > 32_MiB - bytes) return false;
+                // Aliased, overlapping, scaled and MSAA images stay with Cleanup: their copies
+                // are not independent of the state that eviction updates.
+                if (!image.aliased_images.empty() || !image.overlapping_images.empty() ||
+                    image.HasScaled() || image.info.num_samples != 1 || gc_downloads.size() == 16)
+                    return true;
                 auto map = runtime.DownloadStagingBuffer(image.unswizzled_size_bytes, true);
                 // Pin until CPU publication, even if later recording submits work.
                 gc_downloads.emplace_back(id, map);
@@ -46,7 +55,12 @@
                 return usage < (aggressive_mode || ::Eden::Performance::KeepDirtyTextures() ? critical_memory
                                                                                            : expected_memory);
             });
-            if (!gc_downloads.empty()) runtime.Finish();
+            if (!gc_downloads.empty()) {
+                // One drain for the whole batch; the image count is the reported payload.
+                const ::Eden::Performance::Timer drain(::Eden::Performance::gc_batched_drain,
+                                                       gc_downloads.size());
+                runtime.Finish();
+            }
         }
     };
     const auto UsePrefetched = [&](ImageId id, Image& image) {
