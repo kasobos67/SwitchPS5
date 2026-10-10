@@ -60,6 +60,12 @@ cp "$root/build/self-update/self-updater.elf" "$app/self-updater.elf"
 cp "$root/sce_sys/"{param.json,icon0.png,pic0.dds,pic1.dds,snd0.at9} "$app/sce_sys/"
 rm -rf "$app/ui"
 cp -a "$root/headless/prosperoeden/ui" "$app/ui"
+# The switches the runner reads from the app folder (headless/main.cpp). Only a development
+# package gets them: the profile title otherwise takes its timed input replay instead of the
+# controller, and a release build never parses the file.
+if [[ ${EDEN_DEV_PROFILE:-} == ON && -f "$root/headless/dev-settings.txt" ]]; then
+    cp "$root/headless/dev-settings.txt" "$app/dev-settings.txt"
+fi
 # The exact-title upstream Lapy helper is verified before it reaches this package.
 python3 - "$root" "$scratch" "$app" "${1:-}" <<'PY'
 import json, pathlib, re, runpy, shutil, sys
