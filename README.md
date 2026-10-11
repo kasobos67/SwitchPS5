@@ -556,6 +556,7 @@ Thank you to the people who test ProsperoEden on their own consoles and report w
 - **BunkinBacon**, for helping with testing.
 - **Cold** ([GitHub](https://github.com/JMUtechnologies)), for helping with testing.
 - **Bauls Deep** ([GitHub](https://github.com/bawsdeep)), for helping with testing.
+- **OverkillLabs**, for helping with testing.
 
 And to the people who contribute code:
 
