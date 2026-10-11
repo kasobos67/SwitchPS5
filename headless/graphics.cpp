@@ -649,6 +649,9 @@ void GraphicsWindow::OnFrameDisplayed() {
                             RoomPingMilliseconds());
 #endif
         ++frame_total;
+        // What a recorded controller session counts frames by (gameplay_test.h): the input
+        // worker runs on another thread, so it reads a copy rather than the member.
+        Display::gameplay_frame.store(frame_total, std::memory_order_relaxed);
         if (frame_sample_start < 0) {
             frame_sample_start = frame_sample_last = now;
         } else {

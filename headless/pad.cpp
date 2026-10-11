@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include "common/input.h"
 #include "common/logging.h"
+#include "gameplay_test.h"
 #include "input_common/input_poller.h"
 #include <utility>
 
@@ -214,11 +215,20 @@ void Pad::Close() {
         }
         slots[player] = {};
     }
+    GameplayTest::Report();
     connected_players = 0;
     connection_changes = 0;
     if (owns_user_service) { sceUserServiceTerminate(); owns_user_service = false; }
 }
 bool Pad::Poll() {
+    if (GameplayTest::Replaying()) {
+        // A recorded session drives the pad instead of the controller (gameplay_test.h). The
+        // controller is left alone rather than closed, so the game still has its player 1.
+        ++polls;
+        ps5::pad::Data sample{};
+        while (GameplayTest::Take(sample)) Consume(0, {&sample, 1});
+        return true;
+    }
     if (slots[0].handle >= 0 && ++polls_since_scan >= kPollsPerScan) {
         polls_since_scan = 0;
         Rescan();
@@ -309,7 +319,11 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
             std::copysign((std::abs(x) - deadzone) / (1.0f - deadzone), x);
     };
     auto& last_buttons = slots[player].last_buttons;
+    // Player 1's states go to the recording before the substitutions below take them for usable
+    // or not (gameplay_test.h): replaying puts them back through the same substitutions.
+    const bool recording = player == 0 && GameplayTest::Recording();
     for (const auto& raw : samples) {
+        if (recording) GameplayTest::Record(raw);
         auto sample = is_usable(raw) ? raw : neutral_data(raw.timestamp_us);
         // The shortcuts work from every controller.
         constexpr ButtonMask menu_chord = kButtonTouchPad | kButtonL1;
