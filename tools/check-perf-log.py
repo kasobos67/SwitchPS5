@@ -18,6 +18,8 @@ run by hand after a session:
                              of EDEN_DEV_DRAW, no more and no less
   they run in order          flush reaches every draw that got a pipeline, and no
                              later phase is marked more often than the one before
+  config splits              when EDEN_DEV_CFG is there at all, its six phases are
+                             all there and fit inside config, in Configure's order
   fps is a rate              over zero, and not past a thousand
 """
 import importlib.util
@@ -77,8 +79,36 @@ def main(argv):
             f'{path.name}: {later} was marked {counted[later]} times but {earlier} only '
             f'{counted[earlier]} - a phase is marked that the one before it never reached')
 
+    # The config split is newer than some captured runs. A log printed either all six of
+    # EDEN_DEV_CFG or none of it - half a line means a printf was cut in half.
+    cfg_names = tuple(f'cfg.{phase}_ns' for phase in analyze.CFG_PHASES)
+    present = sum(1 for name in cfg_names if any(name in row for row in usable))
+    assert present in (0, len(cfg_names)), (
+        f'{path.name}: {present} of {len(cfg_names)} config phases printed - EDEN_DEV_CFG is '
+        'missing part of its line')
+    if present == len(cfg_names):
+        config = sum(row.get('rast.config_ns', 0) for row in usable)
+        cfg_spent = {phase: sum(row.get(f'cfg.{phase}_ns', 0) for row in usable)
+                     for phase in analyze.CFG_PHASES}
+        cfg_counted = {phase: sum(row.get(f'cfg.{phase}_calls', 0) for row in usable)
+                       for phase in analyze.CFG_PHASES}
+        assert sum(cfg_spent.values()) <= config * 1.01, (
+            f'{path.name}: the six phases inside config come to {sum(cfg_spent.values())} ns, more '
+            f'than the {config} ns config itself was charged')
+        covered_cfg = sum(cfg_spent.values()) / config if config else 0
+        assert covered_cfg >= 0.5, (
+            f'{path.name}: the six phases account for {covered_cfg:.0%} of config - a Mark is not '
+            'running')
+        assert cfg_counted['sync'] > 0, f'{path.name}: the config sync phase never ran'
+        for earlier, later in zip(analyze.CFG_PHASES, analyze.CFG_PHASES[1:]):
+            assert cfg_counted[later] <= cfg_counted[earlier], (
+                f'{path.name}: config {later} was marked {cfg_counted[later]} times but '
+                f'{earlier} only {cfg_counted[earlier]} - a phase is marked that the one before '
+                'it never reached')
+
     print(f'perf log {path.name}: {len(usable)} windows, {covered:.0%} of PrepareDraw in the six '
-          'phases, report lines and nesting PASS')
+          'phases, report lines and nesting PASS'
+          + (f', {covered_cfg:.0%} of config in its six' if present else ', no config split'))
     return 0
 
 

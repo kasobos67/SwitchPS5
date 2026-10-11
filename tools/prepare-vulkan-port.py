@@ -786,12 +786,49 @@ adapt('src/video_core/texture_cache/texture_cache.h',
 
 # These costs sit outside vkCreateGraphicsPipelines: guest shader translation,
 # worker readiness, and background serialization can block different threads.
+# The six phases inside Configure. draw_config is all of Configure but SetEngine's two pointer
+# assignments, and ConfigureImpl is ~210 lines; without these the 2.78 us a draw spends
+# configuring arrives as one number with nothing to aim at. One running clock, marked at the
+# boundaries the source already has.
+configure_phases = [
+    ('bool GraphicsPipeline::ConfigureImpl(bool is_indexed) {',
+     'bool GraphicsPipeline::ConfigureImpl(bool is_indexed) {\n'
+     '    long long since = ::Eden::Performance::NowNs();'),
+    ('    buffer_cache.SetUniformBuffersState(enabled_uniform_buffer_masks, &uniform_buffer_sizes);',
+     '    buffer_cache.SetUniformBuffersState(enabled_uniform_buffer_masks, &uniform_buffer_sizes);\n'
+     '    // Sampler and image tables synced, uniform-buffer state set.\n'
+     '    ::Eden::Performance::Mark(::Eden::Performance::cfg_sync, since);'),
+    ('    texture_cache.FillImageViews(std::span(views.data(), views.size()), false, Spec::has_images);',
+     '    texture_cache.FillImageViews(std::span(views.data(), views.size()), false, Spec::has_images);\n'
+     '    // Every texture handle read out of guest memory, every sampler and view filled.\n'
+     '    ::Eden::Performance::Mark(::Eden::Performance::cfg_read, since);'),
+    ('    buffer_cache.BindHostGeometryBuffers(is_indexed);',
+     '    buffer_cache.BindHostGeometryBuffers(is_indexed);\n'
+     '    // Storage, texture and geometry buffers bound.\n'
+     '    ::Eden::Performance::Mark(::Eden::Performance::cfg_bind, since);'),
+    ('    texture_cache.UpdateRenderTargets(false);',
+     '    // Descriptor queue acquired, image descriptors pushed, uploads barriered.\n'
+     '    ::Eden::Performance::Mark(::Eden::Performance::cfg_desc, since);\n'
+     '    texture_cache.UpdateRenderTargets(false);'),
+    ('    if (IsBuilt() && !pipeline) {',
+     '    // Render targets current, feedback loops checked.\n'
+     '    ::Eden::Performance::Mark(::Eden::Performance::cfg_rt, since);\n'
+     '    if (IsBuilt() && !pipeline) {'),
+    ('    return ConfigureDraw(rescaling, render_area);',
+     '    // Compare the descriptor payload against last draw\'s and record the bindings.\n'
+     '    const bool configured = ConfigureDraw(rescaling, render_area);\n'
+     '    ::Eden::Performance::Mark(::Eden::Performance::cfg_draw, since);\n'
+     '    return configured;'),
+]
 for name in ('vk_graphics_pipeline', 'vk_compute_pipeline'):
-    adapt(f'src/video_core/renderer_vulkan/{name}.cpp', name + '_cost.cpp', [
+    anchors = [
         ('#include <algorithm>', '#include <algorithm>\n#include "performance.h"'),
         ('            std::unique_lock lock{build_mutex};',
          '            auto timer = Eden::Performance::VulkanTimer(16);\n            std::unique_lock lock{build_mutex};'),
-    ])
+    ]
+    if name == 'vk_graphics_pipeline':
+        anchors += configure_phases
+    adapt(f'src/video_core/renderer_vulkan/{name}.cpp', name + '_cost.cpp', anchors)
 shader_costs = [
     ('#include <algorithm>', '#include <algorithm>\n#include <cstdio>\n#include <unordered_set>\n'
      '#include "performance.h"\n#include "dev_vulkan.h"\n#include "diagnostics.h"'),

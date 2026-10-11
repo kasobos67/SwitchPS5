@@ -458,6 +458,23 @@ void ReportGpuThread(unsigned frame) {
                                                 load(draw_record, false)),
                 load(draw_flush, true), load(draw_pipeline, true), load(draw_lock_wait, true),
                 load(draw_config, true), load(draw_state, true), load(draw_record, true));
+    // Where config's time went. sync is the sampler and image table sync plus the uniform-buffer
+    // state; read is the guest-memory handle reads and the view fill; bind is the buffer binds;
+    // desc is the descriptor queue, the pushes and the upload barrier; rt is render targets and
+    // feedback; draw is ConfigureDraw's compare-and-record. These nest inside config, so
+    // unattributed (config less their sum) is the entry clock, SetEngine, the configure_func
+    // pointer call and any early return that left the tail unmarked - a negative value means the
+    // marks themselves cost more than that.
+    std::printf("EDEN_DEV_CFG sync_ns=%llu read_ns=%llu bind_ns=%llu desc_ns=%llu rt_ns=%llu "
+                "draw_ns=%llu unattributed_ns=%llu sync_calls=%llu read_calls=%llu "
+                "bind_calls=%llu desc_calls=%llu rt_calls=%llu draw_calls=%llu\n",
+                load(cfg_sync, false), load(cfg_read, false), load(cfg_bind, false),
+                load(cfg_desc, false), load(cfg_rt, false), load(cfg_draw, false),
+                load(draw_config, false) - (load(cfg_sync, false) + load(cfg_read, false) +
+                                            load(cfg_bind, false) + load(cfg_desc, false) +
+                                            load(cfg_rt, false) + load(cfg_draw, false)),
+                load(cfg_sync, true), load(cfg_read, true), load(cfg_bind, true),
+                load(cfg_desc, true), load(cfg_rt, true), load(cfg_draw, true));
     // Texture-cache GC GPU drains since the last report. The fix these counters watch is the
     // prefetch lookahead (vulkan_gc_downloads.inc): batched drains should cover many images and
     // unbatched ones should be rare, as each unbatched drain is a full pipeline wait on the GPU

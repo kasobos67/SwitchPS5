@@ -26,6 +26,7 @@ CUMULATIVE = {
     'EDEN_DEV_DRAW': 'draw',
     'EDEN_DEV_PUSH': 'push',
     'EDEN_DEV_RAST': 'rast',
+    'EDEN_DEV_CFG': 'cfg',
     'EDEN_DEV_GC_DRAIN': 'gc',
     'EDEN_DEV_GUEST': 'guest',
 }
@@ -33,6 +34,8 @@ SNAPSHOT = {'EDEN_PERF_DIRECT': 'direct'}
 
 # The six phases of RasterizerVulkan::PrepareDraw, in the order they run.
 PHASES = ('flush', 'pipeline', 'lock_wait', 'config', 'state', 'record')
+# The six inside config, all of which but SetEngine is GraphicsPipeline::Configure.
+CFG_PHASES = ('sync', 'read', 'bind', 'desc', 'rt', 'draw')
 
 
 def number(value):
@@ -120,6 +123,10 @@ def derive(row):
             spent = row.get(f'rast.{phase}_ns')
             if spent is not None:
                 row[f'phase_{phase}_us'] = spent / draws / 1000.0
+        for phase in CFG_PHASES:
+            spent = row.get(f'cfg.{phase}_ns')
+            if spent is not None:
+                row[f'phase_cfg_{phase}_us'] = spent / draws / 1000.0
         unattributed = row.get('rast.unattributed_ns')
         if unattributed is not None and rast:
             row['unattributed_frac'] = unattributed / rast
@@ -201,6 +208,7 @@ def report(rows, path, show_windows):
         print('  ' + f'{name:>22} ' + cells + f'  {pearson(*zip(*pairs)):>6.2f}')
 
     report_phases(usable)
+    report_config(usable)
     if show_windows:
         print('\n    win     fps  disp/f  rast/f  us/draw  draws/f  ipc_ms  lockcont')
         for row in usable:
@@ -219,6 +227,11 @@ def report(rows, path, show_windows):
         values = [row[f'phase_{phase}_us'] for row in usable if f'phase_{phase}_us' in row]
         if values:
             summary[f'phase.{phase}'] = summarize(values)
+    for phase in CFG_PHASES:
+        values = [row[f'phase_cfg_{phase}_us'] for row in usable
+                  if f'phase_cfg_{phase}_us' in row]
+        if values:
+            summary[f'phase.config.{phase}'] = summarize(values)
     return summary
 
 
@@ -240,6 +253,26 @@ def report_phases(rows):
               f'{spent[phase] / draws / 1000:>7.3f} us')
     print(f'    {"unattributed":>10} {unattributed / 1e6:>8.1f} s  {unattributed / total * 100:>5.1f}%'
           f'  {unattributed / draws / 1000:>7.3f} us   <- early returns the Timer still charged')
+
+
+def report_config(rows):
+    """Where config's time went: the six phases inside GraphicsPipeline::Configure."""
+    if not any(f'cfg.{phase}_ns' in row for row in rows for phase in CFG_PHASES):
+        return  # no EDEN_DEV_CFG in this log - it predates the config split
+    spent = {phase: sum(row.get(f'cfg.{phase}_ns', 0) for row in rows) for phase in CFG_PHASES}
+    unattributed = sum(row.get('cfg.unattributed_ns', 0) for row in rows)
+    total = sum(row.get('rast.config_ns', 0) for row in rows)
+    draws = sum(row.get('draw.calls', 0) for row in rows)
+    if not total or not draws:
+        return
+    print(f'\n  Configure (all of config but SetEngine), {total / 1e6:.1f} s over {draws:,} draws '
+          f'({total / draws / 1000:.2f} us/draw), by phase:')
+    for phase in CFG_PHASES:
+        print(f'    {phase:>10} {spent[phase] / 1e6:>8.1f} s  {spent[phase] / total * 100:>5.1f}%  '
+              f'{spent[phase] / draws / 1000:>7.3f} us')
+    print(f'    {"unattributed":>10} {unattributed / 1e6:>8.1f} s  '
+          f'{unattributed / total * 100:>5.1f}%  {unattributed / draws / 1000:>7.3f} us'
+          f'   <- entry clock, SetEngine, the pointer call; negative is mark overhead')
 
 
 def compare(runs):

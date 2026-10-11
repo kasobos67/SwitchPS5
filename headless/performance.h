@@ -61,6 +61,14 @@ inline Totals rasterizer_draw;
 // Configure rejects stops at draw_config - so subtracting their sum from rasterizer_draw gives
 // what went unmarked. Two clock reads per phase rather than a Timer apiece, a draw has six of them.
 inline Totals draw_flush, draw_pipeline, draw_lock_wait, draw_config, draw_state, draw_record;
+// The six phases inside draw_config - which is GraphicsPipeline::Configure, past SetEngine's two
+// pointer assignments - in the order ConfigureImpl runs them: syncing the sampler and image tables
+// and the uniform-buffer state, reading every texture handle out of guest memory and filling the
+// views, binding the buffers, queueing the descriptor pushes and the upload barrier, updating
+// render targets and checking feedback, and ConfigureDraw's compare-and-record. They nest inside
+// draw_config, so their sum cannot exceed it; calls count the early returns that leave a later
+// phase unmarked.
+inline Totals cfg_sync, cfg_read, cfg_bind, cfg_desc, cfg_rt, cfg_draw;
 inline Totals gpu_queue_wait, gpu_dispatch;
 // The three phases of the dispatch (Tegra::Control::Scheduler::Push), measured inside it: taking
 // the channel lock and binding it, queueing the submit list, and then executing the guest's
