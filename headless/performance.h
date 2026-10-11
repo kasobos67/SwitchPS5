@@ -124,6 +124,66 @@ inline std::atomic<unsigned long long> guest_fs_file_bytes{}, guest_fs_storage_b
 // Guest svcSendSyncRequest latency (queueing + HLE handling), and HLE handling time per
 // service command (RecordHle, reported as EDEN_DEV_HLE).
 inline Totals guest_ipc_wait;
+inline void AddNs(Totals& totals, long long ns) {
+    totals.nanoseconds.fetch_add(static_cast<unsigned long long>(ns), std::memory_order_relaxed);
+    totals.calls.fetch_add(1, std::memory_order_relaxed);
+}
+// Which guest thread that wait belongs to. The sum alone cannot say whether a frame is waiting or
+// whether background threads are: the same 13 ms spread over a dozen idle helpers costs nothing on
+// the frame, while one thread holding it does. A fixed table keyed by the guest thread id - the
+// first send from a thread claims a slot and takes its name once, every later one only adds. More
+// distinct threads than slots fall into ipc_thread_overflow rather than displacing a claim.
+inline constexpr unsigned ipc_thread_slots = 32;
+inline Totals ipc_thread_overflow;
+struct IpcThreadSlot {
+    std::atomic<unsigned long long> tid{}, calls{}, ns{};
+    char name[24]{};
+};
+inline std::array<IpcThreadSlot, ipc_thread_slots> ipc_threads{};
+// Shape of the wait across every send, so a report can tell one blocking wait a frame from many
+// short ones: below 50 us, below 500 us, below 5 ms, and 5 ms and over.
+inline std::array<std::atomic<unsigned long long>, 4> ipc_hist{};
+// Claims the slot for tid, probing past slots other threads hold. *fresh says this call claimed it,
+// which is the only place a thread id is published - the caller then fills in the name.
+inline unsigned IpcThreadSlotFor(unsigned long long tid, bool* fresh) {
+    unsigned slot = static_cast<unsigned>(tid) % ipc_thread_slots;
+    for (unsigned probe = 0; probe < ipc_thread_slots; ++probe) {
+        const unsigned long long held = ipc_threads[slot].tid.load(std::memory_order_relaxed);
+        if (held == tid) {
+            *fresh = false;
+            return slot;
+        }
+        if (held == 0) {
+            unsigned long long expected = 0;
+            if (ipc_threads[slot].tid.compare_exchange_strong(expected, tid, std::memory_order_relaxed)) {
+                *fresh = true;
+                return slot;
+            }
+        }
+        slot = (slot + 1) % ipc_thread_slots;
+    }
+    *fresh = false;
+    return ipc_thread_slots;
+}
+inline void SetIpcThreadName(unsigned slot, const char* name) {
+    if (slot >= ipc_thread_slots || name == nullptr) return;
+    unsigned i = 0;
+    while (name[i] != '\0' && i + 1 < sizeof ipc_threads[slot].name) {
+        ipc_threads[slot].name[i] = name[i];
+        ++i;
+    }
+    ipc_threads[slot].name[i] = '\0';
+}
+inline void AddIpcThread(unsigned slot, long long ns) {
+    const unsigned long long n = static_cast<unsigned long long>(ns > 0 ? ns : 0);
+    ipc_hist[n < 50000 ? 0 : n < 500000 ? 1 : n < 5000000 ? 2 : 3].fetch_add(1, std::memory_order_relaxed);
+    if (slot >= ipc_thread_slots) {
+        AddNs(ipc_thread_overflow, static_cast<long long>(n));
+        return;
+    }
+    ipc_threads[slot].ns.fetch_add(n, std::memory_order_relaxed);
+    ipc_threads[slot].calls.fetch_add(1, std::memory_order_relaxed);
+}
 void RecordHle(const char* service, unsigned command, long long ns);
 inline long long NowNs() { return Common::g_wall_clock.GetTimeNS().count(); }
 // Texture cache garbage collection (tools/prepare-vulkan-port.py, vulkan_gc_downloads.inc).

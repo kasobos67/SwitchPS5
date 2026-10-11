@@ -566,6 +566,18 @@ void ReportGpuThread(unsigned frame) {
     for (unsigned slot = 0; slot < render_conditions.size(); ++slot)
         std::printf("%s%llu", slot ? "," : "", render_conditions[slot].load(std::memory_order_relaxed));
     std::printf("\n");
+    for (unsigned slot = 0; slot < ipc_threads.size(); ++slot) {
+        const auto calls = ipc_threads[slot].calls.load(std::memory_order_relaxed);
+        if (calls == 0) continue;
+        std::printf("EDEN_DEV_IPC_THREAD slot=%u tid=%llu name=%.23s calls=%llu ns=%llu\n", slot,
+                    ipc_threads[slot].tid.load(std::memory_order_relaxed), ipc_threads[slot].name, calls,
+                    ipc_threads[slot].ns.load(std::memory_order_relaxed));
+    }
+    std::printf("EDEN_DEV_IPCHIST lt50us=%llu lt500us=%llu lt5ms=%llu ge5ms=%llu overflow_calls=%llu "
+                "overflow_ns=%llu\n",
+                ipc_hist[0].load(std::memory_order_relaxed), ipc_hist[1].load(std::memory_order_relaxed),
+                ipc_hist[2].load(std::memory_order_relaxed), ipc_hist[3].load(std::memory_order_relaxed),
+                load(ipc_thread_overflow, true), load(ipc_thread_overflow, false));
     const auto window = Eden::Fastmem::WindowStats();
     std::printf("EDEN_FASTMEM window=%llx pages=%llu chunks=%llu direct_reads=%llu direct_writes=%llu "
                 "faults=%llu maps=%llu unmaps=%llu protects=%llu kernel_calls=%llu kernel_ns=%llu failures=%llu\n",

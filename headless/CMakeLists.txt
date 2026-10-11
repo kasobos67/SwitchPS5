@@ -844,8 +844,25 @@ if(EDEN_DEV_PROFILE)
     if(ipc_at LESS 0)
         message(FATAL_ERROR "Pinned SendSyncRequest changed")
     endif()
-    string(REPLACE "${ipc_old}" "    const auto ipc_start = ::Eden::Performance::NowNs();\n    const Result ipc_result = session->SendSyncRequest(kernel, message, buffer_size);\n    ::Eden::Performance::AddSince(::Eden::Performance::guest_ipc_wait, ipc_start);\n    R_RETURN(ipc_result);" ipc_source "${ipc_source}")
-    write_derived("${PORT_BUILD_DIR}/svc_ipc.cpp" "#include \"${EDEN_PORT_DIR}/performance.h\"\n${ipc_source}")
+    # Which guest thread is waiting, not only how long the waits summed to: a frame held up by one
+    # thread and a frame with a dozen idle helpers reporting the same total look identical without
+    # this, and only one of them can be costing the frame (performance.h).
+    string(REPLACE "${ipc_old}" [=[    const auto ipc_start = ::Eden::Performance::NowNs();
+    const Result ipc_result = session->SendSyncRequest(kernel, message, buffer_size);
+    const long long ipc_ns = ::Eden::Performance::NowNs() - ipc_start;
+    ::Eden::Performance::AddNs(::Eden::Performance::guest_ipc_wait, ipc_ns);
+    {
+        bool fresh = false;
+        const unsigned ipc_slot =
+            ::Eden::Performance::IpcThreadSlotFor(GetCurrentThread(kernel).GetThreadId(), &fresh);
+        if (fresh) {
+            if (const auto ipc_name = Core::GetThreadName(&GetCurrentThread(kernel)))
+                ::Eden::Performance::SetIpcThreadName(ipc_slot, ipc_name->c_str());
+        }
+        ::Eden::Performance::AddIpcThread(ipc_slot, ipc_ns);
+    }
+    R_RETURN(ipc_result);]=] ipc_source "${ipc_source}")
+    write_derived("${PORT_BUILD_DIR}/svc_ipc.cpp" "#include \"${EDEN_PORT_DIR}/performance.h\"\n#include \"core/arm/debug.h\"\n${ipc_source}")
     list(REMOVE_ITEM core_sources "hle/kernel/svc/svc_ipc.cpp")
     list(APPEND core_sources "${PORT_BUILD_DIR}/svc_ipc.cpp")
 endif()
