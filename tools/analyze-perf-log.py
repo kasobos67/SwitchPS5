@@ -129,7 +129,7 @@ def derive(row):
                           ('guest.cache_lock_blocked', 'lockblocked_per_frame'),
                           ('guest.cpu_read_ns', 'cpu_read_ms')):
             if row.get(key) is not None:
-                row[name] = row[key] / (1e6 if name.endswith('_ms') else gpu_frame)
+                row[name] = row[key] / gpu_frame / (1e6 if name.endswith('_ms') else 1)
     return row
 
 
