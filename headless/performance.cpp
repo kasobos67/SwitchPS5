@@ -429,6 +429,16 @@ void ReportGpuThread(unsigned frame) {
                 load(gpu_fence_drain, true), load(gpu_fence_drain, false),
                 load(gpu_present_wait, true), load(gpu_present_wait, false),
                 load(gpu_queue_full, true), load(gpu_queue_full, false), load(rasterizer_draw, true));
+    // What the dispatch is made of: the draw path itself (RasterizerVulkan::PrepareDraw - both
+    // cache locks, pipeline configure, dynamic state, the record) against the guest method
+    // decoding that surrounds it, plus the dispatch's own three phases. A draw whose
+    // EDEN_DEV_DRAW ns is close to EDEN_GPU dispatch_ns is being charged to the rasterizer; one
+    // far below it is being charged to the dma pusher.
+    std::printf("EDEN_DEV_DRAW calls=%llu ns=%llu\n", load(rasterizer_draw, true),
+                load(rasterizer_draw, false));
+    std::printf("EDEN_DEV_PUSH lock_ns=%llu push_ns=%llu dispatch_ns=%llu\n",
+                load(gpu_sched_lock, false), load(gpu_dma_push, false),
+                load(gpu_dma_dispatch, false));
     // Texture-cache GC GPU drains since the last report. The fix these counters watch is the
     // prefetch lookahead (vulkan_gc_downloads.inc): batched drains should cover many images and
     // unbatched ones should be rare, as each unbatched drain is a full pipeline wait on the GPU

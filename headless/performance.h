@@ -55,6 +55,11 @@ inline Totals storage;
 inline Totals jit_protection;
 inline Totals rasterizer_draw;
 inline Totals gpu_queue_wait, gpu_dispatch;
+// The three phases of the dispatch (Tegra::Control::Scheduler::Push), measured inside it: taking
+// the channel lock and binding it, queueing the submit list, and then executing the guest's
+// methods - the O(draws) part. gpu_dispatch is their sum plus the loop's own overhead, so these
+// say whether the time is the lock, the queueing, or the methods themselves.
+inline Totals gpu_sched_lock, gpu_dma_push, gpu_dma_dispatch;
 // Producer-side waits outside the dispatch timer: forced fence drains on the GPU
 // thread, free presentation-frame waits, and guest pushes into a full GPU queue.
 inline Totals gpu_fence_drain, gpu_present_wait, gpu_queue_full;

@@ -97,9 +97,12 @@ void RasterizerVulkan::DispatchCompute() {"""),
     # dispatch interval (dev-settings dispatch_draws=N); default 64 draws between hand-offs.
     ('#ifdef __ANDROID__\n    static constexpr u32 DRAWS_TO_DISPATCH = 512;\n    static constexpr u32 CHECK_MASK = 3;\n#else\n    static constexpr u32 DRAWS_TO_DISPATCH = 4096;\n    static constexpr u32 CHECK_MASK = 7;\n#endif // __ANDROID__\n\n    static_assert(DRAWS_TO_DISPATCH % (CHECK_MASK + 1) == 0);\n',
      '    static constexpr u32 DRAWS_TO_DISPATCH = 512;\n    const u32 CHECK_MASK = ::Eden::Performance::dispatch_mask.load(std::memory_order_relaxed);\n\n'),
-    # Per-draw count for the GPU-thread report (dispatch time per draw).
+    # Per-draw time for the GPU-thread report: how much of the dispatch is the draw path
+    # (cache locks, pipeline configure, dynamic state, the record) rather than the guest's method
+    # decoding around it. The Timer's destructor bumps calls as the old counter did, and covers
+    # every return out of the function.
     ('    FlushWork();\n    gpu_memory->FlushCaching();\n\n    GraphicsPipeline* const pipeline{pipeline_cache.CurrentGraphicsPipeline()};',
-     '    ::Eden::Performance::rasterizer_draw.calls.fetch_add(1, std::memory_order_relaxed);\n    FlushWork();\n    gpu_memory->FlushCaching();\n\n    GraphicsPipeline* const pipeline{pipeline_cache.CurrentGraphicsPipeline()};'),
+     '    const ::Eden::Performance::Timer rasterizer_draw_timer(::Eden::Performance::rasterizer_draw);\n    FlushWork();\n    gpu_memory->FlushCaching();\n\n    GraphicsPipeline* const pipeline{pipeline_cache.CurrentGraphicsPipeline()};'),
     # A forced release blocks the GPU thread until the fence thread has retired
     # every older fence. Time only that producer-side drain.
     ('    fence_manager.WaitPendingFences(force);',
@@ -1006,6 +1009,39 @@ adapt('src/video_core/renderer_vulkan/present/frame_gen.cpp', 'vulkan_frame_gen.
                      ("generating " + std::to_string(plan.generations) +
                       " extra frame(s) per guest frame").c_str());
     }"""),
+])
+# Split the dispatch into its three phases (Tegra::Control::Scheduler::Push): the channel lock,
+# queueing the submit list, and executing the guest's methods. The dispatch timer wraps the whole
+# call from gpu_thread.cpp, so these say which of the three it is spent in.
+adapt('src/video_core/control/scheduler.cpp', 'control_scheduler.cpp', [
+    ('#include <memory>', '#include <memory>\n#include "performance.h"'),
+    ('        std::unique_lock lk(scheduling_guard);\n'
+     '        auto it = channels.find(channel);\n'
+     '        ASSERT(it != channels.end());\n'
+     '        channel_state = it->second;\n'
+     '        gpu.BindChannel(channel_state->bind_id);\n'
+     '    }\n'
+     '    // Process commands outside the lock to reduce contention.\n'
+     '    // Multiple channels can prepare their commands in parallel.\n'
+     '    channel_state->payload->dma_pusher.Push(std::move(entries));\n'
+     '    channel_state->payload->dma_pusher.DispatchCalls();',
+     '        const ::Eden::Performance::Timer sched_lock_timer(::Eden::Performance::gpu_sched_lock);\n'
+     '        std::unique_lock lk(scheduling_guard);\n'
+     '        auto it = channels.find(channel);\n'
+     '        ASSERT(it != channels.end());\n'
+     '        channel_state = it->second;\n'
+     '        gpu.BindChannel(channel_state->bind_id);\n'
+     '    }\n'
+     '    // Process commands outside the lock to reduce contention.\n'
+     '    // Multiple channels can prepare their commands in parallel.\n'
+     '    {\n'
+     '        const ::Eden::Performance::Timer dma_push_timer(::Eden::Performance::gpu_dma_push);\n'
+     '        channel_state->payload->dma_pusher.Push(std::move(entries));\n'
+     '    }\n'
+     '    {\n'
+     '        const ::Eden::Performance::Timer dma_dispatch_timer(::Eden::Performance::gpu_dma_dispatch);\n'
+     '        channel_state->payload->dma_pusher.DispatchCalls();\n'
+     '    }'),
 ])
 shader_header = '#pragma once\n#include <cstdint>\n'
 for stage in ('vert', 'frag'):
