@@ -723,9 +723,9 @@ gc_setup = '''    const auto ReclaimedBytes = [&](const ImageBase& image) {
 for old, new in [
     ('    const auto Cleanup = [this, &num_iterations, &high_priority_mode, &aggressive_mode]',
      gc_setup + '\n    const auto Cleanup = [&, this]'),
-    ('        if (must_download) {', '        if (must_download && !UsePrefetched(image_id, image)) {'),
+    ('        if (must_download) {', '        if (must_download && !TakePrefetched(image_id, image)) {'),
     # Time the per-image drain Cleanup still takes for an image the prefetch could not batch.
-    # One GPU pipeline wait per eviction, against one wait for up to sixteen in the batched path:
+    # One GPU pipeline wait per eviction, against one wait for a whole batch in the batched path:
     # this is the stall the prefetch exists to remove, so keep it visible.
     ('            image.DownloadMemory(map, copies);\n            runtime.Finish();\n'
      '            SwizzleImage(*gpu_memory, image.gpu_addr, image.info, copies, map.mapped_span, swizzle_data_buffer);',
