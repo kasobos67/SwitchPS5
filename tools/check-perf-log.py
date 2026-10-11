@@ -20,6 +20,8 @@ run by hand after a session:
                              later phase is marked more often than the one before
   config splits              when EDEN_DEV_CFG is there at all, its six phases are
                              all there and fit inside config, in Configure's order
+  bind splits                when EDEN_DEV_BIND is there at all, its three fit
+                             inside cfg_bind, in the same order
   fps is a rate              over zero, and not past a thousand
 """
 import importlib.util
@@ -106,9 +108,38 @@ def main(argv):
                 f'{earlier} only {cfg_counted[earlier]} - a phase is marked that the one before '
                 'it never reached')
 
+    # The bind split is newer still. All three or none of them, like the config six.
+    bind_names = tuple(f'bind.{phase}_ns' for phase in analyze.BIND_PHASES)
+    bind_present = sum(1 for name in bind_names if any(name in row for row in usable))
+    assert bind_present in (0, len(bind_names)), (
+        f'{path.name}: {bind_present} of {len(bind_names)} bind phases printed - EDEN_DEV_BIND '
+        'is missing part of its line')
+    covered_bind = 0.0
+    if bind_present == len(bind_names):
+        bind_total = sum(row.get('cfg.bind_ns', 0) for row in usable)
+        bind_spent = {phase: sum(row.get(f'bind.{phase}_ns', 0) for row in usable)
+                      for phase in analyze.BIND_PHASES}
+        bind_counted = {phase: sum(row.get(f'bind.{phase}_calls', 0) for row in usable)
+                        for phase in analyze.BIND_PHASES}
+        assert sum(bind_spent.values()) <= bind_total * 1.01, (
+            f'{path.name}: the three phases inside cfg_bind come to {sum(bind_spent.values())} ns, '
+            f'more than the {bind_total} ns cfg_bind itself was charged')
+        covered_bind = sum(bind_spent.values()) / bind_total if bind_total else 0
+        assert covered_bind >= 0.5, (
+            f'{path.name}: the three phases account for {covered_bind:.0%} of cfg_bind - a Mark is '
+            'not running')
+        assert bind_counted['tbo'] > 0, f'{path.name}: the texture-buffer phase never ran'
+        for earlier, later in zip(analyze.BIND_PHASES, analyze.BIND_PHASES[1:]):
+            assert bind_counted[later] <= bind_counted[earlier], (
+                f'{path.name}: bind {later} was marked {bind_counted[later]} times but {earlier} '
+                f'only {bind_counted[earlier]} - a phase is marked that the one before it never '
+                'reached')
+
     print(f'perf log {path.name}: {len(usable)} windows, {covered:.0%} of PrepareDraw in the six '
           'phases, report lines and nesting PASS'
-          + (f', {covered_cfg:.0%} of config in its six' if present else ', no config split'))
+          + (f', {covered_cfg:.0%} of config in its six' if present else ', no config split')
+          + (f', {covered_bind:.0%} of cfg_bind in its three' if bind_present else
+             ', no bind split'))
     return 0
 
 

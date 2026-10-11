@@ -69,6 +69,10 @@ inline Totals draw_flush, draw_pipeline, draw_lock_wait, draw_config, draw_state
 // draw_config, so their sum cannot exceed it; calls count the early returns that leave a later
 // phase unmarked.
 inline Totals cfg_sync, cfg_read, cfg_bind, cfg_desc, cfg_rt, cfg_draw;
+// The three inside cfg_bind, on a clock of their own started where cfg_read ends so that they
+// chain against each other and still sum to cfg_bind: the texture-buffer loop over the enabled
+// stages, the buffer update pass, and the host geometry binds.
+inline Totals bind_tbo, bind_update, bind_geometry;
 inline Totals gpu_queue_wait, gpu_dispatch;
 // The three phases of the dispatch (Tegra::Control::Scheduler::Push), measured inside it: taking
 // the channel lock and binding it, queueing the submit list, and then executing the guest's

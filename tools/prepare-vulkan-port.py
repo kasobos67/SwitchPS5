@@ -801,10 +801,20 @@ configure_phases = [
     ('    texture_cache.FillImageViews(std::span(views.data(), views.size()), false, Spec::has_images);',
      '    texture_cache.FillImageViews(std::span(views.data(), views.size()), false, Spec::has_images);\n'
      '    // Every texture handle read out of guest memory, every sampler and view filled.\n'
-     '    ::Eden::Performance::Mark(::Eden::Performance::cfg_read, since);'),
+     '    ::Eden::Performance::Mark(::Eden::Performance::cfg_read, since);\n'
+     '    long long since_bind = ::Eden::Performance::NowNs();'),
+    ('    if (regs.transform_feedback_enabled != 0) {',
+     '    // The texture-buffer loop over every enabled stage.\n'
+     '    ::Eden::Performance::Mark(::Eden::Performance::bind_tbo, since_bind);\n'
+     '    if (regs.transform_feedback_enabled != 0) {'),
+    ('    buffer_cache.UpdateGraphicsBuffers(is_indexed);',
+     '    buffer_cache.UpdateGraphicsBuffers(is_indexed);\n'
+     '    // Index, vertex, transform-feedback and per-stage buffer updates done.\n'
+     '    ::Eden::Performance::Mark(::Eden::Performance::bind_update, since_bind);'),
     ('    buffer_cache.BindHostGeometryBuffers(is_indexed);',
      '    buffer_cache.BindHostGeometryBuffers(is_indexed);\n'
      '    // Storage, texture and geometry buffers bound.\n'
+     '    ::Eden::Performance::Mark(::Eden::Performance::bind_geometry, since_bind);\n'
      '    ::Eden::Performance::Mark(::Eden::Performance::cfg_bind, since);'),
     ('    texture_cache.UpdateRenderTargets(false);',
      '    // Descriptor queue acquired, image descriptors pushed, uploads barriered.\n'

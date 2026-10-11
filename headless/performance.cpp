@@ -475,6 +475,16 @@ void ReportGpuThread(unsigned frame) {
                                             load(cfg_rt, false) + load(cfg_draw, false)),
                 load(cfg_sync, true), load(cfg_read, true), load(cfg_bind, true),
                 load(cfg_desc, true), load(cfg_rt, true), load(cfg_draw, true));
+    // Where cfg_bind's time went: tbo is the texture-buffer loop over the enabled stages, update
+    // is the index, vertex, transform-feedback and per-stage buffer updates, geometry is the host
+    // binds after them. They nest inside cfg_bind, so unattributed (cfg_bind less their sum) is
+    // the transform-feedback check, the two pointer-store statements and the clock itself.
+    std::printf("EDEN_DEV_BIND tbo_ns=%llu update_ns=%llu geometry_ns=%llu "
+                "unattributed_ns=%llu tbo_calls=%llu update_calls=%llu geometry_calls=%llu\n",
+                load(bind_tbo, false), load(bind_update, false), load(bind_geometry, false),
+                load(cfg_bind, false) - (load(bind_tbo, false) + load(bind_update, false) +
+                                         load(bind_geometry, false)),
+                load(bind_tbo, true), load(bind_update, true), load(bind_geometry, true));
     // Texture-cache GC GPU drains since the last report. The fix these counters watch is the
     // prefetch lookahead (vulkan_gc_downloads.inc): batched drains should cover many images and
     // unbatched ones should be rare, as each unbatched drain is a full pipeline wait on the GPU
