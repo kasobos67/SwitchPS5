@@ -573,6 +573,46 @@ void ReportGpuThread(unsigned frame) {
                     ipc_threads[slot].tid.load(std::memory_order_relaxed), ipc_threads[slot].name, calls,
                     ipc_threads[slot].ns.load(std::memory_order_relaxed));
     }
+    for (unsigned slot = 0; slot < wait_threads.size(); ++slot) {
+        const auto calls = wait_threads[slot].calls.load(std::memory_order_relaxed);
+        if (calls == 0) continue;
+        const auto tid = wait_threads[slot].tid.load(std::memory_order_relaxed);
+        const char* name = "";
+        for (unsigned islot = 0; islot < ipc_thread_slots; ++islot)
+            if (ipc_threads[islot].tid.load(std::memory_order_relaxed) == tid) {
+                name = ipc_threads[islot].name;
+                break;
+            }
+        // rsn= is this slot's own wait_ns per ThreadWaitReasonForDebugging, same index order as
+        // the histogram line, so a thread's split reads without joining anything by hand.
+        std::printf("EDEN_DEV_WAIT_THREAD tid=%llu name=%.23s calls=%llu ns=%llu waker=%llu rsn=", tid,
+                    name, calls, wait_threads[slot].ns.load(std::memory_order_relaxed),
+                    wait_threads[slot].waker.load(std::memory_order_relaxed));
+        for (unsigned reason = 0; reason < wait_reason_slots; ++reason)
+            std::printf("%s%llu", reason ? "," : "",
+                        wait_threads[slot].reason_ns[reason].load(std::memory_order_relaxed));
+        std::printf("\n");
+    }
+    // tid is the slot index here (performance.h indexes the dispatch table directly by tid).
+    for (unsigned tid = 0; tid < dispatch_slots; ++tid) {
+        const auto dcalls = dispatch_calls[tid].load(std::memory_order_relaxed);
+        if (dcalls == 0) continue;
+        std::printf("EDEN_DEV_DISPATCH tid=%u calls=%llu ns=%llu\n", tid, dcalls,
+                    dispatch_ns[tid].load(std::memory_order_relaxed));
+    }
+    std::printf("EDEN_DEV_DISPATCH overflow_calls=%llu\n",
+                dispatch_overflow_calls.load(std::memory_order_relaxed));
+    // Reason indices are ThreadWaitReasonForDebugging (k_thread.h); named here so a log reads
+    // without the source.
+    std::printf("EDEN_DEV_WAIT reasons=none,sleep,ipc,sync,condvar,arbitration,suspended,other "
+                "overflow_calls=%llu calls=",
+                wait_overflow_calls.load(std::memory_order_relaxed));
+    for (unsigned reason = 0; reason < wait_reason_slots; ++reason)
+        std::printf("%s%llu", reason ? "," : "", wait_reason_calls[reason].load(std::memory_order_relaxed));
+    std::printf(" ns=");
+    for (unsigned reason = 0; reason < wait_reason_slots; ++reason)
+        std::printf("%s%llu", reason ? "," : "", wait_reason_ns[reason].load(std::memory_order_relaxed));
+    std::printf("\n");
     std::printf("EDEN_DEV_IPCHIST lt50us=%llu lt500us=%llu lt5ms=%llu ge5ms=%llu overflow_calls=%llu "
                 "overflow_ns=%llu\n",
                 ipc_hist[0].load(std::memory_order_relaxed), ipc_hist[1].load(std::memory_order_relaxed),

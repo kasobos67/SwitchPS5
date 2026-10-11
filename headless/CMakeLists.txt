@@ -641,9 +641,16 @@ foreach(bits 32 64)
             set(sample_pc "m_jit->Regs()[15]")
             set(sample_fp "m_jit->Fpscr()")
         endif()
+        # NoteRunning must sit before Run(): stamped at SetState, consumed on entry, so the delta
+        # is time spent runnable-but-unscheduled. After Run() it would also count the slice the
+        # thread then executes, which for a main loop is the larger half of the reading.
         string(REPLACE "    return TranslateHaltReason(m_jit->Run());"
-            "    const auto halt = m_jit->Run();\n    ::Eden::Performance::SampleCpu(m_core_index, 0, ${sample_pc}, GetSvcNumber(), ${sample_fp});\n    return TranslateHaltReason(halt);"
+            "    const auto guest_tid = thread ? thread->GetThreadId() : 0;\n    ::Eden::Performance::NoteRunning(guest_tid, ::Eden::Performance::NowNs());\n    const auto halt = m_jit->Run();\n    ::Eden::Performance::SampleCpu(m_core_index, guest_tid, ${sample_pc}, GetSvcNumber(), ${sample_fp});\n    return TranslateHaltReason(halt);"
             wrapper "${wrapper}")
+        string(FIND "${wrapper}" "NoteRunning(guest_tid" note_running_at)
+        if(note_running_at LESS 0)
+            message(FATAL_ERROR "Pinned RunThread dispatch sampling changed")
+        endif()
         if(bits EQUAL 32)
             foreach(counted IN ITEMS "u64 DynarmicCallbacks32::MemoryRead(u32 vaddr, size_t size) {|reads"
                     "void DynarmicCallbacks32::MemoryWrite(Dynarmic::A32::VAddr vaddr, u64 value, size_t size) {|writes")
@@ -1316,7 +1323,66 @@ if(finish_offset LESS 0)
     message(FATAL_ERROR "Pinned thread termination changed; review finalization lock scope.")
 endif()
 string(REPLACE "${old_finish}" "        {\n            KScopedSchedulerLock sl{kernel};\n            m_signaled = true;\n            KSynchronizationObject::NotifyAvailable(kernel);\n        }\n\n        // Finalization may block; scheduling must be enabled here.\n        this->Close(kernel);" thread_source "${thread_source}")
-write_derived("${PORT_BUILD_DIR}/k_thread.cpp" "${thread_source}")
+
+# Which guest thread was blocked, on what, and for how long. A core with nothing to run reads the
+# same whether its thread is asleep until a timeout or waiting on something only the GPU thread can
+# signal, and only one of those is ours to fix. BeginWait stamps the thread; SetState is the single
+# place the wait reason is cleared, so the reason read there is the one the wait actually ran under.
+set(wait_begin [=[    void KThread::BeginWait(KernelCore& kernel, KThreadQueue* queue) {
+        // Set our state as waiting.
+        this->SetState(kernel, ThreadState::Waiting);
+
+        // Set our wait queue.
+        m_wait_queue = queue;
+    }]=])
+string(FIND "${thread_source}" "${wait_begin}" wait_begin_at)
+if(wait_begin_at LESS 0)
+    message(FATAL_ERROR "Pinned KThread::BeginWait changed")
+endif()
+string(REPLACE "${wait_begin}" [=[    void KThread::BeginWait(KernelCore& kernel, KThreadQueue* queue) {
+        // Set our state as waiting.
+        this->SetState(kernel, ThreadState::Waiting);
+
+        // Set our wait queue.
+        m_wait_queue = queue;
+
+        // No name lookup here: this runs under the scheduler lock, and a thread's name lives in
+        // guest memory. Every thread that matters sends requests, so the IPC path names it.
+        ::Eden::Performance::WaitBegin(GetThreadId(), ::Eden::Performance::NowNs());
+    }]=] thread_source "${thread_source}")
+
+set(wait_end [=[    void KThread::SetState(KernelCore& kernel, ThreadState state) {
+        KScopedSchedulerLock sl{kernel};
+        // Clear debugging state
+        this->SetWaitReasonForDebugging({});
+        const ThreadState old_state = m_thread_state.load(std::memory_order_relaxed);]=])
+string(FIND "${thread_source}" "${wait_end}" wait_end_at)
+if(wait_end_at LESS 0)
+    message(FATAL_ERROR "Pinned KThread::SetState changed")
+endif()
+string(REPLACE "${wait_end}" [=[    void KThread::SetState(KernelCore& kernel, ThreadState state) {
+        KScopedSchedulerLock sl{kernel};
+        // Close any wait this thread was under. SetState is the only place the reason is cleared,
+        // so reading it here attributes the wait to the reason it ran under (performance.h).
+        if (const auto wait_reason = this->GetWaitReasonForDebugging();
+            wait_reason != ThreadWaitReasonForDebugging::None) {
+            const auto* waker = GetCurrentThreadPointer(kernel);
+            ::Eden::Performance::WaitEnd(GetThreadId(), static_cast<unsigned>(wait_reason),
+                                         ::Eden::Performance::NowNs(),
+                                         waker ? waker->GetThreadId() : 0);
+        }
+        // Clear debugging state
+        this->SetWaitReasonForDebugging({});
+        const ThreadState old_state = m_thread_state.load(std::memory_order_relaxed);
+        // Only the transition into Runnable is stamped: a thread already running that gets
+        // re-marked Runnable must not report its own remaining execution as time spent waiting to
+        // be scheduled (performance.h).
+        if ((old_state & ThreadState::Mask) != ThreadState::Runnable &&
+            (state & ThreadState::Mask) == ThreadState::Runnable) {
+            ::Eden::Performance::NoteRunnable(GetThreadId(), ::Eden::Performance::NowNs());
+        }]=] thread_source "${thread_source}")
+
+write_derived("${PORT_BUILD_DIR}/k_thread.cpp" "#include \"${EDEN_PORT_DIR}/performance.h\"\n${thread_source}")
 get_target_property(core_sources core SOURCES)
 list(REMOVE_ITEM core_sources hle/kernel/k_thread.cpp)
 list(APPEND core_sources "${PORT_BUILD_DIR}/k_thread.cpp")
