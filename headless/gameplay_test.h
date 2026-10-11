@@ -73,22 +73,27 @@ inline unsigned long long written = 0;
 inline unsigned long long delivered = 0;
 inline unsigned delivered_frame = 0;
 
+// The session file, at namespace scope rather than inside Record so Report can reach it. A
+// console storage write costs about 25 ms (main.cpp), so a state per write is out of the
+// question and the stream buffers instead - which means something has to let go of it, or the
+// last states of a session are still in the buffer when the pad closes.
+inline std::ofstream session;
+
 // A state the pad took, if it is not the one already written. Called for player 1 from
 // Pad::Consume; the line written here is what Take hands back.
 inline void Record(const ps5::pad::Data& sample) {
     if (ModeOf() != Mode::record) return;
-    static std::ofstream out;
     static bool opened = false, have_last = false;
     static State last{};
     const State state = Of(sample);
     if (have_last && state == last) return;
     if (!opened) {
         opened = true;
-        out.open(AppFile(kSessionFile), std::ios::trunc);
-        if (out) out << "# EDEN_GAMEPLAY_TEST v1 <frame> <buttons> <lx> <ly> <rx> <ry> <l2> <r2> <connected>\n";
+        session.open(AppFile(kSessionFile), std::ios::trunc);
+        if (session) session << "# EDEN_GAMEPLAY_TEST v1 <frame> <buttons> <lx> <ly> <rx> <ry> <l2> <r2> <connected>\n";
     }
-    if (!out) return;
-    out << Display::gameplay_frame.load(std::memory_order_relaxed) << ' ' << state.buttons << ' '
+    if (!session) return;
+    session << Display::gameplay_frame.load(std::memory_order_relaxed) << ' ' << state.buttons << ' '
         << unsigned{state.left_x} << ' ' << unsigned{state.left_y} << ' '
         << unsigned{state.right_x} << ' ' << unsigned{state.right_y} << ' '
         << unsigned{state.l2} << ' ' << unsigned{state.r2} << ' '
@@ -169,6 +174,7 @@ inline void Report() {
     static bool printed = false;
     if (printed || ModeOf() == Mode::off) return;
     printed = true;
+    if (session.is_open()) session.flush();
     std::printf("EDEN_GAMEPLAY_TEST session written=%llu delivered=%llu last_frame=%u\n", written,
                 delivered, delivered_frame);
 }
