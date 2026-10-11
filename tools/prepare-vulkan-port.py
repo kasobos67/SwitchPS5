@@ -122,7 +122,7 @@ void RasterizerVulkan::DispatchCompute() {"""),
     query_cache.CounterEnable(VideoCommon::QueryType::ZPassPixelCount64, maxwell3d->regs.zpass_pixel_count_enable);
     draw_func();''',
      '''    const ::Eden::Performance::Timer rasterizer_draw_timer(::Eden::Performance::rasterizer_draw);
-    auto phase = ::Eden::Performance::NowNs();
+    auto phase = ::Eden::Performance::MarkStart();
     FlushWork();
     gpu_memory->FlushCaching();
     ::Eden::Performance::Mark(::Eden::Performance::draw_flush, phase);
@@ -795,7 +795,7 @@ adapt('src/video_core/buffer_cache/buffer_cache.h',
      '#include "video_core/buffer_cache/buffer_cache_base.h"\n#include "performance.h"'),
     ('void BufferCache<P>::BindHostGeometryBuffers(bool is_indexed) {',
      'void BufferCache<P>::BindHostGeometryBuffers(bool is_indexed) {\n'
-     '    long long since_geo = ::Eden::Performance::NowNs();'),
+     '    long long since_geo = ::Eden::Performance::MarkStart();'),
     ('    BindHostVertexBuffers();\n'
      '    BindHostTransformFeedbackBuffers();\n'
      '    if (current_draw_indirect) {\n'
@@ -814,7 +814,7 @@ adapt('src/video_core/buffer_cache/buffer_cache.h',
      '}'),
     ('void BufferCache<P>::DoUpdateGraphicsBuffers(bool is_indexed) {',
      'void BufferCache<P>::DoUpdateGraphicsBuffers(bool is_indexed) {\n'
-     '    long long since_upd = ::Eden::Performance::NowNs();'),
+     '    long long since_upd = ::Eden::Performance::MarkStart();'),
     ('        UpdateTransformFeedbackBuffers();\n'
      '        for (size_t stage = 0; stage < NUM_STAGES; ++stage) {\n'
      '            UpdateUniformBuffers(stage);\n'
@@ -847,7 +847,7 @@ adapt('src/video_core/buffer_cache/buffer_cache.h',
 configure_phases = [
     ('bool GraphicsPipeline::ConfigureImpl(bool is_indexed) {',
      'bool GraphicsPipeline::ConfigureImpl(bool is_indexed) {\n'
-     '    long long since = ::Eden::Performance::NowNs();'),
+     '    long long since = ::Eden::Performance::MarkStart();'),
     ('    buffer_cache.SetUniformBuffersState(enabled_uniform_buffer_masks, &uniform_buffer_sizes);',
      '    buffer_cache.SetUniformBuffersState(enabled_uniform_buffer_masks, &uniform_buffer_sizes);\n'
      '    // Sampler and image tables synced, uniform-buffer state set.\n'
@@ -856,7 +856,7 @@ configure_phases = [
      '    texture_cache.FillImageViews(std::span(views.data(), views.size()), false, Spec::has_images);\n'
      '    // Every texture handle read out of guest memory, every sampler and view filled.\n'
      '    ::Eden::Performance::Mark(::Eden::Performance::cfg_read, since);\n'
-     '    long long since_bind = ::Eden::Performance::NowNs();'),
+     '    long long since_bind = ::Eden::Performance::MarkStart();'),
     ('    if (regs.transform_feedback_enabled != 0) {',
      '    // The texture-buffer loop over every enabled stage.\n'
      '    ::Eden::Performance::Mark(::Eden::Performance::bind_tbo, since_bind);\n'

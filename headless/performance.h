@@ -406,7 +406,16 @@ private:
 // consecutive marks measure the gap between them and together cover the whole sequence without
 // overlap. An early return out of the sequence leaves the tail unmarked - that is what the outer
 // Timer is still charging - and the phase that never ran simply does not call this.
+//
+// Only a development build counts them (draw_marks, set when a game starts there). A draw
+// passes about twenty marks, a clock read and two additions each, and only a development
+// run's report reads the totals: elsewhere a mark is one look at this flag, and the clock it
+// would measure from is not read either (MarkStart). A flag and not an #ifdef: this header
+// must read the same in every library that includes it.
+inline std::atomic<bool> draw_marks{false};
+inline long long MarkStart() { return draw_marks.load(std::memory_order_relaxed) ? NowNs() : 0; }
 inline void Mark(Totals& totals, long long& since) {
+    if (!draw_marks.load(std::memory_order_relaxed)) return;
     const auto now = NowNs();
     const auto elapsed = now - since;
     since = now;
