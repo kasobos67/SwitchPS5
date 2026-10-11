@@ -70,6 +70,13 @@ bool pc_sampling{};
 constexpr size_t runtime_rsp_offset = 248, runtime_rbp_offset = 136;
 using CallerChain = std::array<uintptr_t, 8>;
 std::array<CallerChain, 8192> sampled_callers{};
+// Core0 keeps a chain only for PCs outside our own code: the eboot and the JIT caches name
+// themselves by address, and the rest measured at a tenth of its samples, so a bounded array
+// covers the run without a 4 MB one.
+std::array<CallerChain, 4096> sampled_core_callers{};
+std::array<uintptr_t, 4096> core_caller_pcs{};
+std::atomic<unsigned> core_caller_count{};
+unsigned core_caller_reported{};
 
 CallerChain CaptureCallerChain(uintptr_t rsp, uintptr_t frame, uintptr_t handler_stack) {
     CallerChain callers{};
@@ -106,6 +113,23 @@ void PcSignal(int, siginfo_t*, void* context) {
         if (core_index < sampled_core_pcs.size()) {
             sampled_core_pcs[core_index] = static_cast<const uintptr_t*>(context)[224 / sizeof(uintptr_t)];
             core_pc_count.store(core_index + 1, std::memory_order_release);
+#if defined(EDEN_DEV_WAIT_CALLERS) && defined(PS5_NATIVE)
+            const uintptr_t pc = sampled_core_pcs[core_index];
+            const unsigned caller_index = core_caller_count.load(std::memory_order_relaxed);
+            // Library PCs only: eboot and the JIT caches identify themselves by address.
+            if (caller_index < core_caller_pcs.size() &&
+                (pc < 0x400000 || pc > 0x28c2b30) &&
+                (pc < 0x1200000000 || pc >= 0x1300000000)) {
+                const auto* words = static_cast<const uintptr_t*>(context);
+                char handler_stack_marker;
+                sampled_core_callers[caller_index] = CaptureCallerChain(
+                    words[runtime_rsp_offset / sizeof(uintptr_t)],
+                    words[runtime_rbp_offset / sizeof(uintptr_t)],
+                    reinterpret_cast<uintptr_t>(&handler_stack_marker));
+                core_caller_pcs[caller_index] = pc;
+                core_caller_count.store(caller_index + 1, std::memory_order_release);
+            }
+#endif
         }
         return;
     }
@@ -677,6 +701,24 @@ void Snapshot() {
     for (const auto& [pc, count] : core_counts)
         std::printf("EDEN_PERF_CORE_PC mono_ns=%lld pc=%llx count=%u\n", mono,
                     static_cast<unsigned long long>(pc), count);
+#if defined(EDEN_DEV_WAIT_CALLERS) && defined(PS5_NATIVE)
+    std::map<std::array<unsigned long long, 9>, unsigned> core_caller_counts;
+    const unsigned core_caller_end = core_caller_count.load(std::memory_order_acquire);
+    while (core_caller_reported < core_caller_end) {
+        const unsigned index = core_caller_reported++;
+        std::array<unsigned long long, 9> key{static_cast<unsigned long long>(core_caller_pcs[index])};
+        for (unsigned i = 0; i < 8; ++i)
+            key[i + 1] = static_cast<unsigned long long>(sampled_core_callers[index][i]);
+        ++core_caller_counts[key];
+    }
+    for (const auto& [chain, count] : core_caller_counts) {
+        std::printf("EDEN_PERF_CORE_CALLERS mono_ns=%lld pc=%llx count=%u callers=", mono,
+                    chain[0], count);
+        for (unsigned i = 1; i < chain.size(); ++i)
+            std::printf("%s%llx", i == 1 ? "" : ",", chain[i]);
+        std::printf("\n");
+    }
+#endif
     // The same samples by guest block: location (A32 PC in the low word), block offset, count.
     if (const std::size_t blocks = core0_blocks ? core0_block_count.load(std::memory_order_acquire) : 0) {
         std::map<std::pair<unsigned long long, unsigned long long>, unsigned> guest_counts;
@@ -824,6 +866,15 @@ void BeginPcSampling() {
     std::printf("EDEN_PERF_LIBC memcpy=%p memset=%p memmove=%p memcmp=%p\n",
                 reinterpret_cast<void*>(&std::memcpy), reinterpret_cast<void*>(&std::memset),
                 reinterpret_cast<void*>(&std::memmove), reinterpret_cast<void*>(&std::memcmp));
+    // Anchors for a sampled PC that falls in a library we hold no symbols for: these bracket
+    // the wait primitives the guest cores and the render thread block in.
+    std::printf("EDEN_PERF_LIBC2 mutex_lock=%p mutex_unlock=%p cond_wait=%p cond_timedwait=%p "
+                "cond_signal=%p cond_broadcast=%p nanosleep=%p clock_gettime=%p sched_yield=%p\n",
+                reinterpret_cast<void*>(&pthread_mutex_lock), reinterpret_cast<void*>(&pthread_mutex_unlock),
+                reinterpret_cast<void*>(&pthread_cond_wait), reinterpret_cast<void*>(&pthread_cond_timedwait),
+                reinterpret_cast<void*>(&pthread_cond_signal), reinterpret_cast<void*>(&pthread_cond_broadcast),
+                reinterpret_cast<void*>(&nanosleep), reinterpret_cast<void*>(&clock_gettime),
+                reinterpret_cast<void*>(&sched_yield));
 }
 
 void PollGpuPc() {

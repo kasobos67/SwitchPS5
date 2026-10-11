@@ -22,6 +22,8 @@ dev)
     title=${2:?a development build boots one title: tools/build-package.sh dev TITLE_ID}
     [[ $title =~ ^[0-9A-Fa-f]{16}$ ]] || { echo "Invalid title ID: $title" >&2; exit 1; }
     export EDEN_DEV_VULKAN=ON EDEN_DEV_ROM_ID="$title" EDEN_DEV_PROFILE=ON EDEN_DEV_PROFILE_TITLE="$title"
+    # Bounded caller chains for library PCs the PC sampler lands on (800 KB of dev-build BSS).
+    export EDEN_DEV_WAIT_CALLERS=ON
     # The release-configuration source checks do not apply to development instrumentation.
     export EDEN_SKIP_SOURCE_CHECKS=1
     export EDEN_PACKAGE_DIR="${EDEN_DEV_PACKAGE_DIR:-$root/build/dev/PPSA99008}"
