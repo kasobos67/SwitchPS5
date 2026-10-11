@@ -97,12 +97,59 @@ void RasterizerVulkan::DispatchCompute() {"""),
     # dispatch interval (dev-settings dispatch_draws=N); default 64 draws between hand-offs.
     ('#ifdef __ANDROID__\n    static constexpr u32 DRAWS_TO_DISPATCH = 512;\n    static constexpr u32 CHECK_MASK = 3;\n#else\n    static constexpr u32 DRAWS_TO_DISPATCH = 4096;\n    static constexpr u32 CHECK_MASK = 7;\n#endif // __ANDROID__\n\n    static_assert(DRAWS_TO_DISPATCH % (CHECK_MASK + 1) == 0);\n',
      '    static constexpr u32 DRAWS_TO_DISPATCH = 512;\n    const u32 CHECK_MASK = ::Eden::Performance::dispatch_mask.load(std::memory_order_relaxed);\n\n'),
-    # Per-draw time for the GPU-thread report: how much of the dispatch is the draw path
-    # (cache locks, pipeline configure, dynamic state, the record) rather than the guest's method
-    # decoding around it. The Timer's destructor bumps calls as the old counter did, and covers
-    # every return out of the function.
-    ('    FlushWork();\n    gpu_memory->FlushCaching();\n\n    GraphicsPipeline* const pipeline{pipeline_cache.CurrentGraphicsPipeline()};',
-     '    const ::Eden::Performance::Timer rasterizer_draw_timer(::Eden::Performance::rasterizer_draw);\n    FlushWork();\n    gpu_memory->FlushCaching();\n\n    GraphicsPipeline* const pipeline{pipeline_cache.CurrentGraphicsPipeline()};'),
+    # Where the ~4 us a draw spends goes: six phases under one running clock, each Mark taking the
+    # gap since the previous one so they do not overlap. The Timer still wraps the whole function,
+    # so a draw that returns early is charged for its unmarked tail and the sum of the six falls
+    # short by that amount plus two clock reads per phase. control/scheduler.cpp aside, this is the
+    # only place the dispatch's time can be spent - so its six numbers should add up to it.
+    ('''    FlushWork();
+    gpu_memory->FlushCaching();
+
+    GraphicsPipeline* const pipeline{pipeline_cache.CurrentGraphicsPipeline()};
+    if (!pipeline) {
+        return;
+    }
+    std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};
+    // update engine as channel may be different.
+    pipeline->SetEngine(maxwell3d, gpu_memory);
+    if (!pipeline->Configure(is_indexed))
+        return;
+
+    UpdateDynamicStates();
+
+    query_cache.NotifySegment(true);
+    HandleTransformFeedback();
+    query_cache.CounterEnable(VideoCommon::QueryType::ZPassPixelCount64, maxwell3d->regs.zpass_pixel_count_enable);
+    draw_func();''',
+     '''    const ::Eden::Performance::Timer rasterizer_draw_timer(::Eden::Performance::rasterizer_draw);
+    auto phase = ::Eden::Performance::NowNs();
+    FlushWork();
+    gpu_memory->FlushCaching();
+    ::Eden::Performance::Mark(::Eden::Performance::draw_flush, phase);
+
+    GraphicsPipeline* const pipeline{pipeline_cache.CurrentGraphicsPipeline()};
+    ::Eden::Performance::Mark(::Eden::Performance::draw_pipeline, phase);
+    if (!pipeline) {
+        return;
+    }
+    std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};
+    // update engine as channel may be different.
+    pipeline->SetEngine(maxwell3d, gpu_memory);
+    // Waiting for both cache mutexes. SetEngine between them and here is two pointer assignments,
+    // and the hold itself carries on through what follows: the phases below measure it.
+    ::Eden::Performance::Mark(::Eden::Performance::draw_lock_wait, phase);
+    if (!pipeline->Configure(is_indexed))
+        return;
+    ::Eden::Performance::Mark(::Eden::Performance::draw_config, phase);
+
+    UpdateDynamicStates();
+
+    query_cache.NotifySegment(true);
+    HandleTransformFeedback();
+    query_cache.CounterEnable(VideoCommon::QueryType::ZPassPixelCount64, maxwell3d->regs.zpass_pixel_count_enable);
+    ::Eden::Performance::Mark(::Eden::Performance::draw_state, phase);
+    draw_func();
+    ::Eden::Performance::Mark(::Eden::Performance::draw_record, phase);'''),
     # A forced release blocks the GPU thread until the fence thread has retired
     # every older fence. Time only that producer-side drain.
     ('    fence_manager.WaitPendingFences(force);',

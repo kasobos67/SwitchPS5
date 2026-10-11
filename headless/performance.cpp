@@ -439,6 +439,25 @@ void ReportGpuThread(unsigned frame) {
     std::printf("EDEN_DEV_PUSH lock_ns=%llu push_ns=%llu dispatch_ns=%llu\n",
                 load(gpu_sched_lock, false), load(gpu_dma_push, false),
                 load(gpu_dma_dispatch, false));
+    // Where that draw time went, in order. flush is FlushWork plus the memory flush; pipeline is
+    // taking the current pipeline; lock_wait is the wait for both cache mutexes (the hold is what
+    // the later phases measure); config is SetEngine plus Configure; state is UpdateDynamicStates
+    // and the query, transform-feedback and counter calls; record is draw_func. unattributed is
+    // the early-return tails the outer Timer charged but no phase marked, so it should be small,
+    // and the _calls columns say how often each phase ran - record below flush is draws that bailed.
+    std::printf("EDEN_DEV_RAST flush_ns=%llu pipeline_ns=%llu lock_wait_ns=%llu config_ns=%llu "
+                "state_ns=%llu record_ns=%llu unattributed_ns=%llu flush_calls=%llu "
+                "pipeline_calls=%llu lock_wait_calls=%llu config_calls=%llu state_calls=%llu "
+                "record_calls=%llu\n",
+                load(draw_flush, false), load(draw_pipeline, false),
+                load(draw_lock_wait, false), load(draw_config, false), load(draw_state, false),
+                load(draw_record, false),
+                load(rasterizer_draw, false) - (load(draw_flush, false) + load(draw_pipeline, false) +
+                                                load(draw_lock_wait, false) +
+                                                load(draw_config, false) + load(draw_state, false) +
+                                                load(draw_record, false)),
+                load(draw_flush, true), load(draw_pipeline, true), load(draw_lock_wait, true),
+                load(draw_config, true), load(draw_state, true), load(draw_record, true));
     // Texture-cache GC GPU drains since the last report. The fix these counters watch is the
     // prefetch lookahead (vulkan_gc_downloads.inc): batched drains should cover many images and
     // unbatched ones should be rare, as each unbatched drain is a full pipeline wait on the GPU

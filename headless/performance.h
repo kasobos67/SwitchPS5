@@ -54,6 +54,13 @@ inline std::array<std::atomic<unsigned long long>, 4> evacuations{};
 inline Totals storage;
 inline Totals jit_protection;
 inline Totals rasterizer_draw;
+// The six phases of that draw path (RasterizerVulkan::PrepareDraw) in order: flushing the pending
+// work, taking the current pipeline, waiting for the two cache mutexes (and binding the pipeline
+// to the engine), configuring it, applying dynamic state, and recording. Calls count each phase's
+// early returns as well as its work - a draw with no pipeline stops at draw_pipeline, one
+// Configure rejects stops at draw_config - so subtracting their sum from rasterizer_draw gives
+// what went unmarked. Two clock reads per phase rather than a Timer apiece, a draw has six of them.
+inline Totals draw_flush, draw_pipeline, draw_lock_wait, draw_config, draw_state, draw_record;
 inline Totals gpu_queue_wait, gpu_dispatch;
 // The three phases of the dispatch (Tegra::Control::Scheduler::Push), measured inside it: taking
 // the channel lock and binding it, queueing the submit list, and then executing the guest's
@@ -218,6 +225,19 @@ private:
     unsigned long long requested_bytes;
     std::chrono::nanoseconds start;
 };
+
+// Accumulate one phase of a sequence under a single running clock instead of giving it a Timer:
+// one clock read and two relaxed adds. `since` is where the phase started and advances to now, so
+// consecutive marks measure the gap between them and together cover the whole sequence without
+// overlap. An early return out of the sequence leaves the tail unmarked - that is what the outer
+// Timer is still charging - and the phase that never ran simply does not call this.
+inline void Mark(Totals& totals, long long& since) {
+    const auto now = NowNs();
+    const auto elapsed = now - since;
+    since = now;
+    totals.nanoseconds.fetch_add(static_cast<unsigned long long>(elapsed), std::memory_order_relaxed);
+    totals.calls.fetch_add(1, std::memory_order_relaxed);
+}
 
 // Opt-in API wall times: calls may overlap across threads, so do not sum them as frame time.
 inline std::atomic<bool> vulkan_cost_enabled{false};
