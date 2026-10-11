@@ -81,65 +81,47 @@ def main(argv):
             f'{path.name}: {later} was marked {counted[later]} times but {earlier} only '
             f'{counted[earlier]} - a phase is marked that the one before it never reached')
 
-    # The config split is newer than some captured runs. A log printed either all six of
-    # EDEN_DEV_CFG or none of it - half a line means a printf was cut in half.
-    cfg_names = tuple(f'cfg.{phase}_ns' for phase in analyze.CFG_PHASES)
-    present = sum(1 for name in cfg_names if any(name in row for row in usable))
-    assert present in (0, len(cfg_names)), (
-        f'{path.name}: {present} of {len(cfg_names)} config phases printed - EDEN_DEV_CFG is '
-        'missing part of its line')
-    if present == len(cfg_names):
-        config = sum(row.get('rast.config_ns', 0) for row in usable)
-        cfg_spent = {phase: sum(row.get(f'cfg.{phase}_ns', 0) for row in usable)
-                     for phase in analyze.CFG_PHASES}
-        cfg_counted = {phase: sum(row.get(f'cfg.{phase}_calls', 0) for row in usable)
-                       for phase in analyze.CFG_PHASES}
-        assert sum(cfg_spent.values()) <= config * 1.01, (
-            f'{path.name}: the six phases inside config come to {sum(cfg_spent.values())} ns, more '
-            f'than the {config} ns config itself was charged')
-        covered_cfg = sum(cfg_spent.values()) / config if config else 0
-        assert covered_cfg >= 0.5, (
-            f'{path.name}: the six phases account for {covered_cfg:.0%} of config - a Mark is not '
-            'running')
-        assert cfg_counted['sync'] > 0, f'{path.name}: the config sync phase never ran'
-        for earlier, later in zip(analyze.CFG_PHASES, analyze.CFG_PHASES[1:]):
-            assert cfg_counted[later] <= cfg_counted[earlier], (
-                f'{path.name}: config {later} was marked {cfg_counted[later]} times but '
-                f'{earlier} only {cfg_counted[earlier]} - a phase is marked that the one before '
-                'it never reached')
-
-    # The bind split is newer still. All three or none of them, like the config six.
-    bind_names = tuple(f'bind.{phase}_ns' for phase in analyze.BIND_PHASES)
-    bind_present = sum(1 for name in bind_names if any(name in row for row in usable))
-    assert bind_present in (0, len(bind_names)), (
-        f'{path.name}: {bind_present} of {len(bind_names)} bind phases printed - EDEN_DEV_BIND '
-        'is missing part of its line')
-    covered_bind = 0.0
-    if bind_present == len(bind_names):
-        bind_total = sum(row.get('cfg.bind_ns', 0) for row in usable)
-        bind_spent = {phase: sum(row.get(f'bind.{phase}_ns', 0) for row in usable)
-                      for phase in analyze.BIND_PHASES}
-        bind_counted = {phase: sum(row.get(f'bind.{phase}_calls', 0) for row in usable)
-                        for phase in analyze.BIND_PHASES}
-        assert sum(bind_spent.values()) <= bind_total * 1.01, (
-            f'{path.name}: the three phases inside cfg_bind come to {sum(bind_spent.values())} ns, '
-            f'more than the {bind_total} ns cfg_bind itself was charged')
-        covered_bind = sum(bind_spent.values()) / bind_total if bind_total else 0
-        assert covered_bind >= 0.5, (
-            f'{path.name}: the three phases account for {covered_bind:.0%} of cfg_bind - a Mark is '
-            'not running')
-        assert bind_counted['tbo'] > 0, f'{path.name}: the texture-buffer phase never ran'
-        for earlier, later in zip(analyze.BIND_PHASES, analyze.BIND_PHASES[1:]):
-            assert bind_counted[later] <= bind_counted[earlier], (
-                f'{path.name}: bind {later} was marked {bind_counted[later]} times but {earlier} '
-                f'only {bind_counted[earlier]} - a phase is marked that the one before it never '
+    # Each nested group prints all of its phases or none of them - half a line means a printf
+    # was cut - fits inside the parent it nests in, and is marked in the parent's order.
+    label = {'cfg': 'config', 'bind': 'cfg_bind', 'geo': 'bind_geometry', 'upd': 'bind_update'}
+    counted_words = {3: 'three', 4: 'four', 6: 'six'}
+    results = []
+    for prefix, phases, _key, total_key, _title, _foot in analyze.GROUPS:
+        names = tuple(f'{prefix}.{phase}_ns' for phase in phases)
+        present = sum(1 for name in names if any(name in row for row in usable))
+        assert present in (0, len(names)), (
+            f'{path.name}: {present} of {len(names)} {prefix} phases printed - that line is '
+            'missing part of its fields')
+        if present != len(names):
+            results.append((label[prefix], None))
+            continue
+        total = sum(row.get(total_key, 0) for row in usable)
+        spent = {phase: sum(row.get(f'{prefix}.{phase}_ns', 0) for row in usable)
+                 for phase in phases}
+        counted = {phase: sum(row.get(f'{prefix}.{phase}_calls', 0) for row in usable)
+                   for phase in phases}
+        assert sum(spent.values()) <= total * 1.01, (
+            f'{path.name}: the {len(phases)} phases inside {label[prefix]} come to '
+            f'{sum(spent.values())} ns, more than the {total} ns it was charged')
+        share = sum(spent.values()) / total if total else 0
+        assert share >= 0.5, (
+            f'{path.name}: the {len(phases)} phases account for {share:.0%} of '
+            f'{label[prefix]} - a Mark is not running')
+        assert counted[phases[0]] > 0, (
+            f'{path.name}: the {prefix} {phases[0]} phase never ran')
+        for earlier, later in zip(phases, phases[1:]):
+            assert counted[later] <= counted[earlier], (
+                f'{path.name}: {prefix} {later} was marked {counted[later]} times but {earlier} '
+                f'only {counted[earlier]} - a phase is marked that the one before it never '
                 'reached')
+        results.append((label[prefix], share))
 
     print(f'perf log {path.name}: {len(usable)} windows, {covered:.0%} of PrepareDraw in the six '
           'phases, report lines and nesting PASS'
-          + (f', {covered_cfg:.0%} of config in its six' if present else ', no config split')
-          + (f', {covered_bind:.0%} of cfg_bind in its three' if bind_present else
-             ', no bind split'))
+          + ''.join(
+              f', {share:.0%} of {name} in its {counted_words[len(analyze.GROUPS[i][1])]}'
+              if share is not None else f', no {name} split'
+              for i, (name, share) in enumerate(results)))
     return 0
 
 

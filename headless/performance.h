@@ -73,6 +73,12 @@ inline Totals cfg_sync, cfg_read, cfg_bind, cfg_desc, cfg_rt, cfg_draw;
 // chain against each other and still sum to cfg_bind: the texture-buffer loop over the enabled
 // stages, the buffer update pass, and the host geometry binds.
 inline Totals bind_tbo, bind_update, bind_geometry;
+// The four calls inside bind_geometry and the three inside bind_update. Both walk the memory
+// tracker's pages through SynchronizeBuffer once per buffer on every draw whether or not a byte
+// of it is dirty, so which call carries the time cannot be read off the source - the loop over
+// many stages looked expensive and measured at 2.8%.
+inline Totals geo_index, geo_vertex, geo_xf, geo_indirect;
+inline Totals upd_state, upd_stage, upd_indirect;
 inline Totals gpu_queue_wait, gpu_dispatch;
 // The three phases of the dispatch (Tegra::Control::Scheduler::Push), measured inside it: taking
 // the channel lock and binding it, queueing the submit list, and then executing the guest's

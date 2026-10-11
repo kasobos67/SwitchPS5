@@ -784,6 +784,60 @@ adapt('src/video_core/texture_cache/texture_cache.h',
      'const s64 min_vacancy_expected =\n            ((std::is_same_v<Runtime, Vulkan::TextureCacheRuntime> ? 4 : 6) * mem_threshold) / 10;'),
 ] + texture_costs)
 
+# The four calls inside bind_geometry and the three inside bind_update. They sit in buffer_cache.h
+# rather than in Configure, and both spend their time in SynchronizeBuffer's page walk over the
+# memory tracker - once for the index buffer, once per enabled vertex buffer, once per per-stage
+# segment, every draw, dirty or not. Which of the seven that is cannot be decided by reading it:
+# the texture-buffer loop looked like the cost of bind and measured 2.8%.
+adapt('src/video_core/buffer_cache/buffer_cache.h',
+      'vulkan-cache/video_core/buffer_cache/buffer_cache.h', [
+    ('#include "video_core/buffer_cache/buffer_cache_base.h"',
+     '#include "video_core/buffer_cache/buffer_cache_base.h"\n#include "performance.h"'),
+    ('void BufferCache<P>::BindHostGeometryBuffers(bool is_indexed) {',
+     'void BufferCache<P>::BindHostGeometryBuffers(bool is_indexed) {\n'
+     '    long long since_geo = ::Eden::Performance::NowNs();'),
+    ('    BindHostVertexBuffers();\n'
+     '    BindHostTransformFeedbackBuffers();\n'
+     '    if (current_draw_indirect) {\n'
+     '        BindHostDrawIndirectBuffers();\n'
+     '    }\n'
+     '}',
+     '    ::Eden::Performance::Mark(::Eden::Performance::geo_index, since_geo);\n'
+     '    BindHostVertexBuffers();\n'
+     '    ::Eden::Performance::Mark(::Eden::Performance::geo_vertex, since_geo);\n'
+     '    BindHostTransformFeedbackBuffers();\n'
+     '    ::Eden::Performance::Mark(::Eden::Performance::geo_xf, since_geo);\n'
+     '    if (current_draw_indirect) {\n'
+     '        BindHostDrawIndirectBuffers();\n'
+     '    }\n'
+     '    ::Eden::Performance::Mark(::Eden::Performance::geo_indirect, since_geo);\n'
+     '}'),
+    ('void BufferCache<P>::DoUpdateGraphicsBuffers(bool is_indexed) {',
+     'void BufferCache<P>::DoUpdateGraphicsBuffers(bool is_indexed) {\n'
+     '    long long since_upd = ::Eden::Performance::NowNs();'),
+    ('        UpdateTransformFeedbackBuffers();\n'
+     '        for (size_t stage = 0; stage < NUM_STAGES; ++stage) {\n'
+     '            UpdateUniformBuffers(stage);\n'
+     '            UpdateStorageBuffers(stage);\n'
+     '            UpdateTextureBuffers(stage);\n'
+     '        }\n'
+     '        if (current_draw_indirect) {\n'
+     '            UpdateDrawIndirect();\n'
+     '        }',
+     '        UpdateTransformFeedbackBuffers();\n'
+     '        ::Eden::Performance::Mark(::Eden::Performance::upd_state, since_upd);\n'
+     '        for (size_t stage = 0; stage < NUM_STAGES; ++stage) {\n'
+     '            UpdateUniformBuffers(stage);\n'
+     '            UpdateStorageBuffers(stage);\n'
+     '            UpdateTextureBuffers(stage);\n'
+     '        }\n'
+     '        ::Eden::Performance::Mark(::Eden::Performance::upd_stage, since_upd);\n'
+     '        if (current_draw_indirect) {\n'
+     '            UpdateDrawIndirect();\n'
+     '        }\n'
+     '        ::Eden::Performance::Mark(::Eden::Performance::upd_indirect, since_upd);'),
+])
+
 # These costs sit outside vkCreateGraphicsPipelines: guest shader translation,
 # worker readiness, and background serialization can block different threads.
 # The six phases inside Configure. draw_config is all of Configure but SetEngine's two pointer

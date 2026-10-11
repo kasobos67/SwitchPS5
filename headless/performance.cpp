@@ -485,6 +485,27 @@ void ReportGpuThread(unsigned frame) {
                 load(cfg_bind, false) - (load(bind_tbo, false) + load(bind_update, false) +
                                          load(bind_geometry, false)),
                 load(bind_tbo, true), load(bind_update, true), load(bind_geometry, true));
+    // The four calls inside cfg_bind's geometry phase: the index buffer (or the quad substitute),
+    // the vertex buffers, transform feedback, and the indirect draw buffers when there is one.
+    // They nest inside cfg_bind's geometry, so unattributed is the clock and the two pointer
+    // stores around it - not the SynchronizeBuffer calls, which are inside the phases themselves.
+    std::printf("EDEN_DEV_GEO index_ns=%llu vertex_ns=%llu xf_ns=%llu indirect_ns=%llu "
+                "unattributed_ns=%llu index_calls=%llu vertex_calls=%llu xf_calls=%llu "
+                "indirect_calls=%llu\n",
+                load(geo_index, false), load(geo_vertex, false), load(geo_xf, false),
+                load(geo_indirect, false),
+                load(bind_geometry, false) - (load(geo_index, false) + load(geo_vertex, false) +
+                                              load(geo_xf, false) + load(geo_indirect, false)),
+                load(geo_index, true), load(geo_vertex, true), load(geo_xf, true),
+                load(geo_indirect, true));
+    // The three inside cfg_bind's update phase: index, vertex and transform-feedback updates; the
+    // six-stage uniform, storage and texture loop; and the indirect update when there is one.
+    std::printf("EDEN_DEV_UPD state_ns=%llu stage_ns=%llu indirect_ns=%llu unattributed_ns=%llu "
+                "state_calls=%llu stage_calls=%llu indirect_calls=%llu\n",
+                load(upd_state, false), load(upd_stage, false), load(upd_indirect, false),
+                load(bind_update, false) - (load(upd_state, false) + load(upd_stage, false) +
+                                            load(upd_indirect, false)),
+                load(upd_state, true), load(upd_stage, true), load(upd_indirect, true));
     // Texture-cache GC GPU drains since the last report. The fix these counters watch is the
     // prefetch lookahead (vulkan_gc_downloads.inc): batched drains should cover many images and
     // unbatched ones should be rare, as each unbatched drain is a full pipeline wait on the GPU
