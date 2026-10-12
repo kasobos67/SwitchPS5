@@ -293,7 +293,7 @@ void Compose(const Kind* kind, int code, std::uint64_t address, const Registers&
              const Stamp& stamp, bool restart) noexcept {
     auto& t = report;
     t.Clear();
-    t.Put("ProsperoEden crash report\nversion: ");
+    t.Put("Switch crash report\nversion: ");
     t.Put(version);
     t.Put(" (code size 0x");
     t.Hex(CodeEnd() - CodeStart());

@@ -12,10 +12,10 @@ extern int sceSystemServiceLoadExec(const char *path, const char **args);
 __attribute__((noreturn)) void catchReturnFromMain(int status) {
     char marker[96];
     fflush(NULL);
-    snprintf(marker, sizeof(marker), "EDEN_PPSA99121_MAIN_RETURN status=%d\n", status);
+    snprintf(marker, sizeof(marker), "EDEN_PPSA99009_MAIN_RETURN status=%d\n", status);
     sceKernelDebugOutText(0, marker);
     const int refused = sceSystemServiceLoadExec("exit", NULL);
-    snprintf(marker, sizeof(marker), "EDEN_PPSA99121_EXIT_REFUSED rc=%x\n", (unsigned)refused);
+    snprintf(marker, sizeof(marker), "EDEN_PPSA99009_EXIT_REFUSED rc=%x\n", (unsigned)refused);
     sceKernelDebugOutText(0, marker);
     for (;;) sceKernelUsleep(100000);
 }
@@ -25,18 +25,18 @@ __attribute__((noreturn)) void catchReturnFromMain(int status) {
 // stuck thread. Returns only when the system refuses.
 int eden_restart_app(void) {
     char marker[96];
-    sceKernelDebugOutText(0, "EDEN_PPSA99121_RESTART\n");
+    sceKernelDebugOutText(0, "EDEN_PPSA99009_RESTART\n");
     const int refused = sceSystemServiceLoadExec("/app0/eboot.bin", NULL);
-    snprintf(marker, sizeof(marker), "EDEN_PPSA99121_RESTART_REFUSED rc=%x\n", (unsigned)refused);
+    snprintf(marker, sizeof(marker), "EDEN_PPSA99009_RESTART_REFUSED rc=%x\n", (unsigned)refused);
     sceKernelDebugOutText(0, marker);
     return refused;
 }
 // End the app the way a return from main does, from any thread. Returns only when refused.
 int eden_exit_app(void) {
     char marker[96];
-    sceKernelDebugOutText(0, "EDEN_PPSA99121_EXIT\n");
+    sceKernelDebugOutText(0, "EDEN_PPSA99009_EXIT\n");
     const int refused = sceSystemServiceLoadExec("exit", NULL);
-    snprintf(marker, sizeof(marker), "EDEN_PPSA99121_EXIT_REFUSED rc=%x\n", (unsigned)refused);
+    snprintf(marker, sizeof(marker), "EDEN_PPSA99009_EXIT_REFUSED rc=%x\n", (unsigned)refused);
     sceKernelDebugOutText(0, marker);
     return refused;
 }

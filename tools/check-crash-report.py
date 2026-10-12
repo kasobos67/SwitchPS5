@@ -249,7 +249,7 @@ def check(binary, console):
     status, out, err, reports, note = run(binary, 'thread', console)
     assert status == 42 and out == 'RESTART\n' and len(reports) == 1, (status, out, err[-600:])
     report = reports[0].read_text()
-    assert report.startswith('ProsperoEden crash report\nversion: test-version (code size 0x'), report[:200]
+    assert report.startswith('Switch crash report\nversion: test-version (code size 0x'), report[:200]
     stamp = re.search(r'^time: (\d{4}-\d\d-\d\d \d\d:\d\d:\d\d), (\d+) s after the app started$', report, re.M)
     assert stamp, report
     written = datetime.datetime.strptime(stamp.group(1), '%Y-%m-%d %H:%M:%S')
