@@ -43,6 +43,7 @@
 #include "controller_applet.h"
 #include "error_applet.h"
 #include "keyboard_applet.h"
+#include "load_address.h"
 #include "preferences.h"
 #include "metadata_bridge.h"
 #ifdef EDEN_PS5_OPENGL
@@ -1193,6 +1194,18 @@ int main(int argc, char** argv) {
                     Eden::Report("launch", ("Profile: " + who.profiles[static_cast<std::size_t>(who.current)].name +
                                             " (" + std::to_string(who.current + 1) + " of " +
                                             std::to_string(who.profiles.size()) + ")").c_str());
+            }
+            // The game's RNG seed fixes where its code is loaded and nothing else
+            // (load_address.h): Eden's own setting stays off, so the random numbers the game
+            // is given still differ from start to start.
+            Settings::values.rng_seed_enabled.SetValue(false);
+            Eden::code_seed = -1;
+            if (game && guest) {
+                const auto rng_seed = Eden::LoadGameSettings(eden_game_title_id(guest)).rng_seed;
+                if (rng_seed >= 0) {
+                    Eden::code_seed = rng_seed;
+                    Eden::Report("launch", ("RNG seed: " + std::to_string(rng_seed)).c_str());
+                }
             }
 #endif
             Core::System system;

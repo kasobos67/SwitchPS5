@@ -325,7 +325,7 @@ The menu opens with the profile that the PS5 user in front chose last. If you us
 
 ### Settings per game
 
-**Settings** holds what every game uses. A game can differ from it: in the Library, press Triangle on the game. Its settings list **Video**, **Performance**, **Audio**, **Controls** and **Language**, and each one says how many of its settings the game changes. Inside, a setting shows **Default** with the value Settings has until you choose another one for this game; going past the last choice comes back to **Default**. A change applies the next time the game starts.
+**Settings** holds what every game uses. A game can differ from it: in the Library, press Triangle on the game. Its settings list **Video**, **Performance**, **Audio**, **Controls**, **System** and **Language**, and each one says how many of its settings the game changes. Inside, a setting shows **Default** with the value Settings has until you choose another one for this game; going past the last choice comes back to **Default**. A change applies the next time the game starts.
 
 | Kind | What a game can have of its own |
 |---|---|
@@ -333,6 +333,7 @@ The menu opens with the profile that the PS5 user in front chose last. If you us
 | Performance | Each of the seven switches |
 | Audio | Game volume, mute |
 | Controls | Vibration, and a button mapping of its own |
+| System | RNG seed: with a seed the game is loaded at the same place in memory at every start, which some mods need (HewDraw Remix asks for seed 0). Left and right switch between **Random** and the seed; Cross opens the keyboard to type another one. The game's own random numbers still change from start to start |
 | Language | The language the game is given |
 
 The output resolution, the menu's sounds and the accessibility settings are the same for every game.

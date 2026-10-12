@@ -39,6 +39,7 @@ enum GameRow : int
     row_performance,
     row_audio,
     row_controls,
+    row_system,
     row_language,
     row_mods,
     row_save,   // in builds that move saves
@@ -846,6 +847,7 @@ void Launcher::draw_game(Canvas &c, float open)
         changed(row_performance - row_video),
         changed(row_audio - row_video),
         changed(row_controls - row_video),
+        changed(row_system - row_video),
         changed(row_language - row_video),
         // With the game's Mods switch off (the Library's), none of them is on.
         mods_.empty() ? std::string{tr("No mods")} :
@@ -859,8 +861,9 @@ void Launcher::draw_game(Canvas &c, float open)
         game != nullptr ? game->size : std::string{},
     };
     static constexpr const char *kLabels[] = {TR("Console mode"), TR("Video"),    TR("Performance"),
-                                              TR("Audio"),        TR("Controls"), TR("Language"),
-                                              TR("Mods"),         TR("Save data"), TR("Delete from console")};
+                                              TR("Audio"),        TR("Controls"), TR("System"),
+                                              TR("Language"),     TR("Mods"),     TR("Save data"),
+                                              TR("Delete from console")};
     // Five rows show; the list scrolls to the others.
     list.push_clip({kDialogWindow.x - 24.0f, kDialogWindow.y - 6.0f, kDialogWindow.w + 48.0f,
                     kDialogWindow.h + 12.0f});

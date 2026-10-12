@@ -152,7 +152,7 @@ msgid "Automatic"
 msgstr "Automatikus"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/pairing.cpp, pe/ui/profiles.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/multiplayer.cpp, pe/ui/pairing.cpp, pe/ui/profiles.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
 msgid "Back"
 msgstr "Vissza"
 
@@ -171,7 +171,7 @@ msgid "Bilinear"
 msgstr "Bilineáris"
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
 msgid "Browse"
 msgstr "Böngészés"
 
@@ -570,6 +570,11 @@ msgstr "Eden emulátor PlayStation 5-re"
 msgid "Eden's debug messages in the logs of a game."
 msgstr "Az Eden hibakeresési üzenetei egy játék naplóiban."
 
+#. A button hint: opens the keyboard to type a number. One short word, and not the word used for Change.
+#: pe/ui/game_options.cpp
+msgid "Edit"
+msgstr "Szerkesztés"
+
 #. Label of the shortcut that ends the running game.
 #: pe/ui/settings.cpp
 msgid "END GAME"
@@ -586,6 +591,11 @@ msgstr "Angol (UK)"
 #: host/fake_services.cpp, settings_store.h
 msgid "English (US)"
 msgstr "Angol (USA)"
+
+#. Shown when what was typed for the RNG seed is not such a number.
+#: pe/ui/game_options.cpp
+msgid "Enter a number between 0 and 4294967295."
+msgstr "Adj meg egy 0 és 4294967295 közötti számot."
 
 #: pe/ui/multiplayer.cpp
 msgid "Enter a UDP port between 1 and 65535."
@@ -1218,7 +1228,7 @@ msgstr "Nincs mit importálni"
 msgid "Off"
 msgstr "Ki"
 
-#: pe/ui/settings.cpp
+#: pe/ui/multiplayer.cpp, pe/ui/settings.cpp
 msgid "Offline"
 msgstr "Offline"
 
@@ -1265,7 +1275,7 @@ msgid "Output resolution"
 msgstr "Kimeneti felbontás"
 
 #. Button hint: jump a page of the list (L1 / R1).
-#: pe/ui/browse.cpp, pe/ui/update.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp, pe/ui/update.cpp
 msgid "Page"
 msgstr "Lapozás"
 
@@ -1481,6 +1491,11 @@ msgstr "Sorban áll"
 msgid "Queued, from {0}"
 msgstr "Sorban áll, innen: {0}"
 
+#. The usual value of RNG seed: no fixed seed, a new random one at every start of the game.
+#: pe/ui/game_options.cpp
+msgid "Random"
+msgstr "Véletlenszerű"
+
 #. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Reactive flushing"
@@ -1572,6 +1587,11 @@ msgstr "Jobb Joy-Con"
 #: pe/ui/game_options.cpp
 msgid "Right stick press"
 msgstr "Jobb kar lenyomása"
+
+#. A game setting. RNG is a random number generator and the seed is the number it starts from. A game with a seed is loaded at the same place in memory at every start, which some mods need. Keep it short; RNG and seed may stay in English where players say them so.
+#: pe/ui/game_options.cpp
+msgid "RNG seed"
+msgstr "RNG-mag"
 
 #: eden_services.cpp, pe/ui/launcher.cpp
 msgid "ROM missing from the game files folder"
@@ -1692,7 +1712,7 @@ msgid "Scroll"
 msgstr "Görgetés"
 
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/pairing.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
+#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/multiplayer.cpp, pe/ui/pairing.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
 msgid "Select"
 msgstr "Kiválasztás"
 
@@ -1856,6 +1876,11 @@ msgstr "A mentések szinkronizálása még egyszer."
 msgid "Syncing save data"
 msgstr "Mentések szinkronizálása"
 
+#. A category of a game's settings: how the emulated console itself behaves.
+#: pe/ui/game_options.cpp, pe/ui/library.cpp
+msgid "System"
+msgstr "Rendszer"
+
 #: eden_services.cpp
 msgid "Taiwan"
 msgstr "Tajvan"
@@ -1918,7 +1943,7 @@ msgstr "A játék elindul, amint a mentései naprakészek."
 msgid "The game starts when the download is done."
 msgstr "A játék a letöltés végén elindul."
 
-#: pe/ui/multiplayer.cpp
+#: pe/ui/game_options.cpp, pe/ui/multiplayer.cpp
 msgid "The keyboard could not be opened."
 msgstr "Nem sikerült megnyitni a billentyűzetet."
 

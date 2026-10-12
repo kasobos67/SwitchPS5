@@ -152,7 +152,7 @@ msgid "Automatic"
 msgstr "自动"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/pairing.cpp, pe/ui/profiles.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/multiplayer.cpp, pe/ui/pairing.cpp, pe/ui/profiles.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
 msgid "Back"
 msgstr "返回"
 
@@ -171,7 +171,7 @@ msgid "Bilinear"
 msgstr "双线性"
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
 msgid "Browse"
 msgstr "浏览"
 
@@ -570,6 +570,11 @@ msgstr "适用于 PlayStation 5 的 Eden 模拟器"
 msgid "Eden's debug messages in the logs of a game."
 msgstr "游戏日志中包含 Eden 的调试信息。"
 
+#. A button hint: opens the keyboard to type a number. One short word, and not the word used for Change.
+#: pe/ui/game_options.cpp
+msgid "Edit"
+msgstr "编辑"
+
 #. Label of the shortcut that ends the running game.
 #: pe/ui/settings.cpp
 msgid "END GAME"
@@ -586,6 +591,11 @@ msgstr "英语（英国）"
 #: host/fake_services.cpp, settings_store.h
 msgid "English (US)"
 msgstr "英语（美国）"
+
+#. Shown when what was typed for the RNG seed is not such a number.
+#: pe/ui/game_options.cpp
+msgid "Enter a number between 0 and 4294967295."
+msgstr "请输入 0 到 4294967295 之间的数字。"
 
 #: pe/ui/multiplayer.cpp
 msgid "Enter a UDP port between 1 and 65535."
@@ -1218,7 +1228,7 @@ msgstr "没有可导入的内容"
 msgid "Off"
 msgstr "关"
 
-#: pe/ui/settings.cpp
+#: pe/ui/multiplayer.cpp, pe/ui/settings.cpp
 msgid "Offline"
 msgstr "离线"
 
@@ -1265,7 +1275,7 @@ msgid "Output resolution"
 msgstr "输出分辨率"
 
 #. Button hint: jump a page of the list (L1 / R1).
-#: pe/ui/browse.cpp, pe/ui/update.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp, pe/ui/update.cpp
 msgid "Page"
 msgstr "翻页"
 
@@ -1481,6 +1491,11 @@ msgstr "排队中"
 msgid "Queued, from {0}"
 msgstr "排队中，来自 {0}"
 
+#. The usual value of RNG seed: no fixed seed, a new random one at every start of the game.
+#: pe/ui/game_options.cpp
+msgid "Random"
+msgstr "随机"
+
 #. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Reactive flushing"
@@ -1572,6 +1587,11 @@ msgstr "右 Joy-Con"
 #: pe/ui/game_options.cpp
 msgid "Right stick press"
 msgstr "按下右摇杆"
+
+#. A game setting. RNG is a random number generator and the seed is the number it starts from. A game with a seed is loaded at the same place in memory at every start, which some mods need. Keep it short; RNG and seed may stay in English where players say them so.
+#: pe/ui/game_options.cpp
+msgid "RNG seed"
+msgstr "随机数种子"
 
 #: eden_services.cpp, pe/ui/launcher.cpp
 msgid "ROM missing from the game files folder"
@@ -1692,7 +1712,7 @@ msgid "Scroll"
 msgstr "滚动"
 
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/pairing.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
+#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/multiplayer.cpp, pe/ui/pairing.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
 msgid "Select"
 msgstr "确定"
 
@@ -1856,6 +1876,11 @@ msgstr "再次同步存档数据。"
 msgid "Syncing save data"
 msgstr "正在同步存档数据"
 
+#. A category of a game's settings: how the emulated console itself behaves.
+#: pe/ui/game_options.cpp, pe/ui/library.cpp
+msgid "System"
+msgstr "系统"
+
 #: eden_services.cpp
 msgid "Taiwan"
 msgstr "台湾"
@@ -1918,7 +1943,7 @@ msgstr "存档数据同步后游戏即会启动。"
 msgid "The game starts when the download is done."
 msgstr "下载完成后游戏即会启动。"
 
-#: pe/ui/multiplayer.cpp
+#: pe/ui/game_options.cpp, pe/ui/multiplayer.cpp
 msgid "The keyboard could not be opened."
 msgstr "无法打开键盘。"
 

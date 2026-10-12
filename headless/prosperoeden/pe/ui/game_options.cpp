@@ -1,12 +1,15 @@
 // ProsperoEden - Launcher: a game's own settings by category (Library > Game settings > Video,
-// Performance, Audio, Controls, Language) and the button mapping (Settings > Controls, or a
-// game's own).
+// Performance, Audio, Controls, System, Language) and the button mapping (Settings > Controls,
+// or a game's own).
 // Copyright (C) 2026 BlackBearReloaded
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "pe/ui/launcher.hpp"
 
 #include <algorithm>
+#include <charconv>
+#include <chrono>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -33,14 +36,17 @@ enum Category : int
     category_performance,
     category_audio,
     category_controls,
+    category_system,
     category_language,
 };
 constexpr const char *kCategoryNames[] = {TR("Video"), TR("Performance"), TR("Audio"), TR("Controls"),
-                                          TR("Language")};
+                                          TR("System"), TR("Language")};
 // The Controls category's rows.
 constexpr int kVibrationRow = 0;
 constexpr int kMappingRow = 1;
 constexpr int kControllerRow = 2;
+// The System category's row.
+constexpr int kSeedRow = 0;
 
 // The game's buttons and the DualSense buttons, in the mapping's order (services.hpp). The game's
 // are its own names; the stick presses and the DualSense's named buttons are translated.
@@ -163,6 +169,12 @@ std::vector<Option> options(int category, const GameSettings &game, Preferences 
                          tr("Right Joy-Con")},
                         game.controller, tr("Automatic")});
         break;
+    case category_system:
+        // The seed is a number: the row's one choice is the game's (0 until one is typed, with
+        // Cross). Without a seed the game is loaded at a new random address at every start.
+        rows.push_back({tr("RNG seed"), {std::to_string(std::max<std::int64_t>(game.rng_seed, 0))},
+                        game.rng_seed >= 0 ? 0 : -1, tr("Random")});
+        break;
     default:
         rows.push_back({tr("Language"), services.language_labels(), game.language,
                         pick(services.language_labels(), prefs.language)});
@@ -203,6 +215,9 @@ GameSettings with_option(GameSettings game, int category, int row, int value, co
             game.own_mapping = value >= 0;
         }
         break;
+    case category_system:
+        game.rng_seed = value < 0 ? -1 : std::max<std::int64_t>(game.rng_seed, 0);
+        break;
     default:
         game.language = value;
         break;
@@ -228,6 +243,8 @@ int Launcher::game_overrides(int category) const
         return (game.volume >= 0) + (game.mute >= 0);
     case category_controls:
         return (game.vibration >= 0) + game.own_mapping + (game.controller >= 0);
+    case category_system:
+        return game.rng_seed >= 0;
     default:
         return game.language >= 0;
     }
@@ -246,8 +263,71 @@ void Launcher::open_game_options(int category)
     cue(Cue::open);
 }
 
+void Launcher::edit_seed()
+{
+    seed_edit_stop_ = false;
+    try
+    {
+        seed_edit_ = std::async(std::launch::async,
+                                [this, initial = game_settings_.rng_seed >= 0 ?
+                                                     std::to_string(game_settings_.rng_seed) : std::string{}] {
+                                    return services_.seed_text(initial, seed_edit_stop_);
+                                });
+    }
+    catch (const std::exception &)
+    {
+        say(tr("The keyboard could not be opened."), true);
+        cue(Cue::error);
+    }
+}
+
+void Launcher::update_game_options()
+{
+    if (!seed_edit_.valid() || seed_edit_.wait_for(std::chrono::seconds{0}) != std::future_status::ready)
+        return;
+    std::optional<std::string> answer;
+    try
+    {
+        answer = seed_edit_.get();
+    }
+    catch (const std::exception &)
+    {
+        say(tr("The keyboard could not be opened."), true);
+        cue(Cue::error);
+        return;
+    }
+    // Cancelled, or the dialog it was for is gone.
+    if (!answer || seed_edit_stop_ || modal_ != Modal::game_options || game_options_ != category_system ||
+        games_.empty())
+        return;
+    std::uint32_t seed = 0;
+    const auto parsed = std::from_chars(answer->data(), answer->data() + answer->size(), seed);
+    if (answer->empty() || parsed.ec != std::errc{} || parsed.ptr != answer->data() + answer->size())
+    {
+        say(tr("Enter a number between 0 and 4294967295."), true);
+        cue(Cue::error);
+        return;
+    }
+    GameSettings next = game_settings_;
+    next.rng_seed = seed;
+    const bool saved =
+        services_.set_game_settings(games_[static_cast<std::size_t>(library_.selected)].title_id, next);
+    if (saved)
+        game_settings_ = next;
+    say(saved ? tr("Saved for this game. Applies on next launch.") : tr("Could not save. Please try again."),
+        !saved);
+    cue(saved ? Cue::toggle : Cue::error);
+}
+
 void Launcher::press_game_options(Key key)
 {
+    // The keyboard is open: Circle takes it away, nothing else is for this dialog.
+    if (seed_edit_.valid())
+    {
+        if (key == Key::circle)
+            seed_edit_stop_ = true;
+        return;
+    }
     const Game &game = games_[static_cast<std::size_t>(library_.selected)];
     const std::vector<Option> rows = options(game_options_, game_settings_, prefs_, services_, {hertz(0), hertz(1)});
     switch (key)
@@ -281,6 +361,12 @@ void Launcher::press_game_options(Key key)
     if (game_options_ == category_controls && row == kMappingRow && key == Key::cross && option.value >= 0)
     {
         open_mapping(true);
+        return;
+    }
+    // The seed is typed.
+    if (game_options_ == category_system && row == kSeedRow && key == Key::cross)
+    {
+        edit_seed();
         return;
     }
     if (option.locked)
@@ -357,6 +443,7 @@ void Launcher::draw_game_options(Canvas &c, float open)
 
     const bool opens = game_options_ == category_controls && option_rows_.selected == kMappingRow &&
                        game_settings_.own_mapping;
+    const bool types = game_options_ == category_system && option_rows_.selected == kSeedRow;
     if (!message_.empty())
     {
         notice_block(c, message_, 592.0f, kHints - 6.0f, theme::kSmall, 26.0f,
@@ -367,6 +454,12 @@ void Launcher::draw_game_options(Canvas &c, float open)
         static constexpr Hint kOpen[] = {
             {Pad::cross, TR("Open")}, {Pad::leftright, TR("Change")}, {Pad::circle, TR("Back")}};
         draw_hints(c, kOpen, 3, 592.0f, kHints, theme::kCopy, 736.0f);
+    }
+    else if (types)
+    {
+        static constexpr Hint kType[] = {
+            {Pad::cross, TR("Edit")}, {Pad::leftright, TR("Change")}, {Pad::circle, TR("Back")}};
+        draw_hints(c, kType, 3, 592.0f, kHints, theme::kCopy, 736.0f);
     }
     else
     {

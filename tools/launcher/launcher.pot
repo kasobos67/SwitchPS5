@@ -570,6 +570,11 @@ msgstr ""
 msgid "Eden's debug messages in the logs of a game."
 msgstr ""
 
+#. A button hint: opens the keyboard to type a number. One short word, and not the word used for Change.
+#: pe/ui/game_options.cpp
+msgid "Edit"
+msgstr ""
+
 #. Label of the shortcut that ends the running game.
 #: pe/ui/settings.cpp
 msgid "END GAME"
@@ -585,6 +590,11 @@ msgstr ""
 
 #: host/fake_services.cpp, settings_store.h
 msgid "English (US)"
+msgstr ""
+
+#. Shown when what was typed for the RNG seed is not such a number.
+#: pe/ui/game_options.cpp
+msgid "Enter a number between 0 and 4294967295."
 msgstr ""
 
 #: pe/ui/multiplayer.cpp
@@ -1481,6 +1491,11 @@ msgstr ""
 msgid "Queued, from {0}"
 msgstr ""
 
+#. The usual value of RNG seed: no fixed seed, a new random one at every start of the game.
+#: pe/ui/game_options.cpp
+msgid "Random"
+msgstr ""
+
 #. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Reactive flushing"
@@ -1571,6 +1586,11 @@ msgstr ""
 
 #: pe/ui/game_options.cpp
 msgid "Right stick press"
+msgstr ""
+
+#. A game setting. RNG is a random number generator and the seed is the number it starts from. A game with a seed is loaded at the same place in memory at every start, which some mods need. Keep it short; RNG and seed may stay in English where players say them so.
+#: pe/ui/game_options.cpp
+msgid "RNG seed"
 msgstr ""
 
 #: eden_services.cpp, pe/ui/launcher.cpp
@@ -1856,6 +1876,11 @@ msgstr ""
 msgid "Syncing save data"
 msgstr ""
 
+#. A category of a game's settings: how the emulated console itself behaves.
+#: pe/ui/game_options.cpp, pe/ui/library.cpp
+msgid "System"
+msgstr ""
+
 #: eden_services.cpp
 msgid "Taiwan"
 msgstr ""
@@ -1918,7 +1943,7 @@ msgstr ""
 msgid "The game starts when the download is done."
 msgstr ""
 
-#: pe/ui/multiplayer.cpp
+#: pe/ui/game_options.cpp, pe/ui/multiplayer.cpp
 msgid "The keyboard could not be opened."
 msgstr ""
 

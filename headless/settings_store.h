@@ -442,6 +442,7 @@ struct GameSettings {
     bool own_mapping = false;   // the game has a button mapping of its own: mapping
     ButtonMapping mapping = kDefaultMapping;
     std::array<int, kPerformanceSwitches> performance{-1, -1, -1, -1, -1, -1, -1};  // kPerformanceKeys
+    int64_t rng_seed = -1;
 };
 inline constexpr const char* kRendererKeys[] = {"opengl", "vulkan"};
 // Library > Game settings > Controls > Controller type: the controller every player of the game
@@ -479,6 +480,14 @@ inline GameSettings LoadGameSettings(uint64_t title_id, const std::string& file 
         result.performance[i] = flag(std::string("/performance/") + kPerformanceKeys[i]);
     const int volume = Settings::Int(document, Json::json_pointer(base + "/volume"), -1);
     result.volume = volume >= 0 && volume <= 100 ? volume : -1;
+    const Json::json_pointer seed_at(base + "/rng_seed");
+    if (document.contains(seed_at) && (document.at(seed_at).is_number_integer() ||
+                                       document.at(seed_at).is_number_unsigned())) {
+        const auto& seed_value = document.at(seed_at);
+        const auto seed = seed_value.is_number_unsigned() ? seed_value.get<uint64_t>() :
+                                                             static_cast<uint64_t>(seed_value.get<int64_t>());
+        result.rng_seed = seed <= 0xffffffffULL ? static_cast<int64_t>(seed) : -1;
+    }
     const Json::json_pointer mapping(base + "/mapping");
     result.own_mapping = document.contains(mapping);
     if (result.own_mapping) result.mapping = Settings::Mapping(document, mapping, kDefaultMapping);
@@ -494,7 +503,8 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
         value.controller >= int(std::size(kControllerKeys)) ||
         value.frame_gen_target >= int(std::size(kFrameGenTargetKeys)) ||
         value.frame_gen_multiplier >= int(std::size(kFrameGenMultiplierKeys)) ||
-        value.volume > 100 || !flag_ok(value.hud) || !flag_ok(value.frame_gen) || !flag_ok(value.mute) ||
+        value.volume > 100 || value.rng_seed < -1 || value.rng_seed > 0xffffffffLL ||
+        !flag_ok(value.hud) || !flag_ok(value.frame_gen) || !flag_ok(value.mute) ||
         !flag_ok(value.vibration) ||
         !std::all_of(value.performance.begin(), value.performance.end(), flag_ok) ||
         (value.own_mapping && !ValidMapping(value.mapping))) return false;
@@ -524,6 +534,8 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
     flag(game, "vibration", value.vibration);
     if (value.volume < 0) game.erase("volume");
     else game["volume"] = value.volume;
+    if (value.rng_seed < 0) game.erase("rng_seed");
+    else game["rng_seed"] = value.rng_seed;
     if (value.own_mapping) game["mapping"] = Settings::MappingJson(value.mapping);
     else game.erase("mapping");
     auto& performance = game["performance"];

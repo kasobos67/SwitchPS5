@@ -152,7 +152,7 @@ msgid "Automatic"
 msgstr "Tự động"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/pairing.cpp, pe/ui/profiles.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/multiplayer.cpp, pe/ui/pairing.cpp, pe/ui/profiles.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
 msgid "Back"
 msgstr "Quay lại"
 
@@ -171,7 +171,7 @@ msgid "Bilinear"
 msgstr "Bilinear"
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
 msgid "Browse"
 msgstr "Duyệt"
 
@@ -570,6 +570,11 @@ msgstr "Trình giả lập Eden cho PlayStation 5"
 msgid "Eden's debug messages in the logs of a game."
 msgstr "Thông báo gỡ lỗi của Eden trong nhật ký của trò chơi."
 
+#. A button hint: opens the keyboard to type a number. One short word, and not the word used for Change.
+#: pe/ui/game_options.cpp
+msgid "Edit"
+msgstr "Sửa"
+
 #. Label of the shortcut that ends the running game.
 #: pe/ui/settings.cpp
 msgid "END GAME"
@@ -586,6 +591,11 @@ msgstr "Tiếng Anh (Anh)"
 #: host/fake_services.cpp, settings_store.h
 msgid "English (US)"
 msgstr "Tiếng Anh (Mỹ)"
+
+#. Shown when what was typed for the RNG seed is not such a number.
+#: pe/ui/game_options.cpp
+msgid "Enter a number between 0 and 4294967295."
+msgstr "Nhập một số từ 0 đến 4294967295."
 
 #: pe/ui/multiplayer.cpp
 msgid "Enter a UDP port between 1 and 65535."
@@ -1218,7 +1228,7 @@ msgstr "Không có gì để nhập"
 msgid "Off"
 msgstr "Tắt"
 
-#: pe/ui/settings.cpp
+#: pe/ui/multiplayer.cpp, pe/ui/settings.cpp
 msgid "Offline"
 msgstr "Ngoại tuyến"
 
@@ -1265,7 +1275,7 @@ msgid "Output resolution"
 msgstr "Độ phân giải đầu ra"
 
 #. Button hint: jump a page of the list (L1 / R1).
-#: pe/ui/browse.cpp, pe/ui/update.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp, pe/ui/update.cpp
 msgid "Page"
 msgstr "Trang"
 
@@ -1481,6 +1491,11 @@ msgstr "Đang chờ"
 msgid "Queued, from {0}"
 msgstr "Đang chờ, từ {0}"
 
+#. The usual value of RNG seed: no fixed seed, a new random one at every start of the game.
+#: pe/ui/game_options.cpp
+msgid "Random"
+msgstr "Ngẫu nhiên"
+
 #. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Reactive flushing"
@@ -1572,6 +1587,11 @@ msgstr "Joy-Con phải"
 #: pe/ui/game_options.cpp
 msgid "Right stick press"
 msgstr "Nhấn cần phải"
+
+#. A game setting. RNG is a random number generator and the seed is the number it starts from. A game with a seed is loaded at the same place in memory at every start, which some mods need. Keep it short; RNG and seed may stay in English where players say them so.
+#: pe/ui/game_options.cpp
+msgid "RNG seed"
+msgstr "Seed RNG"
 
 #: eden_services.cpp, pe/ui/launcher.cpp
 msgid "ROM missing from the game files folder"
@@ -1692,7 +1712,7 @@ msgid "Scroll"
 msgstr "Cuộn"
 
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/pairing.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
+#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/multiplayer.cpp, pe/ui/pairing.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
 msgid "Select"
 msgstr "Chọn"
 
@@ -1856,6 +1876,11 @@ msgstr "Đồng bộ dữ liệu lưu thêm một lần."
 msgid "Syncing save data"
 msgstr "Đang đồng bộ dữ liệu lưu"
 
+#. A category of a game's settings: how the emulated console itself behaves.
+#: pe/ui/game_options.cpp, pe/ui/library.cpp
+msgid "System"
+msgstr "Hệ thống"
+
 #: eden_services.cpp
 msgid "Taiwan"
 msgstr "Đài Loan"
@@ -1918,7 +1943,7 @@ msgstr "Trò chơi sẽ bắt đầu khi dữ liệu lưu đã đồng bộ."
 msgid "The game starts when the download is done."
 msgstr "Trò chơi sẽ bắt đầu khi tải xong."
 
-#: pe/ui/multiplayer.cpp
+#: pe/ui/game_options.cpp, pe/ui/multiplayer.cpp
 msgid "The keyboard could not be opened."
 msgstr "Không mở được bàn phím."
 

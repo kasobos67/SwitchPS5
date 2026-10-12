@@ -408,10 +408,10 @@ int Launcher::dialog_rows(Modal modal) const
     case Modal::accessibility:
         return 3;
     case Modal::game:
-        // Console mode, video, performance, audio, controls, language, mods; save data in builds
-        // that move saves.
+        // Console mode, video, performance, audio, controls, system, language, mods; save data in
+        // builds that move saves.
         // A game a download source has can be deleted from the console (and downloaded again).
-        return (services_.save_transfer_available() ? 8 : 7) +
+        return (services_.save_transfer_available() ? 9 : 8) +
                (library_.selected < static_cast<int>(games_.size()) &&
                         !games_[static_cast<std::size_t>(library_.selected)].sources.empty() &&
                         !games_[static_cast<std::size_t>(library_.selected)].remote ? 1 : 0);

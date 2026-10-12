@@ -56,6 +56,8 @@ Launcher::~Launcher()
     if (room_directory_request_.valid()) room_directory_request_.wait();
     room_edit_stop_ = true;
     if (room_edit_.valid()) room_edit_.wait();
+    seed_edit_stop_ = true;
+    if (seed_edit_.valid()) seed_edit_.wait();
     // The game list may still be reading; it uses the services this launcher was given.
     if (scan_.valid())
         scan_.wait();
@@ -252,6 +254,7 @@ void Launcher::update(float dt)
     poll_pairing(dt);
     refresh_sync_setup(dt);
     update_multiplayer();
+    update_game_options();
     update_controllers(dt);
     transition_.update(dt);
     press_ = std::max(0.0f, press_ - dt / 0.18f);

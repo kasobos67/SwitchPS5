@@ -902,21 +902,30 @@ if(EDEN_A32_FASTMEM)
     write_derived("${PORT_BUILD_DIR}/memory.cpp" "${arena_source}")
     list(REMOVE_ITEM core_sources "memory.cpp")
     list(APPEND core_sources "${PORT_BUILD_DIR}/memory.cpp")
-    # Upstream places code at any 4 KiB offset below 16 MiB, which leaves three of four
-    # layouts with every module page out of 16 KiB phase with its backing. Keep the same
-    # range with 16 KiB steps so module chunks can alias.
-    file(READ "${PROJECT_SOURCE_DIR}/src/core/loader/deconstructed_rom_directory.cpp" aslr_source)
-    set(aslr_old "? ::Settings::values.rng_seed.GetValue() : Common::Random::Random64(0)) << 12) & 0xfff000;")
-    string(FIND "${aslr_source}" "${aslr_old}" aslr_at)
-    if(aslr_at LESS 0)
-        message(FATAL_ERROR "Pinned code ASLR offset changed")
-    endif()
-    string(REPLACE "${aslr_old}" "? ::Settings::values.rng_seed.GetValue() : Common::Random::Random64(0)) << 14) & 0xffc000;"
-        aslr_source "${aslr_source}")
-    write_derived("${PORT_BUILD_DIR}/deconstructed_rom_directory.cpp" "${aslr_source}")
-    list(REMOVE_ITEM core_sources "loader/deconstructed_rom_directory.cpp")
-    list(APPEND core_sources "${PORT_BUILD_DIR}/deconstructed_rom_directory.cpp")
 endif()
+# Where a game's code is loaded: at a random offset, or at the one the game's seed gives
+# (load_address.h). Upstream takes the seed from its RNG seed setting, which also seeds the
+# random numbers a game is given; the port's seed fixes the offset alone.
+# With the A32 fastmem window the offset moves in 16 KiB steps over the same range: upstream
+# places code at any 4 KiB offset below 16 MiB, which leaves three of four layouts with every
+# module page out of 16 KiB phase with its backing, and module chunks could not alias.
+file(READ "${PROJECT_SOURCE_DIR}/src/core/loader/deconstructed_rom_directory.cpp" aslr_source)
+set(aslr_old "((::Settings::values.rng_seed_enabled.GetValue()\n        ? ::Settings::values.rng_seed.GetValue() : Common::Random::Random64(0)) << 12) & 0xfff000;")
+string(FIND "${aslr_source}" "${aslr_old}" aslr_at)
+if(aslr_at LESS 0)
+    message(FATAL_ERROR "Pinned code ASLR offset changed")
+endif()
+if(EDEN_A32_FASTMEM)
+    set(aslr_steps "<< 14) & 0xffc000")
+else()
+    set(aslr_steps "<< 12) & 0xfff000")
+endif()
+string(REPLACE "${aslr_old}" "((::Eden::code_seed.load() >= 0 ? static_cast<u64>(::Eden::code_seed.load())\n        : Common::Random::Random64(0)) ${aslr_steps};"
+    aslr_source "${aslr_source}")
+write_derived("${PORT_BUILD_DIR}/deconstructed_rom_directory.cpp"
+    "#include \"${EDEN_PORT_DIR}/load_address.h\"\n${aslr_source}")
+list(REMOVE_ITEM core_sources "loader/deconstructed_rom_directory.cpp")
+list(APPEND core_sources "${PORT_BUILD_DIR}/deconstructed_rom_directory.cpp")
 # GetPseudoDeviceId read the seed through the control data without checking that there is
 # any (a game without control data, such as a homebrew NRO): seed 0 then, as for other
 # NACP fields Eden defaults when the metadata is missing.

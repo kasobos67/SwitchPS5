@@ -152,7 +152,7 @@ msgid "Automatic"
 msgstr "Automático"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/pairing.cpp, pe/ui/profiles.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/multiplayer.cpp, pe/ui/pairing.cpp, pe/ui/profiles.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
 msgid "Back"
 msgstr "Atrás"
 
@@ -171,7 +171,7 @@ msgid "Bilinear"
 msgstr "Bilineal"
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
 msgid "Browse"
 msgstr "Explorar"
 
@@ -570,6 +570,11 @@ msgstr "Emulador Eden para PlayStation 5"
 msgid "Eden's debug messages in the logs of a game."
 msgstr "Los mensajes de depuración de Eden en los registros de un juego."
 
+#. A button hint: opens the keyboard to type a number. One short word, and not the word used for Change.
+#: pe/ui/game_options.cpp
+msgid "Edit"
+msgstr "Editar"
+
 #. Label of the shortcut that ends the running game.
 #: pe/ui/settings.cpp
 msgid "END GAME"
@@ -586,6 +591,11 @@ msgstr "Inglés (Reino Unido)"
 #: host/fake_services.cpp, settings_store.h
 msgid "English (US)"
 msgstr "Inglés (EE. UU.)"
+
+#. Shown when what was typed for the RNG seed is not such a number.
+#: pe/ui/game_options.cpp
+msgid "Enter a number between 0 and 4294967295."
+msgstr "Ingresa un número entre 0 y 4294967295."
 
 #: pe/ui/multiplayer.cpp
 msgid "Enter a UDP port between 1 and 65535."
@@ -1218,7 +1228,7 @@ msgstr "Nada que importar"
 msgid "Off"
 msgstr "No"
 
-#: pe/ui/settings.cpp
+#: pe/ui/multiplayer.cpp, pe/ui/settings.cpp
 msgid "Offline"
 msgstr "Sin conexión"
 
@@ -1265,7 +1275,7 @@ msgid "Output resolution"
 msgstr "Resolución de salida"
 
 #. Button hint: jump a page of the list (L1 / R1).
-#: pe/ui/browse.cpp, pe/ui/update.cpp
+#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp, pe/ui/update.cpp
 msgid "Page"
 msgstr "Página"
 
@@ -1481,6 +1491,11 @@ msgstr "En cola"
 msgid "Queued, from {0}"
 msgstr "En cola, de {0}"
 
+#. The usual value of RNG seed: no fixed seed, a new random one at every start of the game.
+#: pe/ui/game_options.cpp
+msgid "Random"
+msgstr "Aleatoria"
+
 #. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
 msgid "Reactive flushing"
@@ -1572,6 +1587,11 @@ msgstr "Joy-Con derecho"
 #: pe/ui/game_options.cpp
 msgid "Right stick press"
 msgstr "Presionar stick derecho"
+
+#. A game setting. RNG is a random number generator and the seed is the number it starts from. A game with a seed is loaded at the same place in memory at every start, which some mods need. Keep it short; RNG and seed may stay in English where players say them so.
+#: pe/ui/game_options.cpp
+msgid "RNG seed"
+msgstr "Semilla RNG"
 
 #: eden_services.cpp, pe/ui/launcher.cpp
 msgid "ROM missing from the game files folder"
@@ -1692,7 +1712,7 @@ msgid "Scroll"
 msgstr "Desplazar"
 
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/pairing.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
+#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/multiplayer.cpp, pe/ui/pairing.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
 msgid "Select"
 msgstr "Seleccionar"
 
@@ -1856,6 +1876,11 @@ msgstr "Sincronizar los datos guardados una vez más."
 msgid "Syncing save data"
 msgstr "Sincronizando datos guardados"
 
+#. A category of a game's settings: how the emulated console itself behaves.
+#: pe/ui/game_options.cpp, pe/ui/library.cpp
+msgid "System"
+msgstr "Sistema"
+
 #: eden_services.cpp
 msgid "Taiwan"
 msgstr "Taiwán"
@@ -1918,7 +1943,7 @@ msgstr "El juego se inicia cuando sus datos guardados estén al día."
 msgid "The game starts when the download is done."
 msgstr "El juego se inicia al terminar la descarga."
 
-#: pe/ui/multiplayer.cpp
+#: pe/ui/game_options.cpp, pe/ui/multiplayer.cpp
 msgid "The keyboard could not be opened."
 msgstr "No se pudo abrir el teclado."
 
