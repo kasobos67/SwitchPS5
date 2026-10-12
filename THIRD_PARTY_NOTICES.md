@@ -65,7 +65,7 @@ builds on the following projects, each under its own license.
   GPL-3.0-or-later. The launcher's drawing, text, animation and sound code
   (`headless/prosperoeden/pe`) started there.
 - **Montserrat** by Julieta Ulanovsky and contributors, SIL Open Font License
-  1.1 (`third_party/fonts`). The launcher's font is baked from Montserrat Medium.
+  1.1 (`third_party/fonts`). Used for fallback glyphs missing from the supplied Nintendo UI font.
 - **[HarfBuzz](https://github.com/harfbuzz/harfbuzz)**, "Old MIT" license (its
   `COPYING` file). Shapes the launcher's text in the scripts that need it, such
   as Thai and Arabic. Fetched at the release pinned in `tools/deps.json`.
@@ -73,10 +73,15 @@ builds on the following projects, each under its own license.
   domain (`tools/launcher/stb`). `stb_truetype` bakes the launcher's font and,
   in the app, reads the console's system fonts for the scripts Montserrat does
   not have. `stb_image_write` saves the PC previews and is not part of the app.
-- The launcher's sound effects were generated with
-  [ElevenLabs](https://elevenlabs.io) and edited for this project.
-- `third_party/ps5_pad.hpp` and `third_party/native_audio.hpp` are this
-  project's own platform declarations, GPL-3.0-or-later.
+- The Switch-style interface uses selected Nintendo Switch HOME Menu audio,
+  UI symbols, profile artwork, animation data, and fonts. The app icon and PS5
+  background are custom artwork. These assets retain their original rights;
+  the software license does not relicense them.
+- `third_party/ps5_pad.hpp` comes from
+  [ps5-native-gamepad-input-research](https://github.com/blackbearreloaded/ps5-native-gamepad-input-research),
+  and `third_party/native_audio.hpp` from
+  [ps5-audio-decoding-research](https://github.com/blackbearreloaded/ps5-audio-decoding-research).
+  Both are GPL-3.0-or-later.
 
 ## Thanks
 

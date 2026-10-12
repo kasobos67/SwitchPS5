@@ -114,7 +114,7 @@ LDLLDSHIM
 #!/bin/sh
 for a in "\$@"; do last="\$a"; done
 case "\$last" in
---libdir) echo "${shimLib}/lib" ;;
+--libdir) echo "${shimLib}" ;;
 --bindir) echo "$out/bin" ;;
 *) exec ${realLlvmCfg21} "\$@" ;;
 esac
@@ -189,13 +189,13 @@ pkgs.mkShell {
     pkgs.spirv-headers
     pkgs.xxd
     pkgs.which
+    llvm18.clang
+    llvm18.llvm
+    llvm18.lld
     llvm21.clang
     llvm21.llvm
     llvm21.lld
     llvm21.libclang
-    llvm18.clang
-    llvm18.llvm
-    llvm18.lld
     llvmspirv
     python
   ];
@@ -206,7 +206,7 @@ pkgs.mkShell {
     # Payload SDK wrappers select the LLVM install; the shim reports our bindir/libdir
     LLVM_CONFIG = "${shimBin}/bin/llvm-config";
     # shimLib/llvmspirv for LLVM 21 host tools; gcc runtime for -fuse-ld=lld links
-    LD_LIBRARY_PATH = "${shimLib}/lib:${llvmspirv}/lib:${pkgs.stdenv.cc.cc.lib}/lib";
+    LD_LIBRARY_PATH = "${shimLib}:${llvmspirv}/lib:${pkgs.stdenv.cc.cc.lib}/lib";
     # nixpkgs' cc-wrapper hardening (FORTIFY, stack protector) differs from Ubuntu's toolchain
     NIX_HARDENING_ENABLE = "";
   };
