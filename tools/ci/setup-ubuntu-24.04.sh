@@ -35,7 +35,7 @@ sudo apt-get update
 # shellcheck disable=SC2046 # one package name per word
 sudo apt-get install --yes --no-install-recommends $(grep -v '^#' "$here/ubuntu-24.04-packages.txt")
 
-# Meson, for this user (pipx on the runner; pip elsewhere).
+# Meson installation differs between the CI runner and local environments.
 if [[ $(meson --version 2>/dev/null) != "$meson_version" ]]; then
     if command -v pipx > /dev/null; then
         pipx install --force "meson==$meson_version"

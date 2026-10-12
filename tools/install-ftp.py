@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Copies a built PPSA99008 folder to a console over FTP (make install).
+"""Copies a built PPSA99009 folder to a console over FTP (make install).
 
   tools/install-ftp.py HOST APP_DIR [--port 2121]
 
 Needs a running FTP server on the console (for example the Payload SDK's ftpsrv) and
-ProsperoEden closed. Every file goes to /data/homebrew/PPSA99008 under a temporary name and is
+ProsperoEden closed. Every file goes to /data/homebrew/PPSA99009 under a temporary name and is
 renamed into place once complete. Executables are read back and compared when the server offers
 raw SELF transfers. Files already on the console that the package does not contain (your
 settings, saves and logs live elsewhere) are left alone.
@@ -16,7 +16,7 @@ import hashlib
 import pathlib
 import sys
 
-REMOTE = '/data/homebrew/PPSA99008'
+REMOTE = '/data/homebrew/PPSA99009'
 EXECUTABLES = {'eboot.bin', 'sce_module/libc.prx'}
 
 
@@ -45,7 +45,7 @@ def main(argv):
     options = parser.parse_args(argv)
     host, port, app = options.host, options.port, options.app
     if not (app / 'eboot.bin').is_file():
-        sys.exit(f'{app} is not a built PPSA99008 folder (run make package)')
+        sys.exit(f'{app} is not a built PPSA99009 folder (run make package)')
     files = sorted(p for p in app.rglob('*') if p.is_file())
     with connect(host, port) as client:
         try:

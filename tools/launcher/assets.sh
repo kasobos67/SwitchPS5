@@ -14,5 +14,11 @@ mkdir -p "$build" "$root/headless/prosperoeden/ui/fonts"
 "${HOST_CXX:-c++}" -std=c++20 -O2 -w -I"$root/tools/launcher" -I"$root/headless/prosperoeden" \
     "$root/tools/launcher/bake_font.cpp" -o "$build/bake_font"
 "$build/bake_font" "$root/third_party/fonts/Montserrat-Medium.ttf" \
-    "$root/headless/prosperoeden/ui/fonts/montserrat-medium.pefont"
+    "$build/montserrat-fallback.pefont"
+"$build/bake_font" "$root/assets/fonts/Nintendo-UDSG-Regular.ttf" \
+    "$build/nintendo-standard.pefont"
+python3 "$root/tools/launcher/merge-font-atlas.py" "$build/nintendo-standard.pefont" \
+    "$build/montserrat-fallback.pefont" "$root/headless/prosperoeden/ui/fonts/montserrat-medium.pefont"
+python3 "$root/tools/launcher/firmware-symbols.py"
+python3 "$root/tools/launcher/firmware-curves.py"
 python3 "$root/tools/launcher/render-art.py"

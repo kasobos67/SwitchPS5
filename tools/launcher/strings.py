@@ -169,15 +169,6 @@ NOTES = {
     "Selected ROM is no longer available": "Why a game did not start (the file is gone).",
     "PS5 controller initialization failed": "Why a game did not start.",
     "Performance": "A settings category: options that make games run faster, at some cost in accuracy.",
-    "System": "A category of a game's settings: how the emulated console itself behaves.",
-    "RNG seed": "A game setting. RNG is a random number generator and the seed is the number it starts "
-                "from. A game with a seed is loaded at the same place in memory at every start, which some "
-                "mods need. Keep it short; RNG and seed may stay in English where players say them so.",
-    "Random": "The usual value of RNG seed: no fixed seed, a new random one at every start of the game.",
-    "Edit": "A button hint: opens the keyboard to type a number. One short word, and not the word used "
-            "for Change.",
-    "Enter a number between 0 and 4294967295.": "Shown when what was typed for the RNG seed is not such "
-                                                "a number.",
     "Compile ahead": "A switch: the program code a game used in earlier sessions is prepared (compiled) "
                      "while the game starts. Keep it short.",
     "Asynchronous shaders": "A switch. A shader is a small graphics program; keep the word the language's "

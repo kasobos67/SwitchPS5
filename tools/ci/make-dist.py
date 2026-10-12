@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Release files from a built PPSA99008 folder (make release).
+"""Release files from a built PPSA99009 folder (make release).
 
   tools/ci/make-dist.py APP_DIR
 
@@ -27,7 +27,7 @@ dist = root / 'dist'
 shutil.rmtree(dist, ignore_errors=True)
 dist.mkdir()
 archive = dist / f'ProsperoEden-{tag}.zip'
-files = [(p, 'PPSA99008/' + p.relative_to(app).as_posix()) for p in sorted(app.rglob('*')) if p.is_file()]
+files = [(p, 'PPSA99009/' + p.relative_to(app).as_posix()) for p in sorted(app.rglob('*')) if p.is_file()]
 files += [(root / name, name) for name in ('README.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md') if (root / name).exists()]
 with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as zip_file:
     for path, name in files:

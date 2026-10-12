@@ -97,59 +97,9 @@ void RasterizerVulkan::DispatchCompute() {"""),
     # dispatch interval (dev-settings dispatch_draws=N); default 64 draws between hand-offs.
     ('#ifdef __ANDROID__\n    static constexpr u32 DRAWS_TO_DISPATCH = 512;\n    static constexpr u32 CHECK_MASK = 3;\n#else\n    static constexpr u32 DRAWS_TO_DISPATCH = 4096;\n    static constexpr u32 CHECK_MASK = 7;\n#endif // __ANDROID__\n\n    static_assert(DRAWS_TO_DISPATCH % (CHECK_MASK + 1) == 0);\n',
      '    static constexpr u32 DRAWS_TO_DISPATCH = 512;\n    const u32 CHECK_MASK = ::Eden::Performance::dispatch_mask.load(std::memory_order_relaxed);\n\n'),
-    # Where the ~4 us a draw spends goes: six phases under one running clock, each Mark taking the
-    # gap since the previous one so they do not overlap. The Timer still wraps the whole function,
-    # so a draw that returns early is charged for its unmarked tail and the sum of the six falls
-    # short by that amount plus two clock reads per phase. control/scheduler.cpp aside, this is the
-    # only place the dispatch's time can be spent - so its six numbers should add up to it.
-    ('''    FlushWork();
-    gpu_memory->FlushCaching();
-
-    GraphicsPipeline* const pipeline{pipeline_cache.CurrentGraphicsPipeline()};
-    if (!pipeline) {
-        return;
-    }
-    std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};
-    // update engine as channel may be different.
-    pipeline->SetEngine(maxwell3d, gpu_memory);
-    if (!pipeline->Configure(is_indexed))
-        return;
-
-    UpdateDynamicStates();
-
-    query_cache.NotifySegment(true);
-    HandleTransformFeedback();
-    query_cache.CounterEnable(VideoCommon::QueryType::ZPassPixelCount64, maxwell3d->regs.zpass_pixel_count_enable);
-    draw_func();''',
-     '''    const ::Eden::Performance::Timer rasterizer_draw_timer(::Eden::Performance::rasterizer_draw);
-    auto phase = ::Eden::Performance::MarkStart();
-    FlushWork();
-    gpu_memory->FlushCaching();
-    ::Eden::Performance::Mark(::Eden::Performance::draw_flush, phase);
-
-    GraphicsPipeline* const pipeline{pipeline_cache.CurrentGraphicsPipeline()};
-    ::Eden::Performance::Mark(::Eden::Performance::draw_pipeline, phase);
-    if (!pipeline) {
-        return;
-    }
-    std::scoped_lock lock{buffer_cache.mutex, texture_cache.mutex};
-    // update engine as channel may be different.
-    pipeline->SetEngine(maxwell3d, gpu_memory);
-    // Waiting for both cache mutexes. SetEngine between them and here is two pointer assignments,
-    // and the hold itself carries on through what follows: the phases below measure it.
-    ::Eden::Performance::Mark(::Eden::Performance::draw_lock_wait, phase);
-    if (!pipeline->Configure(is_indexed))
-        return;
-    ::Eden::Performance::Mark(::Eden::Performance::draw_config, phase);
-
-    UpdateDynamicStates();
-
-    query_cache.NotifySegment(true);
-    HandleTransformFeedback();
-    query_cache.CounterEnable(VideoCommon::QueryType::ZPassPixelCount64, maxwell3d->regs.zpass_pixel_count_enable);
-    ::Eden::Performance::Mark(::Eden::Performance::draw_state, phase);
-    draw_func();
-    ::Eden::Performance::Mark(::Eden::Performance::draw_record, phase);'''),
+    # Per-draw count for the GPU-thread report (dispatch time per draw).
+    ('    FlushWork();\n    gpu_memory->FlushCaching();\n\n    GraphicsPipeline* const pipeline{pipeline_cache.CurrentGraphicsPipeline()};',
+     '    ::Eden::Performance::rasterizer_draw.calls.fetch_add(1, std::memory_order_relaxed);\n    FlushWork();\n    gpu_memory->FlushCaching();\n\n    GraphicsPipeline* const pipeline{pipeline_cache.CurrentGraphicsPipeline()};'),
     # A forced release blocks the GPU thread until the fence thread has retired
     # every older fence. Time only that producer-side drain.
     ('    fence_manager.WaitPendingFences(force);',
@@ -723,19 +673,7 @@ gc_setup = '''    const auto ReclaimedBytes = [&](const ImageBase& image) {
 for old, new in [
     ('    const auto Cleanup = [this, &num_iterations, &high_priority_mode, &aggressive_mode]',
      gc_setup + '\n    const auto Cleanup = [&, this]'),
-    ('        if (must_download) {', '        if (must_download && !TakePrefetched(image_id, image)) {'),
-    # Time the per-image drain Cleanup still takes for an image the prefetch could not batch.
-    # One GPU pipeline wait per eviction, against one wait for a whole batch in the batched path:
-    # this is the stall the prefetch exists to remove, so keep it visible.
-    ('            image.DownloadMemory(map, copies);\n            runtime.Finish();\n'
-     '            SwizzleImage(*gpu_memory, image.gpu_addr, image.info, copies, map.mapped_span, swizzle_data_buffer);',
-     '            image.DownloadMemory(map, copies);\n'
-     '            {\n'
-     '                const ::Eden::Performance::Timer drain_timer(\n'
-     '                    ::Eden::Performance::gc_unbatched_drain, 1);\n'
-     '                runtime.Finish();\n'
-     '            }\n'
-     '            SwizzleImage(*gpu_memory, image.gpu_addr, image.info, copies, map.mapped_span, swizzle_data_buffer);'),
+    ('        if (must_download) {', '        if (must_download && !UsePrefetched(image_id, image)) {'),
     ('(!high_priority_mode && must_download)) {', '(!DirtyEvictions() && must_download)) {'),
     ('    Configure(false);', '    Configure(false);\n    PrefetchDownloads();'),
     ('        Configure(true);', '        Configure(true);\n        PrefetchDownloads();'),
@@ -784,115 +722,14 @@ adapt('src/video_core/texture_cache/texture_cache.h',
      'const s64 min_vacancy_expected =\n            ((std::is_same_v<Runtime, Vulkan::TextureCacheRuntime> ? 4 : 6) * mem_threshold) / 10;'),
 ] + texture_costs)
 
-# The four calls inside bind_geometry and the three inside bind_update. They sit in buffer_cache.h
-# rather than in Configure, and both spend their time in SynchronizeBuffer's page walk over the
-# memory tracker - once for the index buffer, once per enabled vertex buffer, once per per-stage
-# segment, every draw, dirty or not. Which of the seven that is cannot be decided by reading it:
-# the texture-buffer loop looked like the cost of bind and measured 2.8%.
-adapt('src/video_core/buffer_cache/buffer_cache.h',
-      'vulkan-cache/video_core/buffer_cache/buffer_cache.h', [
-    ('#include "video_core/buffer_cache/buffer_cache_base.h"',
-     '#include "video_core/buffer_cache/buffer_cache_base.h"\n#include "performance.h"'),
-    ('void BufferCache<P>::BindHostGeometryBuffers(bool is_indexed) {',
-     'void BufferCache<P>::BindHostGeometryBuffers(bool is_indexed) {\n'
-     '    long long since_geo = ::Eden::Performance::MarkStart();'),
-    ('    BindHostVertexBuffers();\n'
-     '    BindHostTransformFeedbackBuffers();\n'
-     '    if (current_draw_indirect) {\n'
-     '        BindHostDrawIndirectBuffers();\n'
-     '    }\n'
-     '}',
-     '    ::Eden::Performance::Mark(::Eden::Performance::geo_index, since_geo);\n'
-     '    BindHostVertexBuffers();\n'
-     '    ::Eden::Performance::Mark(::Eden::Performance::geo_vertex, since_geo);\n'
-     '    BindHostTransformFeedbackBuffers();\n'
-     '    ::Eden::Performance::Mark(::Eden::Performance::geo_xf, since_geo);\n'
-     '    if (current_draw_indirect) {\n'
-     '        BindHostDrawIndirectBuffers();\n'
-     '    }\n'
-     '    ::Eden::Performance::Mark(::Eden::Performance::geo_indirect, since_geo);\n'
-     '}'),
-    ('void BufferCache<P>::DoUpdateGraphicsBuffers(bool is_indexed) {',
-     'void BufferCache<P>::DoUpdateGraphicsBuffers(bool is_indexed) {\n'
-     '    long long since_upd = ::Eden::Performance::MarkStart();'),
-    ('        UpdateTransformFeedbackBuffers();\n'
-     '        for (size_t stage = 0; stage < NUM_STAGES; ++stage) {\n'
-     '            UpdateUniformBuffers(stage);\n'
-     '            UpdateStorageBuffers(stage);\n'
-     '            UpdateTextureBuffers(stage);\n'
-     '        }\n'
-     '        if (current_draw_indirect) {\n'
-     '            UpdateDrawIndirect();\n'
-     '        }',
-     '        UpdateTransformFeedbackBuffers();\n'
-     '        ::Eden::Performance::Mark(::Eden::Performance::upd_state, since_upd);\n'
-     '        for (size_t stage = 0; stage < NUM_STAGES; ++stage) {\n'
-     '            UpdateUniformBuffers(stage);\n'
-     '            UpdateStorageBuffers(stage);\n'
-     '            UpdateTextureBuffers(stage);\n'
-     '        }\n'
-     '        ::Eden::Performance::Mark(::Eden::Performance::upd_stage, since_upd);\n'
-     '        if (current_draw_indirect) {\n'
-     '            UpdateDrawIndirect();\n'
-     '        }\n'
-     '        ::Eden::Performance::Mark(::Eden::Performance::upd_indirect, since_upd);'),
-])
-
 # These costs sit outside vkCreateGraphicsPipelines: guest shader translation,
 # worker readiness, and background serialization can block different threads.
-# The six phases inside Configure. draw_config is all of Configure but SetEngine's two pointer
-# assignments, and ConfigureImpl is ~210 lines; without these the 2.78 us a draw spends
-# configuring arrives as one number with nothing to aim at. One running clock, marked at the
-# boundaries the source already has.
-configure_phases = [
-    ('bool GraphicsPipeline::ConfigureImpl(bool is_indexed) {',
-     'bool GraphicsPipeline::ConfigureImpl(bool is_indexed) {\n'
-     '    long long since = ::Eden::Performance::MarkStart();'),
-    ('    buffer_cache.SetUniformBuffersState(enabled_uniform_buffer_masks, &uniform_buffer_sizes);',
-     '    buffer_cache.SetUniformBuffersState(enabled_uniform_buffer_masks, &uniform_buffer_sizes);\n'
-     '    // Sampler and image tables synced, uniform-buffer state set.\n'
-     '    ::Eden::Performance::Mark(::Eden::Performance::cfg_sync, since);'),
-    ('    texture_cache.FillImageViews(std::span(views.data(), views.size()), false, Spec::has_images);',
-     '    texture_cache.FillImageViews(std::span(views.data(), views.size()), false, Spec::has_images);\n'
-     '    // Every texture handle read out of guest memory, every sampler and view filled.\n'
-     '    ::Eden::Performance::Mark(::Eden::Performance::cfg_read, since);\n'
-     '    long long since_bind = ::Eden::Performance::MarkStart();'),
-    ('    if (regs.transform_feedback_enabled != 0) {',
-     '    // The texture-buffer loop over every enabled stage.\n'
-     '    ::Eden::Performance::Mark(::Eden::Performance::bind_tbo, since_bind);\n'
-     '    if (regs.transform_feedback_enabled != 0) {'),
-    ('    buffer_cache.UpdateGraphicsBuffers(is_indexed);',
-     '    buffer_cache.UpdateGraphicsBuffers(is_indexed);\n'
-     '    // Index, vertex, transform-feedback and per-stage buffer updates done.\n'
-     '    ::Eden::Performance::Mark(::Eden::Performance::bind_update, since_bind);'),
-    ('    buffer_cache.BindHostGeometryBuffers(is_indexed);',
-     '    buffer_cache.BindHostGeometryBuffers(is_indexed);\n'
-     '    // Storage, texture and geometry buffers bound.\n'
-     '    ::Eden::Performance::Mark(::Eden::Performance::bind_geometry, since_bind);\n'
-     '    ::Eden::Performance::Mark(::Eden::Performance::cfg_bind, since);'),
-    ('    texture_cache.UpdateRenderTargets(false);',
-     '    // Descriptor queue acquired, image descriptors pushed, uploads barriered.\n'
-     '    ::Eden::Performance::Mark(::Eden::Performance::cfg_desc, since);\n'
-     '    texture_cache.UpdateRenderTargets(false);'),
-    ('    if (IsBuilt() && !pipeline) {',
-     '    // Render targets current, feedback loops checked.\n'
-     '    ::Eden::Performance::Mark(::Eden::Performance::cfg_rt, since);\n'
-     '    if (IsBuilt() && !pipeline) {'),
-    ('    return ConfigureDraw(rescaling, render_area);',
-     '    // Compare the descriptor payload against last draw\'s and record the bindings.\n'
-     '    const bool configured = ConfigureDraw(rescaling, render_area);\n'
-     '    ::Eden::Performance::Mark(::Eden::Performance::cfg_draw, since);\n'
-     '    return configured;'),
-]
 for name in ('vk_graphics_pipeline', 'vk_compute_pipeline'):
-    anchors = [
+    adapt(f'src/video_core/renderer_vulkan/{name}.cpp', name + '_cost.cpp', [
         ('#include <algorithm>', '#include <algorithm>\n#include "performance.h"'),
         ('            std::unique_lock lock{build_mutex};',
          '            auto timer = Eden::Performance::VulkanTimer(16);\n            std::unique_lock lock{build_mutex};'),
-    ]
-    if name == 'vk_graphics_pipeline':
-        anchors += configure_phases
-    adapt(f'src/video_core/renderer_vulkan/{name}.cpp', name + '_cost.cpp', anchors)
+    ])
 shader_costs = [
     ('#include <algorithm>', '#include <algorithm>\n#include <cstdio>\n#include <unordered_set>\n'
      '#include "performance.h"\n#include "dev_vulkan.h"\n#include "diagnostics.h"'),
@@ -1157,39 +994,6 @@ adapt('src/video_core/renderer_vulkan/present/frame_gen.cpp', 'vulkan_frame_gen.
                      ("generating " + std::to_string(plan.generations) +
                       " extra frame(s) per guest frame").c_str());
     }"""),
-])
-# Split the dispatch into its three phases (Tegra::Control::Scheduler::Push): the channel lock,
-# queueing the submit list, and executing the guest's methods. The dispatch timer wraps the whole
-# call from gpu_thread.cpp, so these say which of the three it is spent in.
-adapt('src/video_core/control/scheduler.cpp', 'control_scheduler.cpp', [
-    ('#include <memory>', '#include <memory>\n#include "performance.h"'),
-    ('        std::unique_lock lk(scheduling_guard);\n'
-     '        auto it = channels.find(channel);\n'
-     '        ASSERT(it != channels.end());\n'
-     '        channel_state = it->second;\n'
-     '        gpu.BindChannel(channel_state->bind_id);\n'
-     '    }\n'
-     '    // Process commands outside the lock to reduce contention.\n'
-     '    // Multiple channels can prepare their commands in parallel.\n'
-     '    channel_state->payload->dma_pusher.Push(std::move(entries));\n'
-     '    channel_state->payload->dma_pusher.DispatchCalls();',
-     '        const ::Eden::Performance::Timer sched_lock_timer(::Eden::Performance::gpu_sched_lock);\n'
-     '        std::unique_lock lk(scheduling_guard);\n'
-     '        auto it = channels.find(channel);\n'
-     '        ASSERT(it != channels.end());\n'
-     '        channel_state = it->second;\n'
-     '        gpu.BindChannel(channel_state->bind_id);\n'
-     '    }\n'
-     '    // Process commands outside the lock to reduce contention.\n'
-     '    // Multiple channels can prepare their commands in parallel.\n'
-     '    {\n'
-     '        const ::Eden::Performance::Timer dma_push_timer(::Eden::Performance::gpu_dma_push);\n'
-     '        channel_state->payload->dma_pusher.Push(std::move(entries));\n'
-     '    }\n'
-     '    {\n'
-     '        const ::Eden::Performance::Timer dma_dispatch_timer(::Eden::Performance::gpu_dma_dispatch);\n'
-     '        channel_state->payload->dma_pusher.DispatchCalls();\n'
-     '    }'),
 ])
 shader_header = '#pragma once\n#include <cstdint>\n'
 for stage in ('vert', 'frag'):
