@@ -1,0 +1,2830 @@
+{
+  "textures": [
+    {
+      "group": "ResidentMenu",
+      "name": "RdtIcoNews_00_Home^s",
+      "width": 20,
+      "height": 40,
+      "format": "0x1d01",
+      "components": "0x2010101",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "701d3092aa6065d5ceb14e7140547eb52358e9d4a737701acbb09da59045f470",
+      "decoded": "work/fidelity-decoded-textures/ResidentMenu/RdtIcoNews_00_Home_s.png",
+      "rgba_sha256": "4611d50ce9cfbc9a50888ba40f6fc1070a450c10e40354652bd9820b63be6873",
+      "png_sha256": "0ca1ce9aff5c9ec16fb33a63e0de9f73957c44e3951c157f8ae6f4bda48ab98f",
+      "nonempty": true,
+      "asset": "assets/art/native/ResidentMenu-RdtIcoNews_00_Home_s.png"
+    },
+    {
+      "group": "ResidentMenu",
+      "name": "RdtIcoNews_01_Home^s",
+      "width": 8,
+      "height": 6,
+      "format": "0x1d01",
+      "components": "0x2010101",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "701d3092aa6065d5ceb14e7140547eb52358e9d4a737701acbb09da59045f470",
+      "decoded": "work/fidelity-decoded-textures/ResidentMenu/RdtIcoNews_01_Home_s.png",
+      "rgba_sha256": "966ba735e1f7598168bbde737443589f9c69b0ee89f2b8379ba34e424c592938",
+      "png_sha256": "7ceb5f6edfcc621bcd85f4cf431ffdc2416c77c7b2dc6c646e433320968a2f80",
+      "nonempty": true,
+      "asset": "assets/art/native/ResidentMenu-RdtIcoNews_01_Home_s.png"
+    },
+    {
+      "group": "ResidentMenu",
+      "name": "RdtIcoShop^s",
+      "width": 20,
+      "height": 40,
+      "format": "0x1d01",
+      "components": "0x2010101",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "701d3092aa6065d5ceb14e7140547eb52358e9d4a737701acbb09da59045f470",
+      "decoded": "work/fidelity-decoded-textures/ResidentMenu/RdtIcoShop_s.png",
+      "rgba_sha256": "658e77658b7ae3881faa6b0275aa2ed3abf172410b251292e9d2dab14c31c22a",
+      "png_sha256": "7fee5604a970b7e25f5dddc50e406406a8786c47035e012bb01b29f44420acd8",
+      "nonempty": true,
+      "asset": "assets/art/native/ResidentMenu-RdtIcoShop_s.png"
+    },
+    {
+      "group": "ResidentMenu",
+      "name": "RdtIcoSet^s",
+      "width": 20,
+      "height": 20,
+      "format": "0x1d01",
+      "components": "0x2010101",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "701d3092aa6065d5ceb14e7140547eb52358e9d4a737701acbb09da59045f470",
+      "decoded": "work/fidelity-decoded-textures/ResidentMenu/RdtIcoSet_s.png",
+      "rgba_sha256": "1ed2016c84997deb98985e7e03356a10274fb9b9508c9e6b54fa875f871b46a0",
+      "png_sha256": "e2368ec89de5ddf08c32a57b2a09224ac27c15fc4b933c7cd94d4efe7421e04c",
+      "nonempty": true,
+      "asset": "assets/art/native/ResidentMenu-RdtIcoSet_s.png"
+    },
+    {
+      "group": "ResidentMenu",
+      "name": "RdtIcoPwrForm^s",
+      "width": 20,
+      "height": 40,
+      "format": "0x1d01",
+      "components": "0x2010101",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "701d3092aa6065d5ceb14e7140547eb52358e9d4a737701acbb09da59045f470",
+      "decoded": "work/fidelity-decoded-textures/ResidentMenu/RdtIcoPwrForm_s.png",
+      "rgba_sha256": "83cb68ae4877658631b1679d14016bb333b5b6bf5e383715a17fbc74de215045",
+      "png_sha256": "e55b813587ce8ade6fa06e063d1603eb80fed4c4e4001c10db22a0d61bff2d9b",
+      "nonempty": true,
+      "asset": "assets/art/native/ResidentMenu-RdtIcoPwrForm_s.png"
+    },
+    {
+      "group": "ResidentMenu",
+      "name": "RdtIcoPvr_00^s",
+      "width": 52,
+      "height": 45,
+      "format": "0x1d01",
+      "components": "0x2010101",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "701d3092aa6065d5ceb14e7140547eb52358e9d4a737701acbb09da59045f470",
+      "decoded": "work/fidelity-decoded-textures/ResidentMenu/RdtIcoPvr_00_s.png",
+      "rgba_sha256": "065eadaf00c5ea1b09022ca91367f86e402ae09abc0fd4c0331a892912110da1",
+      "png_sha256": "7336d751c9e7443ce597ed2fa3ba95136abfa259031e3461c9f2c2ffbe99f295",
+      "nonempty": true,
+      "asset": "assets/art/native/ResidentMenu-RdtIcoPvr_00_s.png"
+    },
+    {
+      "group": "ResidentMenu",
+      "name": "RdtIcoPvr_01^s",
+      "width": 21,
+      "height": 29,
+      "format": "0x1d01",
+      "components": "0x2010101",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "701d3092aa6065d5ceb14e7140547eb52358e9d4a737701acbb09da59045f470",
+      "decoded": "work/fidelity-decoded-textures/ResidentMenu/RdtIcoPvr_01_s.png",
+      "rgba_sha256": "9e08dca4d9ba1bb3d3a20f7e1dab78b9740ee08448ece39c5b776ae71fddd412",
+      "png_sha256": "43ab53b8db7aec2e45a73e95964a41737e1b8dab39c9745b0b7d9b2a5a9c5c13",
+      "nonempty": true,
+      "asset": "assets/art/native/ResidentMenu-RdtIcoPvr_01_s.png"
+    },
+    {
+      "group": "ResidentMenu",
+      "name": "RdtIcoCtrl_00^s",
+      "width": 50,
+      "height": 50,
+      "format": "0x1d01",
+      "components": "0x2010101",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "701d3092aa6065d5ceb14e7140547eb52358e9d4a737701acbb09da59045f470",
+      "decoded": "work/fidelity-decoded-textures/ResidentMenu/RdtIcoCtrl_00_s.png",
+      "rgba_sha256": "11a9b2925ee1e1b4c541c0ed45b21d084cbd50889310f5cac0535d54f9a71f55",
+      "png_sha256": "0d8d68bab1b63c248fffcdf6b5bb942322dea8e89f174f8b313f6830de035ad2",
+      "nonempty": true,
+      "asset": "assets/art/native/ResidentMenu-RdtIcoCtrl_00_s.png"
+    },
+    {
+      "group": "ResidentMenu",
+      "name": "RdtIcoCtrl_01^s",
+      "width": 10,
+      "height": 10,
+      "format": "0x1d01",
+      "components": "0x2010101",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "701d3092aa6065d5ceb14e7140547eb52358e9d4a737701acbb09da59045f470",
+      "decoded": "work/fidelity-decoded-textures/ResidentMenu/RdtIcoCtrl_01_s.png",
+      "rgba_sha256": "f6804b28185acddc64e16629ade355516b8b7f67d8b66fafd2ef0c2c72cff5d0",
+      "png_sha256": "e38d2de9ca0aa9a60552404606cd8f1386f2466689dd68e06289b42c90022ef5",
+      "nonempty": true,
+      "asset": "assets/art/native/ResidentMenu-RdtIcoCtrl_01_s.png"
+    },
+    {
+      "group": "ResidentMenu",
+      "name": "RdtIcoCtrl_02^s",
+      "width": 6,
+      "height": 6,
+      "format": "0x1d01",
+      "components": "0x2010101",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "701d3092aa6065d5ceb14e7140547eb52358e9d4a737701acbb09da59045f470",
+      "decoded": "work/fidelity-decoded-textures/ResidentMenu/RdtIcoCtrl_02_s.png",
+      "rgba_sha256": "6105d1294f1ed8f143fc772236bfa82b4782820eea99fa1316209a682217ba7b",
+      "png_sha256": "6d72986e3b26d4703a949b3997181e9a13d1ec8cff6e7a66a31c4bc24d1691db",
+      "nonempty": true,
+      "asset": "assets/art/native/ResidentMenu-RdtIcoCtrl_02_s.png"
+    },
+    {
+      "group": "ResidentMenu",
+      "name": "EffectLaunch_00^t",
+      "width": 110,
+      "height": 110,
+      "format": "0x1e01",
+      "components": "0x3020202",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "701d3092aa6065d5ceb14e7140547eb52358e9d4a737701acbb09da59045f470",
+      "decoded": "work/fidelity-decoded-textures/ResidentMenu/EffectLaunch_00_t.png",
+      "rgba_sha256": "711135582b58f985d81960163da72252e6888f6f80b2e4c1101869a9ed2a42f4",
+      "png_sha256": "536e1086b5cf6e0c3d3a7dd469f13a68de7ee9453490828f478cfaa830405df7",
+      "nonempty": true,
+      "asset": "assets/art/native/ResidentMenu-EffectLaunch_00_t.png"
+    },
+    {
+      "group": "ResidentMenu",
+      "name": "CursorEff_08^w",
+      "width": 64,
+      "height": 64,
+      "format": "0x2d01",
+      "components": "0x5040302",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "701d3092aa6065d5ceb14e7140547eb52358e9d4a737701acbb09da59045f470",
+      "decoded": "work/fidelity-decoded-textures/ResidentMenu/CursorEff_08_w.png",
+      "rgba_sha256": "6d6426812aea8e31899a8810b22f29ecb94de538d3b9baa1e2f4bdd8ce289d32",
+      "png_sha256": "0bb456d0fc7bc627f99b7bf2521f0a8cd4d6bdf2be7b74555a86be1a3e762428",
+      "nonempty": false,
+      "asset": "assets/art/native/ResidentMenu-CursorEff_08_w.png"
+    },
+    {
+      "group": "common",
+      "name": "waiticon_00^d",
+      "width": 42,
+      "height": 42,
+      "format": "0x201",
+      "components": "0x2010101",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/common.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "96d2f3d9ff3241f0a47151dd7368f1ae5c4c8b3c8661c0d302743dde03bfc8ca",
+      "decoded": "work/fidelity-decoded-textures/common/waiticon_00_d.png",
+      "rgba_sha256": "9989766ef075ba93501891356d0b40c640dadf9ded7e59a8144f7c20ccdec964",
+      "png_sha256": "c194cd29bd27375ca8e5945fd87f4a514b861d3f0ac6a7b10620f4103ce8c0d2",
+      "nonempty": true,
+      "asset": "assets/art/native/common-waiticon_00_d.png"
+    },
+    {
+      "group": "common",
+      "name": "waiticon_01^d",
+      "width": 20,
+      "height": 20,
+      "format": "0x201",
+      "components": "0x2010101",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/common.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "96d2f3d9ff3241f0a47151dd7368f1ae5c4c8b3c8661c0d302743dde03bfc8ca",
+      "decoded": "work/fidelity-decoded-textures/common/waiticon_01_d.png",
+      "rgba_sha256": "5ea9413deba70fac39b3707e8e8ac335179acb13dbbb460197294b4bd1c6747f",
+      "png_sha256": "8f00777fdbc7579cadac3adc5a9171fe4ecb8198f2e93b954a494cfe050c5cef",
+      "nonempty": true,
+      "asset": "assets/art/native/common-waiticon_01_d.png"
+    },
+    {
+      "group": "common",
+      "name": "IcoBtnPlusRev_24^s",
+      "width": 24,
+      "height": 24,
+      "format": "0x1d01",
+      "components": "0x2010101",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/common.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "96d2f3d9ff3241f0a47151dd7368f1ae5c4c8b3c8661c0d302743dde03bfc8ca",
+      "decoded": "work/fidelity-decoded-textures/common/IcoBtnPlusRev_24_s.png",
+      "rgba_sha256": "e83f395994a4447ee1d23f95e589a379b97afffe5717b604a73ceb2fc8cb95e8",
+      "png_sha256": "f65573a5e116621edacbd42900a9d7f1ec320cbef95846042f42f63dbb197ac9",
+      "nonempty": true,
+      "asset": "assets/art/native/common-IcoBtnPlusRev_24_s.png"
+    },
+    {
+      "group": "common",
+      "name": "IcoCheck_72^t",
+      "width": 72,
+      "height": 72,
+      "format": "0x1e01",
+      "components": "0x3020202",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/common.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "96d2f3d9ff3241f0a47151dd7368f1ae5c4c8b3c8661c0d302743dde03bfc8ca",
+      "decoded": "work/fidelity-decoded-textures/common/IcoCheck_72_t.png",
+      "rgba_sha256": "e71a1337b99d96c8c4390f6c93b2dfef0d38c637cdb2ddbef63db1c3404a5ea5",
+      "png_sha256": "8e8ed793dcdac667733197dce527bce6a0c3a2b8306b9aac35602c24ff88ed12",
+      "nonempty": true,
+      "asset": "assets/art/native/common-IcoCheck_72_t.png"
+    },
+    {
+      "group": "Flaunch",
+      "name": "BalloonTip^t",
+      "width": 11,
+      "height": 13,
+      "format": "0x1e01",
+      "components": "0x3020202",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/Flaunch.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "263c2bc7eefe679c526cf347ebc684fe03050a430208e755076ced4cef2fab27",
+      "decoded": "work/fidelity-decoded-textures/Flaunch/BalloonTip_t.png",
+      "rgba_sha256": "85786c091f4c4862d43553543aed4ae2432350d1d31d6e0ba098d6df8a2ac401",
+      "png_sha256": "9e2d91e7f084052075e4f1f88af978b443c87c102fe453b6570af217412591bb",
+      "nonempty": true,
+      "asset": "assets/art/native/Flaunch-BalloonTip_t.png"
+    },
+    {
+      "group": "Flaunch",
+      "name": "BalloonTipShdw^t",
+      "width": 12,
+      "height": 20,
+      "format": "0x1e01",
+      "components": "0x3020202",
+      "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/Flaunch.szs_unpacked/timg/__Combined.bntx",
+      "source_sha256": "263c2bc7eefe679c526cf347ebc684fe03050a430208e755076ced4cef2fab27",
+      "decoded": "work/fidelity-decoded-textures/Flaunch/BalloonTipShdw_t.png",
+      "rgba_sha256": "d5eb32d65587319c95523c0ce3699ce213742ea77b54a3488c4ae09c88e05c23",
+      "png_sha256": "184e19aa3cd2df0ad6f62b06f305b750885ef778743b81bef627fb6de1c11ab5",
+      "nonempty": true,
+      "asset": "assets/art/native/Flaunch-BalloonTipShdw_t.png"
+    }
+  ],
+  "profiles": [
+    {
+      "kind": "chara",
+      "index": 0,
+      "name": "00000001",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000001.szs",
+      "source_sha256": "f0e111cd219738826fa2a301614503071c1779eea060af77a1de94e1244d92c1",
+      "rgba_sha256": "0f925f1f006efdda2cf4161df6f68e4e070aca09561146478aa9b1f6a63475cd",
+      "png": "work/fidelity-avatars/chara-00000001.png",
+      "asset": "assets/art/native/profile-00000001.png"
+    },
+    {
+      "kind": "chara",
+      "index": 1,
+      "name": "00000002",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000002.szs",
+      "source_sha256": "e0fb72066f7e91c7a9ed559a0668dbc0365c43a51687069427bc44295e4465b9",
+      "rgba_sha256": "73da26be1c7a23a040ac67e6b8e4ab3ffa80fd36c4fd5abde45096d75b0b5bf3",
+      "png": "work/fidelity-avatars/chara-00000002.png",
+      "asset": "assets/art/native/profile-00000002.png"
+    },
+    {
+      "kind": "chara",
+      "index": 2,
+      "name": "00000003",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000003.szs",
+      "source_sha256": "4e96467881c49784fa9d5e98cc2d1bc4ec9cd1bc3016cea422bfe72e556080f3",
+      "rgba_sha256": "562e26f807b45fb0a0b4513b45035a59d0c19b76f25e642f614e71a2f00c2d56",
+      "png": "work/fidelity-avatars/chara-00000003.png",
+      "asset": "assets/art/native/profile-00000003.png"
+    },
+    {
+      "kind": "chara",
+      "index": 3,
+      "name": "00000004",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000004.szs",
+      "source_sha256": "e176c700d3402ab09818ad9ef5f35aca007c834791521e17b23c5de0ba41246f",
+      "rgba_sha256": "7d5ce746033b2c9548f35b423320e6a12cc4073b412cdef4e6b7ffd6e036f50b",
+      "png": "work/fidelity-avatars/chara-00000004.png",
+      "asset": "assets/art/native/profile-00000004.png"
+    },
+    {
+      "kind": "chara",
+      "index": 4,
+      "name": "00000005",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000005.szs",
+      "source_sha256": "a00410d78966c2e23172f6f8d59691caee8a181969988aa8a96daeed8f33b4df",
+      "rgba_sha256": "ed8da4d222cf9c6f7fdd9cf9f05221a7bba17f66c2cd27754d6a880456ddb406",
+      "png": "work/fidelity-avatars/chara-00000005.png",
+      "asset": "assets/art/native/profile-00000005.png"
+    },
+    {
+      "kind": "chara",
+      "index": 5,
+      "name": "00000006",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000006.szs",
+      "source_sha256": "b017c60084ac4d559df1d101068e436c33688a5c12ac3140df5b6f1f30cd4e5e",
+      "rgba_sha256": "7510d1a4810d2625f838363e2a31c5596af5f65b0b92555a52186a4beae9bcdc",
+      "png": "work/fidelity-avatars/chara-00000006.png",
+      "asset": "assets/art/native/profile-00000006.png"
+    },
+    {
+      "kind": "chara",
+      "index": 6,
+      "name": "00000007",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000007.szs",
+      "source_sha256": "72fc3e1373ac01279598a264f888df405c24dba5923873e27338f4a7d24d8725",
+      "rgba_sha256": "8a2563b544019b0593cb2f8d3ca06df8baec46813955fad3f1f3aa169d205416",
+      "png": "work/fidelity-avatars/chara-00000007.png",
+      "asset": "assets/art/native/profile-00000007.png"
+    },
+    {
+      "kind": "chara",
+      "index": 7,
+      "name": "00000008",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000008.szs",
+      "source_sha256": "8229194bb22fd7ab51ed8b2557f681764784c8a2d8ab4ca49372c87b9365944b",
+      "rgba_sha256": "37ebcedd8731b1ad2a510f255ede4e9a541b06b529f66192d16e5682780d2bfc",
+      "png": "work/fidelity-avatars/chara-00000008.png",
+      "asset": "assets/art/native/profile-00000008.png"
+    },
+    {
+      "kind": "chara",
+      "index": 8,
+      "name": "00000009",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000009.szs",
+      "source_sha256": "4e1cbc870103ad52b7397a4350914419754d5ec23f4eacbe44ec9cd11a83e7e8",
+      "rgba_sha256": "6b5c0f76d00e7f8559f5ddd9b460e9512613658e83307e1afbda771dafd59567",
+      "png": "work/fidelity-avatars/chara-00000009.png",
+      "asset": "assets/art/native/profile-00000009.png"
+    },
+    {
+      "kind": "chara",
+      "index": 9,
+      "name": "0000000A",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000000A.szs",
+      "source_sha256": "9eb94a519a649707eb580f4c5ac26e50c86ee4f8210f821fa70846eabeb1213d",
+      "rgba_sha256": "9a9d97d0d354fbc704d8a870baf275b3f8516e5e0acccfcae581ea27d41b8bf1",
+      "png": "work/fidelity-avatars/chara-0000000A.png",
+      "asset": "assets/art/native/profile-0000000A.png"
+    },
+    {
+      "kind": "chara",
+      "index": 10,
+      "name": "0000000B",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000000B.szs",
+      "source_sha256": "62f4e5ac9e35d8408472700ce7d0c0fe289907327dbef5dd75156d063a840156",
+      "rgba_sha256": "664d2821319e1984dd5649611676c16de2976da0d819d3a3eb15594d61ffb24f",
+      "png": "work/fidelity-avatars/chara-0000000B.png",
+      "asset": "assets/art/native/profile-0000000B.png"
+    },
+    {
+      "kind": "chara",
+      "index": 11,
+      "name": "0000000C",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000000C.szs",
+      "source_sha256": "cd2338f537fac79baea3b8331b638a7f5bf2972d5f7b9b7ed07486353204df10",
+      "rgba_sha256": "50debeb26f63454b16f87693dfd516f1360ff8c194ba1dbb2bcda47e69cc93c8",
+      "png": "work/fidelity-avatars/chara-0000000C.png",
+      "asset": "assets/art/native/profile-0000000C.png"
+    },
+    {
+      "kind": "chara",
+      "index": 12,
+      "name": "0000000D",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000000D.szs",
+      "source_sha256": "4e29f09f64fba701c1a336b261511e70333d5c1c0c9ecd048a834f88487448c1",
+      "rgba_sha256": "271606fcda07d29cfae3e8d5eb73e20e5776757865a50db8df4b18cc4685bf2f",
+      "png": "work/fidelity-avatars/chara-0000000D.png",
+      "asset": "assets/art/native/profile-0000000D.png"
+    },
+    {
+      "kind": "chara",
+      "index": 13,
+      "name": "0000000E",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000000E.szs",
+      "source_sha256": "a074897e5a22fd16ee58186290850258bc386c362c4493ef921b82962d2d8f25",
+      "rgba_sha256": "32a61e34322a585bd0ca434c79985eeda39fb448b5036543d105d30632afacd4",
+      "png": "work/fidelity-avatars/chara-0000000E.png",
+      "asset": "assets/art/native/profile-0000000E.png"
+    },
+    {
+      "kind": "chara",
+      "index": 14,
+      "name": "0000000F",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000000F.szs",
+      "source_sha256": "ed53e18b6dd983aec317e8fa9cc0424ddf595d30e2ea8d49bd3bde252adc3b04",
+      "rgba_sha256": "d354e3e6cc77e50b1473c49f2a63bf009c4188f3a99627220cbedce66f6ce22e",
+      "png": "work/fidelity-avatars/chara-0000000F.png",
+      "asset": "assets/art/native/profile-0000000F.png"
+    },
+    {
+      "kind": "chara",
+      "index": 15,
+      "name": "00000010",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000010.szs",
+      "source_sha256": "36af0c3cd16388c7ccd2b3958229588bdc444681c1eb8f205f4486044e40e911",
+      "rgba_sha256": "b2c5766a2d6eef1f68e2ca1b1a7a4bf6272b4b8da5a04e9e85fde8ef784744a8",
+      "png": "work/fidelity-avatars/chara-00000010.png",
+      "asset": "assets/art/native/profile-00000010.png"
+    },
+    {
+      "kind": "chara",
+      "index": 16,
+      "name": "00000011",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000011.szs",
+      "source_sha256": "c562d8e15c63bbaf70d0a2d0d3cf6a4e8d7fc51a2f007b45c68114d6a29f6c1b",
+      "rgba_sha256": "31e974317879fc498925ca24c51670a8e884b138c61bdfda83bc0ead200e6476",
+      "png": "work/fidelity-avatars/chara-00000011.png",
+      "asset": "assets/art/native/profile-00000011.png"
+    },
+    {
+      "kind": "chara",
+      "index": 17,
+      "name": "00000012",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000012.szs",
+      "source_sha256": "d6f85a9ae2c0c590a666c6b504ac740700e900df4d798236c26f67ca3463c7dd",
+      "rgba_sha256": "d93adf375f883e2daef9cebccf297e9cc70ea4f176b78beaab56d5aa5ff59838",
+      "png": "work/fidelity-avatars/chara-00000012.png",
+      "asset": "assets/art/native/profile-00000012.png"
+    },
+    {
+      "kind": "chara",
+      "index": 18,
+      "name": "00000013",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000013.szs",
+      "source_sha256": "f44b4e0806d8a5d8eacc9eb54b2bf3a9b72106331a9a7ec75ddb7a63d840fe93",
+      "rgba_sha256": "1fbeadc8266f4f801c065432f8232fb36f16261f39ebc29549a3473f01be5a3b",
+      "png": "work/fidelity-avatars/chara-00000013.png",
+      "asset": "assets/art/native/profile-00000013.png"
+    },
+    {
+      "kind": "chara",
+      "index": 19,
+      "name": "00000014",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000014.szs",
+      "source_sha256": "652b1901be5456e35301365c2d3d3b3d48cb7140340638f491c9ba71e2d57bb7",
+      "rgba_sha256": "703a05e0ce91799b5818e822d66f39609e1e2b5759b4276bb19398e33bb5ef38",
+      "png": "work/fidelity-avatars/chara-00000014.png",
+      "asset": "assets/art/native/profile-00000014.png"
+    },
+    {
+      "kind": "chara",
+      "index": 20,
+      "name": "00000015",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000015.szs",
+      "source_sha256": "1df8755adc5e95182e4047d419a3f1646acd43769abc12c96b1039b787b7f98d",
+      "rgba_sha256": "2a2f79eb9b05f945e6699400b9693b42d278cb2db1683975fe33ef6aa6977bd8",
+      "png": "work/fidelity-avatars/chara-00000015.png",
+      "asset": "assets/art/native/profile-00000015.png"
+    },
+    {
+      "kind": "chara",
+      "index": 21,
+      "name": "00000016",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000016.szs",
+      "source_sha256": "e51b9978e304f2067a582a17d666e8094bea5c0f6df66f0f82aa56b66c238001",
+      "rgba_sha256": "2b2740557a8b68bd8a3ab87e0ce4386b20743f8d4f7f9ec700ced50f8065bf4d",
+      "png": "work/fidelity-avatars/chara-00000016.png",
+      "asset": "assets/art/native/profile-00000016.png"
+    },
+    {
+      "kind": "chara",
+      "index": 22,
+      "name": "00000017",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000017.szs",
+      "source_sha256": "0649497ee9faa412781ae1d5c2e434ae371b07f1f9ea345bedabaab2710e5b57",
+      "rgba_sha256": "a3eef42c46f4e2ce8dc3d64e77188807e6a39fc5317ed6f421b08b088de04c18",
+      "png": "work/fidelity-avatars/chara-00000017.png",
+      "asset": "assets/art/native/profile-00000017.png"
+    },
+    {
+      "kind": "chara",
+      "index": 23,
+      "name": "00000018",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000018.szs",
+      "source_sha256": "cb7bae407e9ef1c1246439431b211385e0d9e428c5c315d8b0e408a2d3180d7c",
+      "rgba_sha256": "dfb4c8c4c133dfa2b42a406d98725eb7ea42af1693092f60bd6ceed295027e65",
+      "png": "work/fidelity-avatars/chara-00000018.png",
+      "asset": "assets/art/native/profile-00000018.png"
+    },
+    {
+      "kind": "chara",
+      "index": 24,
+      "name": "00000019",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000019.szs",
+      "source_sha256": "2a13f01eb18b36d919c0c193f1c6ed8fa083339be2cea0d5d3efd68723255ae9",
+      "rgba_sha256": "7bca8be1b761ac2ee5f021543cbd5b0be6d596375848eff0a636481d0794d7ba",
+      "png": "work/fidelity-avatars/chara-00000019.png",
+      "asset": "assets/art/native/profile-00000019.png"
+    },
+    {
+      "kind": "chara",
+      "index": 25,
+      "name": "0000001A",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000001A.szs",
+      "source_sha256": "7488ed9d8bc234c7ca889b689f74365ef8df41511e40186c99179501c8626649",
+      "rgba_sha256": "c3c4cbb1584cb905b5408984267519e579afb4219c34c28afe88c1a35840cdaf",
+      "png": "work/fidelity-avatars/chara-0000001A.png",
+      "asset": "assets/art/native/profile-0000001A.png"
+    },
+    {
+      "kind": "chara",
+      "index": 26,
+      "name": "0000001B",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000001B.szs",
+      "source_sha256": "46d3d4fcc8a30e3bc23904bc98612a311ec1e0d004812212b0217bdb10b79c05",
+      "rgba_sha256": "d7510ca571516cf8e8177edad132ae0803e1716f79368d901135ef5bbb13dd42",
+      "png": "work/fidelity-avatars/chara-0000001B.png",
+      "asset": "assets/art/native/profile-0000001B.png"
+    },
+    {
+      "kind": "chara",
+      "index": 27,
+      "name": "0000001C",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000001C.szs",
+      "source_sha256": "3df17ebc4aa75dad1b6ca7b3ba2e7cc84d54f4eee354b04c1743ade6daf720b7",
+      "rgba_sha256": "92bdcdfe67d8f644920052c703207670cdff083a3ef2eadfd40e3d1d6f7131ad",
+      "png": "work/fidelity-avatars/chara-0000001C.png",
+      "asset": "assets/art/native/profile-0000001C.png"
+    },
+    {
+      "kind": "chara",
+      "index": 28,
+      "name": "0000001D",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000001D.szs",
+      "source_sha256": "e3735523ae06cf6e8b197b9f5ce6391528f3a5c6cd80af32d4e5458b562eb78f",
+      "rgba_sha256": "0a77ac18ad7a9e80117b6c8a4b25ef4d2ac665f11c4b26dfb408be1c463c27b3",
+      "png": "work/fidelity-avatars/chara-0000001D.png",
+      "asset": "assets/art/native/profile-0000001D.png"
+    },
+    {
+      "kind": "chara",
+      "index": 29,
+      "name": "0000001E",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000001E.szs",
+      "source_sha256": "303b737569a8ebba501f93d14cac63c5e2127c1bed14191499928a12bcb8c92f",
+      "rgba_sha256": "63f4546d7821fc095ab387759cf58b30ad98e3d3172bb2ccf71f099aebcd746d",
+      "png": "work/fidelity-avatars/chara-0000001E.png",
+      "asset": "assets/art/native/profile-0000001E.png"
+    },
+    {
+      "kind": "chara",
+      "index": 30,
+      "name": "0000001F",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000001F.szs",
+      "source_sha256": "a54b944a7cd420a7c65b1ab9fc3902a8bbd3b1c1a9264096df9601aeb13524ce",
+      "rgba_sha256": "4d7efee5e3b7d539852bfff988b7c1bf1a53c8e87d20875168c865b51c8709b2",
+      "png": "work/fidelity-avatars/chara-0000001F.png",
+      "asset": "assets/art/native/profile-0000001F.png"
+    },
+    {
+      "kind": "chara",
+      "index": 31,
+      "name": "00000020",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000020.szs",
+      "source_sha256": "537131fb16f3c7015d8b8776b0e3a8f04ce6acd3b12d8af1f8e3f2aab2a49d67",
+      "rgba_sha256": "d5baf3217445c5d348de8c8a60b5b6bd653151a8a492d8157867f1f786b602fe",
+      "png": "work/fidelity-avatars/chara-00000020.png",
+      "asset": "assets/art/native/profile-00000020.png"
+    },
+    {
+      "kind": "chara",
+      "index": 32,
+      "name": "00000021",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000021.szs",
+      "source_sha256": "580cd2042c0b13dc21d05422abcd85386c182f2c23146270617b0ca292044975",
+      "rgba_sha256": "619cc9ea5b82d0e2f6608e77c700377a9baa62c678de2d608568cbcd899ef505",
+      "png": "work/fidelity-avatars/chara-00000021.png",
+      "asset": "assets/art/native/profile-00000021.png"
+    },
+    {
+      "kind": "chara",
+      "index": 33,
+      "name": "00000022",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000022.szs",
+      "source_sha256": "54745d76d7a314dc3ed32525243c343683fb6e072f15853afed8994f85b2a0c6",
+      "rgba_sha256": "f9453679d7acae54d3931316f25837525dda6c143344d9a7e5a575beb2bfc4f3",
+      "png": "work/fidelity-avatars/chara-00000022.png",
+      "asset": "assets/art/native/profile-00000022.png"
+    },
+    {
+      "kind": "chara",
+      "index": 34,
+      "name": "00000023",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000023.szs",
+      "source_sha256": "b45a4c4b3e0d2aec947c305c3cade6c6387e19313d04318665249eb3a7d7af5f",
+      "rgba_sha256": "4d345227eb3232558daca6b4f562f27a9258794ba90e34a936eebf5f6de76d58",
+      "png": "work/fidelity-avatars/chara-00000023.png",
+      "asset": "assets/art/native/profile-00000023.png"
+    },
+    {
+      "kind": "chara",
+      "index": 35,
+      "name": "00000024",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000024.szs",
+      "source_sha256": "af3247a4af5dc9613d760f4a6e41140665f582a1e3c80ce583237575736eadd7",
+      "rgba_sha256": "8418c3ccf20ce7eb9d8e327e236bd0b1c4565c273516788c995e7077e8c6f87b",
+      "png": "work/fidelity-avatars/chara-00000024.png",
+      "asset": "assets/art/native/profile-00000024.png"
+    },
+    {
+      "kind": "chara",
+      "index": 36,
+      "name": "00000025",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000025.szs",
+      "source_sha256": "a3b23f30c5ebdd4c93ff839d0a936e380337dffc75d0017a9eb6b6144af79078",
+      "rgba_sha256": "fd35c60db1f73da6f16fa2a1bff4ef54381b065a4a1db305a7d42df66ed132e0",
+      "png": "work/fidelity-avatars/chara-00000025.png",
+      "asset": "assets/art/native/profile-00000025.png"
+    },
+    {
+      "kind": "chara",
+      "index": 37,
+      "name": "00000026",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000026.szs",
+      "source_sha256": "353595936f21452b2646afce9d856c91e2665be4e3dbae9ac34fdd2719ad08fe",
+      "rgba_sha256": "d275c1a55e530d35576faa6d06bba80490e09ae7885ca53cfadb099490fac2f3",
+      "png": "work/fidelity-avatars/chara-00000026.png",
+      "asset": "assets/art/native/profile-00000026.png"
+    },
+    {
+      "kind": "chara",
+      "index": 38,
+      "name": "00000027",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000027.szs",
+      "source_sha256": "a0b87decda240ab23788913727428066002c6bfcce20e9ec2795b96112f1f0a2",
+      "rgba_sha256": "bcb3866d71e93fdda26eee8b9ec4f0804b4cc5bba741bf73c1d2a58278fb2799",
+      "png": "work/fidelity-avatars/chara-00000027.png",
+      "asset": "assets/art/native/profile-00000027.png"
+    },
+    {
+      "kind": "chara",
+      "index": 39,
+      "name": "00000028",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000028.szs",
+      "source_sha256": "a9dbe6de8242b80d36c050a720948b9ad12fc6bfc7c6c50811dce6a7014dbf16",
+      "rgba_sha256": "eb04cdd4c409500e979fadd9bab9e190f691345d111dba9401c2830221e3ccb5",
+      "png": "work/fidelity-avatars/chara-00000028.png",
+      "asset": "assets/art/native/profile-00000028.png"
+    },
+    {
+      "kind": "chara",
+      "index": 40,
+      "name": "00000029",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000029.szs",
+      "source_sha256": "9e14e364f8f958d9dc06a4c70046084805ccfc3458ad4a07a3d1b2a54fb3f488",
+      "rgba_sha256": "0f4c125b44336b2161a2527d541eb9a50550245bff42ee5adc47f11a67e78a47",
+      "png": "work/fidelity-avatars/chara-00000029.png",
+      "asset": "assets/art/native/profile-00000029.png"
+    },
+    {
+      "kind": "chara",
+      "index": 41,
+      "name": "0000002A",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000002A.szs",
+      "source_sha256": "0e58079da8bc0f878b29d06bfa36ccf7ea928c25f3b0d37a2a2d4df8bc0357f0",
+      "rgba_sha256": "675a3619ac0efee68f1151f31a35f3a64876ca8cc1506ae8f10d4fca46d165fe",
+      "png": "work/fidelity-avatars/chara-0000002A.png",
+      "asset": "assets/art/native/profile-0000002A.png"
+    },
+    {
+      "kind": "chara",
+      "index": 42,
+      "name": "0000002B",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000002B.szs",
+      "source_sha256": "d47124ae87dcb21c1377265e6102287de2ed5d39905de1698273528e0c533850",
+      "rgba_sha256": "6cd4d7c248ed728e30bb5f2692a04409d31885f45c78654105e1dfff71396d34",
+      "png": "work/fidelity-avatars/chara-0000002B.png",
+      "asset": "assets/art/native/profile-0000002B.png"
+    },
+    {
+      "kind": "chara",
+      "index": 43,
+      "name": "0000002C",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000002C.szs",
+      "source_sha256": "98f2a0f4355b067b6389bf764ef9d893d5c0589defae3b993f2791ea9f33a35c",
+      "rgba_sha256": "78674ecc2d941bcf06cab5cdaebefda3b2aa0a28afae85f70a642cf5458e1156",
+      "png": "work/fidelity-avatars/chara-0000002C.png",
+      "asset": "assets/art/native/profile-0000002C.png"
+    },
+    {
+      "kind": "chara",
+      "index": 44,
+      "name": "0000002D",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000002D.szs",
+      "source_sha256": "777dcc1792c6ead07d873b45a6b6fb38bccca8883247b58dfbcec2ae1f47e67d",
+      "rgba_sha256": "f2c84293860cbf8660c07ee66bd36d636d86a90d4bb866911fb163ec88dd62b5",
+      "png": "work/fidelity-avatars/chara-0000002D.png",
+      "asset": "assets/art/native/profile-0000002D.png"
+    },
+    {
+      "kind": "chara",
+      "index": 45,
+      "name": "0000002E",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000002E.szs",
+      "source_sha256": "4a57dd70c517e81f46f3abe005f2400b31ab738090dcb764409e3af5840cfd2a",
+      "rgba_sha256": "499143a5192d21301fc82eaf3d89d0f505781fd35fc46a5c071f435f37009ee7",
+      "png": "work/fidelity-avatars/chara-0000002E.png",
+      "asset": "assets/art/native/profile-0000002E.png"
+    },
+    {
+      "kind": "chara",
+      "index": 46,
+      "name": "0000002F",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000002F.szs",
+      "source_sha256": "f603b258750383c8876f6d34eab5fbf9e4ddecfb48e324a8a5f73def2fa40b0e",
+      "rgba_sha256": "1aa4e820ae7c279d59736e0fc772c506cc2235b625a688380ec0f68f36e29141",
+      "png": "work/fidelity-avatars/chara-0000002F.png",
+      "asset": "assets/art/native/profile-0000002F.png"
+    },
+    {
+      "kind": "chara",
+      "index": 47,
+      "name": "00000030",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000030.szs",
+      "source_sha256": "e0cb9f3b03ee435a67733c5d03110039b6890546455ae4ae050acc1a178c108c",
+      "rgba_sha256": "bf32e4084fd4410fd057912e26d675c918c7d9d9b88c1f515d128a3b7008f5b8",
+      "png": "work/fidelity-avatars/chara-00000030.png",
+      "asset": "assets/art/native/profile-00000030.png"
+    },
+    {
+      "kind": "chara",
+      "index": 48,
+      "name": "00000031",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000031.szs",
+      "source_sha256": "f4bd784c8b46e30c031be03d06dc91d4c2294e2e963afd3283085a140cd7e047",
+      "rgba_sha256": "ab41988a0b6d8a3414b25c61a3745c00143ae06fa80039908bc2a20c9356d390",
+      "png": "work/fidelity-avatars/chara-00000031.png",
+      "asset": "assets/art/native/profile-00000031.png"
+    },
+    {
+      "kind": "chara",
+      "index": 49,
+      "name": "00000032",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000032.szs",
+      "source_sha256": "178678a8d822350b03f40b6adf611b510fb73270979a1ee96789ba3dc5bd903d",
+      "rgba_sha256": "dd5289d8eb1133b2b9c59ee883dd184a4e9425cf3016ae2a26b863ef4e538c1d",
+      "png": "work/fidelity-avatars/chara-00000032.png",
+      "asset": "assets/art/native/profile-00000032.png"
+    },
+    {
+      "kind": "chara",
+      "index": 50,
+      "name": "00000033",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000033.szs",
+      "source_sha256": "2108671f4520737109475092fe3c50e148eb7235c121c8e905d3ba19683cd131",
+      "rgba_sha256": "d47c0fc8cfbf6f1a9a398920942e67745892aa23f214fa4f3f4849a60e6f9c29",
+      "png": "work/fidelity-avatars/chara-00000033.png",
+      "asset": "assets/art/native/profile-00000033.png"
+    },
+    {
+      "kind": "chara",
+      "index": 51,
+      "name": "00000034",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000034.szs",
+      "source_sha256": "bc3c797228cd688acecc26def5bb552e39ed17a2c9faa8e19644925553c5c547",
+      "rgba_sha256": "d49e6e0b710168ebb2149bc348dec3c2137f8321c1e4e6d05c2637ab33fe3b4d",
+      "png": "work/fidelity-avatars/chara-00000034.png",
+      "asset": "assets/art/native/profile-00000034.png"
+    },
+    {
+      "kind": "chara",
+      "index": 52,
+      "name": "00000035",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000035.szs",
+      "source_sha256": "d3fa10cba571912c2bdb66915373cd453d92251e17a484ebad273a460a71da4f",
+      "rgba_sha256": "e77fd06108532eebcd8d0a0caaa3a91417ef4436ad32e8f333ae3b46e55578fe",
+      "png": "work/fidelity-avatars/chara-00000035.png",
+      "asset": "assets/art/native/profile-00000035.png"
+    },
+    {
+      "kind": "chara",
+      "index": 53,
+      "name": "00000036",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000036.szs",
+      "source_sha256": "814daff826d2402b073c661ea3f75501f98d5446d51d39f508fb3cda9418984b",
+      "rgba_sha256": "4107c721bf0588a6cafa17246adf453117839f1d9354d80f2075f1d876be7670",
+      "png": "work/fidelity-avatars/chara-00000036.png",
+      "asset": "assets/art/native/profile-00000036.png"
+    },
+    {
+      "kind": "chara",
+      "index": 54,
+      "name": "00000037",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000037.szs",
+      "source_sha256": "d8c5e2d7798f723414cbbec55bb74c3e42250a9575cb1fee06528bdcd0741a37",
+      "rgba_sha256": "4432a9e4c138298f8d857be326f6af82027acfeb1d90a17ba55b94d5269f5d69",
+      "png": "work/fidelity-avatars/chara-00000037.png",
+      "asset": "assets/art/native/profile-00000037.png"
+    },
+    {
+      "kind": "chara",
+      "index": 55,
+      "name": "00000038",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000038.szs",
+      "source_sha256": "92a3787ccac335b913837fa6f503b6b9ce9f2fb2a985aab3e6b7b779e1201864",
+      "rgba_sha256": "a73ebfcaa247075c5a95f16cae622d1b154ea27e77376dac3bc2c2bb1dea2948",
+      "png": "work/fidelity-avatars/chara-00000038.png",
+      "asset": "assets/art/native/profile-00000038.png"
+    },
+    {
+      "kind": "chara",
+      "index": 56,
+      "name": "00000039",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000039.szs",
+      "source_sha256": "49041af80cffc1ba08cd1656fb25f232f4586e49302ba40250f310c489f0ed79",
+      "rgba_sha256": "02fd95b8f360a791ed87a1bd0231c32733366b4eda38112aa072ddcd5e61cf9a",
+      "png": "work/fidelity-avatars/chara-00000039.png",
+      "asset": "assets/art/native/profile-00000039.png"
+    },
+    {
+      "kind": "chara",
+      "index": 57,
+      "name": "0000003A",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000003A.szs",
+      "source_sha256": "5fecdcb49938e2155cdb58f20225504b6fc8e4f9f650d844a6ac0746f2dd5f7f",
+      "rgba_sha256": "132cdd78e76e409faecbae91de427f42cfe47dd3424182a7f346fbd438031525",
+      "png": "work/fidelity-avatars/chara-0000003A.png",
+      "asset": "assets/art/native/profile-0000003A.png"
+    },
+    {
+      "kind": "chara",
+      "index": 58,
+      "name": "0000003B",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000003B.szs",
+      "source_sha256": "b24881b5358e0283ea5f4bd26ec20553bc2db83f86b0d4eed1afbd316064f4d6",
+      "rgba_sha256": "75ac8b7b62b428a6604f337a0a13b57086fd21181ece5f3e95fbad8cc228d32b",
+      "png": "work/fidelity-avatars/chara-0000003B.png",
+      "asset": "assets/art/native/profile-0000003B.png"
+    },
+    {
+      "kind": "chara",
+      "index": 59,
+      "name": "0000003C",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000003C.szs",
+      "source_sha256": "ca37e05cb4168d5712082b698ee16a7ad0f09ba41667f41c83b79dab2d5ac893",
+      "rgba_sha256": "ef725cd35710af062053664e2be32adac9306d50643c55a4f08ced7598f163b2",
+      "png": "work/fidelity-avatars/chara-0000003C.png",
+      "asset": "assets/art/native/profile-0000003C.png"
+    },
+    {
+      "kind": "chara",
+      "index": 60,
+      "name": "0000003D",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000003D.szs",
+      "source_sha256": "bfa0dbe4d2c17209c947a1d05a43eed22c257f07cbed8881d15971bc3ac6a338",
+      "rgba_sha256": "057ea7608d5df7ec7879bb94a935e68ed35282be60f6c4052e2f44156c974da9",
+      "png": "work/fidelity-avatars/chara-0000003D.png",
+      "asset": "assets/art/native/profile-0000003D.png"
+    },
+    {
+      "kind": "chara",
+      "index": 61,
+      "name": "0000003E",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000003E.szs",
+      "source_sha256": "eed09349e91f0d3eaf07dac43ff87d15fda00b2fa94eb98959dc8971d4cdb41e",
+      "rgba_sha256": "5ed9dca34a2d5628387b03dd315cb464d0fc767fdab2f3a956f2ffb8fd382bb1",
+      "png": "work/fidelity-avatars/chara-0000003E.png",
+      "asset": "assets/art/native/profile-0000003E.png"
+    },
+    {
+      "kind": "chara",
+      "index": 62,
+      "name": "0000003F",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000003F.szs",
+      "source_sha256": "7604065b4d4538942fc8b5636976d653e43615e1ae275ea79872ad21d346a4b1",
+      "rgba_sha256": "4504702d3d1114f93a735dec6c241e4b6e4e7f19aaec08d750e9b33a41767de8",
+      "png": "work/fidelity-avatars/chara-0000003F.png",
+      "asset": "assets/art/native/profile-0000003F.png"
+    },
+    {
+      "kind": "chara",
+      "index": 63,
+      "name": "00000040",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000040.szs",
+      "source_sha256": "2998e4782978c9a897a5844e0e5f19f47f328bf56f70740c405ac2b7ac963ab2",
+      "rgba_sha256": "b694943d7098d228ff02a90b87bd7640cfb30f5b316fdf9cd30c1d8a45a752c7",
+      "png": "work/fidelity-avatars/chara-00000040.png",
+      "asset": "assets/art/native/profile-00000040.png"
+    },
+    {
+      "kind": "chara",
+      "index": 64,
+      "name": "00000041",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000041.szs",
+      "source_sha256": "111ac5f5cad59a876a56b7b086636a4a9b8426b6a38ccb3913fce81325f58ea4",
+      "rgba_sha256": "1bef091414af8479b4d9b8ea4deae5657446e813be7323ae8db1fe5e15559f14",
+      "png": "work/fidelity-avatars/chara-00000041.png",
+      "asset": "assets/art/native/profile-00000041.png"
+    },
+    {
+      "kind": "chara",
+      "index": 65,
+      "name": "00000042",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000042.szs",
+      "source_sha256": "4cca484df5c83f6a1176f394ee4e61b8eb6c15b6fa218956f81ebb9d0e3b8d60",
+      "rgba_sha256": "4464df7babc4762150ec290d68931ac09813d790bc323b69f37e4d06523995f7",
+      "png": "work/fidelity-avatars/chara-00000042.png",
+      "asset": "assets/art/native/profile-00000042.png"
+    },
+    {
+      "kind": "chara",
+      "index": 66,
+      "name": "00000043",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000043.szs",
+      "source_sha256": "d5e3e66aac8ccf51134cdbad89e738b4db6461c5e9cd9b386c44a43855990aa1",
+      "rgba_sha256": "9f4a20e4d4774df4854b405074d1a29788d750bb623429098151772457af85a2",
+      "png": "work/fidelity-avatars/chara-00000043.png",
+      "asset": "assets/art/native/profile-00000043.png"
+    },
+    {
+      "kind": "chara",
+      "index": 67,
+      "name": "00000044",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000044.szs",
+      "source_sha256": "b00a6db743e7b7a2275b4071650cd894dc58cf111bbfe143ae4515c1a6b3a993",
+      "rgba_sha256": "2d4ed69ee44b00efd7a8babb65d1df0f04d4652e682699b1111ad6a96326b548",
+      "png": "work/fidelity-avatars/chara-00000044.png",
+      "asset": "assets/art/native/profile-00000044.png"
+    },
+    {
+      "kind": "chara",
+      "index": 68,
+      "name": "00000045",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000045.szs",
+      "source_sha256": "e0759a25850da30ed003b113b4fb299266a4a113af49925fd769b9b498374898",
+      "rgba_sha256": "a1d360f8aa869c3e40c915c61489fc35e8c27226de3cecb2deca21bb4c2be5a3",
+      "png": "work/fidelity-avatars/chara-00000045.png",
+      "asset": "assets/art/native/profile-00000045.png"
+    },
+    {
+      "kind": "chara",
+      "index": 69,
+      "name": "00000046",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000046.szs",
+      "source_sha256": "d9d8e03f21269e05c5bfc3cbef29a64c1d95b351382da98ec9f6226ad0c00bc3",
+      "rgba_sha256": "382f007df83fa249ce06b876894b33303266397629c339d0a48fb15bd34d3048",
+      "png": "work/fidelity-avatars/chara-00000046.png",
+      "asset": "assets/art/native/profile-00000046.png"
+    },
+    {
+      "kind": "chara",
+      "index": 70,
+      "name": "00000047",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000047.szs",
+      "source_sha256": "c35362bef68e8f153f4fb59cee4454d6a68f384e23b5568c7e4516b4b7df79a4",
+      "rgba_sha256": "0283f91053a21d94f4db4752915a986eecb0e1ba138be53317183b5e12d6db79",
+      "png": "work/fidelity-avatars/chara-00000047.png",
+      "asset": "assets/art/native/profile-00000047.png"
+    },
+    {
+      "kind": "chara",
+      "index": 71,
+      "name": "00000048",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000048.szs",
+      "source_sha256": "bd74fbd42681a3ee476bb52c8537868d554c4e13edf5b61d82173735f7f22fc9",
+      "rgba_sha256": "6a68312b7551439b7f9b6c7864e3e0fc146794130f61e8e19d8091d01b489704",
+      "png": "work/fidelity-avatars/chara-00000048.png",
+      "asset": "assets/art/native/profile-00000048.png"
+    },
+    {
+      "kind": "chara",
+      "index": 72,
+      "name": "00000049",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000049.szs",
+      "source_sha256": "29d98072e800a7f7e01f35a0603730330fbd724318add2cb72778d6c03d866c4",
+      "rgba_sha256": "75cb67f26f9fea8490d234d26c557209c90be40e816ec69516b7a3706cd2a55e",
+      "png": "work/fidelity-avatars/chara-00000049.png",
+      "asset": "assets/art/native/profile-00000049.png"
+    },
+    {
+      "kind": "chara",
+      "index": 73,
+      "name": "0000004A",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000004A.szs",
+      "source_sha256": "3750cfa82358ead913a2cc33f14615bdecae805ee0eee09ca7980b190a30f85a",
+      "rgba_sha256": "e2f18b274affe40b528b01ebe0f7f88fedfb7c3c92c3b3059991a8108511a9b1",
+      "png": "work/fidelity-avatars/chara-0000004A.png",
+      "asset": "assets/art/native/profile-0000004A.png"
+    },
+    {
+      "kind": "chara",
+      "index": 74,
+      "name": "0000004B",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000004B.szs",
+      "source_sha256": "507f09f4e9c20eba6cb8d2e5cb68a6372dd07d1cf93c9a1ec83f59056fc727cf",
+      "rgba_sha256": "d7d346c0e88b1fa8088739b4f176c06155ece28993ca1970aa8ae5a073770257",
+      "png": "work/fidelity-avatars/chara-0000004B.png",
+      "asset": "assets/art/native/profile-0000004B.png"
+    },
+    {
+      "kind": "chara",
+      "index": 75,
+      "name": "0000004C",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000004C.szs",
+      "source_sha256": "710214405f4ec3323dd017d650784ba130eab1a41ec87926d3523ca728db47d1",
+      "rgba_sha256": "4e51d9f90cec85218801e52940d5e96b1053e459e8128fc6b2bd984c273c61ed",
+      "png": "work/fidelity-avatars/chara-0000004C.png",
+      "asset": "assets/art/native/profile-0000004C.png"
+    },
+    {
+      "kind": "chara",
+      "index": 76,
+      "name": "0000004D",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000004D.szs",
+      "source_sha256": "568aa0735c015869a24faa1fc316fb65462e8ac06ae83a2145b39a3b2d67386c",
+      "rgba_sha256": "bacf9c5d9251c271a688d8eb4091c371197869b2ce1023f6d2cfaa9b39c4c1d7",
+      "png": "work/fidelity-avatars/chara-0000004D.png",
+      "asset": "assets/art/native/profile-0000004D.png"
+    },
+    {
+      "kind": "chara",
+      "index": 77,
+      "name": "0000004E",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000004E.szs",
+      "source_sha256": "1f5edb9e7298fbcc91db149a2aa253df7946804d99f198b9e8bc89ad0f3655f1",
+      "rgba_sha256": "be24c599774c09d66c332fd44640548333a111de8652688fce5fc8019d416561",
+      "png": "work/fidelity-avatars/chara-0000004E.png",
+      "asset": "assets/art/native/profile-0000004E.png"
+    },
+    {
+      "kind": "chara",
+      "index": 78,
+      "name": "0000004F",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000004F.szs",
+      "source_sha256": "8d12479d2d797af69d8aed1929c2f55a17677fe0792b91c989464e14771c914a",
+      "rgba_sha256": "6fe1d4a9fad74e9f693f14daf1f5f636a9552482ae26e2e4ff737be197fc3fea",
+      "png": "work/fidelity-avatars/chara-0000004F.png",
+      "asset": "assets/art/native/profile-0000004F.png"
+    },
+    {
+      "kind": "chara",
+      "index": 79,
+      "name": "00000050",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000050.szs",
+      "source_sha256": "d203ea5711a4a5d7cba64b9aaf769bf1c3aa66493d3ddb62b47a618889c11000",
+      "rgba_sha256": "82963db141d30b4889bd545f7356047b795a6ad7d097ac05ed4a0056e4b4896b",
+      "png": "work/fidelity-avatars/chara-00000050.png",
+      "asset": "assets/art/native/profile-00000050.png"
+    },
+    {
+      "kind": "chara",
+      "index": 80,
+      "name": "00000051",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000051.szs",
+      "source_sha256": "5ad9941f195b7a4a2331a0c7652dc8574e8db8887fb0e409b1ef53e74bba8fbb",
+      "rgba_sha256": "b835adf361bacfe83227fc514174eb6c41dd31270baf59b0ab41b8a17670d9b1",
+      "png": "work/fidelity-avatars/chara-00000051.png",
+      "asset": "assets/art/native/profile-00000051.png"
+    },
+    {
+      "kind": "chara",
+      "index": 81,
+      "name": "00000052",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000052.szs",
+      "source_sha256": "71d0d3048709a4a7123acdc0fb9cadb3d0613aac781b4bb2db17c7384cb18cb4",
+      "rgba_sha256": "0a5a8e8d723f2ac701c8cd638b1574c303d204f25d591b35d8849e8d658bb92b",
+      "png": "work/fidelity-avatars/chara-00000052.png",
+      "asset": "assets/art/native/profile-00000052.png"
+    },
+    {
+      "kind": "chara",
+      "index": 82,
+      "name": "00000053",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000053.szs",
+      "source_sha256": "0fa5935f0fbe672104202cf280dbd98c9e812e9051282282730ef0b8af99cb26",
+      "rgba_sha256": "c8a6034e627398a2de162a3cc122fa2aa3068c59e405d84366856d5d4d406f2d",
+      "png": "work/fidelity-avatars/chara-00000053.png",
+      "asset": "assets/art/native/profile-00000053.png"
+    },
+    {
+      "kind": "chara",
+      "index": 83,
+      "name": "00000054",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000054.szs",
+      "source_sha256": "1e53ff9bc1eeeda1572a5c2919064a62f8e82cdcf9e5b7067fe61261f0ecf16a",
+      "rgba_sha256": "cb7d8c92680ea7f776710a16ef9cf8c920f302102cdb0e33a9a2caa7f4e2ba75",
+      "png": "work/fidelity-avatars/chara-00000054.png",
+      "asset": "assets/art/native/profile-00000054.png"
+    },
+    {
+      "kind": "chara",
+      "index": 84,
+      "name": "00000055",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000055.szs",
+      "source_sha256": "2f95b6ed8486deb087d55d43f039b515fdf234cb5f80c5c815f24bb9070bac50",
+      "rgba_sha256": "4363efe67d334a5241a2732356cb301e022336e8be815bfa149805b26a3b8008",
+      "png": "work/fidelity-avatars/chara-00000055.png",
+      "asset": "assets/art/native/profile-00000055.png"
+    },
+    {
+      "kind": "chara",
+      "index": 85,
+      "name": "00000056",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000056.szs",
+      "source_sha256": "123db38b3a64c439f02686f00deef2bc0707c48db8911c609170f1acc01bd22d",
+      "rgba_sha256": "164786a79739220cd1ccb909691b98cfc58750d89517bac1b8bcd8227fb2b6a0",
+      "png": "work/fidelity-avatars/chara-00000056.png",
+      "asset": "assets/art/native/profile-00000056.png"
+    },
+    {
+      "kind": "chara",
+      "index": 86,
+      "name": "00000057",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000057.szs",
+      "source_sha256": "179c8ba8d095469f69214c646cb2720bbafb63300f1d38a13604a0c288408d03",
+      "rgba_sha256": "baf34c48e9489899801cb2b3a62a72d5b685d60d517429b80f8eb34b915652e9",
+      "png": "work/fidelity-avatars/chara-00000057.png",
+      "asset": "assets/art/native/profile-00000057.png"
+    },
+    {
+      "kind": "chara",
+      "index": 87,
+      "name": "00000058",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000058.szs",
+      "source_sha256": "3697fa46983fa0a9636ab356447c941e694360b562af4177aa07541960c6d1db",
+      "rgba_sha256": "7c27ed3b64bfbd5c5ef9a742c77766d7881950be80a77774deb790974e869aff",
+      "png": "work/fidelity-avatars/chara-00000058.png",
+      "asset": "assets/art/native/profile-00000058.png"
+    },
+    {
+      "kind": "chara",
+      "index": 88,
+      "name": "00000059",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000059.szs",
+      "source_sha256": "3dc7fb74d78d9d553b7809e528f069e9b84fe3a2ebc5099acccba6ef4b1ef1db",
+      "rgba_sha256": "13b8b7d6bdd4010fc82817d0f8a9dd850f6bf983ff6dd2b38054fa625a9c1d2a",
+      "png": "work/fidelity-avatars/chara-00000059.png",
+      "asset": "assets/art/native/profile-00000059.png"
+    },
+    {
+      "kind": "chara",
+      "index": 89,
+      "name": "0000005A",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000005A.szs",
+      "source_sha256": "ea6797643ce6299273a1288ec6c969f2069e84efda77a376a3aa524baec8796a",
+      "rgba_sha256": "63be84af8338eef1de12be6280dcc2833a3e66a32a0c31cce528e883c5e4c56e",
+      "png": "work/fidelity-avatars/chara-0000005A.png",
+      "asset": "assets/art/native/profile-0000005A.png"
+    },
+    {
+      "kind": "chara",
+      "index": 90,
+      "name": "0000005B",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000005B.szs",
+      "source_sha256": "134a91e8e99e60778155b8e465f041230d66c2ec91cbcca978332712101c1b78",
+      "rgba_sha256": "0c03d2c45492e91317e61c43753eceaf209312013ee29591ecdcf74bc045a60d",
+      "png": "work/fidelity-avatars/chara-0000005B.png",
+      "asset": "assets/art/native/profile-0000005B.png"
+    },
+    {
+      "kind": "chara",
+      "index": 91,
+      "name": "0000005C",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000005C.szs",
+      "source_sha256": "e6404e0e7aee648b13152de3d3bda4446e80af4ad5bb6d4a767505972645320d",
+      "rgba_sha256": "52a00503eb3124b636f32c551689c104bfb46b11fc30004d3977204fe1d808de",
+      "png": "work/fidelity-avatars/chara-0000005C.png",
+      "asset": "assets/art/native/profile-0000005C.png"
+    },
+    {
+      "kind": "chara",
+      "index": 92,
+      "name": "0000005D",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000005D.szs",
+      "source_sha256": "fba6f5bb1c7ea558973d8ef163dbb44fddb5ef292bf83e0a429ac7c8fa604f84",
+      "rgba_sha256": "e5036ffa15dbb918f273ed1cb93ad54cc767b104b3891a8d729613289d4b4df5",
+      "png": "work/fidelity-avatars/chara-0000005D.png",
+      "asset": "assets/art/native/profile-0000005D.png"
+    },
+    {
+      "kind": "chara",
+      "index": 93,
+      "name": "0000005E",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000005E.szs",
+      "source_sha256": "673234b1ec2ef1ced2679ac5b901427cea6bbc85030936ceaf75f4b2d6b4cb73",
+      "rgba_sha256": "3e69cc397ae2081f86c9f4d7aec55f836b3c5d7a6bcfd47dcfcddfc6cf16495f",
+      "png": "work/fidelity-avatars/chara-0000005E.png",
+      "asset": "assets/art/native/profile-0000005E.png"
+    },
+    {
+      "kind": "chara",
+      "index": 94,
+      "name": "0000005F",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000005F.szs",
+      "source_sha256": "e36f58366f058a51f6702e48b2337a92d4016c83661dcda9851c7143d0a42b24",
+      "rgba_sha256": "b4691aaa115897ccbf7455c515ebfeb56858d615b2ff1c05c2a912f47e6982dd",
+      "png": "work/fidelity-avatars/chara-0000005F.png",
+      "asset": "assets/art/native/profile-0000005F.png"
+    },
+    {
+      "kind": "chara",
+      "index": 95,
+      "name": "00000060",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000060.szs",
+      "source_sha256": "27d196ca897fa9e485ffbc0de7d1385eaf5f21129c3c544ee20aa7b8163163e3",
+      "rgba_sha256": "a837860a8ddc21381790de4e763249b19cd086d6b5db73e10de400d7ddde3133",
+      "png": "work/fidelity-avatars/chara-00000060.png",
+      "asset": "assets/art/native/profile-00000060.png"
+    },
+    {
+      "kind": "chara",
+      "index": 96,
+      "name": "00000061",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000061.szs",
+      "source_sha256": "434fda54cbd73fe73903270f70cbf12cd6c25295bf80f5278627026e6c7001a2",
+      "rgba_sha256": "2b09cc68029faa19dce3ef76e4fbba9a711417f3fe97742dfb3c54405a1eb11d",
+      "png": "work/fidelity-avatars/chara-00000061.png",
+      "asset": "assets/art/native/profile-00000061.png"
+    },
+    {
+      "kind": "chara",
+      "index": 97,
+      "name": "00000062",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000062.szs",
+      "source_sha256": "7610645504449793d9e42f3a3233fa9465cbaffde85d75dab65959dff4d1e49a",
+      "rgba_sha256": "de322c4e117aeb42810d1a51a856b24b13279593a9b7f9e293bb1a96cce93172",
+      "png": "work/fidelity-avatars/chara-00000062.png",
+      "asset": "assets/art/native/profile-00000062.png"
+    },
+    {
+      "kind": "chara",
+      "index": 98,
+      "name": "00000063",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000063.szs",
+      "source_sha256": "0dda6d53688fb69562757f258f35b5173787c836f73667293ce97a197a8bcdc9",
+      "rgba_sha256": "c5671442f401aff047e2a102378b8c294100d31031e049f25372fbc6c9ec21c0",
+      "png": "work/fidelity-avatars/chara-00000063.png",
+      "asset": "assets/art/native/profile-00000063.png"
+    },
+    {
+      "kind": "chara",
+      "index": 99,
+      "name": "00000064",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000064.szs",
+      "source_sha256": "678118d0af8cd8c92a25314c93e00fb0e810233dfa211bea9630cce410103a0e",
+      "rgba_sha256": "1a0e6d1bef8993a3ea85b9efd750c9e1e5d61b7c1652a551a6b0b1d0469d55cf",
+      "png": "work/fidelity-avatars/chara-00000064.png",
+      "asset": "assets/art/native/profile-00000064.png"
+    },
+    {
+      "kind": "chara",
+      "index": 100,
+      "name": "00000065",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000065.szs",
+      "source_sha256": "e91bb027ab63c562859aab7a887ab751959685ea19d5ad8ff1968faf74ac20d6",
+      "rgba_sha256": "b71791de68bad364986be14a3cb07e71331b9db95f943db2bd1af21107d1cc0b",
+      "png": "work/fidelity-avatars/chara-00000065.png",
+      "asset": "assets/art/native/profile-00000065.png"
+    },
+    {
+      "kind": "chara",
+      "index": 101,
+      "name": "00000066",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000066.szs",
+      "source_sha256": "b7aece6fc8584c81c90fdfdb6d72d75e7a331d838b827e6bdc6c76512fe21355",
+      "rgba_sha256": "3ad66e3253629f83aee97b9c00fbd406db4858491057e804d4542aa1d48c9379",
+      "png": "work/fidelity-avatars/chara-00000066.png",
+      "asset": "assets/art/native/profile-00000066.png"
+    },
+    {
+      "kind": "chara",
+      "index": 102,
+      "name": "00000067",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000067.szs",
+      "source_sha256": "fae649a1c5dc8cd7e4ebb4d4798a6180bd1fd0717b71c15ae7c52136396486fb",
+      "rgba_sha256": "c3b62282ac3142e031ab166e4f6a29df260897d4875dbf0cd4ee6355aae641f0",
+      "png": "work/fidelity-avatars/chara-00000067.png",
+      "asset": "assets/art/native/profile-00000067.png"
+    },
+    {
+      "kind": "chara",
+      "index": 103,
+      "name": "00000068",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000068.szs",
+      "source_sha256": "69ad1526cba1309bc8c603545a071b7c27601a16a3c14d73f52db83b241f810a",
+      "rgba_sha256": "dcd07f39940c3bc61b9a210a9d2ea134c1048bd5453096c678c3204d9c7becbf",
+      "png": "work/fidelity-avatars/chara-00000068.png",
+      "asset": "assets/art/native/profile-00000068.png"
+    },
+    {
+      "kind": "chara",
+      "index": 104,
+      "name": "00000069",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000069.szs",
+      "source_sha256": "8e0466627126a30f28e333f35ccdf8042c320e1d33f6432832cd0237f88cc517",
+      "rgba_sha256": "cdd25e336b7813518608ea9a6a1285ae53de5320543972b1a5c0971b1085061c",
+      "png": "work/fidelity-avatars/chara-00000069.png",
+      "asset": "assets/art/native/profile-00000069.png"
+    },
+    {
+      "kind": "chara",
+      "index": 105,
+      "name": "0000006A",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000006A.szs",
+      "source_sha256": "0045a08a0d9e1ecff2411ce564b58d6ec8810da6ebe6cd0f49f004f0139fb196",
+      "rgba_sha256": "c503cbfcbf24804513003dd825f6c0bdf2644ac706ef9dab0e34251323b9f2f0",
+      "png": "work/fidelity-avatars/chara-0000006A.png",
+      "asset": "assets/art/native/profile-0000006A.png"
+    },
+    {
+      "kind": "chara",
+      "index": 106,
+      "name": "0000006B",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000006B.szs",
+      "source_sha256": "77071042d1f3c4063a02eb791a16f5632793532089b493c719e11b793b27f7c2",
+      "rgba_sha256": "7b463ffb6a37ab1ffdf6af34b686fa337e04f74d967b35e9e617dd068cf5973a",
+      "png": "work/fidelity-avatars/chara-0000006B.png",
+      "asset": "assets/art/native/profile-0000006B.png"
+    },
+    {
+      "kind": "chara",
+      "index": 107,
+      "name": "0000006C",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000006C.szs",
+      "source_sha256": "001fa501eb43d393db5726cc00be216d9483af2318fc40e343b25dd301490f5e",
+      "rgba_sha256": "d3c361506907fc7c8e9b612275b39fd33fb960cc23deb6f262a1eefbf245c713",
+      "png": "work/fidelity-avatars/chara-0000006C.png",
+      "asset": "assets/art/native/profile-0000006C.png"
+    },
+    {
+      "kind": "chara",
+      "index": 108,
+      "name": "0000006D",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000006D.szs",
+      "source_sha256": "ebb1e1fb6b3804b3d1a5f6b4c3ceac2e6db75f39037afbd6a3d80b2cc89d945b",
+      "rgba_sha256": "e41eae86a444df324d490305a2fe6fb92633a6f944a2ed2a91b43507939e78e3",
+      "png": "work/fidelity-avatars/chara-0000006D.png",
+      "asset": "assets/art/native/profile-0000006D.png"
+    },
+    {
+      "kind": "chara",
+      "index": 109,
+      "name": "0000006E",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000006E.szs",
+      "source_sha256": "84aa7a220ee9a00cd5a77104d5bf4fe5d7dbab9fcf56419c4358214b42f16f3b",
+      "rgba_sha256": "4b51fb0bb83ee7a00d13c02893cd3a85191d59ec101f310513080dc02361da5a",
+      "png": "work/fidelity-avatars/chara-0000006E.png",
+      "asset": "assets/art/native/profile-0000006E.png"
+    },
+    {
+      "kind": "chara",
+      "index": 110,
+      "name": "0000006F",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000006F.szs",
+      "source_sha256": "4ef28487bb61b8efd785d14357afdbb5eacf94e2e21b08da42ff2a0cc4d4583a",
+      "rgba_sha256": "9c82d814ced14e110da6c27818507f1fd005a84b6d174d28cbed4e3840545767",
+      "png": "work/fidelity-avatars/chara-0000006F.png",
+      "asset": "assets/art/native/profile-0000006F.png"
+    },
+    {
+      "kind": "chara",
+      "index": 111,
+      "name": "00000070",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000070.szs",
+      "source_sha256": "5fcbabba89046fe204ef9abb2e2da09c18ed6427c6585a4d5ac90d40c27e6830",
+      "rgba_sha256": "d2ed28860e28fc214417242330820be6d25b0ae52b28070cb8e662e9b608c66e",
+      "png": "work/fidelity-avatars/chara-00000070.png",
+      "asset": "assets/art/native/profile-00000070.png"
+    },
+    {
+      "kind": "chara",
+      "index": 112,
+      "name": "00000071",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000071.szs",
+      "source_sha256": "ef7e0d9d4ee4d8778a01f8c0d2b8d67f434ad5bfd0159a913750827ad4adea44",
+      "rgba_sha256": "4656d4226f2196e5932de59069be631d09a61fd2b10f86804a14b2bcf0e08dba",
+      "png": "work/fidelity-avatars/chara-00000071.png",
+      "asset": "assets/art/native/profile-00000071.png"
+    },
+    {
+      "kind": "chara",
+      "index": 113,
+      "name": "00000072",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000072.szs",
+      "source_sha256": "9b69f70dd778b021e8baedbee93605be4a16f7d9bcb98c6ccd22ab4edc38c3ba",
+      "rgba_sha256": "1ee7e46a4fe3b328aeb0db652f492ec8175aedef2d15a80fde91992fcb79561f",
+      "png": "work/fidelity-avatars/chara-00000072.png",
+      "asset": "assets/art/native/profile-00000072.png"
+    },
+    {
+      "kind": "chara",
+      "index": 114,
+      "name": "00000073",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000073.szs",
+      "source_sha256": "6704f5dd6c22d94bdba3f1be51f14d06b6096705305a6c95c3cf15e60438b1e2",
+      "rgba_sha256": "e28358fb22db724db07e2c56692abcdbdf54ce0e3cd6fa822e6c475112f5d0f3",
+      "png": "work/fidelity-avatars/chara-00000073.png",
+      "asset": "assets/art/native/profile-00000073.png"
+    },
+    {
+      "kind": "chara",
+      "index": 115,
+      "name": "00000074",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000074.szs",
+      "source_sha256": "a756265a83db1ac0bc568bffdc7bb9e417b152803837e43052cf18c6d034b536",
+      "rgba_sha256": "8120e00255da57768239ac4709d65c4e60dde55782e39434b3523e82cba08f35",
+      "png": "work/fidelity-avatars/chara-00000074.png",
+      "asset": "assets/art/native/profile-00000074.png"
+    },
+    {
+      "kind": "chara",
+      "index": 116,
+      "name": "00000075",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000075.szs",
+      "source_sha256": "43d83810429398a2ce44bb72ab6c80ada96050574359eccdd01ceaadcdedc5ff",
+      "rgba_sha256": "e0c375f997b0893336fabd8316b20d9c419d46c42a72e3c6b11c8f6d9169846c",
+      "png": "work/fidelity-avatars/chara-00000075.png",
+      "asset": "assets/art/native/profile-00000075.png"
+    },
+    {
+      "kind": "chara",
+      "index": 117,
+      "name": "00000076",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000076.szs",
+      "source_sha256": "f713a44c58b6a607692338de37a363bded394863982054dd8d3d8f337e76d93b",
+      "rgba_sha256": "4e9729bdddfea49cdb273b883fc842b3c7c5ade74f45bd35e7ca26f98704a72d",
+      "png": "work/fidelity-avatars/chara-00000076.png",
+      "asset": "assets/art/native/profile-00000076.png"
+    },
+    {
+      "kind": "chara",
+      "index": 118,
+      "name": "00000077",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000077.szs",
+      "source_sha256": "169a8919345be0795e5bb6aeed8003733e6f90e19d1c6ba2fd57257da894b589",
+      "rgba_sha256": "61b34227430ee709011ad87c67f4d3173f0c82297b0c08ffca9c171e2673165b",
+      "png": "work/fidelity-avatars/chara-00000077.png",
+      "asset": "assets/art/native/profile-00000077.png"
+    },
+    {
+      "kind": "chara",
+      "index": 119,
+      "name": "00000078",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000078.szs",
+      "source_sha256": "5397b1324e5ec6a3c6fffdd2ca9026009fe4e48efd68eb55abe07d758d5bf668",
+      "rgba_sha256": "4fc963b1638046eb9bdeb381ef75464665a193081bceecdd17e2dc54d2956618",
+      "png": "work/fidelity-avatars/chara-00000078.png",
+      "asset": "assets/art/native/profile-00000078.png"
+    },
+    {
+      "kind": "chara",
+      "index": 120,
+      "name": "00000079",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000079.szs",
+      "source_sha256": "217a07c402b7231dffa3821edce71aec9c05ada6e95ce10c2984348ea7ca4cd4",
+      "rgba_sha256": "995598a9c0840f5d6422b177acddba159d71164942431e0a5213c857e7b61e83",
+      "png": "work/fidelity-avatars/chara-00000079.png",
+      "asset": "assets/art/native/profile-00000079.png"
+    },
+    {
+      "kind": "chara",
+      "index": 121,
+      "name": "0000007A",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000007A.szs",
+      "source_sha256": "49fbc8e6b7b36a18070a21443772d6dd0fc50ffb90d330facae86d1d75e83425",
+      "rgba_sha256": "acd79176d81ad281201d3424f7c1090a40418ef0b57a5b6437f897b24d62498d",
+      "png": "work/fidelity-avatars/chara-0000007A.png",
+      "asset": "assets/art/native/profile-0000007A.png"
+    },
+    {
+      "kind": "chara",
+      "index": 122,
+      "name": "0000007B",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000007B.szs",
+      "source_sha256": "f68dd07e37b02a291ebb9724d21c0c5ca616e39116fc43cbfd034bbeaca07e15",
+      "rgba_sha256": "775b1b22f1d243fab10b246e52057a1dbe0933f70c003296e5b1e7be7475d748",
+      "png": "work/fidelity-avatars/chara-0000007B.png",
+      "asset": "assets/art/native/profile-0000007B.png"
+    },
+    {
+      "kind": "chara",
+      "index": 123,
+      "name": "0000007C",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000007C.szs",
+      "source_sha256": "e99237e10836c8db0edc504714b72d3c4e7c41ab9758e2f993e19364113a1bbd",
+      "rgba_sha256": "e6d6bb6840e70b31775059a499c714046a2d147260cdc02fa63cabcb9e917eec",
+      "png": "work/fidelity-avatars/chara-0000007C.png",
+      "asset": "assets/art/native/profile-0000007C.png"
+    },
+    {
+      "kind": "chara",
+      "index": 124,
+      "name": "0000007D",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000007D.szs",
+      "source_sha256": "bdea59c2e7f794647be520c96e1320211333cb28295fc9992065659d08fe055e",
+      "rgba_sha256": "8a01eb43479c0ee8149e7ca37d8eef68143365f1b308ba75252c5a173f8d748d",
+      "png": "work/fidelity-avatars/chara-0000007D.png",
+      "asset": "assets/art/native/profile-0000007D.png"
+    },
+    {
+      "kind": "chara",
+      "index": 125,
+      "name": "0000007E",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000007E.szs",
+      "source_sha256": "8c5467655315c3c1a795519ea26b7b2efc35d12f772f5d9386e319d7ce391598",
+      "rgba_sha256": "c2a9ab8b8240f152227c0339941f49b67e00a30b88766c4dba4c95e9f9ac2692",
+      "png": "work/fidelity-avatars/chara-0000007E.png",
+      "asset": "assets/art/native/profile-0000007E.png"
+    },
+    {
+      "kind": "chara",
+      "index": 126,
+      "name": "0000007F",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000007F.szs",
+      "source_sha256": "31289b4576e04cbd7f0e9473185364599475e9d6847be09da0d71be7bcd53b3b",
+      "rgba_sha256": "6d893308397b0e08cd1daabe8e6705486a2d4c665b247eabdf57ad79e37178e9",
+      "png": "work/fidelity-avatars/chara-0000007F.png",
+      "asset": "assets/art/native/profile-0000007F.png"
+    },
+    {
+      "kind": "chara",
+      "index": 127,
+      "name": "00000080",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000080.szs",
+      "source_sha256": "83bd3652c62867f91e1b205ba4dc89a3e81c325946da5908d5e3f1cc02fffd21",
+      "rgba_sha256": "856d70c614021850804033d912b3d625cda8347f1a6962a7ded15f477c4b4d29",
+      "png": "work/fidelity-avatars/chara-00000080.png",
+      "asset": "assets/art/native/profile-00000080.png"
+    },
+    {
+      "kind": "chara",
+      "index": 128,
+      "name": "00000081",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000081.szs",
+      "source_sha256": "a9482ccad086e82fdfd494c686ecdd0dbf4b3317b10c507ecd80d7152845336e",
+      "rgba_sha256": "9326b7e9e26aa9b28571d89d0dce2ffed9a32f050116bd990e15acaa5bdab8e1",
+      "png": "work/fidelity-avatars/chara-00000081.png",
+      "asset": "assets/art/native/profile-00000081.png"
+    },
+    {
+      "kind": "chara",
+      "index": 129,
+      "name": "00000082",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000082.szs",
+      "source_sha256": "1d837ed9ca362275365cefdf7ea882ccbfeaaaefe774c2196514c328a9578e9d",
+      "rgba_sha256": "5ea4ac75676d79eeab583a95070ac47f3de805e2d0e085d02e8317b6b0eab4f8",
+      "png": "work/fidelity-avatars/chara-00000082.png",
+      "asset": "assets/art/native/profile-00000082.png"
+    },
+    {
+      "kind": "chara",
+      "index": 130,
+      "name": "00000083",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000083.szs",
+      "source_sha256": "0e939fcf85978db13c119ed5ee869402868233feab2443a97e187c068dee490a",
+      "rgba_sha256": "418a5a36ae84875c4f221fe6b53b45ba5a6c70c517136d859d53cbbb4812be79",
+      "png": "work/fidelity-avatars/chara-00000083.png",
+      "asset": "assets/art/native/profile-00000083.png"
+    },
+    {
+      "kind": "chara",
+      "index": 131,
+      "name": "00000084",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000084.szs",
+      "source_sha256": "da3434c0f467af2191b0b895baec80b3b667dedc3567354a232702d2fbfd93e6",
+      "rgba_sha256": "70f4e76869c4d95cb2c22a2c98258f4a2f4d45734882207e36b5a1fe95b508e1",
+      "png": "work/fidelity-avatars/chara-00000084.png",
+      "asset": "assets/art/native/profile-00000084.png"
+    },
+    {
+      "kind": "chara",
+      "index": 132,
+      "name": "00000085",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000085.szs",
+      "source_sha256": "b4ba6939e6db1f74dba3f9ace1d1513d871c3a7bc918792724bdb8f134bff532",
+      "rgba_sha256": "046820d33ac8d9a1eb121e8f70e103fc7a0c85cec695dea29104ea7b80213a0b",
+      "png": "work/fidelity-avatars/chara-00000085.png",
+      "asset": "assets/art/native/profile-00000085.png"
+    },
+    {
+      "kind": "chara",
+      "index": 133,
+      "name": "00000086",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000086.szs",
+      "source_sha256": "73c562d83a6556110a5e142071dd984a9c46add113ecae0d649656428438bbe1",
+      "rgba_sha256": "04deced90a6f3d4f17d023ecb83dd11116bc23a9808f14d204d2ff255d7f82cd",
+      "png": "work/fidelity-avatars/chara-00000086.png",
+      "asset": "assets/art/native/profile-00000086.png"
+    },
+    {
+      "kind": "chara",
+      "index": 134,
+      "name": "00000087",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000087.szs",
+      "source_sha256": "939208dfb8ecdc3e5d3b5d52c5deb2e852e3907b550c5562348a720434d3aa6a",
+      "rgba_sha256": "fd7e9e429fa6028197b1ffa3c242d9d1fe724ff9ea56d1eb49cfc9d4cfae79ae",
+      "png": "work/fidelity-avatars/chara-00000087.png",
+      "asset": "assets/art/native/profile-00000087.png"
+    },
+    {
+      "kind": "chara",
+      "index": 135,
+      "name": "00000088",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000088.szs",
+      "source_sha256": "86f0661e9f59291d159869407bcd8c4870eed8de58b751c1e896d3fd3c799c93",
+      "rgba_sha256": "33652c369fb63b4e14185be7c60195d189edfeff470f94f690c81946fab64eb4",
+      "png": "work/fidelity-avatars/chara-00000088.png",
+      "asset": "assets/art/native/profile-00000088.png"
+    },
+    {
+      "kind": "chara",
+      "index": 136,
+      "name": "00000089",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000089.szs",
+      "source_sha256": "949f4a4062b965a3bc343f00c0b93d3b8d33585d1e3dc936b1fb025d10cf42c4",
+      "rgba_sha256": "0ee9de0a49fe8d97b0eb656b1431beb6fddf36a5202cd63b93dfa3d3f786a5f1",
+      "png": "work/fidelity-avatars/chara-00000089.png",
+      "asset": "assets/art/native/profile-00000089.png"
+    },
+    {
+      "kind": "chara",
+      "index": 137,
+      "name": "0000008A",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000008A.szs",
+      "source_sha256": "14c5857c95df559880ae297cc98972ae12762f6ae425001379304ae2079a69c9",
+      "rgba_sha256": "208c12f08b397744986baa643971f87a85810bbbfacd16ce763ab90b092606f7",
+      "png": "work/fidelity-avatars/chara-0000008A.png",
+      "asset": "assets/art/native/profile-0000008A.png"
+    },
+    {
+      "kind": "chara",
+      "index": 138,
+      "name": "0000008B",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000008B.szs",
+      "source_sha256": "d4888a159472d76827955c4f7c7a6e1b16a098312032e662a00cc967baf94deb",
+      "rgba_sha256": "fb27a3e0ae20255d39cc2dd4c9b0e0d98454474aa9ac0d9f42770e34c1bcd7aa",
+      "png": "work/fidelity-avatars/chara-0000008B.png",
+      "asset": "assets/art/native/profile-0000008B.png"
+    },
+    {
+      "kind": "chara",
+      "index": 139,
+      "name": "0000008C",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000008C.szs",
+      "source_sha256": "62fe7446792e6376dead2ac8887515afeb654bdfdbd80756bb2e59eeaf45faba",
+      "rgba_sha256": "3b4448759efd1a601d6b7f6b77c396517b574a641c3aa649df17c46bbb5832da",
+      "png": "work/fidelity-avatars/chara-0000008C.png",
+      "asset": "assets/art/native/profile-0000008C.png"
+    },
+    {
+      "kind": "chara",
+      "index": 140,
+      "name": "0000008D",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000008D.szs",
+      "source_sha256": "355fc4e2eada16a6ae54c358b57326e2d932511aaacb78f5fd21094c1370f2cf",
+      "rgba_sha256": "d872d087f5f4b8058035d00f0b0c7f7371409e508eda37c4ae9fe96a68c0afcb",
+      "png": "work/fidelity-avatars/chara-0000008D.png",
+      "asset": "assets/art/native/profile-0000008D.png"
+    },
+    {
+      "kind": "chara",
+      "index": 141,
+      "name": "0000008E",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000008E.szs",
+      "source_sha256": "3bd02d714b988f55171379a35b8df58e836e1b337d4993653fb2c93cc78e44c6",
+      "rgba_sha256": "6dd6f21a4dabd7eaeb275193d759f3f45c6b9d8f2bf3faa5fbf136fc4d7a41d0",
+      "png": "work/fidelity-avatars/chara-0000008E.png",
+      "asset": "assets/art/native/profile-0000008E.png"
+    },
+    {
+      "kind": "chara",
+      "index": 142,
+      "name": "0000008F",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/0000008F.szs",
+      "source_sha256": "f28e36e0391b13192ae06013fa9711f4c2271dea58c8e626cd61792d1dd4ea70",
+      "rgba_sha256": "4febecc037b4a23a55c9458d228f1a9e6e549782fd2b1d1bcf83b6823c5e56fd",
+      "png": "work/fidelity-avatars/chara-0000008F.png",
+      "asset": "assets/art/native/profile-0000008F.png"
+    },
+    {
+      "kind": "chara",
+      "index": 143,
+      "name": "00000090",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000090.szs",
+      "source_sha256": "9c7379f84dde565b53436a43a0315ae0134a636c14ffcf4333fbcaf129eb1a7e",
+      "rgba_sha256": "2b7bd18e7e308e8566211fb01e5b7ac18889e52e09b0f3dcbb615d2a5ce5c30e",
+      "png": "work/fidelity-avatars/chara-00000090.png",
+      "asset": "assets/art/native/profile-00000090.png"
+    },
+    {
+      "kind": "chara",
+      "index": 144,
+      "name": "00000091",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000091.szs",
+      "source_sha256": "c6a286588f654e311f06d78ee6d5126db39b8334220f9edd3b44ee680f1aff82",
+      "rgba_sha256": "6b1b86f4038da4d7ccda936b48e973ebdf5d5b5d59ea09de9d9e8ba980b83015",
+      "png": "work/fidelity-avatars/chara-00000091.png",
+      "asset": "assets/art/native/profile-00000091.png"
+    },
+    {
+      "kind": "chara",
+      "index": 145,
+      "name": "00000092",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000092.szs",
+      "source_sha256": "686941ff601fa4b465aa6d12916f3dfecd4a6e247fb9d8d370fcf39eb112e730",
+      "rgba_sha256": "1e6c6fbb82641610e6241b062349132b205e4c8afa422b3f1f16d85fcb298d02",
+      "png": "work/fidelity-avatars/chara-00000092.png",
+      "asset": "assets/art/native/profile-00000092.png"
+    },
+    {
+      "kind": "chara",
+      "index": 146,
+      "name": "00000093",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/chara/00000093.szs",
+      "source_sha256": "5baa2573320bba388d19bca9da11eabc26c66c8a8f69fd6230f55cc8d70e1dd9",
+      "rgba_sha256": "b0864a5fc26c4500d5fa9aff33ec60be2e48dd47640fd5442dfaf3d40a12f8c9",
+      "png": "work/fidelity-avatars/chara-00000093.png",
+      "asset": "assets/art/native/profile-00000093.png"
+    }
+  ],
+  "colors": [
+    {
+      "kind": "bg",
+      "index": 0,
+      "name": "10000001",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000001.szs",
+      "source_sha256": "153467ad9f4e1d527c43b8457e374404f0911794d259590fd2ab142d4b414a48",
+      "rgba_sha256": "4226d5d053b27076a18ccce51b35cd57d47e1dfafa65fe641aeaacac87c76fde",
+      "png": "work/fidelity-avatars/bg-10000001.png",
+      "rgba": [
+        255,
+        204,
+        204,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 1,
+      "name": "10000002",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000002.szs",
+      "source_sha256": "914d41e4f17398b6182510a9fc1a7dbb08ebc6b77958e50fd4ee9fdeab01d9b1",
+      "rgba_sha256": "6b15729460393b377d8dc30932d3d5e9b1c98e485e6cc2f18e028d17f74d1b25",
+      "png": "work/fidelity-avatars/bg-10000002.png",
+      "rgba": [
+        255,
+        153,
+        153,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 2,
+      "name": "10000003",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000003.szs",
+      "source_sha256": "9e0245254ab805349bfcac3552ebc612834d5586359e4a89431cad76cb1add7f",
+      "rgba_sha256": "a69239d212c7d0f9cdb4c1355d702af34fc6c14c102d99502a7e9d19a6e2ade0",
+      "png": "work/fidelity-avatars/bg-10000003.png",
+      "rgba": [
+        255,
+        105,
+        105,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 3,
+      "name": "10000004",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000004.szs",
+      "source_sha256": "f15caa70b8e693154fae9a2ac75664d618869b5573ea36aae9e1698b9aba38f3",
+      "rgba_sha256": "b8b9b478324141d9331328a2150e74ec5feb266a743a51cab73d903247247ea4",
+      "png": "work/fidelity-avatars/bg-10000004.png",
+      "rgba": [
+        255,
+        0,
+        0,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 4,
+      "name": "10000005",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000005.szs",
+      "source_sha256": "b47eef976887e19a7b7e855f6a2c38256e4640865fb65196e8c85ae48a8897d3",
+      "rgba_sha256": "f0fd2991efc1f2eb43abfb2b5d6c3dfff53bbdba7f8a1333f1937052a100d57f",
+      "png": "work/fidelity-avatars/bg-10000005.png",
+      "rgba": [
+        200,
+        10,
+        10,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 5,
+      "name": "10000006",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000006.szs",
+      "source_sha256": "8bd0eb5ad173891698e72d726373a5358a58ebab927db70893c5162de40d1311",
+      "rgba_sha256": "833c04d3f2640cfb86ddcd3c9e897a3c8a28503f7b64aad6a8af4f655fc1c86f",
+      "png": "work/fidelity-avatars/bg-10000006.png",
+      "rgba": [
+        111,
+        16,
+        16,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 6,
+      "name": "10000007",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000007.szs",
+      "source_sha256": "468d7069bac9bcc05b232b537d9cf72bdf69cc97a0b710c6a5ddee6f43cd549b",
+      "rgba_sha256": "4a70178b85581c83d05d08c8c85b5d1f7b661e196be9212c079858adf15ae9c1",
+      "png": "work/fidelity-avatars/bg-10000007.png",
+      "rgba": [
+        255,
+        227,
+        204,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 7,
+      "name": "10000008",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000008.szs",
+      "source_sha256": "29130a6dcbafb3c1b8df9152dc9df4a1c2bb7cb7652ef3372de05c8b7db58c09",
+      "rgba_sha256": "d2b6402e7cc2cfeb3a0c297a68623f6b7e6920362dcc8e78c3cc8a1d9850b068",
+      "png": "work/fidelity-avatars/bg-10000008.png",
+      "rgba": [
+        255,
+        195,
+        153,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 8,
+      "name": "10000009",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000009.szs",
+      "source_sha256": "46a5c70be337e0e2db0cd40258240d72d70006861f6a17bb54fd57d38566f918",
+      "rgba_sha256": "bda7117867da03f60819eedbd1c4e7e3a39791a93d86df08351732e29fb8ef5e",
+      "png": "work/fidelity-avatars/bg-10000009.png",
+      "rgba": [
+        255,
+        176,
+        102,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 9,
+      "name": "1000000A",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000000A.szs",
+      "source_sha256": "2dda39ed18218c7bb9cbe14531ebbd9ec9c196a74a1da6e58ff3114cf1d0fb2e",
+      "rgba_sha256": "cba5f1750ae8bb82e4c70daaf098f19e667fbc2d7329aa014bb2d1f3d18248f3",
+      "png": "work/fidelity-avatars/bg-1000000A.png",
+      "rgba": [
+        255,
+        132,
+        0,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 10,
+      "name": "1000000B",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000000B.szs",
+      "source_sha256": "3b5951a501866306a569d9f71cbc97eeb7f6517de19b2510bf9e54ec97892a96",
+      "rgba_sha256": "de21b4bc1410e13878241f5b4ee44d9fd57a418791bc158d34c9915a1ee9512c",
+      "png": "work/fidelity-avatars/bg-1000000B.png",
+      "rgba": [
+        193,
+        127,
+        58,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 11,
+      "name": "1000000C",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000000C.szs",
+      "source_sha256": "2cccd880200f16984d596026a27fcb51a85d5c31ea593130e45615782fa547ae",
+      "rgba_sha256": "e8995d15cba82ac28a063b310432d8627225a5eb19d14ac9fc91adfec0fed7ec",
+      "png": "work/fidelity-avatars/bg-1000000C.png",
+      "rgba": [
+        110,
+        71,
+        34,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 12,
+      "name": "1000000D",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000000D.szs",
+      "source_sha256": "c899342369b1cca41676ccc0be8ca48c09114fb3d7deab3377a8f111af176974",
+      "rgba_sha256": "b3da08eddf18a8a133e5d1a41fd88f1c05694a6b980054562f0b70b756851934",
+      "png": "work/fidelity-avatars/bg-1000000D.png",
+      "rgba": [
+        255,
+        255,
+        153,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 13,
+      "name": "1000000E",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000000E.szs",
+      "source_sha256": "edcdc7a8730a0daed61ae6f2bdf6c2dbfca8060a8b7f645bf25c3262cf5371b2",
+      "rgba_sha256": "47df6779f4f0f1229d7e34e1780953675dcd9c6915d1f990c172fe55fd4aa85a",
+      "png": "work/fidelity-avatars/bg-1000000E.png",
+      "rgba": [
+        255,
+        255,
+        0,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 14,
+      "name": "1000000F",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000000F.szs",
+      "source_sha256": "dad3d18779369dac910fb6fe5a08fe0a09bee1ef91675611183c85bd3c4f0440",
+      "rgba_sha256": "e28c070b2473b9d52506e839fbca7203e23791c1e557bed7e2978305c7001f16",
+      "png": "work/fidelity-avatars/bg-1000000F.png",
+      "rgba": [
+        255,
+        230,
+        0,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 15,
+      "name": "10000010",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000010.szs",
+      "source_sha256": "02e707c021a28603f65f3d2224b304a12fd1af3234d130c11dd100233d27362c",
+      "rgba_sha256": "6d5b161e9afa1801dbe2fe0823f072b4b1df59a77fe68c0b85f72494bf706a53",
+      "png": "work/fidelity-avatars/bg-10000010.png",
+      "rgba": [
+        255,
+        182,
+        0,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 16,
+      "name": "10000011",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000011.szs",
+      "source_sha256": "41330f2b2c5f5ddfb89d3a5d7607a3a136895a78a85c4805c930f3af3108e137",
+      "rgba_sha256": "2e784bc1d8117d139aed842965a20090872fa44b9f6e4bf4fd8447fdf1407321",
+      "png": "work/fidelity-avatars/bg-10000011.png",
+      "rgba": [
+        191,
+        166,
+        69,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 17,
+      "name": "10000012",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000012.szs",
+      "source_sha256": "53f929ea20945bdcbf698fe3aed8a9562dd82a414d4389aa85facbc1f880b9ff",
+      "rgba_sha256": "fef41424ba3939bf470a236460724d38ac4166bab6574b7409510f3d6e288ebe",
+      "png": "work/fidelity-avatars/bg-10000012.png",
+      "rgba": [
+        126,
+        108,
+        15,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 18,
+      "name": "10000013",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000013.szs",
+      "source_sha256": "ad24e019b9a2d77ee543f944789c110fa7bbe9e0573fd420d8686bd2520d38ba",
+      "rgba_sha256": "4d3c9c8ad4bb11b6775a270baa7708b02a8a47a12bf3f8df450555bfbc6282e0",
+      "png": "work/fidelity-avatars/bg-10000013.png",
+      "rgba": [
+        240,
+        255,
+        153,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 19,
+      "name": "10000014",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000014.szs",
+      "source_sha256": "6b314d45492c3bc363df85aa4def6e23f8f52cd64ac0abc30607bf163b0bbf37",
+      "rgba_sha256": "a71562a5374c26f79fe8ce2d81c3691415f966c435177780d9552c08d7431ca9",
+      "png": "work/fidelity-avatars/bg-10000014.png",
+      "rgba": [
+        230,
+        255,
+        49,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 20,
+      "name": "10000015",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000015.szs",
+      "source_sha256": "a4409471fc1e19ba7646545d48cbb36bf6768e47148d52356c476c912b155c39",
+      "rgba_sha256": "dd413b9d57b55f08afc5bcdcb7e4bd28f25534c32835561a91af0699174cd32c",
+      "png": "work/fidelity-avatars/bg-10000015.png",
+      "rgba": [
+        211,
+        240,
+        37,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 21,
+      "name": "10000016",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000016.szs",
+      "source_sha256": "4afc4897d20ac1242f0176ba20699df1ae128409172d86e368b5fba0247cfb3c",
+      "rgba_sha256": "f025b19f85a8a4ef247006b13e3ce53a8b7a5f021fc8ea30220505179e6e080d",
+      "png": "work/fidelity-avatars/bg-10000016.png",
+      "rgba": [
+        198,
+        214,
+        0,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 22,
+      "name": "10000017",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000017.szs",
+      "source_sha256": "260c34189228294b01d1fa41024d23fcfcaaa6c0c2917607551488cddc7b07be",
+      "rgba_sha256": "cf4cde63ab80856f2c74b2ce5053a394d1eb4e38fad634dce07aa69919516c92",
+      "png": "work/fidelity-avatars/bg-10000017.png",
+      "rgba": [
+        161,
+        176,
+        38,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 23,
+      "name": "10000018",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000018.szs",
+      "source_sha256": "3f34f2d492b795a8e866f062a1474c41d38677fb38a594391e15612af290b892",
+      "rgba_sha256": "d62729a4ac184ecf66ce0a90bab31e2dc47fd518b5b588d7c3e0040a4b27ec80",
+      "png": "work/fidelity-avatars/bg-10000018.png",
+      "rgba": [
+        103,
+        115,
+        15,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 24,
+      "name": "10000019",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000019.szs",
+      "source_sha256": "d46429d1be83c1ceb3e5a7d72e73e8ebc66654d15928a2baaf4d9e7c715e2761",
+      "rgba_sha256": "2116419489b6b5701cf3793d7dccd49a869412ad5a7b3c91fe3ff053a80fdd08",
+      "png": "work/fidelity-avatars/bg-10000019.png",
+      "rgba": [
+        212,
+        249,
+        199,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 25,
+      "name": "1000001A",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000001A.szs",
+      "source_sha256": "dfbef1de86e62ea5c766a7984433c4eacfa7b5d13c2a5ed4934d1a2a5b2e7be0",
+      "rgba_sha256": "a28abe9f626d8981f6fb372c7fc6b8d0d8cabcfe2687e57c1d76dde4638e7bb5",
+      "png": "work/fidelity-avatars/bg-1000001A.png",
+      "rgba": [
+        180,
+        244,
+        156,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 26,
+      "name": "1000001B",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000001B.szs",
+      "source_sha256": "fb15492a7e7e3b4bdb5da6db232a23a287f739c7a71ba6d8df6012cf7db15cb8",
+      "rgba_sha256": "94b4e89f42fed6181090a2baac9d190db979f457f73d95d2947c36faad52e011",
+      "png": "work/fidelity-avatars/bg-1000001B.png",
+      "rgba": [
+        134,
+        230,
+        108,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 27,
+      "name": "1000001C",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000001C.szs",
+      "source_sha256": "e2f3f3cd5f389377ac4ee12806975297405fa0613b89ba398de03a6cd1630f7f",
+      "rgba_sha256": "0745bfb7f7cfeaaa2ae0046b2f91b9bba80b7cf928810f335deb417c75a30866",
+      "png": "work/fidelity-avatars/bg-1000001C.png",
+      "rgba": [
+        52,
+        215,
+        13,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 28,
+      "name": "1000001D",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000001D.szs",
+      "source_sha256": "e7583ba0cd4185fd8f095489bf125a84e26d487036f83b42fa2368690bd5914b",
+      "rgba_sha256": "1473277bab90e93011728f7ad454bf5217996c3c571fa2c3106dd73733c9e05b",
+      "png": "work/fidelity-avatars/bg-1000001D.png",
+      "rgba": [
+        79,
+        163,
+        29,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 29,
+      "name": "1000001E",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000001E.szs",
+      "source_sha256": "e9870f8eb25e95f46662813cfdcf08a005f4f0361a805a2825b5ca86abc32355",
+      "rgba_sha256": "43afd3b2cb10449bea173fdbed6d9848f8882454c4227e9405026868a9ba1e33",
+      "png": "work/fidelity-avatars/bg-1000001E.png",
+      "rgba": [
+        36,
+        117,
+        25,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 30,
+      "name": "1000001F",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000001F.szs",
+      "source_sha256": "a46a60e5af40f1efef48fb4206fff682e0934a255960dc9e8e865131b3b94ce2",
+      "rgba_sha256": "e92919f97a08e17487cd2de1b7ebd074558a1d7a621b47cef85eba417f965ab7",
+      "png": "work/fidelity-avatars/bg-1000001F.png",
+      "rgba": [
+        191,
+        239,
+        225,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 31,
+      "name": "10000020",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000020.szs",
+      "source_sha256": "0aa8e1cd91b3290ce2dbf694bd8159bf2491ce37196b876deca74ffad5723e95",
+      "rgba_sha256": "360d515f8c32d77e1c0c2c3302b8439d9a5ea3e694ed3336440fef50fe1c8bee",
+      "png": "work/fidelity-avatars/bg-10000020.png",
+      "rgba": [
+        145,
+        227,
+        206,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 32,
+      "name": "10000021",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000021.szs",
+      "source_sha256": "ea1f1ad297db2fc90f3dd4828bba17be4d8d92495981b5a3126af385e8207066",
+      "rgba_sha256": "23305ab5a8d6891aae9865c238f7f91b1d987a1c782db24ae197cd4d142fa005",
+      "png": "work/fidelity-avatars/bg-10000021.png",
+      "rgba": [
+        101,
+        230,
+        195,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 33,
+      "name": "10000022",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000022.szs",
+      "source_sha256": "aa9e59b9de94461455c3cb03338c93a9055f0ecabb9e310157cc0156ed27e323",
+      "rgba_sha256": "1b9a1f4c24557335fa1f79135ea9b8557b73b98c6304216a72565d965c5424c2",
+      "png": "work/fidelity-avatars/bg-10000022.png",
+      "rgba": [
+        0,
+        219,
+        161,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 34,
+      "name": "10000023",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000023.szs",
+      "source_sha256": "d0ea9d4b0116396a4b24867f04c0a42549091ee373e1fe6bfeb2a52a51cebb62",
+      "rgba_sha256": "d6811bf392f3736bb2e62a827f7f9bcb280dac64c9eb5b32394f319f4122a17b",
+      "png": "work/fidelity-avatars/bg-10000023.png",
+      "rgba": [
+        46,
+        172,
+        139,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 35,
+      "name": "10000024",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000024.szs",
+      "source_sha256": "d3b167ba20077a545d9b46f125cfec4df18bfb2491e41e02a99147ab57fce6e1",
+      "rgba_sha256": "22c1a89ff60464fb99d78c575d5848cc7a283268863bff32169eb1b215c0aa64",
+      "png": "work/fidelity-avatars/bg-10000024.png",
+      "rgba": [
+        15,
+        115,
+        88,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 36,
+      "name": "10000025",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000025.szs",
+      "source_sha256": "7e58a22d14b02ddcf18000beb7ba38cad6c5074752fd1c82d7eb0ef6e63f5522",
+      "rgba_sha256": "599e382f30d052f29b62fdb953b0095e06d4736a13f963fcd2bf959fcba1a69e",
+      "png": "work/fidelity-avatars/bg-10000025.png",
+      "rgba": [
+        192,
+        228,
+        240,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 37,
+      "name": "10000026",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000026.szs",
+      "source_sha256": "549a993a8f6bfbf97f24e508230c3471f4c0db87040d6eb654a0f1cba5dc3192",
+      "rgba_sha256": "75bb369ecb29985064983bdedc782a5c8207a95f805a1d4df85a63597bf3c3ef",
+      "png": "work/fidelity-avatars/bg-10000026.png",
+      "rgba": [
+        145,
+        220,
+        242,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 38,
+      "name": "10000027",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000027.szs",
+      "source_sha256": "e68f41ac8dac8225760f94ec97303c0861a450334c6395c40a332d1c15ca8c20",
+      "rgba_sha256": "f9384e7bf686d5a89767af5cd5b01f23ee3ae435885e99c36c8934665d0efac2",
+      "png": "work/fidelity-avatars/bg-10000027.png",
+      "rgba": [
+        94,
+        214,
+        235,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 39,
+      "name": "10000028",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000028.szs",
+      "source_sha256": "63f3b253995c6bac4e54df11508e135e80e4ec5582316ae34785db22e7509f9e",
+      "rgba_sha256": "fc9eb50d79302b988dfdf5b36150354955476fd6254ceb2c3fc656cf52de0ef1",
+      "png": "work/fidelity-avatars/bg-10000028.png",
+      "rgba": [
+        19,
+        190,
+        237,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 40,
+      "name": "10000029",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000029.szs",
+      "source_sha256": "af0fda8adb7365e1095fb4312429422e3d9cfc317350e0c2678f9063ddb1957a",
+      "rgba_sha256": "141df8335bc1c0ad6a89852f98f324c061a0ae17b99296a7ba0458d3843a8285",
+      "png": "work/fidelity-avatars/bg-10000029.png",
+      "rgba": [
+        52,
+        150,
+        193,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 41,
+      "name": "1000002A",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000002A.szs",
+      "source_sha256": "8ce9e7a3dafa4903f49a4a7b552e4f6724c5fe38d63362835ffe62b6d2135782",
+      "rgba_sha256": "26d4f284f3bbfbe7e37222f6f92de2930b0ea59db94e19cf169065aa4182b857",
+      "png": "work/fidelity-avatars/bg-1000002A.png",
+      "rgba": [
+        22,
+        94,
+        114,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 42,
+      "name": "1000002B",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000002B.szs",
+      "source_sha256": "a76d1ada3e82430ab0f74073161fdab82b2f8937c80bfcc43dcefbbeab0da7d8",
+      "rgba_sha256": "93c81e13052f62d716f9b9461f4e98852adbe9f7d7ab8f0d101c62914a51a9ec",
+      "png": "work/fidelity-avatars/bg-1000002B.png",
+      "rgba": [
+        174,
+        213,
+        247,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 43,
+      "name": "1000002C",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000002C.szs",
+      "source_sha256": "a7569a0c78eafee62b297c47effb1a8eef728974d4bf88faafa0efcc711c890f",
+      "rgba_sha256": "70d57ece44c7283c2800c143b794897d2dc6fa07007b14042847a6e4190a4ff2",
+      "png": "work/fidelity-avatars/bg-1000002C.png",
+      "rgba": [
+        128,
+        189,
+        255,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 44,
+      "name": "1000002D",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000002D.szs",
+      "source_sha256": "a1d256a4730b69ed6a963ce038fa528579972b79f159416e185b38c7b483e239",
+      "rgba_sha256": "ed079efe6fffe6cddab2c6d4abdbd381e9df2cc885b22c47778798a548217035",
+      "png": "work/fidelity-avatars/bg-1000002D.png",
+      "rgba": [
+        71,
+        155,
+        255,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 45,
+      "name": "1000002E",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000002E.szs",
+      "source_sha256": "15e45ffc6b3cf129cc2d6d1e33fe0132f00652f92b857eeb90f45b9b450e8ffa",
+      "rgba_sha256": "8f935667ee2fbff2df7988b005ab05fb6f01fcefeb7d93d0803abeddc4ec8588",
+      "png": "work/fidelity-avatars/bg-1000002E.png",
+      "rgba": [
+        49,
+        79,
+        255,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 46,
+      "name": "1000002F",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000002F.szs",
+      "source_sha256": "5616c61a38be0916711218327eed99692985f03460bc3a6e45214eabbdb09c70",
+      "rgba_sha256": "4581041fe7830a9de0befaefac46ba83d632d0b0ce29c6a59cff564ec72790a9",
+      "png": "work/fidelity-avatars/bg-1000002F.png",
+      "rgba": [
+        0,
+        81,
+        189,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 47,
+      "name": "10000030",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000030.szs",
+      "source_sha256": "898648a74e96b37e7431449fbb1c147094b2cf81b8b011f42c74cd8fb0c137a1",
+      "rgba_sha256": "32c0a0821c5bfe30ed6f08856c78a55511424c2c0abc051995bb09e4171fe187",
+      "png": "work/fidelity-avatars/bg-10000030.png",
+      "rgba": [
+        28,
+        61,
+        104,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 48,
+      "name": "10000031",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000031.szs",
+      "source_sha256": "d55e5484da4c8d0ca3d05a333ddcc0e44bfeb1d56b58a11e36de5aec3e5b6fe4",
+      "rgba_sha256": "c04f96623e8ab935119cba9190ae54c2f5b1894897a429dc1af6418b1aa74f03",
+      "png": "work/fidelity-avatars/bg-10000031.png",
+      "rgba": [
+        228,
+        204,
+        255,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 49,
+      "name": "10000032",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000032.szs",
+      "source_sha256": "f6770f44d1cb3c5bc8408a1cbf47209ffc2c67ae884c070c097bc2690e600d93",
+      "rgba_sha256": "e85812cbf6f2e29975407b420b2b25114128d304c7f40fcfd953108c7c2dc037",
+      "png": "work/fidelity-avatars/bg-10000032.png",
+      "rgba": [
+        210,
+        168,
+        255,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 50,
+      "name": "10000033",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000033.szs",
+      "source_sha256": "8c21e3c8744f831686dac9705c78927592489657f82cad21f365e2a7fae786dc",
+      "rgba_sha256": "f6835d1ac6d3260e5e826c2e434ce3bf901f03f839a2fa4615b64b93fbc2fe58",
+      "png": "work/fidelity-avatars/bg-10000033.png",
+      "rgba": [
+        182,
+        107,
+        255,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 51,
+      "name": "10000034",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000034.szs",
+      "source_sha256": "dcdafbcb269db36db403220e6f54aecf9fafdfaa05e57a832b899ae9d2b96f41",
+      "rgba_sha256": "bc3d126f920f15b61a97d78712eb3cb111fb7a02266302552accdf060fb47383",
+      "png": "work/fidelity-avatars/bg-10000034.png",
+      "rgba": [
+        140,
+        25,
+        255,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 52,
+      "name": "10000035",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000035.szs",
+      "source_sha256": "d7b4c87db74e1491c55079cf7377eb8d00c4aaec0879acaaa844de0ed82f357d",
+      "rgba_sha256": "185aa67ae384a74239f962f1f2f4b4c7578eb4380001d610718d877fb7a2fb2b",
+      "png": "work/fidelity-avatars/bg-10000035.png",
+      "rgba": [
+        113,
+        29,
+        189,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 53,
+      "name": "10000036",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000036.szs",
+      "source_sha256": "e2f1e0c5139a13125b2c69982669e40d8667bcf30663c187ec7709e35ad8561e",
+      "rgba_sha256": "e11a8772dbe6e248f65017c821c433d9683b7f56bbaeb2bff49c0787839b6369",
+      "png": "work/fidelity-avatars/bg-10000036.png",
+      "rgba": [
+        69,
+        18,
+        120,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 54,
+      "name": "10000037",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000037.szs",
+      "source_sha256": "220bc0e40b886f8d405155cd5181d4df4e02846131e38cbe757a95546f57897e",
+      "rgba_sha256": "176d0c636d2faa1970f0a9ba891d15a08cf815d538ff749a68b395acefb33c21",
+      "png": "work/fidelity-avatars/bg-10000037.png",
+      "rgba": [
+        255,
+        204,
+        249,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 55,
+      "name": "10000038",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000038.szs",
+      "source_sha256": "162c80ec9b275264ab3a32bfed6f2b1fd97cecce2f6f26a926514e45b5b09cf7",
+      "rgba_sha256": "1ea0a38e557b611600771063d2428fc821285345ae6887160060768a8e584ae1",
+      "png": "work/fidelity-avatars/bg-10000038.png",
+      "rgba": [
+        255,
+        166,
+        228,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 56,
+      "name": "10000039",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000039.szs",
+      "source_sha256": "f643097cf9fbef1c9b545c74e5622b1be2b86f1c0f5ccd43c5ee0779afd33203",
+      "rgba_sha256": "71e6af1862e4471b6126c07ba0eba3326abd01590d0a14c8982a91fa9f629aea",
+      "png": "work/fidelity-avatars/bg-10000039.png",
+      "rgba": [
+        255,
+        115,
+        212,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 57,
+      "name": "1000003A",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000003A.szs",
+      "source_sha256": "e16e6e4455d96feda951cfb11a2775f721866663c7898bbaa5cf9648a5da9278",
+      "rgba_sha256": "4b424705946200034ddf287fcdfeab139729b5b25cc7b8ddf4650a07a84330f0",
+      "png": "work/fidelity-avatars/bg-1000003A.png",
+      "rgba": [
+        255,
+        25,
+        223,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 58,
+      "name": "1000003B",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000003B.szs",
+      "source_sha256": "2aefd032e09aa5af5c30d3a387706079bddd61fdcf9e3e0346103981224a273d",
+      "rgba_sha256": "d5231d810f5157e8a25d63af6043ee5f238f6bf0ac804151fca2683427079e5a",
+      "png": "work/fidelity-avatars/bg-1000003B.png",
+      "rgba": [
+        191,
+        10,
+        188,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 59,
+      "name": "1000003C",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000003C.szs",
+      "source_sha256": "041034d472b91438a5c342d18a93fafcf52969d9e59632948148bb69b28081bc",
+      "rgba_sha256": "1e266a6d0aa2706ae4fb3dc920790fe9fcb2277db94ca9cbe6d1812f4e535e8b",
+      "png": "work/fidelity-avatars/bg-1000003C.png",
+      "rgba": [
+        105,
+        21,
+        121,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 60,
+      "name": "1000003D",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000003D.szs",
+      "source_sha256": "4fbf9db4faf885239bcfc765e2ae506e07f54d1bb2417c71afc02f6aa3fe54ab",
+      "rgba_sha256": "c96912cbf941f0c74b185741d1cbdf953e763aec2268eba9eb82b8c314ee120a",
+      "png": "work/fidelity-avatars/bg-1000003D.png",
+      "rgba": [
+        245,
+        245,
+        245,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 61,
+      "name": "1000003E",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000003E.szs",
+      "source_sha256": "0f3ec8555d2824bd5ebb905ebd66ef3c0d664b20ce3a0d88e3f26aca39da8299",
+      "rgba_sha256": "152a04f0550033e9ef8fda3d9dbcc6cb0cb9a631f97da6185c998c0d5408dae5",
+      "png": "work/fidelity-avatars/bg-1000003E.png",
+      "rgba": [
+        217,
+        217,
+        217,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 62,
+      "name": "1000003F",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/1000003F.szs",
+      "source_sha256": "1aa7f7ee5739cfc33f84515d42dd6017cade3c1b28c6d261c7724c84ce50ca1a",
+      "rgba_sha256": "4ae61af6dce6eac388a46ea36c896f9fffe8a3e3f91531aa7c315a66cb7ce713",
+      "png": "work/fidelity-avatars/bg-1000003F.png",
+      "rgba": [
+        179,
+        179,
+        179,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 63,
+      "name": "10000040",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000040.szs",
+      "source_sha256": "848aba726962ec4048507b33f504c4ba2580a40a609f05593713b8be731d0072",
+      "rgba_sha256": "c96b1376b73708d62410c2ddbd20ddedafd4f222ef5e07ad97526fd933a0e9c3",
+      "png": "work/fidelity-avatars/bg-10000040.png",
+      "rgba": [
+        128,
+        128,
+        128,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 64,
+      "name": "10000041",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000041.szs",
+      "source_sha256": "a7dfa8e5f74d16c9b271f521f796d7ca600dbb8031645f425208333d0c0516cb",
+      "rgba_sha256": "0d14b8aa12bb361a09b25291ce80b58be1cb1e724f74905fd59b83f66fd9af40",
+      "png": "work/fidelity-avatars/bg-10000041.png",
+      "rgba": [
+        71,
+        75,
+        85,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 65,
+      "name": "10000042",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000042.szs",
+      "source_sha256": "e68f0db83b62a58a7640044d0ab34243dca5fd0e4f85c5a7aea653307ab9a9ac",
+      "rgba_sha256": "3fdddc763f7af5425c1ce75e55212d2f3494fcf7c782b5be18e6a5ac44e8ffda",
+      "png": "work/fidelity-avatars/bg-10000042.png",
+      "rgba": [
+        40,
+        40,
+        40,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 66,
+      "name": "10000043",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000043.szs",
+      "source_sha256": "7a49fe2b0c688ff6143af78f0a279132b1917c282f249330ceaf92311f6e58e6",
+      "rgba_sha256": "95488fbf275993fdb6d075003e5cb313816b63a7fcddbaff88805e913ee257e4",
+      "png": "work/fidelity-avatars/bg-10000043.png",
+      "rgba": [
+        235,
+        240,
+        247,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 67,
+      "name": "10000044",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000044.szs",
+      "source_sha256": "af8d75436c6c0d4fcafbae54cd127ffd958ff9c06d18dab786138c094176eb37",
+      "rgba_sha256": "a47a3684721f7b17b7592b691feb66b157e19343153467f72feaa3e2d29d1e0c",
+      "png": "work/fidelity-avatars/bg-10000044.png",
+      "rgba": [
+        195,
+        202,
+        217,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 68,
+      "name": "10000045",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000045.szs",
+      "source_sha256": "389431fa810cce4efd2bdff68cefe8781ca52340c702062d69046d6bd45d228b",
+      "rgba_sha256": "d553819ac631d2327e682ee5042ecac5081f7b8125c96e416aa02bd4c9050a91",
+      "png": "work/fidelity-avatars/bg-10000045.png",
+      "rgba": [
+        153,
+        160,
+        179,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 69,
+      "name": "10000046",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000046.szs",
+      "source_sha256": "dddc547dae2d3d2d801a85e48853e784a6fc1a5093bf9bbff33400616f9b7c14",
+      "rgba_sha256": "22f2bbbaac2f88be542fe8ac566d3aebaa0f43427b0bbfe51698f099ed397893",
+      "png": "work/fidelity-avatars/bg-10000046.png",
+      "rgba": [
+        102,
+        108,
+        128,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 70,
+      "name": "10000047",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000047.szs",
+      "source_sha256": "88c5da91faef57f4573d40c4a6e7f416a544ce087afc1907692604f6ef211301",
+      "rgba_sha256": "1d71ed9e54907b75791644585e68123d874f908dda929cb18f454bc0085ee6fd",
+      "png": "work/fidelity-avatars/bg-10000047.png",
+      "rgba": [
+        60,
+        68,
+        89,
+        255
+      ]
+    },
+    {
+      "kind": "bg",
+      "index": 71,
+      "name": "10000048",
+      "source": "d43802ae368a813b7f94d4c142ed5785/romfs/bg/10000048.szs",
+      "source_sha256": "7620f5a9c03a83e300f27638023278769e4e59b9dbf709fd5d6c6281d7ffa26c",
+      "rgba_sha256": "c4ed7bda9822b0ca95bce69e0b963ebe0a6ebcfb580d8b8b228219022fd2afb1",
+      "png": "work/fidelity-avatars/bg-10000048.png",
+      "rgba": [
+        19,
+        29,
+        69,
+        255
+      ]
+    }
+  ],
+  "source_decoder": "texture2ddecoder1.0.6 ASTC/BC and Nintendo BNTX component selection; Yaz0 raw RGBA avatar pixels",
+  "reference_audio_listened": false
+}

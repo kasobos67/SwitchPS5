@@ -315,6 +315,7 @@ std::string FakeServices::setup_details()
 bool FakeServices::folders(const std::string &directory, std::vector<std::string> *names)
 {
     names->clear();
+    if (directory == unreadable_folder) return false;
     if (directory == "/mnt/ext1/eden")
         *names = {"firmware", "keys", "roms", "updates"};
     else if (directory == "/mnt/ext1")

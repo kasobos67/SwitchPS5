@@ -54,47 +54,10 @@ inline std::array<std::atomic<unsigned long long>, 4> evacuations{};
 inline Totals storage;
 inline Totals jit_protection;
 inline Totals rasterizer_draw;
-// The six phases of that draw path (RasterizerVulkan::PrepareDraw) in order: flushing the pending
-// work, taking the current pipeline, waiting for the two cache mutexes (and binding the pipeline
-// to the engine), configuring it, applying dynamic state, and recording. Calls count each phase's
-// early returns as well as its work - a draw with no pipeline stops at draw_pipeline, one
-// Configure rejects stops at draw_config - so subtracting their sum from rasterizer_draw gives
-// what went unmarked. Two clock reads per phase rather than a Timer apiece, a draw has six of them.
-inline Totals draw_flush, draw_pipeline, draw_lock_wait, draw_config, draw_state, draw_record;
-// The six phases inside draw_config - which is GraphicsPipeline::Configure, past SetEngine's two
-// pointer assignments - in the order ConfigureImpl runs them: syncing the sampler and image tables
-// and the uniform-buffer state, reading every texture handle out of guest memory and filling the
-// views, binding the buffers, queueing the descriptor pushes and the upload barrier, updating
-// render targets and checking feedback, and ConfigureDraw's compare-and-record. They nest inside
-// draw_config, so their sum cannot exceed it; calls count the early returns that leave a later
-// phase unmarked.
-inline Totals cfg_sync, cfg_read, cfg_bind, cfg_desc, cfg_rt, cfg_draw;
-// The three inside cfg_bind, on a clock of their own started where cfg_read ends so that they
-// chain against each other and still sum to cfg_bind: the texture-buffer loop over the enabled
-// stages, the buffer update pass, and the host geometry binds.
-inline Totals bind_tbo, bind_update, bind_geometry;
-// The four calls inside bind_geometry and the three inside bind_update. Both walk the memory
-// tracker's pages through SynchronizeBuffer once per buffer on every draw whether or not a byte
-// of it is dirty, so which call carries the time cannot be read off the source - the loop over
-// many stages looked expensive and measured at 2.8%.
-inline Totals geo_index, geo_vertex, geo_xf, geo_indirect;
-inline Totals upd_state, upd_stage, upd_indirect;
 inline Totals gpu_queue_wait, gpu_dispatch;
-// The three phases of the dispatch (Tegra::Control::Scheduler::Push), measured inside it: taking
-// the channel lock and binding it, queueing the submit list, and then executing the guest's
-// methods - the O(draws) part. gpu_dispatch is their sum plus the loop's own overhead, so these
-// say whether the time is the lock, the queueing, or the methods themselves.
-inline Totals gpu_sched_lock, gpu_dma_push, gpu_dma_dispatch;
 // Producer-side waits outside the dispatch timer: forced fence drains on the GPU
 // thread, free presentation-frame waits, and guest pushes into a full GPU queue.
 inline Totals gpu_fence_drain, gpu_present_wait, gpu_queue_full;
-// Texture-cache GC GPU drains (RunGarbageCollector). A dirty eviction copies the image back to
-// guest memory and waits for the GPU first (Scheduler::Finish). The batched path spends one drain
-// on up to sixteen images; the unbatched path is the per-image fallback in Cleanup, which the
-// prefetch cannot take (an image larger than its byte budget, or one that arrives after the
-// lookahead stopped). calls = drains, requested_bytes = images covered: one drain per image in the
-// unbatched case is the stall to drive out.
-inline Totals gc_batched_drain, gc_unbatched_drain;
 // Guest threads entering the GPU caches: CPU writes to tracked pages and flush-area lookups.
 inline Totals guest_cpu_write, guest_cpu_read;
 // Those entries take the buffer and texture cache locks, which the GPU thread holds for one draw at
@@ -124,165 +87,8 @@ inline std::atomic<unsigned long long> guest_fs_file_bytes{}, guest_fs_storage_b
 // Guest svcSendSyncRequest latency (queueing + HLE handling), and HLE handling time per
 // service command (RecordHle, reported as EDEN_DEV_HLE).
 inline Totals guest_ipc_wait;
-inline void AddNs(Totals& totals, long long ns) {
-    totals.nanoseconds.fetch_add(static_cast<unsigned long long>(ns), std::memory_order_relaxed);
-    totals.calls.fetch_add(1, std::memory_order_relaxed);
-}
-// Which guest thread that wait belongs to. The sum alone cannot say whether a frame is waiting or
-// whether background threads are: the same 13 ms spread over a dozen idle helpers costs nothing on
-// the frame, while one thread holding it does. A fixed table keyed by the guest thread id - the
-// first send from a thread claims a slot and takes its name once, every later one only adds. More
-// distinct threads than slots fall into ipc_thread_overflow rather than displacing a claim.
-inline constexpr unsigned ipc_thread_slots = 32;
-inline Totals ipc_thread_overflow;
-struct IpcThreadSlot {
-    std::atomic<unsigned long long> tid{}, calls{}, ns{};
-    char name[24]{};
-};
-inline std::array<IpcThreadSlot, ipc_thread_slots> ipc_threads{};
-// Shape of the wait across every send, so a report can tell one blocking wait a frame from many
-// short ones: below 50 us, below 500 us, below 5 ms, and 5 ms and over.
-inline std::array<std::atomic<unsigned long long>, 4> ipc_hist{};
-// Claims the slot for tid, probing past slots other threads hold. *fresh says this call claimed it,
-// which is the only place a thread id is published - the caller then fills in the name.
-inline unsigned IpcThreadSlotFor(unsigned long long tid, bool* fresh) {
-    unsigned slot = static_cast<unsigned>(tid) % ipc_thread_slots;
-    for (unsigned probe = 0; probe < ipc_thread_slots; ++probe) {
-        const unsigned long long held = ipc_threads[slot].tid.load(std::memory_order_relaxed);
-        if (held == tid) {
-            *fresh = false;
-            return slot;
-        }
-        if (held == 0) {
-            unsigned long long expected = 0;
-            if (ipc_threads[slot].tid.compare_exchange_strong(expected, tid, std::memory_order_relaxed)) {
-                *fresh = true;
-                return slot;
-            }
-        }
-        slot = (slot + 1) % ipc_thread_slots;
-    }
-    *fresh = false;
-    return ipc_thread_slots;
-}
-inline void SetIpcThreadName(unsigned slot, const char* name) {
-    if (slot >= ipc_thread_slots || name == nullptr) return;
-    unsigned i = 0;
-    while (name[i] != '\0' && i + 1 < sizeof ipc_threads[slot].name) {
-        ipc_threads[slot].name[i] = name[i];
-        ++i;
-    }
-    ipc_threads[slot].name[i] = '\0';
-}
-inline void AddIpcThread(unsigned slot, long long ns) {
-    const unsigned long long n = static_cast<unsigned long long>(ns > 0 ? ns : 0);
-    ipc_hist[n < 50000 ? 0 : n < 500000 ? 1 : n < 5000000 ? 2 : 3].fetch_add(1, std::memory_order_relaxed);
-    if (slot >= ipc_thread_slots) {
-        AddNs(ipc_thread_overflow, static_cast<long long>(n));
-        return;
-    }
-    ipc_threads[slot].ns.fetch_add(n, std::memory_order_relaxed);
-    ipc_threads[slot].calls.fetch_add(1, std::memory_order_relaxed);
-}
-// Blocking time under ThreadWaitReasonForDebugging, stamped by KThread::BeginWait and closed by
-// KThread::SetState - the single place the reason is cleared, so the reason read there is the one
-// the wait ran under. A core with nothing to run and a thread asleep until a timeout are the same
-// reading without this, and only one of them is ours to fix.
-//
-// Its own table, deliberately not the IPC one: every guest thread waits while only some send, so
-// sharing let the threads parked since boot claim every slot and starve both at once - one run
-// recorded 92% of its waits and none of its 93,788 sends. 512 covers a session's thread churn;
-// wait_overflow_calls counts whatever still does not fit.
-inline constexpr unsigned wait_thread_slots = 512;
-inline std::atomic<unsigned long long> wait_overflow_calls{};
-// Indexed by ThreadWaitReasonForDebugging (k_thread.h), whose values run 0 through 6.
-inline constexpr unsigned wait_reason_slots = 8;
-struct WaitThreadSlot {
-    std::atomic<unsigned long long> tid{}, calls{}, ns{};
-    std::atomic<long long> start{};
-    // Who closed the wait. A thread woken by one fixed tid was waiting on an event, and one woken
-    // by many different tids was queued behind whoever held its lock - both read as ConditionVar
-    // in the reason, so this is what tells the two apart.
-    std::atomic<unsigned long long> waker{};
-    // The reason histogram below is every thread summed together, and condvar wins that on volume
-    // alone. The reason for the one thread core0 sits idle behind is what names a fix, so each
-    // slot keeps its own split rather than only adding to the shared total.
-    std::array<std::atomic<unsigned long long>, wait_reason_slots> reason_ns{};
-};
-inline std::array<WaitThreadSlot, wait_thread_slots> wait_threads{};
-inline std::array<std::atomic<unsigned long long>, wait_reason_slots> wait_reason_ns{};
-inline std::array<std::atomic<unsigned long long>, wait_reason_slots> wait_reason_calls{};
-inline unsigned WaitThreadSlotFor(unsigned long long tid) {
-    unsigned slot = static_cast<unsigned>(tid) % wait_thread_slots;
-    for (unsigned probe = 0; probe < wait_thread_slots; ++probe) {
-        const unsigned long long held = wait_threads[slot].tid.load(std::memory_order_relaxed);
-        if (held == tid) return slot;
-        if (held == 0) {
-            unsigned long long expected = 0;
-            if (wait_threads[slot].tid.compare_exchange_strong(expected, tid, std::memory_order_relaxed))
-                return slot;
-        }
-        slot = (slot + 1) % wait_thread_slots;
-    }
-    return wait_thread_slots;
-}
-// NowNs comes from the caller: both hooks sit under the scheduler lock, and a second clock lookup
-// per transition is the whole cost this diagnostic adds to the guest's own blocking.
-inline void WaitBegin(unsigned long long tid, long long now_ns) {
-    const unsigned slot = WaitThreadSlotFor(tid);
-    if (slot >= wait_thread_slots) return;
-    wait_threads[slot].start.store(now_ns, std::memory_order_relaxed);
-}
-inline void WaitEnd(unsigned long long tid, unsigned reason, long long now_ns,
-                    unsigned long long waker_tid) {
-    const unsigned slot = WaitThreadSlotFor(tid);
-    if (slot >= wait_thread_slots) {
-        // Counted here rather than in WaitBegin: a wait whose start did not fit ends without one,
-        // so this is the single place that sees both halves of a dropped wait.
-        wait_overflow_calls.fetch_add(1, std::memory_order_relaxed);
-        return;
-    }
-    const long long start = wait_threads[slot].start.exchange(0, std::memory_order_relaxed);
-    if (start == 0) return;
-    const unsigned long long n = static_cast<unsigned long long>(now_ns > start ? now_ns - start : 0);
-    wait_threads[slot].ns.fetch_add(n, std::memory_order_relaxed);
-    wait_threads[slot].calls.fetch_add(1, std::memory_order_relaxed);
-    wait_threads[slot].waker.store(waker_tid, std::memory_order_relaxed);
-    if (reason < wait_reason_slots) {
-        wait_threads[slot].reason_ns[reason].fetch_add(n, std::memory_order_relaxed);
-        wait_reason_ns[reason].fetch_add(n, std::memory_order_relaxed);
-        wait_reason_calls[reason].fetch_add(1, std::memory_order_relaxed);
-    }
-}
-inline long long NowNs() { return Common::g_wall_clock.GetTimeNS().count(); }
-// Dispatch latency: how long a thread sat runnable before a host core entered RunThread on it.
-// MainThread blocks ~419 us per handoff against a worker that is itself blocked, while cores 1
-// and 2 are idle for most of the frame, so that gap is either the worker's own work or the time
-// the scheduler takes to get it running - and only the second is ours to fix. SetState stamps
-// the transition into Runnable; RunThread consumes and clears it, so one stamp buys one reading
-// and the cost is one clock lookup per actual dispatch rather than per guest halt.
-inline constexpr unsigned dispatch_slots = 512;
-inline std::array<std::atomic<long long>, dispatch_slots> dispatch_since{};
-inline std::array<std::atomic<unsigned long long>, dispatch_slots> dispatch_ns{};
-inline std::array<std::atomic<unsigned long long>, dispatch_slots> dispatch_calls{};
-inline std::atomic<unsigned long long> dispatch_overflow_calls{};
-inline void NoteRunnable(unsigned long long tid, long long now_ns) {
-    if (tid >= dispatch_slots) {
-        dispatch_overflow_calls.fetch_add(1, std::memory_order_relaxed);
-        return;
-    }
-    dispatch_since[tid].store(now_ns, std::memory_order_relaxed);
-}
-inline void NoteRunning(unsigned long long tid, long long now_ns) {
-    if (tid >= dispatch_slots) return;
-    const long long since = dispatch_since[tid].exchange(0, std::memory_order_relaxed);
-    if (since == 0) return;
-    dispatch_ns[tid].fetch_add(
-        static_cast<unsigned long long>(now_ns > since ? now_ns - since : 0),
-        std::memory_order_relaxed);
-    dispatch_calls[tid].fetch_add(1, std::memory_order_relaxed);
-}
 void RecordHle(const char* service, unsigned command, long long ns);
+inline long long NowNs() { return Common::g_wall_clock.GetTimeNS().count(); }
 // Texture cache garbage collection (tools/prepare-vulkan-port.py, vulkan_gc_downloads.inc).
 // Past its "expected" memory use Eden's collector also evicts images the GPU wrote, and each of
 // those is first copied back to guest memory behind a wait for the GPU. On the console a large
@@ -400,28 +206,6 @@ private:
     unsigned long long requested_bytes;
     std::chrono::nanoseconds start;
 };
-
-// Accumulate one phase of a sequence under a single running clock instead of giving it a Timer:
-// one clock read and two relaxed adds. `since` is where the phase started and advances to now, so
-// consecutive marks measure the gap between them and together cover the whole sequence without
-// overlap. An early return out of the sequence leaves the tail unmarked - that is what the outer
-// Timer is still charging - and the phase that never ran simply does not call this.
-//
-// Only a development build counts them (draw_marks, set when a game starts there). A draw
-// passes about twenty marks, a clock read and two additions each, and only a development
-// run's report reads the totals: elsewhere a mark is one look at this flag, and the clock it
-// would measure from is not read either (MarkStart). A flag and not an #ifdef: this header
-// must read the same in every library that includes it.
-inline std::atomic<bool> draw_marks{false};
-inline long long MarkStart() { return draw_marks.load(std::memory_order_relaxed) ? NowNs() : 0; }
-inline void Mark(Totals& totals, long long& since) {
-    if (!draw_marks.load(std::memory_order_relaxed)) return;
-    const auto now = NowNs();
-    const auto elapsed = now - since;
-    since = now;
-    totals.nanoseconds.fetch_add(static_cast<unsigned long long>(elapsed), std::memory_order_relaxed);
-    totals.calls.fetch_add(1, std::memory_order_relaxed);
-}
 
 // Opt-in API wall times: calls may overlap across threads, so do not sum them as frame time.
 inline std::atomic<bool> vulkan_cost_enabled{false};

@@ -617,22 +617,6 @@ foreach(bits 32 64)
         if(inline_exclusive_at LESS 0)
             message(FATAL_ERROR "Pinned exclusive-access configuration changed")
         endif()
-        # Eden's Unsafe CPU mode (Settings > Performance > Faster CPU emulation) clears this again, twice:
-        # cpuopt_unsafe_host_mmu is false on every platform but Apple, Linux, Android and Windows, so the
-        # Unsafe case and the closing IsFastmemEnabled() check both drop fastmem_exclusive_access, and every
-        # LDXR/STXR then left JIT code for the global-monitor helpers (14% of the core time in Pokemon Violet,
-        # measured). The pointer reset stays; the inline page-table path needs no fastmem pointer.
-        set(unsafe_old "        if (!Settings::values.cpuopt_unsafe_host_mmu) {\n            config.fastmem_pointer = std::nullopt;\n            config.fastmem_exclusive_access = false;\n        }")
-        set(unsafe_new "        if (!Settings::values.cpuopt_unsafe_host_mmu) {\n            config.fastmem_pointer = std::nullopt;\n        }")
-        set(final_old "    if (!Settings::IsFastmemEnabled()) {\n        config.fastmem_pointer = std::nullopt;\n        config.fastmem_exclusive_access = false;\n    }")
-        set(final_new "    if (!Settings::IsFastmemEnabled()) {\n        config.fastmem_pointer = std::nullopt;\n    }")
-        foreach(pair IN ITEMS unsafe final)
-            string(FIND "${wrapper}" "${${pair}_old}" unsafe_at)
-            if(unsafe_at LESS 0)
-                message(FATAL_ERROR "Pinned Unsafe CPU mode fastmem handling changed (${pair}, arm_dynarmic_${bits})")
-            endif()
-            string(REPLACE "${${pair}_old}" "${${pair}_new}" wrapper "${wrapper}")
-        endforeach()
     endif()
       string(REPLACE "std::uint32_t(512_MiB)" "std::uint32_t(16_MiB)" wrapper "${wrapper}")
       # Guest cores 0-2 share a 640 MiB code budget. A64: 256/192/192, since a large
@@ -657,16 +641,9 @@ foreach(bits 32 64)
             set(sample_pc "m_jit->Regs()[15]")
             set(sample_fp "m_jit->Fpscr()")
         endif()
-        # NoteRunning must sit before Run(): stamped at SetState, consumed on entry, so the delta
-        # is time spent runnable-but-unscheduled. After Run() it would also count the slice the
-        # thread then executes, which for a main loop is the larger half of the reading.
         string(REPLACE "    return TranslateHaltReason(m_jit->Run());"
-            "    const auto guest_tid = thread ? thread->GetThreadId() : 0;\n    ::Eden::Performance::NoteRunning(guest_tid, ::Eden::Performance::NowNs());\n    const auto halt = m_jit->Run();\n    ::Eden::Performance::SampleCpu(m_core_index, guest_tid, ${sample_pc}, GetSvcNumber(), ${sample_fp});\n    return TranslateHaltReason(halt);"
+            "    const auto halt = m_jit->Run();\n    ::Eden::Performance::SampleCpu(m_core_index, 0, ${sample_pc}, GetSvcNumber(), ${sample_fp});\n    return TranslateHaltReason(halt);"
             wrapper "${wrapper}")
-        string(FIND "${wrapper}" "NoteRunning(guest_tid" note_running_at)
-        if(note_running_at LESS 0)
-            message(FATAL_ERROR "Pinned RunThread dispatch sampling changed")
-        endif()
         if(bits EQUAL 32)
             foreach(counted IN ITEMS "u64 DynarmicCallbacks32::MemoryRead(u32 vaddr, size_t size) {|reads"
                     "void DynarmicCallbacks32::MemoryWrite(Dynarmic::A32::VAddr vaddr, u64 value, size_t size) {|writes")
@@ -867,25 +844,8 @@ if(EDEN_DEV_PROFILE)
     if(ipc_at LESS 0)
         message(FATAL_ERROR "Pinned SendSyncRequest changed")
     endif()
-    # Which guest thread is waiting, not only how long the waits summed to: a frame held up by one
-    # thread and a frame with a dozen idle helpers reporting the same total look identical without
-    # this, and only one of them can be costing the frame (performance.h).
-    string(REPLACE "${ipc_old}" [=[    const auto ipc_start = ::Eden::Performance::NowNs();
-    const Result ipc_result = session->SendSyncRequest(kernel, message, buffer_size);
-    const long long ipc_ns = ::Eden::Performance::NowNs() - ipc_start;
-    ::Eden::Performance::AddNs(::Eden::Performance::guest_ipc_wait, ipc_ns);
-    {
-        bool fresh = false;
-        const unsigned ipc_slot =
-            ::Eden::Performance::IpcThreadSlotFor(GetCurrentThread(kernel).GetThreadId(), &fresh);
-        if (fresh) {
-            if (const auto ipc_name = Core::GetThreadName(&GetCurrentThread(kernel)))
-                ::Eden::Performance::SetIpcThreadName(ipc_slot, ipc_name->c_str());
-        }
-        ::Eden::Performance::AddIpcThread(ipc_slot, ipc_ns);
-    }
-    R_RETURN(ipc_result);]=] ipc_source "${ipc_source}")
-    write_derived("${PORT_BUILD_DIR}/svc_ipc.cpp" "#include \"${EDEN_PORT_DIR}/performance.h\"\n#include \"core/arm/debug.h\"\n${ipc_source}")
+    string(REPLACE "${ipc_old}" "    const auto ipc_start = ::Eden::Performance::NowNs();\n    const Result ipc_result = session->SendSyncRequest(kernel, message, buffer_size);\n    ::Eden::Performance::AddSince(::Eden::Performance::guest_ipc_wait, ipc_start);\n    R_RETURN(ipc_result);" ipc_source "${ipc_source}")
+    write_derived("${PORT_BUILD_DIR}/svc_ipc.cpp" "#include \"${EDEN_PORT_DIR}/performance.h\"\n${ipc_source}")
     list(REMOVE_ITEM core_sources "hle/kernel/svc/svc_ipc.cpp")
     list(APPEND core_sources "${PORT_BUILD_DIR}/svc_ipc.cpp")
 endif()
@@ -902,30 +862,21 @@ if(EDEN_A32_FASTMEM)
     write_derived("${PORT_BUILD_DIR}/memory.cpp" "${arena_source}")
     list(REMOVE_ITEM core_sources "memory.cpp")
     list(APPEND core_sources "${PORT_BUILD_DIR}/memory.cpp")
+    # Upstream places code at any 4 KiB offset below 16 MiB, which leaves three of four
+    # layouts with every module page out of 16 KiB phase with its backing. Keep the same
+    # range with 16 KiB steps so module chunks can alias.
+    file(READ "${PROJECT_SOURCE_DIR}/src/core/loader/deconstructed_rom_directory.cpp" aslr_source)
+    set(aslr_old "? ::Settings::values.rng_seed.GetValue() : Common::Random::Random64(0)) << 12) & 0xfff000;")
+    string(FIND "${aslr_source}" "${aslr_old}" aslr_at)
+    if(aslr_at LESS 0)
+        message(FATAL_ERROR "Pinned code ASLR offset changed")
+    endif()
+    string(REPLACE "${aslr_old}" "? ::Settings::values.rng_seed.GetValue() : Common::Random::Random64(0)) << 14) & 0xffc000;"
+        aslr_source "${aslr_source}")
+    write_derived("${PORT_BUILD_DIR}/deconstructed_rom_directory.cpp" "${aslr_source}")
+    list(REMOVE_ITEM core_sources "loader/deconstructed_rom_directory.cpp")
+    list(APPEND core_sources "${PORT_BUILD_DIR}/deconstructed_rom_directory.cpp")
 endif()
-# Where a game's code is loaded: at a random offset, or at the one the game's seed gives
-# (load_address.h). Upstream takes the seed from its RNG seed setting, which also seeds the
-# random numbers a game is given; the port's seed fixes the offset alone.
-# With the A32 fastmem window the offset moves in 16 KiB steps over the same range: upstream
-# places code at any 4 KiB offset below 16 MiB, which leaves three of four layouts with every
-# module page out of 16 KiB phase with its backing, and module chunks could not alias.
-file(READ "${PROJECT_SOURCE_DIR}/src/core/loader/deconstructed_rom_directory.cpp" aslr_source)
-set(aslr_old "((::Settings::values.rng_seed_enabled.GetValue()\n        ? ::Settings::values.rng_seed.GetValue() : Common::Random::Random64(0)) << 12) & 0xfff000;")
-string(FIND "${aslr_source}" "${aslr_old}" aslr_at)
-if(aslr_at LESS 0)
-    message(FATAL_ERROR "Pinned code ASLR offset changed")
-endif()
-if(EDEN_A32_FASTMEM)
-    set(aslr_steps "<< 14) & 0xffc000")
-else()
-    set(aslr_steps "<< 12) & 0xfff000")
-endif()
-string(REPLACE "${aslr_old}" "((::Eden::code_seed.load() >= 0 ? static_cast<u64>(::Eden::code_seed.load())\n        : Common::Random::Random64(0)) ${aslr_steps};"
-    aslr_source "${aslr_source}")
-write_derived("${PORT_BUILD_DIR}/deconstructed_rom_directory.cpp"
-    "#include \"${EDEN_PORT_DIR}/load_address.h\"\n${aslr_source}")
-list(REMOVE_ITEM core_sources "loader/deconstructed_rom_directory.cpp")
-list(APPEND core_sources "${PORT_BUILD_DIR}/deconstructed_rom_directory.cpp")
 # GetPseudoDeviceId read the seed through the control data without checking that there is
 # any (a game without control data, such as a homebrew NRO): seed 0 then, as for other
 # NACP fields Eden defaults when the metadata is missing.
@@ -1348,66 +1299,7 @@ if(finish_offset LESS 0)
     message(FATAL_ERROR "Pinned thread termination changed; review finalization lock scope.")
 endif()
 string(REPLACE "${old_finish}" "        {\n            KScopedSchedulerLock sl{kernel};\n            m_signaled = true;\n            KSynchronizationObject::NotifyAvailable(kernel);\n        }\n\n        // Finalization may block; scheduling must be enabled here.\n        this->Close(kernel);" thread_source "${thread_source}")
-
-# Which guest thread was blocked, on what, and for how long. A core with nothing to run reads the
-# same whether its thread is asleep until a timeout or waiting on something only the GPU thread can
-# signal, and only one of those is ours to fix. BeginWait stamps the thread; SetState is the single
-# place the wait reason is cleared, so the reason read there is the one the wait actually ran under.
-set(wait_begin [=[    void KThread::BeginWait(KernelCore& kernel, KThreadQueue* queue) {
-        // Set our state as waiting.
-        this->SetState(kernel, ThreadState::Waiting);
-
-        // Set our wait queue.
-        m_wait_queue = queue;
-    }]=])
-string(FIND "${thread_source}" "${wait_begin}" wait_begin_at)
-if(wait_begin_at LESS 0)
-    message(FATAL_ERROR "Pinned KThread::BeginWait changed")
-endif()
-string(REPLACE "${wait_begin}" [=[    void KThread::BeginWait(KernelCore& kernel, KThreadQueue* queue) {
-        // Set our state as waiting.
-        this->SetState(kernel, ThreadState::Waiting);
-
-        // Set our wait queue.
-        m_wait_queue = queue;
-
-        // No name lookup here: this runs under the scheduler lock, and a thread's name lives in
-        // guest memory. Every thread that matters sends requests, so the IPC path names it.
-        ::Eden::Performance::WaitBegin(GetThreadId(), ::Eden::Performance::NowNs());
-    }]=] thread_source "${thread_source}")
-
-set(wait_end [=[    void KThread::SetState(KernelCore& kernel, ThreadState state) {
-        KScopedSchedulerLock sl{kernel};
-        // Clear debugging state
-        this->SetWaitReasonForDebugging({});
-        const ThreadState old_state = m_thread_state.load(std::memory_order_relaxed);]=])
-string(FIND "${thread_source}" "${wait_end}" wait_end_at)
-if(wait_end_at LESS 0)
-    message(FATAL_ERROR "Pinned KThread::SetState changed")
-endif()
-string(REPLACE "${wait_end}" [=[    void KThread::SetState(KernelCore& kernel, ThreadState state) {
-        KScopedSchedulerLock sl{kernel};
-        // Close any wait this thread was under. SetState is the only place the reason is cleared,
-        // so reading it here attributes the wait to the reason it ran under (performance.h).
-        if (const auto wait_reason = this->GetWaitReasonForDebugging();
-            wait_reason != ThreadWaitReasonForDebugging::None) {
-            const auto* waker = GetCurrentThreadPointer(kernel);
-            ::Eden::Performance::WaitEnd(GetThreadId(), static_cast<unsigned>(wait_reason),
-                                         ::Eden::Performance::NowNs(),
-                                         waker ? waker->GetThreadId() : 0);
-        }
-        // Clear debugging state
-        this->SetWaitReasonForDebugging({});
-        const ThreadState old_state = m_thread_state.load(std::memory_order_relaxed);
-        // Only the transition into Runnable is stamped: a thread already running that gets
-        // re-marked Runnable must not report its own remaining execution as time spent waiting to
-        // be scheduled (performance.h).
-        if ((old_state & ThreadState::Mask) != ThreadState::Runnable &&
-            (state & ThreadState::Mask) == ThreadState::Runnable) {
-            ::Eden::Performance::NoteRunnable(GetThreadId(), ::Eden::Performance::NowNs());
-        }]=] thread_source "${thread_source}")
-
-write_derived("${PORT_BUILD_DIR}/k_thread.cpp" "#include \"${EDEN_PORT_DIR}/performance.h\"\n${thread_source}")
+write_derived("${PORT_BUILD_DIR}/k_thread.cpp" "${thread_source}")
 get_target_property(core_sources core SOURCES)
 list(REMOVE_ITEM core_sources hle/kernel/k_thread.cpp)
 list(APPEND core_sources "${PORT_BUILD_DIR}/k_thread.cpp")

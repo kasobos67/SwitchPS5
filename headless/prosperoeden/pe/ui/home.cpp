@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "pe/ui/launcher.hpp"
+#include "pe/ui/stock_motion.hpp"
+#include "pe/ui/stock_assets.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -14,34 +16,52 @@ namespace pe::ui
 
 using audio::Cue;
 
-namespace
+int Launcher::home_recent_count() const
 {
-
-const Color kWhite{1.0f, 1.0f, 1.0f, 1.0f};
-
-constexpr Rect kHero{120.0f, 200.0f, 1680.0f, 480.0f};
-// Header tabs, hero buttons and "view all" are as wide as their words need in the language shown;
-// these are their sizes in English and the edges they keep.
-constexpr float kNavRight = 1480.0f;
-constexpr float kNavWidth = 136.0f;
-constexpr float kButtonWidth = 272.0f;
-constexpr float kButtonWidest = 390.0f;
-constexpr float kViewAllWidth = 304.0f;
-
-Rect tile_rect(int index)
-{
-    return {120.0f + 424.0f * static_cast<float>(index), 760.0f, 400.0f, 144.0f};
+    return home_.status.empty() && !home_tiles_.empty() ?
+        static_cast<int>(home_tiles_.size()) - 1 : 0;
 }
 
-// The four controllers, at the right of the hero beside its buttons.
-constexpr float kPadsRight = 1752.0f;
-Rect pad_rect(int player)
+void Launcher::rebuild_home_tiles()
 {
-    return {kPadsRight - 354.0f + 94.0f * static_cast<float>(player), 506.0f, 72.0f, 50.0f};
+    const int selected = home_focus_ == 0 ? 0 :
+        home_focus_ >= kHomeFirstRecent && home_focus_ < kHomeAllSoftware ? home_focus_ - 6 : -1;
+    const std::string selected_file = selected >= 0 && selected < static_cast<int>(home_tiles_.size()) ?
+        home_tiles_[static_cast<std::size_t>(selected)].file : std::string{};
+    std::vector<Recent> tiles;
+    const auto add = [&](const Recent &recent) {
+        if (tiles.size() >= kHomeGames || recent.file.empty() || !services_.game_exists(recent.file))
+            return;
+        if (std::any_of(tiles.begin(), tiles.end(), [&](const Recent &tile) { return tile.file == recent.file; }))
+            return;
+        auto tile = recent;
+        const auto game = std::find_if(games_.begin(), games_.end(),
+            [&](const Game &candidate) { return candidate.file == tile.file; });
+        if (game != games_.end()) {
+            tile.title = game->name;
+            tile.cover = game->cover;
+        }
+        tiles.push_back(std::move(tile));
+    };
+    if (home_.last_exists)
+        add({home_.last_file, home_.last_title, home_.last_cover});
+    for (const auto &file : presentation_.recent_games)
+        add({file, file, {}});
+    for (const Recent &recent : home_.recents)
+        add(recent);
+    for (const Game &game : games_)
+        add({game.file, game.name, game.cover});
+    home_tiles_ = std::move(tiles);
+    if (selected >= 0) {
+        const int visible = home_.status.empty() ? static_cast<int>(home_tiles_.size()) :
+                                                  std::min(1, static_cast<int>(home_tiles_.size()));
+        int slot = std::min(selected, std::max(0, visible - 1));
+        for (int i = 0; i < visible; ++i)
+            if (home_tiles_[static_cast<std::size_t>(i)].file == selected_file)
+                slot = i;
+        home_focus_ = slot == 0 ? 0 : slot + 6;
+    }
 }
-
-} // namespace
-
 void Launcher::open_library_at_last()
 {
     open(Screen::library, true);
@@ -60,89 +80,147 @@ void Launcher::open_library_at_last()
 void Launcher::press_home(Key key)
 {
     const bool ready = home_.setup_ready;
-    const bool continue_ready = ready && home_.last_exists;
-    // The status panel takes the place of the recent games.
-    const bool recents_shown = home_.status.empty();
-    const int recent_count = recents_shown ? static_cast<int>(home_.recents.size()) : 0;
+    const bool continue_ready = ready && !home_tiles_.empty();
+    const int recent_count = home_recent_count();
     const int before = home_focus_;
+    const bool before_profile = home_profile_focus_;
     int &focus = home_focus_;
 
+    const auto selected_options = [&]() {
+        const std::string file = focus == 0 && continue_ready ? home_tiles_.front().file :
+            focus >= kHomeFirstRecent && focus < kHomeFirstRecent + recent_count ? home_tiles_[static_cast<std::size_t>(focus - 6)].file : std::string{};
+        if (file.empty() || !ready) { cue(Cue::error); return; }
+        // Prepare the selected game's existing editor without leaving HOME.
+        // Closing its modal then returns to the same tile or shortcut.
+        enter_library();
+        for (int i = 0; i < static_cast<int>(games_.size()); ++i) {
+            if (games_[static_cast<std::size_t>(i)].file != file) continue;
+            library_.reset(library_.count, i);
+            refresh_selected_game();
+            mode_.snap(selected_docked_ ? 0.0f : 1.0f);
+            press_library(Key::triangle);
+            return;
+        }
+        say(tr("ROM missing from the game files folder"), true);
+        cue(Cue::error);
+    };
+    const auto tile_focus = [&](int position) {
+        if (position == 0) return 0;
+        return position <= recent_count ? position + 6 : kHomeAllSoftware;
+    };
+    if (home_profile_focus_)
+    {
+        const int previous_profile = home_profile_;
+        if (key == Key::left || key == Key::right) {
+            home_profile_ = std::clamp(home_profile_ + (key == Key::right ? 1 : -1), 0, std::max(0, static_cast<int>(profiles_.size()) - 1));
+            cue(Cue::focus_account);
+        } else if (key == Key::down || key == Key::circle) { home_profile_focus_ = false; cue(Cue::focus_navigation); }
+        else if (key == Key::cross)
+        {
+            read_profiles();
+            if (home_profile_ < 0 || home_profile_ >= static_cast<int>(profiles_.size()))
+            {
+                cue(Cue::error);
+                return;
+            }
+            if (profiles_[static_cast<std::size_t>(home_profile_)].playing)
+            {
+                open_profiles();
+                profile_rows_.reset(profile_row_count(), home_profile_);
+            }
+            else
+            {
+                if (services_.room_status().phase != Eden::Multiplayer::Phase::Idle) {
+                    services_.leave_room();
+                    say(tr("Leaving the room. Select the profile again when disconnected."));
+                    return;
+                }
+                if (!services_.choose_profile(home_profile_))
+                {
+                    say(tr("Could not save. Please try again."), true);
+                    cue(Cue::error);
+                    return;
+                }
+                read_profiles();
+                prefs_ = services_.preferences();
+                apply_look();
+                read_home();
+                // The current-user marker is the confirmation; keep HOME ready.
+                message_.clear();
+                cue(Cue::account_select);
+            }
+        }
+        if (previous_profile != home_profile_ || !home_profile_focus_) {
+            previous_home_focus_ = -1;
+            previous_home_profile_ = previous_profile;
+            focus_elapsed_ = 0.0f;
+        }
+        return;
+    }
     switch (key)
     {
     case Key::up:
-        if (focus == 0 || focus == 4)
-            focus = ready ? 1 : 2;
-        else if (focus >= 5)
-            focus = 0;
+        if (focus >= 1 && focus <= 6) focus = 0;
+        else if (!profiles_.empty()) home_profile_focus_ = true;
         break;
     case Key::down:
-        if (focus >= 1 && focus <= 3)
-        {
-            if (ready)
-                focus = 0;
-        }
-        else if ((focus == 0 || focus == 4) && recents_shown)
-        {
-            focus = recent_count > 0 ? 5 : 9;
-        }
+        if (focus == 0 || focus >= kHomeFirstRecent) focus = 1;
         break;
     case Key::left:
     case Key::right:
     {
         const int delta = key == Key::right ? 1 : -1;
-        if (focus >= 1 && focus <= 3)
-        {
-            focus = 1 + (focus - 1 + delta + 3) % 3;
-            if (focus == 1 && !ready)
-                focus = delta > 0 ? 2 : 3;
-        }
-        else if (focus == 0 || focus == 4)
-        {
-            if (continue_ready)
-                focus = focus == 0 ? 4 : 0;
-        }
-        else
-        {
-            const int length = recent_count + 1;
-            int position = focus == 9 ? recent_count : focus - 5;
-            position = (position + delta + length) % length;
-            focus = position == recent_count ? 9 : position + 5;
+        if (focus >= 1 && focus <= 6) {
+            focus = std::clamp(focus + delta, 1, 6);
+        } else {
+            const int length = recent_count + 2;
+            int position = focus == 0 ? 0 : focus == kHomeAllSoftware ? length - 1 : focus - 6;
+            focus = tile_focus(std::clamp(position + delta, 0, length - 1));
         }
         break;
     }
     case Key::triangle:
-        if ((focus == 0 || focus == 4) && continue_ready)
-            open_library_at_last();
+        selected_options();
         return;
     case Key::cross:
         press_ = 1.0f;
         if (focus == 0 && continue_ready)
         {
-            launch(home_.last_file, home_.last_title, home_.last_cover);
+            const Recent &game = home_tiles_.front();
+            request_launch(game.file, game.title, game.cover);
         }
-        else if ((focus == 0 || focus == 1 || focus == 9) && ready)
+        else if ((focus == 0 || focus == kHomeAllSoftware) && ready)
         {
             open(Screen::library, true);
             enter_library();
         }
-        else if (focus == 2)
+        else if (focus == 5)
         {
             open(Screen::settings, true);
             prefs_ = services_.preferences();
             section_.snap(1.0f);
+            settings_content_ = false;
         }
-        else if (focus == 3)
+        else if (focus == 1)
         {
             open(Screen::about, true);
         }
-        else if (focus == 4 && continue_ready)
+        else if (focus == 3)
         {
-            open_library_at_last();
+            open_multiplayer();
+            cue(Cue::album_open);
         }
-        else if (focus >= 5 && focus < 5 + recent_count && ready)
+        else if (focus == 2) { open(Screen::files, true); enter_files(); }
+        else if (focus == 4)
         {
-            const Recent &recent = home_.recents[static_cast<std::size_t>(focus - 5)];
-            launch(recent.file, recent.title, recent.cover);
+            prefs_ = services_.preferences();
+            open_mapping(false);
+        }
+        else if (focus == 6) { screen_off_ = true; cue(Cue::select); }
+        else if (focus >= kHomeFirstRecent && focus < kHomeFirstRecent + recent_count && ready)
+        {
+            const Recent &recent = home_tiles_[static_cast<std::size_t>(focus - 6)];
+            request_launch(recent.file, recent.title, recent.cover);
         }
         else
         {
@@ -152,8 +230,15 @@ void Launcher::press_home(Key key)
     default:
         return;
     }
-    if (focus != before)
+    if (focus != before || home_profile_focus_ != before_profile)
+    {
+        previous_home_focus_ = before;
+        previous_home_profile_ = -1;
+        focus_elapsed_ = 0.0f;
         cue(Cue::focus);
+        if ((focus == 0 || focus >= kHomeFirstRecent) && (key == Key::left || key == Key::right)) cue(Cue::home_scroll);
+    }
+    else if (key == Key::left || key == Key::right) cue(Cue::scroll_limit);
 }
 
 void Launcher::update_controllers(float dt)
@@ -188,198 +273,153 @@ void Launcher::update_controllers(float dt)
 
 void Launcher::draw_controllers(Canvas &c)
 {
-    if (textures_.controller() == 0)
-        return;
-    text(c, tr("CONTROLLERS"), kPadsRight, baseline(462.0f, 30.0f, theme::kSmall), theme::kSmall,
-         Color::rgb(0xc6d2c7), Align::right, 3.0f);
-    for (int player = 0; player < 4; ++player)
-    {
-        const std::size_t index = static_cast<std::size_t>(player);
-        const Rect r = pad_rect(player);
-        const float lit = tween::clamp01(controller_lit_[index].value);
-        // A controller that joins lands with a small bounce.
-        const float pop = controller_pop_[index];
-        const float bounce = std::sin(3.14159265f * (1.0f - pop)) * pop * motion();
-        c.list.push_transform(1.0f + 0.34f * bounce, r.x + r.w * 0.5f, r.y + r.h * 0.5f, 0.0f,
-                              -5.0f * bounce);
-        controller_icon(c, r, lit);
-        c.list.pop_transform();
-        const char number[] = {static_cast<char>('1' + player), 0};
-        text(c, number, r.x + r.w * 0.5f, baseline(564.0f, 26.0f, theme::kSmall), theme::kSmall,
-             gfx::mix(theme::kFaint.with_alpha(0.6f), theme::kLime, lit), Align::center);
+for (int player=0; player<4; ++player) {
+        const float lit=tween::clamp01(controller_lit_[static_cast<std::size_t>(player)].value);
+        controller_icon(c,{108.0f+66.0f*player,1007.0f,50.4f,35.0f},lit);
     }
 }
 
 void Launcher::draw_home(Canvas &c)
 {
-    gfx::DrawList &list = c.list;
-    const bool ready = home_.setup_ready;
-    const bool continue_ready = ready && home_.last_exists;
-    const auto focus = [&](int index) { return home_springs_[static_cast<std::size_t>(index)].value; };
-    const auto measure = [&](std::string_view value, float size, float tracking = 0.0f)
-    { return text_width(c, value, size, tracking); };
-    // Each band of the screen arrives a moment after the one above it.
-    const auto arrive = [&](int band)
-    { return tween::cubic_out((intro_ - 0.12f - 0.08f * static_cast<float>(band)) / 0.55f); };
-    const auto begin_band = [&](int band, float rise)
-    {
-        const float e = arrive(band);
-        list.push_opacity(e);
-        list.push_transform(1.0f, 0.0f, 0.0f, 0.0f, (1.0f - e) * rise * motion());
-    };
-    const auto end_band = [&]
-    {
-        list.pop_transform();
-        list.pop_opacity();
-    };
-    // A focused surface grows a little and dips when pressed.
-    const auto begin_lift = [&](const Rect &r, float amount, float grow)
-    {
-        const float scale = 1.0f + (grow * amount - 0.035f * press_ * amount) * motion();
-        list.push_transform(scale, r.x + r.w * 0.5f, r.y + r.h * 0.5f, 0.0f,
-                            -3.0f * amount * motion());
-    };
-
-    // ---- header ----
-    begin_band(0, -18.0f);
-    if (textures_.brand() != 0)
-        list.rounded_image(textures_.brand(), {120.0f, 72.0f, 72.0f, 72.0f},
-                           {0.0f, 0.0f, 1.0f, 1.0f}, 16.0f, kWhite);
-    text(c, "PROSPEROEDEN", 216.0f, baseline(72.0f, 44.0f, theme::kBrand), theme::kBrand,
-         theme::kText, Align::left, 3.0f);
-    // Who is playing is named once there is more than one profile to be.
-    const float edition = text(c, fill(tr("PS5 EDITION  /  {0}"), {version_}), 216.0f,
-                               baseline(120.0f, 28.0f, theme::kSmall), theme::kSmall, Color::rgb(0x9fac9e),
-                               Align::left, 1.0f);
-    if (profiles_.size() > 1 && !playing_.empty())
-        text_shrink(c, "/  " + playing_, 216.0f + edition + 16.0f, baseline(120.0f, 28.0f, theme::kSmall),
-                    theme::kSmall, theme::kLimePale, 300.0f);
-    static constexpr const char *kNav[] = {TR("Library"), TR("Settings"), TR("About")};
-    Rect nav[3];
-    float nav_right = kNavRight;
-    for (int i = 2; i >= 0; --i)
-    {
-        const float width = std::max(kNavWidth, measure(tr(kNav[i]), theme::kText24) + 48.0f);
-        nav[i] = {nav_right - width, 80.0f, width, 64.0f};
-        nav_right -= width + 8.0f;
-    }
-    for (int i = 0; i < 3; ++i)
-    {
-        const Rect r = nav[i];
-        const float f = focus(1 + i);
-        list.push_opacity(i == 0 && !ready ? 0.4f : 1.0f);
-        plate(c, kNavPlate, r, f);
-        text(c, tr(kNav[i]), r.x + r.w * 0.5f, baseline(r.y, 60.0f, theme::kText24), theme::kText24,
-             gfx::mix(theme::kMuted, theme::kText, f), Align::center);
-        list.pop_opacity();
-    }
-    text(c, clock_, 1800.0f, baseline(92.0f, 40.0f, theme::kClock), theme::kClock,
-         Color::rgb(0xc1cdc2), Align::right);
-    list.rounded_rect({120.0f, 160.0f, 1680.0f, 1.0f}, 0.0f, theme::kText.with_alpha(0.12f));
-    end_band();
-
-    // ---- continue playing ----
-    begin_band(1, 28.0f);
-    glass(c, kHero, 14.0f, theme::kGlass.with_alpha(0.60f), kWhite.with_alpha(0.125f));
-    cover(c, home_.last_cover, {168.0f, 272.0f, 336.0f, 336.0f}, 16.0f, 1.0f);
-    text(c, tr("CONTINUE PLAYING"), 560.0f, baseline(264.0f, 30.0f, theme::kSmall), theme::kSmall,
-         theme::kLime, Align::left, 3.0f);
-    text_block(c, home_.last_file.empty() ? tr("Your next adventure") : home_.last_title, 560.0f,
-               baseline(312.0f, 56.0f, theme::kDisplay), theme::kDisplay, 56.0f, theme::kText,
-               1120.0f, 2);
-    notice(c, home_.last_file.empty() ? tr("Choose a game from your library.") : home_.last_caption,
-           560.0f, baseline(424.0f, 36.0f, theme::kText24), theme::kText24,
-           home_.last_caption_warning ? theme::kWarning : Color::rgb(0xabb8ae), 1040.0f,
-           home_.last_caption_warning);
-    // The line under it ends before the controllers' label.
-    const float info_width =
-        kPadsRight - measure(tr("CONTROLLERS"), theme::kSmall, 3.0f) - 48.0f - 560.0f;
-    if (!home_.last_language.empty())
-        text_shrink(c,
-                    fill(tr("Add-ons: {0}  /  Language: {1}"),
-                         {addons_line(home_.last_addons, home_.last_mods, home_.last_mods_on),
-                          home_.last_language}),
-                    560.0f, baseline(462.0f, 30.0f, theme::kSmall), theme::kSmall,
-                    Color::rgb(0xabb8ae), info_width);
-    const char *first = continue_ready ? tr("Launch game") : tr("Open library");
-    const char *second = tr("Game details");
-    const float button = std::clamp(
-        std::max(measure(first, theme::kText24), measure(second, theme::kText24)) + 64.0f,
-        kButtonWidth, kButtonWidest);
-    const Rect continue_rect{560.0f, 504.0f, button, 72.0f};
-    const Rect details_rect{560.0f + button + 16.0f, 504.0f, button, 72.0f};
-    const auto hero_button = [&](const Rect &r, const char *label, float f, bool enabled)
-    {
-        list.push_opacity(enabled ? 1.0f : 0.4f);
-        begin_lift(r, f, 0.035f);
-        plate(c, kButtonPlate, r, f);
-        text_shrink(c, label, r.x + r.w * 0.5f, baseline(r.y, 70.0f, theme::kText24),
-                    theme::kText24, theme::kText, r.w - 32.0f, Align::center);
-        list.pop_transform();
-        list.pop_opacity();
-    };
-    hero_button(continue_rect, first, focus(0), ready);
-    hero_button(details_rect, second, focus(4), continue_ready);
-    text(c, tr("Eden emulator for PlayStation 5"), 560.0f, baseline(616.0f, 30.0f, theme::kSmall),
-         theme::kSmall, theme::kFaint);
-    draw_controllers(c);
-    end_band();
-
-    // ---- recently played, or what needs attention ----
-    begin_band(2, 28.0f);
-    if (!home_.status.empty())
-    {
-        const Rect panel{120.0f, 728.0f, 1680.0f, 152.0f};
-        const Color accent = home_.launch_failed ? theme::kWarning : theme::kLime;
-        glass(c, panel, 10.0f, Color::rgb(0x0a1611, 0.62f), kWhite.with_alpha(0.08f), 0.6f);
-        list.rounded_rect({panel.x, panel.y + 10.0f, 4.0f, panel.h - 20.0f}, 2.0f, accent);
-        notice_block(c, home_.status, 148.0f, baseline(752.0f, 36.0f, theme::kText24),
-                     theme::kText24, 36.0f, theme::kText, 1624.0f, 3, home_.launch_failed);
-    }
-    else
-    {
-        text(c, tr("RECENTLY PLAYED"), 120.0f, baseline(712.0f, 30.0f, theme::kSmall), theme::kSmall,
-             Color::rgb(0xc6d2c7), Align::left, 3.0f);
-        {
-            const float f = focus(9);
-            const float width =
-                std::max(kViewAllWidth, measure(tr("VIEW ALL GAMES"), theme::kSmall) + 48.0f);
-            const Rect r{1800.0f - width, 708.0f, width, 40.0f};
-            plate(c, kNavPlate, r, f);
-            text(c, tr("VIEW ALL GAMES"), r.x + r.w - 24.0f, baseline(r.y, 40.0f, theme::kSmall),
-                 theme::kSmall, gfx::mix(Color::rgb(0xafbbaf), theme::kLime, f), Align::right);
-        }
-        if (home_.recents.empty())
-            text(c, tr("Games you launch will appear here."), 120.0f,
-                 baseline(784.0f, 36.0f, theme::kText24), theme::kText24, theme::kMuted);
-        for (int i = 0; i < static_cast<int>(home_.recents.size()) && i < 4; ++i)
-        {
-            const Recent &recent = home_.recents[static_cast<std::size_t>(i)];
-            const Rect r = tile_rect(i);
-            const float f = focus(5 + i);
-            begin_lift(r, f, 0.03f);
-            plate(c, kTilePlate, r, f);
-            cover(c, recent.cover, {r.x + 24.0f, r.y + 24.0f, 96.0f, 96.0f}, 10.0f, 0.5f);
-            text_block(c, recent.title, r.x + 144.0f, baseline(r.y + 40.0f, 32.0f, theme::kText24),
-                       theme::kText24, 32.0f, gfx::mix(Color::rgb(0xd7e1d9), theme::kTitle, f),
-                       232.0f, 2);
-            list.pop_transform();
+    auto &l = c.list;
+    const int count = home_recent_count();
+    float frame = 60.0f * intro_;
+    float games_alpha = (first_start_ ? stock_motion::home_starter_alpha(frame) : stock_motion::home_entry_alpha(frame)) / 255.0f;
+    float games_scale = first_start_ ? stock_motion::home_starter_scale(frame) : stock_motion::home_entry_scale(frame);
+    float applet_alpha = games_alpha;
+    float applet_scale = games_scale;
+    if (transition_.running) {
+        frame = transition_.elapsed * 60.0f;
+        if (screen_ != Screen::home) {
+            games_alpha = stock_motion::home_game_in_alpha(frame) / 255.0f;
+            games_scale = stock_motion::home_game_in_scale(frame);
+            applet_alpha = stock_motion::home_applet_in_alpha(frame) / 255.0f;
+            applet_scale = stock_motion::home_applet_in_scale(frame);
+        } else {
+            frame = std::max(0.0f, frame - 6.0f);
+            games_alpha = stock_motion::home_game_out_alpha(frame) / 255.0f;
+            games_scale = stock_motion::home_game_out_scale(frame);
+            applet_alpha = stock_motion::home_applet_out_alpha(frame) / 255.0f;
+            applet_scale = stock_motion::home_applet_out_scale(std::min(frame,20.0f));
         }
     }
-    end_band();
+    l.push_opacity(games_alpha);
+    for (int i = 0; i < static_cast<int>(profiles_.size()); ++i) {
+        const Rect r{100.5f + 90.0f * i, 62.0f, 72.0f, 72.0f};
+        const auto avatar = presentation_.avatar(profiles_[static_cast<std::size_t>(i)].name);
+        profile_avatar(c, avatar.icon, avatar.color, r, true);
+        l.ring(r.x + 36.0f, r.y + 36.0f, 37.0f, 2.0f, theme::kTitle.with_alpha(0.7f));
+        if (profiles_[static_cast<std::size_t>(i)].playing &&
+            !(home_profile_focus_ && i == home_profile_))
+            l.rounded_rect({r.x + 16.0f, r.y + r.h + 10.0f, 40.0f, 4.0f}, 2.0f, theme::kLime);
+        if (i == previous_home_profile_ && focus_elapsed_ < .05f)
+            stock_focus(c,r,stock_motion::home_unfocus_alpha(focus_elapsed_*60)/255.0f,focus_elapsed_,true);
+        if (home_profile_focus_ && i == home_profile_) {
+            stock_focus(c, r, 1.0f, focus_elapsed_, true);
+            text_fit(c, profiles_[static_cast<std::size_t>(i)].name, r.x + 36.0f, 178.0f, 28.0f,
+                     theme::kLime, 240.0f, Align::center);
+        }
+    }
+    text(c, clock_, 1814.0f, baseline(80,50,30), 30.0f, theme::kText, Align::right);
+    // Stock MiniSet/HudSignal wireless artwork beside the clock reports the
+    // multiplayer room connection, not the console's Internet/Wi-Fi state.
+    const auto room_phase = room_status_.phase;
+    const bool connected = room_phase == Eden::Multiplayer::Phase::Connected;
+    const bool changing = room_phase == Eden::Multiplayer::Phase::Connecting ||
+                          room_phase == Eden::Multiplayer::Phase::Disconnecting;
+    const auto signal = connected ? stock_assets::Icon::wifi_connected :
+                        changing ? stock_assets::Icon::wifi_connecting :
+                                   stock_assets::Icon::wifi_unset;
+    if (c.textures.stock_ui())
+        l.image(c.textures.stock_ui(), {1832.0f, 81.0f, 48.0f, 48.0f},
+                stock_assets::icon_uv(signal), theme::kText);
+    l.pop_opacity();
 
-    // ---- footer ----
-    begin_band(3, 0.0f);
-    list.rounded_rect({120.0f, 952.0f, 1680.0f, 1.0f}, 0.0f, theme::kText.with_alpha(0.10f));
-    static constexpr Hint kHints[] = {
-        {Pad::cross, TR("Select")}, {Pad::triangle, TR("Details")}, {Pad::dpad, TR("Navigate")}};
-    std::string status = home_.system_status;
-    if (services_.room_status().phase == Eden::Multiplayer::Phase::Connected)
-        status += std::string{"  /  "} + tr("Multiplayer") + ": " + tr("Connected");
-    const float status_width = text_shrink(c, status, 1800.0f, 989.0f, theme::kSmall,
-                                          Color::rgb(0x9eac9f), 1120.0f, Align::right);
-    draw_hints(c, kHints, 3, 120.0f, 982.0f, theme::kMuted, 1680.0f - status_width - 48.0f);
-    end_band();
+    const int selected_slot = home_focus_ >= kHomeFirstRecent && home_focus_ < kHomeFirstRecent + count ? home_focus_ - 6 :
+                              home_focus_ == kHomeAllSoftware ? count + 1 : 0;
+    std::string selected = selected_slot <= count && !home_tiles_.empty() ? home_tiles_[static_cast<std::size_t>(selected_slot)].title : tr("All Software");
+    const float center = kHomeTileX + kHomeTileSize * 0.5f + selected_slot * kHomeTilePitch - home_strip_.value;
+    if (!home_profile_focus_ && (home_focus_ == 0 || home_focus_ >= kHomeFirstRecent)) {
+        const float width = std::min(900.0f, std::max(450.0f, text_width(c, selected, 32.0f)));
+        const float x = std::clamp(center - width * 0.5f, 112.0f, 1808.0f - width);
+        l.push_opacity(games_alpha);
+        text_marquee(c, selected, {x, 222.0f, width, 52.0f}, 32.0f, theme::kLime, focus_elapsed_, Align::center);
+        l.pop_opacity();
+    }
+
+    l.push_opacity(games_alpha);
+    l.push_transform(1.0f + (games_scale - 1.0f) * motion(), 960, 483, 0, 0);
+    l.push_clip({0, 278, 1920, 426});
+    const auto tile = [&](int slot, int id, const std::string &path, bool all) {
+        Rect r{kHomeTileX + kHomeTilePitch * slot - home_strip_.value, kHomeTileY, kHomeTileSize, kHomeTileSize};
+        const bool focus = id == home_focus_ && !home_profile_focus_;
+        const bool starting = !selected_game_.empty() && focus && !all;
+        const float launch_frame = launch_.elapsed * 60.0f;
+        const float scale = starting ? stock_motion::decide_scale(launch_frame) : 1.0f;
+        l.push_transform(1.0f + (scale - 1.0f) * motion(), r.x+r.w*.5f, r.y+r.h*.5f, 0, 0);
+        if (all) {
+            r = {r.x + 72.0f, r.y + 72.0f, 240.0f, 240.0f};
+            l.shadow({r.x, r.y + 1.5f, r.w, r.h},120,7.5f,Color::rgb(0,0.4f));
+            l.circle(r.x+120,r.y+120,120,theme::kShortcut);
+            l.push_transform(1.8f, r.x+120, r.y+120, 0, 0);
+            home_symbol(c,0,r.x+120,r.y+120,theme::kTitle);
+            l.pop_transform();
+        } else cover(c, path, r, 0.0f, 1.0f);
+        if (!focus && id == previous_home_focus_ && focus_elapsed_ < .05f)
+            stock_focus(c,r,stock_motion::home_unfocus_alpha(focus_elapsed_*60)/255.0f,focus_elapsed_,all);
+        if (focus) stock_focus(c, r, stock_motion::home_focus_alpha(focus_elapsed_*60.0f)/255.0f, focus_elapsed_, all);
+        if (starting) {
+            l.rounded_rect(r,0,Color::rgb(0xffffff,stock_motion::decide_flash(launch_frame)/255.0f));
+            const float effect_scale = stock_motion::launch_effect_scale(launch_frame);
+            const float effect_size = 450.0f * effect_scale;
+            // Keep the mirrored launch light inside the pressed artwork. Its
+            // expanding quad must not leave a second rectangle around the tile
+            // or wash out the focus border and adjacent covers.
+            if(c.textures.stock_ui()) {
+                l.push_clip(r);
+                l.image(c.textures.stock_ui(),
+                    {r.x+r.w*.5f-effect_size*.5f,r.y+r.h*.5f-effect_size*.5f,effect_size,effect_size},
+                    stock_assets::icon_uv(stock_assets::Icon::launch_effect),
+                    Color::rgb(0xffffff,stock_motion::launch_effect_alpha(launch_frame)/255.0f));
+                l.pop_clip();
+            }
+        }
+        l.pop_transform();
+    };
+    tile(0,0,!home_tiles_.empty() ? home_tiles_.front().cover : std::string{},false);
+    for (int i=0;i<count;++i) tile(i+1,i+kHomeFirstRecent,home_tiles_[static_cast<std::size_t>(i+1)].cover,false);
+    tile(count+1,kHomeAllSoftware,{},true);
+    l.pop_clip();
+    l.pop_transform();
+    l.pop_opacity();
+
+    if (!message_.empty()) notice_block(c,message_,160.5f,baseline(706,32,22),22,32,
+        message_warning_ ? theme::kWarning : theme::kLime,1680,2,message_warning_);
+    else if (!home_.status.empty()) notice_block(c,home_.status,160.5f,baseline(706,32,22),22,32,theme::kCopy,1680,2,home_.launch_failed);
+    else if (home_tiles_.empty()) text_shrink(c,tr("Games you launch will appear here."),160.5f,731,22,theme::kMeta,1680);
+
+    const char *names[] = {TR("About"),TR("Game files"),TR("Multiplayer"),TR("Controllers"),TR("System Settings"),TR("Screen off")};
+    const Color inks[] = {Color::rgb(0xff4d4d),Color::rgb(0xffae2e),Color::rgb(0x4a9bdb),theme::kTitle,theme::kTitle,theme::kTitle};
+    l.push_opacity(applet_alpha);
+    l.push_transform(1+(applet_scale-1)*motion(),960,816,0,0);
+    for (int i=0;i<6;++i) {
+        const float x=555.0f+162*i,y=816.0f;
+        l.shadow({x-66,y-64.5f,132,132},66,7.5f,Color::rgb(0,.35f));
+        l.circle(x,y,66,theme::kShortcut);
+        if (previous_home_focus_ == i+1 && focus_elapsed_ < .05f)
+            stock_focus(c,{x-66,y-66,132,132},stock_motion::home_unfocus_alpha(focus_elapsed_*60)/255.0f,focus_elapsed_,true);
+        if (!home_profile_focus_ && home_focus_==i+1) {
+            stock_focus(c,{x-66,y-66,132,132},1,focus_elapsed_,true);
+            text_shrink(c,tr(names[i]),x,baseline(892,40,24),24,theme::kLime,330,Align::center);
+        }
+        applet_symbol(c,i,x,y,inks[i]);
+    }
+    l.pop_transform();
+    l.pop_opacity();
+    if (draw_chrome_) {
+        static constexpr Hint hints[]={{Pad::triangle,TR("Game settings")},{Pad::cross,TR("Select")}};
+        draw_footer(c,hints,2);
+    }
 }
 
 } // namespace pe::ui

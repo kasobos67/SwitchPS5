@@ -34,10 +34,6 @@ inline constexpr int kSettleSeconds = 5;
 inline std::atomic<int> game_millihertz{60000};
 // Frames left out since the session began (SkipFrame).
 inline std::atomic<unsigned> skipped_frames{0};
-// Frames made since the process started: GraphicsWindow::frame_total's cross-thread copy, and the
-// clock a recorded controller session is keyed on (gameplay_test.h), so a replay lands each
-// recorded state back on the frame it was taken on.
-inline std::atomic<unsigned> gameplay_frame{0};
 
 // Whether the frame the game just made is left out. True only when the game's clock runs faster
 // than the output refreshes (240 FPS on a 120 Hz output, 120 FPS on a 60 Hz one) and the last

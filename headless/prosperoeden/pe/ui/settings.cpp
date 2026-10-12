@@ -16,11 +16,6 @@ using audio::Cue;
 namespace
 {
 
-constexpr Rect kListPanel{108.0f, 188.0f, 820.0f, 720.0f};
-constexpr Rect kDetailPanel{980.0f, 188.0f, 820.0f, 720.0f};
-constexpr Rect kDialog{550.0f, 180.0f, 820.0f, 720.0f};
-constexpr float kRowsTop = 264.0f;
-constexpr float kRowHeight = 50.0f;
 enum Category
 {
     kProfiles,
@@ -31,19 +26,16 @@ enum Category
     kAccessibility,
     kDiagnostics,
     kFiles,
+    kLanguage,
+    kThemes,
     kDownloads,
     kSaveSync,
     kMultiplayer,
-    kLanguage,
     kCategoryCount,
 };
 constexpr const char *kCategories[kCategoryCount] = {
     TR("Profiles"), TR("Video"), TR("Performance"), TR("Audio"), TR("Controls"), TR("Accessibility"),
-    TR("Diagnostics"), TR("Game files"), TR("Downloads"), TR("Save sync"), TR("Multiplayer"), TR("Language")};
-// The same as headings: capitals differ by language, so each is its own text.
-constexpr const char *kHeadings[kCategoryCount] = {
-    TR("PROFILES"), TR("VIDEO"), TR("PERFORMANCE"), TR("AUDIO"), TR("CONTROLS"), TR("ACCESSIBILITY"),
-    TR("DIAGNOSTICS"), TR("GAME FILES"), TR("DOWNLOADS"), TR("SAVE SYNC"), TR("MULTIPLAYER"), TR("LANGUAGE")};
+    TR("System"), TR("Data Management"), TR("Language"), TR("Themes"), TR("Downloads"), TR("Save sync"), TR("Multiplayer")};
 
 // The Video dialog's rows, and the window that shows five of them (placed as a game's settings
 // are).
@@ -55,19 +47,16 @@ enum VideoRow : int
     video_filter,
     video_refresh,
     video_overlay,
-    // Frame generation: not shown in a build without it (Services::frame_gen_state).
     video_frame_gen,
     video_frame_gen_target,
     video_frame_gen_multiplier,
     kVideoRows,
 };
-constexpr int kFrameGenTargets = 6;     // Auto, 60, 90, 120, 144, 240 Hz (settings_store.h)
-constexpr int kFrameGenMultipliers = 3; // 2x, 3x, 4x
-constexpr float kVideoRowsTop = 334.0f;
+constexpr float kVideoRowsTop = 228.0f;
 constexpr float kVideoRowPitch = 96.0f;
 constexpr float kVideoRowHeight = 94.0f;
-constexpr int kVideoRowsShown = 5;
-constexpr Rect kVideoWindow{592.0f, kVideoRowsTop, 736.0f,
+constexpr int kVideoRowsShown = 6;
+constexpr Rect kVideoWindow{714.0f, kVideoRowsTop, 1086.0f,
                             kVideoRowPitch * (kVideoRowsShown - 1) + kVideoRowHeight};
 // The Performance dialog's switches, and the window that shows four of them over what the
 // highlighted one does.
@@ -82,8 +71,8 @@ enum PerformanceRow : int
     speed_skip_invalidation,
     kPerformanceRows,
 };
-constexpr int kPerformanceRowsShown = 4;
-constexpr Rect kPerformanceWindow{592.0f, kVideoRowsTop, 736.0f,
+constexpr int kPerformanceRowsShown = 5;
+constexpr Rect kPerformanceWindow{714.0f, kVideoRowsTop, 1086.0f,
                                   kVideoRowPitch * (kPerformanceRowsShown - 1) + kVideoRowHeight};
 // The sizes of Preferences::output, as every language writes them.
 constexpr const char *kOutputs[] = {"1080p", "1440p", "2160p"};
@@ -92,9 +81,6 @@ const char *output_name(int output)
 {
     return kOutputs[std::clamp(output, 0, 2)];
 }
-
-constexpr const char *kFrameGenTargetNames[] = {"", "60", "90", "120", "144", "240"};
-constexpr const char *kFrameGenMultiplierNames[] = {"2x", "3x", "4x"};
 
 const char *on_off(bool value)
 {
@@ -112,286 +98,350 @@ std::string pick(const std::vector<std::string> &values, int index)
                values[static_cast<std::size_t>(index)] : std::string{"-"};
 }
 
-// A path that fits a label: the end is what tells folders apart.
-std::string short_path(const std::string &path, std::size_t limit)
+} // namespace
+
+Launcher::Modal Launcher::settings_modal() const
 {
-    return path.size() <= limit ? path : "..." + path.substr(path.size() - (limit - 3));
+    switch (settings_.selected)
+    {
+    case kVideo: return Modal::video;
+    case kPerformance: return Modal::performance;
+    case kAudio: return Modal::audio;
+    case kControls: return Modal::controls;
+    case kAccessibility: return Modal::accessibility;
+    case kDiagnostics: return Modal::diagnostics;
+    default: return Modal::none;
+    }
 }
 
-} // namespace
+void Launcher::enter_settings_content()
+{
+    settings_content_ = true;
+    option_ = 0;
+    message_.clear();
+    video_rows_.visible = kVideoRowsShown;
+    video_rows_.pitch = kVideoRowPitch;
+    video_rows_.reset(dialog_rows(Modal::video), 0);
+    performance_rows_.visible = kPerformanceRowsShown;
+    performance_rows_.pitch = kVideoRowPitch;
+    performance_rows_.reset(kPerformanceRows, 0);
+    option_cursor_.snap(dialog_row_top(settings_modal(), 0));
+    const auto states = switch_states(settings_modal());
+    for (std::size_t i = 0; i < states.size(); ++i)
+        switches_[i].snap(states[i] ? 1.0f : 0.0f);
+    cue(Cue::focus);
+}
 
 void Launcher::press_settings(Key key)
 {
-    switch (key)
+    if (!settings_content_)
     {
-    case Key::circle:
-        open(Screen::home, false);
-        return;
-    case Key::up:
-    case Key::down:
-        if (settings_.move(key == Key::down ? 1 : -1))
+        if (key == Key::circle)
         {
-            section_.value = 0.0f;
-            section_.velocity = 0.0f;
-            cue(Cue::focus);
+            open(Screen::home, false);
+            return;
         }
-        return;
-    case Key::cross:
-        press_ = 1.0f;
-        switch (settings_.selected)
+        if (key == Key::up || key == Key::down)
         {
-        case kFiles:
-            open(Screen::files, true);
-            enter_files();
-            break;
-        case kLanguage:
-            open(Screen::language, true);
-            enter_language();
-            break;
-        case kProfiles:
-            open_profiles();
-            break;
-        case kDownloads:
-            open_sources();
-            break;
-        case kSaveSync:
-            open_sync_setup();
-            break;
-        case kMultiplayer:
-            open_multiplayer();
-            break;
-        case kVideo:
-            open_modal(Modal::video);
-            video_rows_.visible = kVideoRowsShown;
-            video_rows_.pitch = kVideoRowPitch;
-            video_rows_.reset(dialog_rows(Modal::video), 0);
-            break;
-        case kPerformance:
-            open_modal(Modal::performance);
-            performance_rows_.visible = kPerformanceRowsShown;
-            performance_rows_.pitch = kVideoRowPitch;
-            performance_rows_.reset(kPerformanceRows, 0);
-            break;
-        case kAudio:
-            open_modal(Modal::audio);
-            break;
-        case kControls:
-            open_modal(Modal::controls);
-            break;
-        case kAccessibility:
-            open_modal(Modal::accessibility);
-            break;
-        default:
-            open_modal(Modal::diagnostics);
-            break;
+            if (settings_.move(key == Key::down ? 1 : -1))
+            {
+                section_.snap(0.0f);
+                option_ = 0;
+                message_.clear();
+                cue(Cue::focus);
+            }
+            return;
         }
-        return;
-    default:
+        if (key == Key::cross || key == Key::right)
+            enter_settings_content();
         return;
     }
+    if (key == Key::circle || key == Key::left)
+    {
+        settings_content_ = false;
+        message_.clear();
+        cue(Cue::back);
+        return;
+    }
+    if (settings_.selected == kThemes)
+    {
+        if (key == Key::up || key == Key::down)
+        {
+            option_ = 1 - std::clamp(option_, 0, 1);
+            cue(Cue::focus);
+        }
+        else if (key == Key::cross || key == Key::right)
+        {
+            const bool saved = set_ui_theme(option_ == 0);
+            if (!saved)
+                say(tr("Could not save. Please try again."), true);
+            cue(saved ? Cue::toggle : Cue::error);
+        }
+        return;
+    }
+    const Modal editor = settings_modal();
+    if (editor == Modal::none)
+    {
+        if (key != Key::cross && key != Key::right)
+            return;
+        switch (settings_.selected)
+        {
+        case kProfiles: open_profiles(); break;
+        case kFiles: open(Screen::files, true); enter_files(); break;
+        case kLanguage: open(Screen::language, true); enter_language(); break;
+        case kDownloads: open_sources(); break;
+        case kSaveSync: open_sync_setup(); break;
+        case kMultiplayer: open_multiplayer(); break;
+        default: break;
+        }
+        return;
+    }
+    if (key == Key::cross || key == Key::right)
+    {
+        const bool choice = (editor == Modal::video && option_ != video_overlay) ||
+            (editor == Modal::audio && option_ != 1);
+        if (choice)
+        {
+            if(editor == Modal::video && option_ >= video_frame_gen && services_.frame_gen_state() != 2) {
+                say(tr("Frame generation needs Lossless.dll, from Lossless Scaling, in the lossless folder."),true); cue(Cue::error); return;
+            }
+            open_settings_choice();
+            return;
+        }
+    }
+    // Use the original preference writer and its rollback behavior. A pane is not a modal:
+    // the temporary discriminator only selects the same existing editor action.
+    modal_ = editor;
+    press_dialog(key);
+    if (modal_ == editor)
+        modal_ = Modal::none;
+    option_cursor_.snap(dialog_row_top(editor, option_));
 }
 
 void Launcher::draw_settings(Canvas &c)
 {
-    gfx::DrawList &list = c.list;
-    draw_frame(c, tr("Settings"), tr("Fine-tune your experience"));
-
-    // ---- categories ----
-    glass(c, kListPanel, 26.0f, theme::kPanel.with_alpha(0.80f), theme::kPanelEdge.with_alpha(0.55f));
-    text(c, tr("PREFERENCES"), 138.0f, baseline(208.0f, 28.0f, theme::kSmall), theme::kSmall,
-         theme::kLimePale, Align::left, 3.0f);
-    const auto row_rect = [&](int row) -> Rect
-    { return {150.0f, kRowsTop + settings_.pitch * static_cast<float>(row), 736.0f, kRowHeight}; };
-    for (int row = 0; row < kCategoryCount; ++row)
-        plate_rest(c, kRowPlate, row_rect(row));
-    plate_focus(c, kRowPlate, {150.0f, kRowsTop + settings_.cursor(), 736.0f, kRowHeight}, 1.0f);
-    const std::string summaries[kCategoryCount] = {
-        playing_,
-        prefs_.renderer != 0 ? "Vulkan" : "OpenGL",
-        prefs_.async_shaders || prefs_.fast_gpu || prefs_.unsafe_cpu || prefs_.unsafe_dma ||
-                !prefs_.reactive_flushing || prefs_.skip_invalidation ? tr("On") : "",
-        prefs_.mute ? tr("Muted") : percent(prefs_.volume),
-        prefs_.vibration ? tr("Vibration on") : tr("Vibration off"),
-        prefs_.large_text || prefs_.high_contrast || prefs_.reduce_motion ? tr("On") : "",
-        prefs_.detailed_logging ? tr("Detailed logs on") : prefs_.immediate_logs ? tr("On") : "",
-        "",
-        !sources_.configured ? std::string{tr("Not set up")} :
-        sources_.list.size() == 1 ? sources_.list.front().name :
-                                    fill(tr("{0} sources"), {std::to_string(sources_.list.size())}),
-        [&] {
-            int linked = 0;
-            for (const SaveSyncProfile &profile : sync_setup_.profiles)
-                linked += profile.linked ? 1 : 0;
-            return linked == 0 ? std::string{tr("Off")} : fill(tr("{0} of {1} profiles"), {std::to_string(linked),
-                                                                                           std::to_string(sync_setup_.profiles.size())});
-        }(),
-        services_.room_status().phase == Eden::Multiplayer::Phase::Connected ? tr("Connected") : tr("Off"),
-        pick(services_.language_labels(), prefs_.language),
-    };
-    for (int row = 0; row < kCategoryCount; ++row)
+    auto &list = c.list;
+    draw_frame(c, tr("System Settings"), "");
+    // The measured stock sidebar is a darker surface, not a custom vertical divider.
+    list.rounded_rect({96.0f, 195.0f, 510.0f, 722.0f}, 0.0f, theme::kPanel);
+    list.push_clip({150.0f,203.0f,450.0f,698.0f});
+    for (int row = settings_.first_row(); row <= settings_.last_row(); ++row)
     {
-        const Rect r = row_rect(row);
-        // What the category is set to, then a chevron: there is more behind the row.
-        const float summary =
-            text_shrink(c, summaries[row], r.x + r.w - 62.0f, baseline(r.y, r.h, theme::kSmall),
-                        theme::kSmall, theme::kMeta, 330.0f, Align::right);
-        text_shrink(c, tr(kCategories[row]), r.x + 36.0f, baseline(r.y, r.h, theme::kText24),
-                    theme::kText24, theme::kValue, r.w - 36.0f - 62.0f - summary - 24.0f);
-        const float cx = r.x + r.w - 34.0f;
-        const float cy = r.y + r.h * 0.5f;
-        const Color ink = theme::kLimePale.with_alpha(row == settings_.selected ? 0.95f : 0.4f);
-        list.line(cx - 4.0f, cy - 8.0f, cx + 4.0f, cy, 2.2f, ink);
-        list.line(cx + 4.0f, cy, cx - 4.0f, cy + 8.0f, 2.2f, ink);
-    }
-
-    // ---- what the focused category holds ----
-    glass(c, kDetailPanel, 26.0f, theme::kPanel.with_alpha(0.80f),
-          theme::kPanelEdge.with_alpha(0.55f));
-    text(c, tr("ON THIS CONSOLE"), 1016.0f, baseline(210.0f, 28.0f, theme::kSmall), theme::kSmall,
-         theme::kLimePale, Align::left, 3.0f);
-    text_shrink(c, tr("Make it yours."), 1016.0f, baseline(258.0f, 54.0f, theme::kLead),
-                theme::kLead, theme::kTitle, 748.0f);
-    text_block(c, tr("Adjust the essentials without leaving your library behind."), 1016.0f,
-               baseline(332.0f, 36.0f, theme::kText24), theme::kText24, 36.0f, theme::kCopy, 748.0f,
-               2, kShrink);
-    list.rounded_rect({1016.0f, 432.0f, 748.0f, 1.0f}, 0.0f, theme::kRule);
-
-    struct Line
-    {
-        const char *label;
-        std::string value;
-    };
-    std::vector<Line> lines;
-    const char *about = "";
-    const std::string folder = services_.files_folder();
-    const std::string saved_folder = services_.saved_files_folder();
-    switch (settings_.selected)
-    {
-    case kProfiles:
-        about = tr("Who is playing. Each profile keeps its own save data and settings.");
-        lines = {{tr("PLAYING"), playing_}, {tr("PROFILES"), std::to_string(profiles_.size())}};
-        break;
-    case kVideo:
-        about = tr("Graphics backend and how games are scaled to your TV.");
-        lines = {{tr("RENDERER"), prefs_.renderer != 0 ? tr("Vulkan (recommended)") : "OpenGL"},
-                 {tr("OUTPUT RESOLUTION"), output_name(prefs_.output)},
-                 {tr("RESOLUTION"), pick(services_.resolution_labels(), prefs_.resolution)},
-                 {tr("UPSCALING FILTER"), pick(services_.filter_labels(), prefs_.filter)},
-                 {tr("REFRESH RATE"), hertz(prefs_.refresh)},
-                 {tr("FPS OVERLAY"), on_off(prefs_.hud)}};
-        break;
-    case kPerformance:
-        about = tr("Faster games, at some cost in accuracy.");
-        lines = {{tr("COMPILE AHEAD"), on_off(prefs_.block_list)},
-                 {tr("ASYNCHRONOUS SHADERS"), on_off(prefs_.async_shaders)},
-                 {tr("FASTER GPU EMULATION"), on_off(prefs_.fast_gpu)},
-                 {tr("FASTER CPU EMULATION"), on_off(prefs_.unsafe_cpu)},
-                 {tr("FASTER DMA"), on_off(prefs_.unsafe_dma)},
-                 {tr("REACTIVE FLUSHING"), on_off(prefs_.reactive_flushing)},
-                 {tr("SKIP CPU INVALIDATION"), on_off(prefs_.skip_invalidation)}};
-        break;
-    case kAudio:
-        about = tr("Game volume, and the sounds of this menu.");
-        lines = {{tr("GAME VOLUME"), percent(prefs_.volume)},
-                 {tr("MUTE"), on_off(prefs_.mute)},
-                 {tr("MENU SOUNDS"), prefs_.menu_volume > 0 ? percent(prefs_.menu_volume) : tr("Off")}};
-        break;
-    case kControls:
-        about = tr("Vibration, button mapping and the shortcuts during a game.");
-        lines = {{tr("VIBRATION"), on_off(prefs_.vibration)},
-                 {tr("BUTTON MAPPING"), prefs_.mapping == kDefaultMapping ? tr("As usual") : tr("Changed")},
-                 {tr("END GAME"), std::string(tr("Touchpad")) + " + L1"},
-                 {tr("FPS OVERLAY"), std::string(tr("Touchpad")) + " + R1"}};
-        break;
-    case kAccessibility:
-        about = tr("Make the menu easier to see and follow.");
-        lines = {{tr("LARGER TEXT"), on_off(prefs_.large_text)},
-                 {tr("HIGH CONTRAST"), on_off(prefs_.high_contrast)},
-                 {tr("REDUCE MOTION"), on_off(prefs_.reduce_motion)}};
-        break;
-    case kDiagnostics:
-        about = tr("Setup status and detailed logs.");
-        lines = {{tr("SETUP"), home_.setup_ready ? tr("Ready") : tr("Needs attention")},
-                 {tr("DETAILED LOGS"), on_off(prefs_.detailed_logging)}};
-        break;
-    case kFiles:
-        about = tr("The folder that holds your keys, firmware and games.");
-        lines = {{tr("IN USE"), short_path(folder, 34)}};
-        if (!saved_folder.empty() && saved_folder != folder)
-            lines.push_back({tr("NEXT START"), short_path(saved_folder, 34)});
-        break;
-    case kDownloads:
-    {
-        about = tr("Games on your network, downloaded when you play them.");
-        int queued = 0;
-        for (const Download &download : downloads_)
-            queued += download.state != DownloadState::failed ? 1 : 0;
-        if (!sources_.configured)
-            lines.push_back({tr("SOURCES"), tr("Not set up")});
-        // Each source with its state; three at most, the FTP server that writes the downloads and the
-        // queue under them.
-        for (std::size_t i = 0; i < sources_.list.size() && i < 3; ++i)
+        const Rect r{156.0f, 209.0f + 68.0f * row - settings_.scroll(), 438.0f, 66.0f};
+        const bool selected = row == settings_.selected;
+        if (selected)
         {
-            const SourceInfo &source = sources_.list[i];
-            lines.push_back({source.name.c_str(), source.refreshing ? std::string{tr("Reading...")} :
-                                                  source.online     ? fill(tr("{0} games"), {std::to_string(source.games)}) :
-                                                                      std::string{tr("Offline")}});
+            if (!settings_content_)
+                plate_focus(c, kRowPlate, r, 1.0f);
+            list.rounded_rect({171.0f, r.y + 12.0f, 4.0f, r.h - 24.0f}, 0.0f, theme::kLime);
         }
-        lines.push_back({tr("FTP SERVER"), fill(tr("Port {0}"), {std::to_string(sources_.ftp_port)})});
-        lines.push_back({tr("DOWNLOADS"), std::to_string(queued)});
-        break;
+        text_shrink(c, tr(kCategories[row]), 188.0f, baseline(r.y, r.h, 30.0f), 30.0f,
+                    selected ? theme::kLime : theme::kText, 385.0f);
     }
-    case kSaveSync:
+    list.pop_clip();
+    scrollbar(c,settings_,608.0f,209.0f,678.0f);
+    const Modal editor = settings_modal();
+    if (editor != Modal::none)
+        draw_dialog(c, editor, 1.0f);
+    else if (settings_.selected == kThemes)
     {
-        about = tr("Each profile's save data on a server of its own, synced before and after a game.");
-        if (!sync_setup_.error.empty())
-            lines.push_back({tr("SAVE-SYNC.JSON"), tr("Not readable")});
-        for (std::size_t i = 0; i < sync_setup_.profiles.size() && i < 4; ++i)
+        const char *names[] = {TR("Basic White"), TR("Basic Black")};
+        for (int row = 0; row < 2; ++row)
         {
-            const SaveSyncProfile &profile = sync_setup_.profiles[i];
-            lines.push_back({profile.name.c_str(), profile.linked ? (profile.note.empty() ? tr("Linked") : tr("Needs attention")) :
-                                                                    tr("Not linked")});
+            const Rect r{714.0f, 228.0f + 114.0f * row, 1086.0f, 112.0f};
+            plate_rest(c, kRowPlate, r);
+            if (settings_content_ && option_ == row)
+                plate_focus(c, kRowPlate, r, 1.0f);
+            list.bordered_rect({750.0f, r.y + 24.0f, 64.0f, 64.0f}, 0.0f,
+                               Color::rgb(row == 0 ? 0xf4f4f4 : 0x303030), 1.0f, theme::kRule);
+            text(c, tr(names[row]), 846.0f, baseline(r.y, r.h, 30.0f), 30.0f, theme::kText);
+            if (presentation_.white_theme == (row == 0))
+            {
+                list.line(1730.0f, r.y + 53.0f, 1742.0f, r.y + 65.0f, 4.0f, theme::kLime);
+                list.line(1742.0f, r.y + 65.0f, 1766.0f, r.y + 39.0f, 4.0f, theme::kLime);
+            }
         }
-        if (!sync_setup_.automatic)
-            lines.push_back({tr("SYNC"), tr("Off")});
-        break;
     }
-    case kMultiplayer:
-        about = tr("Join an Eden room, then choose Local Wireless in a supported game. Everyone needs a compatible game version.");
-        lines = {{tr("PUBLIC ROOMS"), tr("Browse the public directory")},
-                 {tr("PRIVATE ROOM"), tr("Room address and UDP port")}};
-        break;
-    default:
-        about = tr("The language games use when they offer it.");
-        lines = {{tr("LANGUAGE"), pick(services_.language_labels(), prefs_.language)},
-                 {tr("REGION"), services_.language_region(prefs_.language)}};
-        break;
-    }
-    const float shown = tween::clamp01(section_.value);
-    list.push_opacity(shown);
-    list.push_transform(1.0f, 0.0f, 0.0f, 0.0f, (1.0f - shown) * 10.0f * motion());
-    text(c, tr(kHeadings[settings_.selected]), 1016.0f, baseline(458.0f, 30.0f, theme::kSmall),
-         theme::kSmall, theme::kLime, Align::left, 3.0f);
-    text_shrink(c, about, 1016.0f, baseline(494.0f, 32.0f, 22.0f), 22.0f, theme::kCopy, 748.0f);
-    // Five lines sit 62 apart; Video's six and Performance's seven move closer to stay inside
-    // the panel.
-    const float pitch = lines.size() > 6 ? 46.0f : lines.size() > 5 ? 52.0f : 62.0f;
-    for (std::size_t i = 0; i < lines.size(); ++i)
+    else
     {
-        const float top = 562.0f + pitch * static_cast<float>(i);
-        const float value =
-            text_shrink(c, lines[i].value, 1764.0f, baseline(top, 36.0f, theme::kText24),
-                        theme::kText24, theme::kValue, 470.0f, Align::right);
-        text_shrink(c, lines[i].label, 1016.0f, baseline(top, 36.0f, theme::kSmall), theme::kSmall,
-                    theme::kLabel, 748.0f - value - 24.0f, Align::left, 2.0f);
-        list.rounded_rect({1016.0f, top + 48.0f, 748.0f, 1.0f}, 0.0f, theme::kRule.with_alpha(0.45f));
+        const Rect r{714.0f, 228.0f, 1086.0f, 112.0f};
+        plate_rest(c, kRowPlate, r);
+        if (settings_content_)
+            plate_focus(c, kRowPlate, r, 1.0f);
+        std::string action;
+        std::string copy;
+        if (settings_.selected == kProfiles)
+        {
+            action = tr("User Settings");
+            copy = tr("Each user keeps their own save data, settings and recent software.");
+            for (std::size_t i = 0; i < profiles_.size(); ++i)
+            {
+                const float x = 750.0f + static_cast<float>(i) * 124.0f;
+                list.circle(x + 44.0f, 439.0f, 44.0f, Color::rgb(0x438cc8));
+                if (c.textures.stock_icons())
+                    list.image(c.textures.stock_icons(), {x + 14.0f, 409.0f, 60.0f, 60.0f},
+                        {256.0f/384.0f, 0, 128.0f/384.0f, 1}, theme::kText);
+                if (profiles_[i].playing)
+                    list.ring(x + 44.0f, 439.0f, 50.0f, 3.0f, theme::kLime);
+            }
+        }
+        else if (settings_.selected == kFiles)
+        {
+            action = tr("Manage Game Files");
+            copy = services_.files_folder();
+        }
+        else if (settings_.selected == kDownloads)
+        {
+            action = tr("Downloads");
+            copy = tr("Games on your network, downloaded when you play them.");
+            copy += "\n" + (sources_.configured ? fill(tr("{0} sources"),{std::to_string(sources_.list.size())}) : std::string{tr("Not set up")});
+        }
+        else if (settings_.selected == kSaveSync)
+        {
+            action = tr("Save sync");
+            copy = tr("Each profile's save data on a server of its own, synced before and after a game.");
+        }
+        else if (settings_.selected == kMultiplayer)
+        {
+            action = tr("Multiplayer");
+            copy = tr("Join an Eden room, then choose Local Wireless in a supported game. Everyone needs a compatible game version.");
+            copy += "\n" + std::string(services_.room_status().phase == Eden::Multiplayer::Phase::Connected ? tr("Connected") : tr("Off"));
+        }
+        else
+        {
+            action = tr("Language");
+            copy = pick(services_.language_labels(), prefs_.language);
+        }
+        text(c, action, 750.0f, baseline(r.y, r.h, 30.0f), 30.0f, theme::kText);
+        text_block(c, copy, 750.0f, 550.0f, 24.0f, 36.0f, theme::kCopy, 1008.0f, 3, kShrink);
     }
-    list.pop_transform();
-    list.pop_opacity();
+    if (!message_.empty())
+        notice_block(c, message_, 714.0f, 887.0f, 24.0f, 30.0f,
+                     message_warning_ ? theme::kWarning : theme::kCopy, 1086.0f, 2, message_warning_);
+    static constexpr Hint hints[] = {{Pad::circle, TR("Back")}, {Pad::cross, TR("OK")}};
+    draw_footer(c, hints, 2);
+}
 
-    static constexpr Hint kHints[] = {
-        {Pad::cross, TR("Select")}, {Pad::circle, TR("Back")}, {Pad::updown, TR("Browse settings")}};
-    draw_footer(c, kHints, 3);
+namespace
+{
+struct SettingChoices
+{
+    std::string title;
+    std::vector<std::string> values;
+    int selected = 0;
+};
+
+SettingChoices setting_choices(int category, int option, const Preferences &prefs, Services &services)
+{
+    if (category == kVideo)
+    {
+        switch (option)
+        {
+        case video_renderer: return {tr("Renderer"), {"OpenGL", "Vulkan"}, prefs.renderer};
+        case video_output: return {tr("Output resolution"), {"1080p", "1440p", "2160p"}, prefs.output};
+        case video_resolution: return {tr("Resolution"), services.resolution_labels(), prefs.resolution};
+        case video_filter: return {tr("Upscaling filter"), services.filter_labels(), prefs.filter};
+        case video_frame_gen: return {tr("Frame generation"), {tr("Off"),tr("On")},prefs.frame_gen ? 1 : 0};
+        case video_frame_gen_target: return {tr("Frame gen target"),{tr("Auto"),"60 Hz","90 Hz","120 Hz","144 Hz","240 Hz"},prefs.frame_gen_target};
+        case video_frame_gen_multiplier: return {tr("Frame gen multiplier"),{"2x","3x","4x"},prefs.frame_gen_multiplier};
+        default: return {tr("Refresh rate"), {"60 Hz", "120 Hz"}, prefs.refresh};
+        }
+    }
+    SettingChoices choices;
+    choices.title = option == 0 ? tr("Game volume") : tr("Menu sounds");
+    for (int volume = 0; volume <= 100; volume += 10)
+        choices.values.push_back(percent(volume));
+    choices.selected = (option == 0 ? prefs.volume : prefs.menu_volume) / 10;
+    return choices;
+}
+} // namespace
+
+void Launcher::open_settings_choice()
+{
+    setting_choice_category_ = settings_.selected;
+    setting_choice_option_ = option_;
+    const auto choices = setting_choices(setting_choice_category_, setting_choice_option_, prefs_, services_);
+    setting_choice_rows_.visible = 6;
+    setting_choice_rows_.pitch = 90.0f;
+    setting_choice_rows_.wrap = false;
+    setting_choice_rows_.reset(static_cast<int>(choices.values.size()), choices.selected);
+    open_modal(Modal::settings_choice);
+}
+
+void Launcher::press_settings_choice(Key key)
+{
+    if (key == Key::circle)
+    {
+        close_modal();
+        option_ = setting_choice_option_;
+        return;
+    }
+    if (key == Key::up || key == Key::down)
+    {
+        if (setting_choice_rows_.move(key == Key::down ? 1 : -1))
+            cue(Cue::focus);
+        return;
+    }
+    if (key != Key::cross)
+        return;
+    const Preferences before = prefs_;
+    const int value = setting_choice_rows_.selected;
+    if (setting_choice_category_ == kVideo)
+    {
+        switch (setting_choice_option_)
+        {
+        case video_renderer: prefs_.renderer = value; break;
+        case video_output: prefs_.output = value; break;
+        case video_resolution: prefs_.resolution = value; break;
+        case video_filter: prefs_.filter = value; break;
+        case video_frame_gen: prefs_.frame_gen = value != 0; break;
+        case video_frame_gen_target: prefs_.frame_gen_target = value; break;
+        case video_frame_gen_multiplier: prefs_.frame_gen_multiplier = value; break;
+        default: prefs_.refresh = value; break;
+        }
+    }
+    else if (setting_choice_option_ == 0)
+        prefs_.volume = value * 10;
+    else
+        prefs_.menu_volume = value * 10;
+    if (!save_preferences(true))
+    {
+        prefs_ = before;
+        cue(Cue::error);
+        return;
+    }
+    apply_look();
+    close_modal();
+    option_ = setting_choice_option_;
+    cue(Cue::saved);
+}
+
+void Launcher::draw_settings_choice(Canvas &c, float open)
+{
+    const auto choices = setting_choices(setting_choice_category_, setting_choice_option_, prefs_, services_);
+    c.list.push_opacity(open);
+    glass(c, {390.0f, 135.0f, 1140.0f, 810.0f}, 0.0f, theme::kPanel, theme::kPanelEdge, 1.0f);
+    text(c, choices.title, 450.0f, 212.0f, 36.0f, theme::kTitle);
+    c.list.push_clip({420.0f, 255.0f, 1080.0f, 550.0f});
+    for (int row = setting_choice_rows_.first_row(); row <= setting_choice_rows_.last_row(); ++row)
+    {
+        const Rect r{450.0f, 264.0f + row * 90.0f - setting_choice_rows_.scroll(), 1020.0f, 88.0f};
+        plate(c, kRowPlate, r, row == setting_choice_rows_.selected ? 1.0f : 0.0f);
+        text_shrink(c, choices.values[static_cast<std::size_t>(row)], 486.0f,
+                    baseline(r.y, r.h, 30.0f), 30.0f, theme::kText, 900.0f);
+        if (row == choices.selected)
+        {
+            c.list.line(1386.0f, r.y + 42.0f, 1398.0f, r.y + 54.0f, 4.0f, theme::kLime);
+            c.list.line(1398.0f, r.y + 54.0f, 1422.0f, r.y + 28.0f, 4.0f, theme::kLime);
+        }
+    }
+    c.list.pop_clip();
+    scrollbar(c, setting_choice_rows_, 1484.0f, 264.0f, 538.0f);
+    if (!message_.empty())
+        notice(c, message_, 450.0f, 839.0f, 24.0f, theme::kWarning, 1020.0f, true);
+    static constexpr Hint hints[] = {{Pad::circle, TR("Back")}, {Pad::cross, TR("OK")}};
+    draw_hints_right(c,hints,2,1470.0f,897.0f,theme::kText);
+    c.list.pop_opacity();
 }
 
 // ---------------------------------------------------------------- dialogs
@@ -408,15 +458,15 @@ int Launcher::dialog_rows(Modal modal) const
     case Modal::accessibility:
         return 3;
     case Modal::game:
-        // Console mode, video, performance, audio, controls, system, language, mods; save data in
-        // builds that move saves.
-        // A game a download source has can be deleted from the console (and downloaded again).
-        return (services_.save_transfer_available() ? 9 : 8) +
+        // Console mode, video, performance, audio, controls, language, mods; save data in builds
+        // that move saves.
+        return (services_.save_transfer_available() ? 8 : 7) +
                (library_.selected < static_cast<int>(games_.size()) &&
-                        !games_[static_cast<std::size_t>(library_.selected)].sources.empty() &&
-                        !games_[static_cast<std::size_t>(library_.selected)].remote ? 1 : 0);
-    case Modal::controls:     // vibration, the button mapping
-    case Modal::diagnostics:  // detailed logging, logs written at once
+                !games_[static_cast<std::size_t>(library_.selected)].sources.empty() &&
+                !games_[static_cast<std::size_t>(library_.selected)].remote ? 1 : 0);
+    case Modal::diagnostics:
+    case Modal::controls:
+        // Two logging switches, or vibration and mapping.
         return 2;
     default:
         return 1;
@@ -429,7 +479,7 @@ float Launcher::dialog_row_top(Modal modal, int row) const
     {
     case Modal::audio:
     case Modal::accessibility:
-        return 370.0f + 102.0f * static_cast<float>(row);
+        return kVideoRowsTop + kVideoRowPitch * static_cast<float>(row);
     case Modal::performance: // four of its rows show; the list scrolls to the others
         return kVideoRowsTop + kVideoRowPitch * static_cast<float>(row) - performance_rows_.scroll();
     case Modal::video: // five of its rows show; the list scrolls to the others
@@ -438,10 +488,9 @@ float Launcher::dialog_row_top(Modal modal, int row) const
         return 334.0f + 96.0f * static_cast<float>(row);
     case Modal::controls: // under the shortcuts
         return 560.0f + 96.0f * static_cast<float>(row);
-    case Modal::diagnostics: // under the setup's state
-        return 500.0f + 102.0f * static_cast<float>(row);
+    case Modal::diagnostics: return 648.0f + 96.0f * row;
     default:
-        return 670.0f;
+        return 744.0f;
     }
 }
 
@@ -502,20 +551,12 @@ void Launcher::press_dialog(Key key)
         }
         else if (option_ == video_refresh)
             prefs_.refresh = prefs_.refresh != 0 ? 0 : 1;
-        else if (option_ >= video_frame_gen && services_.frame_gen_state() != 2)
-        {
-            say(tr("Frame generation needs Lossless.dll, from Lossless Scaling, in the lossless folder."), true);
-            cue(Cue::error);
-            return;
+        else if(option_ >= video_frame_gen) {
+            if(services_.frame_gen_state() != 2) { say(tr("Frame generation needs Lossless.dll, from Lossless Scaling, in the lossless folder."),true); cue(Cue::error); return; }
+            if(option_ == video_frame_gen) prefs_.frame_gen = !prefs_.frame_gen;
+            else if(option_ == video_frame_gen_target) prefs_.frame_gen_target = (std::clamp(prefs_.frame_gen_target,0,5)+step+6)%6;
+            else prefs_.frame_gen_multiplier = (std::clamp(prefs_.frame_gen_multiplier,0,2)+step+3)%3;
         }
-        else if (option_ == video_frame_gen)
-            prefs_.frame_gen = !prefs_.frame_gen;
-        else if (option_ == video_frame_gen_target)
-            prefs_.frame_gen_target =
-                (std::clamp(prefs_.frame_gen_target, 0, kFrameGenTargets - 1) + step + kFrameGenTargets) % kFrameGenTargets;
-        else if (option_ == video_frame_gen_multiplier)
-            prefs_.frame_gen_multiplier = (std::clamp(prefs_.frame_gen_multiplier, 0, kFrameGenMultipliers - 1) + step +
-                                           kFrameGenMultipliers) % kFrameGenMultipliers;
         else
             prefs_.hud = !prefs_.hud;
         break;
@@ -565,10 +606,8 @@ void Launcher::press_dialog(Key key)
             prefs_.reduce_motion = !prefs_.reduce_motion;
         break;
     case Modal::diagnostics:
-        if (option_ == 0)
-            prefs_.detailed_logging = !prefs_.detailed_logging;
-        else
-            prefs_.immediate_logs = !prefs_.immediate_logs;
+        if(option_ == 0) prefs_.detailed_logging = !prefs_.detailed_logging;
+        else prefs_.immediate_logs = !prefs_.immediate_logs;
         break;
     default:
         return;
@@ -585,301 +624,158 @@ void Launcher::press_dialog(Key key)
         say(tr("Saved. A display that cannot show 120 Hz stays at 60 Hz."));
     }
     apply_look();
+    if (sound == Cue::toggle)
+    {
+        const auto states = switch_states(modal_);
+        const int state = modal_ == Modal::video || modal_ == Modal::controls || modal_ == Modal::diagnostics ? 0 :
+                          modal_ == Modal::audio ? 0 : option_;
+        sound = states[static_cast<std::size_t>(std::clamp(state,0,6))] ? Cue::toggle : Cue::toggle_off;
+    }
     cue(sound);
 }
 
 void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
 {
-    gfx::DrawList &list = c.list;
+    auto &list = c.list;
     list.push_opacity(open);
-    list.push_transform(1.0f - 0.03f * (1.0f - open) * motion(), 960.0f, 540.0f, 0.0f,
-                        (1.0f - open) * 26.0f * motion());
-    glass(c, kDialog, 26.0f, theme::kPanel.with_alpha(0.97f), theme::kPanelEdge.with_alpha(0.66f),
-          1.6f);
-
-    const char *title = "";
-    const char *copy = "";
-    switch (modal)
-    {
-    case Modal::video:
-        title = tr("Video");
-        copy = tr("How games are drawn and scaled to your TV.");
-        break;
-    case Modal::performance:
-        title = tr("Performance");
-        copy = tr("Faster games, at some cost in accuracy.");
-        break;
-    case Modal::audio:
-        title = tr("Audio");
-        copy = tr("Game audio; PS5 system-menu music is unchanged.");
-        break;
-    case Modal::controls:
-        title = tr("Controls");
-        copy = tr("Controller shortcuts and supported features.");
-        break;
-    case Modal::accessibility:
-        title = tr("Accessibility");
-        copy = tr("Make the menu easier to see and follow.");
-        break;
-    default:
-        title = tr("Diagnostics");
-        copy = tr("Detailed logs apply to the next game launch.");
-        break;
-    }
-    text_shrink(c, title, 592.0f, baseline(218.0f, 62.0f, theme::kDisplay), theme::kDisplay,
-                theme::kTitle, 736.0f);
-    text_shrink(c, copy, 592.0f, baseline(291.0f, 32.0f, theme::kSmall), theme::kSmall,
-                Color::rgb(0xbecbb9), 736.0f);
-
     const int rows = dialog_rows(modal);
-    // Video's rows scroll in a window of five and Performance's in one of four; the other dialogs
-    // show all of theirs.
     const bool scrolls = modal == Modal::video || modal == Modal::performance;
-    const ListView &rows_view = modal == Modal::performance ? performance_rows_ : video_rows_;
+    const ListView &view = modal == Modal::performance ? performance_rows_ : video_rows_;
     const Rect &window = modal == Modal::performance ? kPerformanceWindow : kVideoWindow;
-    const int first = scrolls ? rows_view.first_row() : 0;
-    const int last = scrolls ? rows_view.last_row() : rows - 1;
+    const int first = scrolls ? view.first_row() : 0;
+    const int last = scrolls ? view.last_row() : rows - 1;
+    const bool focus = settings_content_ && modal_ == Modal::none;
     if (scrolls)
-        list.push_clip({window.x - 24.0f, window.y - 6.0f, window.w + 48.0f, window.h + 12.0f});
+        list.push_clip({708.0f, window.y - 6.0f, 1110.0f, window.h + 12.0f});
     for (int row = first; row <= last; ++row)
     {
-        list.push_opacity(scrolls ? rows_view.row_alpha(row, kVideoRowHeight) : 1.0f);
-        plate_rest(c, kRowPlate, {592.0f, dialog_row_top(modal, row), 736.0f, 94.0f});
-        list.pop_opacity();
+        const Rect r{714.0f, dialog_row_top(modal, row), 1086.0f, 94.0f};
+        plate_rest(c, kRowPlate, r);
+        if (focus && row == option_)
+            plate_focus(c, kRowPlate, r, 1.0f);
     }
-    plate_focus(c, kRowPlate,
-                {592.0f,
-                 scrolls ? kVideoRowsTop + rows_view.cursor() - rows_view.scroll() :
-                           option_cursor_.value,
-                 736.0f, 94.0f},
-                1.0f);
-
-    // A row's name takes what its control (`taken` wide, at the right) leaves of the row.
-    const auto label = [&](int row, const char *value, float taken)
+    constexpr float kValueRight = 1764.0f;
+    const auto value = [&](int row, const std::string &name, const std::string &shown, bool on = false)
     {
-        text_shrink(c, value, 628.0f, baseline(dialog_row_top(modal, row), 94.0f, theme::kText24),
-                    theme::kText24, theme::kValue, 664.0f - taken - 28.0f);
+        const float y = dialog_row_top(modal, row);
+        const float used = text_shrink(c, shown, kValueRight, baseline(y, 94.0f, 30.0f),
+                                      30.0f, on ? theme::kLime : theme::kCopy, 624.0f, Align::right);
+        text_shrink(c, name, 750.0f, baseline(y, 94.0f, 30.0f), 30.0f,
+                    theme::kText, 1014.0f - used - 30.0f);
     };
-    const auto choice = [&](int row, const std::string &value)
-    {
-        return chooser(c, value, 1296.0f,
-                       baseline(dialog_row_top(modal, row), 94.0f, theme::kText24),
-                       row == option_ ? 1.0f : 0.0f, theme::kLimePale);
-    };
-    constexpr float kToggle = 64.0f;
-    const auto row_centre = [&](int row) { return dialog_row_top(modal, row) + 47.0f; };
-    const float knob = tween::clamp01(switches_[0].value);
-
+    const auto switch_row = [&](int row, const char *name, bool on)
+    { value(row, name, on_off(on), on); };
     switch (modal)
     {
     case Modal::video:
     {
         const std::string values[] = {
-            prefs_.renderer != 0 ? tr("Vulkan (recommended)") : "OpenGL",
-            output_name(prefs_.output),
+            prefs_.renderer != 0 ? "Vulkan" : "OpenGL", output_name(prefs_.output),
             pick(services_.resolution_labels(), prefs_.resolution),
-            pick(services_.filter_labels(), prefs_.filter),
-            hertz(prefs_.refresh),
-            std::string{}, // FPS overlay: a switch
-            on_off(prefs_.frame_gen),
-            prefs_.frame_gen_target <= 0 ? std::string{tr("Auto")} :
-                fill(tr("{0} Hz"), {kFrameGenTargetNames[std::clamp(prefs_.frame_gen_target, 1, kFrameGenTargets - 1)]}),
-            kFrameGenMultiplierNames[std::clamp(prefs_.frame_gen_multiplier, 0, kFrameGenMultipliers - 1)],
-        };
-        const bool frame_gen_locked = services_.frame_gen_state() != 2;
-        static constexpr const char *kNames[kVideoRows] = {
-            TR("Renderer"),         TR("Output resolution"), TR("Resolution"),
-            TR("Upscaling filter"), TR("Refresh rate"),      TR("FPS overlay"),
-            TR("Frame generation"), TR("Frame gen target"),  TR("Frame gen multiplier")};
+            pick(services_.filter_labels(), prefs_.filter), hertz(prefs_.refresh), std::string{}, on_off(prefs_.frame_gen),
+            prefs_.frame_gen_target <= 0 ? std::string{tr("Auto")} : fill(tr("{0} Hz"),{std::vector<std::string>{"Auto","60","90","120","144","240"}[static_cast<std::size_t>(std::clamp(prefs_.frame_gen_target,1,5))]}),
+            std::vector<std::string>{"2x","3x","4x"}[static_cast<std::size_t>(std::clamp(prefs_.frame_gen_multiplier,0,2))]};
+        static constexpr const char *names[] = {TR("Renderer"), TR("Output resolution"),
+            TR("Resolution"), TR("Upscaling filter"), TR("Refresh rate"), TR("FPS overlay"), TR("Frame generation"), TR("Frame gen target"), TR("Frame gen multiplier")};
         for (int row = first; row <= last; ++row)
-        {
-            list.push_opacity(video_rows_.row_alpha(row, kVideoRowHeight));
             if (row == video_overlay)
-            {
-                label(row, tr(kNames[row]), kToggle);
-                toggle(c, 1292.0f, row_centre(row), knob);
-            }
-            else if (row >= video_frame_gen && frame_gen_locked)
-            {
-                // Greyed out: the user's Lossless.dll is not there.
-                list.push_opacity(0.38f);
-                label(row, tr(kNames[row]), choice(row, tr("Unavailable")));
-                list.pop_opacity();
-            }
-            else
-            {
-                label(row, tr(kNames[row]), choice(row, values[row]));
-            }
-            list.pop_opacity();
-        }
-        break;
-    }
-    case Modal::audio:
-    {
-        // A level row: its value at the right, the bar ending 20 before it (or where "100%"
-        // would leave it), and the name in what remains.
-        const auto level_row = [&](int row, const char *name, const std::string &value, int level)
-        {
-            const float shown =
-                text(c, value, 1292.0f, baseline(dialog_row_top(modal, row), 94.0f, theme::kText24),
-                     theme::kText24, theme::kLimePale, Align::right);
-            const float gap = std::max(96.0f, shown + 20.0f);
-            level_bar(c, 1292.0f - gap, row_centre(row), 260.0f, static_cast<float>(level) / 100.0f,
-                      option_ == row ? 1.0f : 0.0f);
-            label(row, name, 260.0f + gap);
-        };
-        level_row(0, tr("Game volume"), percent(prefs_.volume), prefs_.volume);
-        label(1, tr("Mute"), kToggle);
-        toggle(c, 1292.0f, row_centre(1), knob);
-        level_row(2, tr("Menu sounds"), prefs_.menu_volume > 0 ? percent(prefs_.menu_volume) : tr("Off"),
-                  prefs_.menu_volume);
-        break;
-    }
-    case Modal::controls:
-    {
-        // Each shortcut: its buttons as a key cap, then what it does.
-        struct Shortcut
-        {
-            const char *key;
-            const char *action;
-        };
-        static constexpr Shortcut kShortcuts[] = {
-            {" + L1", TR("End the game and return to this menu")},
-            {" + R1", TR("Show or hide the FPS overlay")}};
-        for (int i = 0; i < 2; ++i)
-        {
-            const float top = 366.0f + 78.0f * static_cast<float>(i);
-            list.bordered_rect({592.0f, top, 186.0f, 54.0f}, 12.0f, Color::rgb(0x15231d, 0.9f),
-                               1.0f, theme::kRowEdge.with_alpha(0.6f));
-            text_shrink(c, std::string(tr("Touchpad")) + kShortcuts[i].key, 685.0f,
-                        baseline(top, 54.0f, theme::kSmall), theme::kSmall, theme::kLimePale, 170.0f,
-                        Align::center);
-            text_shrink(c, tr(kShortcuts[i].action), 802.0f, baseline(top, 54.0f, 22.0f), 22.0f,
-                        theme::kBody, 526.0f);
-        }
-        label(0, tr("Vibration"), kToggle);
-        toggle(c, 1292.0f, row_centre(0), knob);
-        // The button mapping: as usual or changed, opened with Cross.
-        const float shown = text_shrink(
-            c, prefs_.mapping == kDefaultMapping ? tr("As usual") : tr("Changed"), 1292.0f,
-            baseline(dialog_row_top(modal, 1), 94.0f, theme::kSmall), theme::kSmall,
-            prefs_.mapping == kDefaultMapping ? theme::kMeta : theme::kLimePale, 320.0f, Align::right);
-        label(1, tr("Button mapping"), shown);
+                switch_row(row, tr(names[row]), prefs_.hud);
+            else if(row >= video_frame_gen && services_.frame_gen_state() != 2) {
+                list.push_opacity(.38f); value(row,tr(names[row]),tr("Unavailable")); list.pop_opacity();
+            } else value(row, tr(names[row]), values[row]);
         break;
     }
     case Modal::performance:
     {
-        static constexpr const char *kNames[kPerformanceRows] = {
-            TR("Compile ahead"),        TR("Asynchronous shaders"), TR("Faster GPU emulation"),
-            TR("Faster CPU emulation"), TR("Faster DMA"),           TR("Reactive flushing"),
-            TR("Skip CPU invalidation")};
+        static constexpr const char *names[] = {TR("Compile ahead"), TR("Asynchronous shaders"),
+            TR("Faster GPU emulation"), TR("Faster CPU emulation"), TR("Faster DMA"),
+            TR("Reactive flushing"), TR("Skip CPU invalidation")};
+        const bool states[] = {prefs_.block_list, prefs_.async_shaders, prefs_.fast_gpu,
+            prefs_.unsafe_cpu, prefs_.unsafe_dma, prefs_.reactive_flushing, prefs_.skip_invalidation};
         for (int row = first; row <= last; ++row)
+            switch_row(row, tr(names[row]), states[row]);
+        break;
+    }
+    case Modal::audio:
+        value(0, tr("Game volume"), percent(prefs_.volume));
+        switch_row(1, tr("Mute"), prefs_.mute);
+        value(2, tr("Menu sounds"), prefs_.menu_volume ? percent(prefs_.menu_volume) : tr("Off"));
+        break;
+    case Modal::controls:
+    {
+        text(c, tr("Controllers"), 750.0f, 256.0f, 30.0f, theme::kText);
+        // Connection is read from the PS5 controller service; no pairing or battery is invented.
+        const unsigned connected = controllers_;
+        for (int player = 0; player < 4; ++player)
         {
-            list.push_opacity(rows_view.row_alpha(row, kVideoRowHeight));
-            // Asynchronous shaders act with Vulkan only: the OpenGL renderer compiles in its own
-            // context here (graphics.cpp), and Eden then leaves them off.
-            const std::string name =
-                std::string(tr(kNames[row])) + (row == speed_async_shaders ? " (Vulkan)" : "");
-            label(row, name.c_str(), kToggle);
-            toggle(c, 1292.0f, row_centre(row),
-                   tween::clamp01(switches_[static_cast<std::size_t>(row)].value));
-            list.pop_opacity();
+            const float x = 778.0f + player * 252.0f;
+            const bool present = (connected & (1u << player)) != 0;
+            if (present)
+            {
+                controller_icon(c, {x, 309.0f, 160.0f, 111.0f}, 1.0f);
+                for (int light = 0; light < 4; ++light)
+                    list.rounded_rect({x + 41.0f + light * 21.0f, 449.0f, 12.0f, 12.0f}, 0.0f,
+                                      light <= player ? theme::kLime : theme::kRule);
+            }
+            else
+            {
+                text(c, "-", x + 80.0f, 392.0f, 32.0f, theme::kMeta, Align::center);
+            }
         }
+        text_shrink(c, tr("Connected controllers"), 750.0f, 511.0f, 24.0f, theme::kCopy, 1008.0f);
+        switch_row(0, tr("Vibration"), prefs_.vibration);
+        value(1, tr("Change Button Mapping"), prefs_.mapping == kDefaultMapping ? tr("Default") : tr("Changed"));
+        list.line(714.0f, 780.0f, 1800.0f, 780.0f, 1.0f, theme::kRule);
+        text_shrink(c, std::string(tr("Touchpad")) + " + L1  " + tr("End the game and return to this menu"),
+                    750.0f, 823.0f, 24.0f, theme::kCopy, 1008.0f);
+        text_shrink(c, std::string(tr("Touchpad")) + " + R1  " + tr("Show or hide the FPS overlay"),
+                    750.0f, 867.0f, 24.0f, theme::kCopy, 1008.0f);
         break;
     }
     case Modal::accessibility:
-    {
-        static constexpr const char *kNames[] = {TR("Larger text"), TR("High contrast"),
-                                                 TR("Reduce motion")};
-        static constexpr const char *kAbout[] = {
-            TR("Draws the menu's small text larger."),
-            TR("Solid panels, brighter text and an outlined highlight."),
-            TR("Stops the background drifting and the screens sliding, here and on the loading "
-               "screen.")};
-        for (int row = 0; row < 3; ++row)
-        {
-            label(row, tr(kNames[row]), kToggle);
-            toggle(c, 1292.0f, row_centre(row),
-                   tween::clamp01(switches_[static_cast<std::size_t>(row)].value));
-        }
-        // What the highlighted switch does.
-        text_block(c, tr(kAbout[std::clamp(option_, 0, 2)]), 592.0f,
-                   baseline(700.0f, 30.0f, theme::kSmall), theme::kSmall, 30.0f, theme::kMeta, 736.0f,
-                   2, kShrink);
+        switch_row(0, tr("Larger text"), prefs_.large_text);
+        switch_row(1, tr("High contrast"), prefs_.high_contrast);
+        switch_row(2, tr("Reduce motion"), prefs_.reduce_motion);
         break;
-    }
     default:
-    {
-        text_block(c, services_.setup_details(), 592.0f, baseline(364.0f, 40.0f, theme::kText24),
-                   theme::kText24, 40.0f, theme::kBody, 736.0f, 3, kShrink);
-        static constexpr const char *kNames[] = {TR("Detailed logging"), TR("Write logs at once")};
-        static constexpr const char *kAbout[] = {
-            TR("Eden's debug messages in the logs of a game."),
-            TR("Keeps the last line before a crash, but games stutter. From the next start.")};
-        for (int row = 0; row < 2; ++row)
-        {
-            label(row, tr(kNames[row]), kToggle);
-            toggle(c, 1292.0f, row_centre(row),
-                   tween::clamp01(switches_[static_cast<std::size_t>(row)].value));
-        }
-        // What the highlighted switch does.
-        text_block(c, tr(kAbout[std::clamp(option_, 0, 1)]), 592.0f,
-                   baseline(716.0f, 30.0f, theme::kSmall), theme::kSmall, 30.0f, theme::kMeta, 736.0f,
-                   2, kShrink);
+        text(c, tr("System Information"), 750.0f, 258.0f, 30.0f, theme::kText);
+        text_block(c, services_.setup_details(), 750.0f, 330.0f, 26.0f, 39.0f,
+                   theme::kCopy, 1008.0f, 6, kShrink);
+        text_shrink(c, services_.files_folder(), 750.0f, 612.0f, 24.0f, theme::kCopy, 1008.0f);
+        switch_row(0, tr("Detailed logging"), prefs_.detailed_logging);
+        switch_row(1, tr("Write logs at once"), prefs_.immediate_logs);
+        if(option_ == 1) text_block(c,tr("Keeps the last line before a crash, but games stutter. From the next start."),750,878,22,28,theme::kMeta,1008,2,kShrink);
         break;
     }
-    }
-
     if (scrolls)
     {
         list.pop_clip();
-        scrollbar(c, rows_view, 1340.0f, window.y, window.h);
+        scrollbar(c, view, 1821.0f, window.y, window.h);
     }
     if (modal == Modal::performance)
     {
-        // What the highlighted switch does, under the window.
-        static constexpr const char *kAbout[kPerformanceRows] = {
-            TR("Compiles the code a game used before as it starts, so new areas stutter less."),
-            TR("Draws an effect once its shader is ready instead of pausing. Things can be missing "
-               "for a moment."),
-            TR("Lowest GPU accuracy: faster in demanding games, and graphics can be wrong."),
-            TR("Less exact floating-point math: faster, and a few games misbehave."),
-            TR("Less exact memory transfers to the GPU: faster, and a few games show wrong graphics."),
-            TR("Keeps what a game reads back from the GPU exact. Off is faster, and some effects "
-               "break."),
-            TR("Skips some checks when a game changes memory the GPU uses: faster, and textures "
-               "can be stale.")};
-        text_block(c, tr(kAbout[std::clamp(option_, 0, kPerformanceRows - 1)]), 592.0f,
-                   baseline(window.y + window.h + 22.0f, 30.0f, theme::kSmall), theme::kSmall, 30.0f,
-                   theme::kMeta, 736.0f, 2, kShrink);
+        static constexpr const char *about[] = {
+            TR("Compiles code used in earlier sessions as a game starts."),
+            TR("Vulkan draws effects once their shaders are ready, reducing compilation pauses."),
+            TR("Lower GPU accuracy can be faster, but graphics may be incorrect."),
+            TR("Less exact floating-point math may affect some games."),
+            TR("Less exact GPU memory transfers may affect some graphics."),
+            TR("Keeps GPU readback accurate. Disabling it may affect effects."),
+            TR("Fewer memory invalidation checks may leave stale textures.")};
+        text_block(c, tr(about[std::clamp(option_, 0, kPerformanceRows - 1)]), 750.0f,
+                   772.0f, 24.0f, 33.0f, theme::kCopy, 1008.0f, 3, kShrink);
     }
-
-    // Under the rows: Video's five, and Performance's four with their line of text, end lower
-    // than the other dialogs' three.
-    const float foot = scrolls ? 848.0f : 811.0f;
-    if (!message_.empty())
+    else if (modal == Modal::audio)
+        text_block(c, tr("Game audio settings apply when software starts. Menu sound volume changes immediately."),
+                   750.0f, 620.0f, 24.0f, 36.0f, theme::kCopy, 1008.0f, 3, kShrink);
+    else if (modal == Modal::accessibility)
     {
-        notice(c, message_, 592.0f, foot + 7.0f, theme::kSmall,
-               message_warning_ ? theme::kWarning : theme::kLimePale, 736.0f, message_warning_);
+        static constexpr const char *about[] = {TR("Draws the menu's small text larger."),
+            TR("Solid surfaces and brighter text make the selection easier to see."),
+            TR("Limits menu transitions and loading-screen motion.")};
+        text_block(c, tr(about[std::clamp(option_, 0, 2)]), 750.0f, 620.0f, 24.0f,
+                   36.0f, theme::kCopy, 1008.0f, 3, kShrink);
     }
-    else if (modal == Modal::controls && option_ == 1)
-    {
-        static constexpr Hint kOpen[] = {
-            {Pad::updown, TR("Select")}, {Pad::cross, TR("Open")}, {Pad::circle, TR("Back")}};
-        draw_hints(c, kOpen, 3, 592.0f, foot, theme::kCopy, 736.0f);
-    }
-    else if (rows > 1)
-    {
-        static constexpr Hint kHints[] = {
-            {Pad::updown, TR("Select")}, {Pad::leftright, TR("Change")}, {Pad::circle, TR("Back")}};
-        draw_hints(c, kHints, 3, 592.0f, foot, theme::kCopy, 736.0f);
-    }
-    else
-    {
-        static constexpr Hint kHints[] = {{Pad::cross, TR("Change")}, {Pad::circle, TR("Back")}};
-        draw_hints(c, kHints, 2, 592.0f, foot, theme::kCopy, 736.0f);
-    }
-    list.pop_transform();
     list.pop_opacity();
 }
 

@@ -523,19 +523,6 @@ std::optional<std::string> EdenServices::room_text(int field, const std::string&
     return Common::UTF16ToUTF8(answer.text);
 }
 
-std::optional<std::int64_t> EdenServices::ask_seed(std::int64_t current, const std::atomic<bool>& stop) {
-    Eden::TextRequest request;
-    request.title = u"RNG seed";
-    request.initial = Common::UTF8ToUTF16(current >= 0 ? std::to_string(current) : std::string{});
-    request.max_length = 10;  // 4294967295
-    request.numbers = true;
-    const auto answer = Eden::AskSystemKeyboard(request, stop);
-    if (answer.outcome == Eden::TextOutcome::unavailable)
-        throw std::runtime_error("The system keyboard is unavailable");
-    if (answer.outcome != Eden::TextOutcome::accepted) return std::nullopt;
-    return Eden::RngSeedFromText(Common::UTF16ToUTF8(answer.text));
-}
-
 EdenServices::EdenServices(std::string launch_error, Eden::Multiplayer::RoomClient& rooms)
     : rooms_(rooms), launch_error_(std::move(launch_error)) {
     (void)mkdir(Eden::ConfigDir().c_str(), 0777);
@@ -919,7 +906,6 @@ pe::ui::GameSettings EdenServices::game_settings(std::uint64_t title_id) {
     result.own_mapping = saved.own_mapping;
     result.mapping = saved.mapping;
     result.performance = saved.performance;
-    result.rng_seed = saved.rng_seed;
     return result;
 }
 
@@ -941,7 +927,6 @@ bool EdenServices::set_game_settings(std::uint64_t title_id, const pe::ui::GameS
     value.own_mapping = settings.own_mapping;
     value.mapping = settings.mapping;
     value.performance = settings.performance;
-    value.rng_seed = settings.rng_seed;
     const bool saved = Eden::SaveGameSettings(title_id, value);
     if (!saved) Eden::Report("settings", "Could not write game settings");
     return saved;

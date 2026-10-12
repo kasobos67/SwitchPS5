@@ -43,7 +43,6 @@
 #include "controller_applet.h"
 #include "error_applet.h"
 #include "keyboard_applet.h"
-#include "load_address.h"
 #include "preferences.h"
 #include "metadata_bridge.h"
 #ifdef EDEN_PS5_OPENGL
@@ -135,7 +134,7 @@ public:
 // and caches) into /data/prosperoeden. Only folders that do not exist yet are filled, and the
 // sandbox copy stays, so an older ProsperoEden still finds its data.
 static void MigrateSandboxData() {
-    const std::filesystem::path sandbox{"/mnt/sandbox/PPSA99008_000/download0"};
+    const std::filesystem::path sandbox{"/mnt/sandbox/PPSA99009_000/download0"};
     const std::pair<std::filesystem::path, std::string> moves[] = {
         {sandbox / "eden-headless-g7/user", Eden::UserDir()},
         {sandbox / "prosperoeden/covers", Eden::CoversDir()},
@@ -198,11 +197,9 @@ static void MoveGameFilesOutOfTheApp() {
 }
 #endif
 
-// A player who has a single Joy-Con plays it on a whole DualSense (Pad::Grip): the pad presses
-// that Joy-Con's buttons and moves its stick from both halves. When the game has single Joy-Cons
-// held sideways (their hold type, set by the game), the DualSense is still held as usual, and
-// the pad also turns the stick, the button places and the motion by a quarter. Asked a few
-// times a second.
+// A game that has single Joy-Cons held sideways (their hold type, set by the game) is played on a
+// DualSense held as usual: the pad then turns the stick, the button places and the motion by a
+// quarter for each player who has such a Joy-Con (Pad::Grip). Asked a few times a second.
 static void UpdateGrips(Core::System& system, Eden::Pad& pad) {
     using Grip = Eden::Pad::Grip;
     static unsigned calls = 0;
@@ -219,19 +216,16 @@ static void UpdateGrips(Core::System& system, Eden::Pad& pad) {
     }
     for (std::size_t index = 0; index < Eden::Pad::kMaxPlayers; ++index) {
         const auto style = system.HIDCore().GetEmulatedControllerByIndex(index)->GetNpadStyleIndex();
-        const Grip grip =
-            style == Core::HID::NpadStyleIndex::JoyconLeft ? (sideways ? Grip::sideways_left : Grip::upright_left) :
-            style == Core::HID::NpadStyleIndex::JoyconRight ? (sideways ? Grip::sideways_right : Grip::upright_right) :
-                                                              Grip::usual;
+        const Grip grip = !sideways ? Grip::usual :
+                          style == Core::HID::NpadStyleIndex::JoyconLeft ? Grip::sideways_left :
+                          style == Core::HID::NpadStyleIndex::JoyconRight ? Grip::sideways_right : Grip::usual;
         pad.SetGrip(index, grip);
         if (grip == last[index]) continue;
         last[index] = grip;
         Eden::Report("controllers", ("Player " + std::to_string(index + 1) +
                                      (grip == Grip::usual ? ": controller as usual" :
                                       grip == Grip::sideways_left ? ": a left Joy-Con held sideways, turned for a DualSense held as usual" :
-                                      grip == Grip::sideways_right ? ": a right Joy-Con held sideways, turned for a DualSense held as usual" :
-                                      grip == Grip::upright_left ? ": a left Joy-Con held upright; the shapes are its four buttons, the arrows and either stick its stick" :
-                                                                   ": a right Joy-Con held upright; the shapes are its four buttons, the arrows and either stick its stick")).c_str());
+                                                                    ": a right Joy-Con held sideways, turned for a DualSense held as usual")).c_str());
     }
 }
 
@@ -304,7 +298,7 @@ int main(int argc, char** argv) {
         Eden::Crash::Install(Eden::LogsDir(), Eden::kAppVersion, last_crash.restarted);
         Eden::BootTrace::Ready(Eden::LogsDir(), Eden::FilesystemAccess());
         Eden::BootTrace::Line("logs and crash handler ready (%s)", Eden::LogsDir().c_str());
-        for (const char* folder : {"/app0", Eden::kMountedAppDir, Eden::kInstallDir, "/mnt/sandbox/PPSA99008_000/app0"})
+        for (const char* folder : {"/app0", Eden::kMountedAppDir, Eden::kInstallDir, "/mnt/sandbox/PPSA99009_000/app0"})
             Eden::BootTrace::Line("app folder candidate %s: eboot %s, font %s", folder,
                                   Eden::FileExists(std::string{folder} + "/eboot.bin") ? "yes" : "no",
                                   Eden::FileExists(std::string{folder} + "/ui/fonts/montserrat-medium.pefont") ? "yes" : "no");
@@ -561,7 +555,6 @@ int main(int argc, char** argv) {
         const bool performance_run = std::filesystem::exists(Eden::AppFile("performance-run.txt"));
 #ifdef EDEN_DEV_PROFILE
         Eden::Performance::texture_budget_log = true;  // EDEN_VULKAN_TEXTURE_BUDGET every 300 frames
-        Eden::Performance::draw_marks = true;          // the phases of a draw, in the EDEN_DEV_ lines
         // Optional 20 Hz GPU-thread PC samples. The handler must exist before the
         // GPU thread registers, which unblocks SIGUSR2 only while sampling is on.
         const bool pc_sample_run = std::filesystem::exists(Eden::AppFile("pc-sample.txt"));
@@ -1194,18 +1187,6 @@ int main(int argc, char** argv) {
                     Eden::Report("launch", ("Profile: " + who.profiles[static_cast<std::size_t>(who.current)].name +
                                             " (" + std::to_string(who.current + 1) + " of " +
                                             std::to_string(who.profiles.size()) + ")").c_str());
-            }
-            // The game's RNG seed fixes where its code is loaded and nothing else
-            // (load_address.h): Eden's own setting stays off, so the random numbers the game
-            // is given still differ from start to start.
-            Settings::values.rng_seed_enabled.SetValue(false);
-            Eden::code_seed = -1;
-            if (game && guest) {
-                const auto rng_seed = Eden::LoadGameSettings(eden_game_title_id(guest)).rng_seed;
-                if (rng_seed >= 0) {
-                    Eden::code_seed = rng_seed;
-                    Eden::Report("launch", ("RNG seed: " + std::to_string(rng_seed)).c_str());
-                }
             }
 #endif
             Core::System system;

@@ -49,7 +49,7 @@ msgstr "Giới thiệu"
 
 #: pe/ui/browse.cpp
 msgid "About ProsperoEden"
-msgstr "Giới thiệu về ProsperoEden"
+msgstr "Giới thiệu về Switch"
 
 #. Time left while downloading; {0} is a number of minutes. Keep it short.
 #: pe/ui/remote.cpp, pe/ui/update.cpp
@@ -152,7 +152,7 @@ msgid "Automatic"
 msgstr "Tự động"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/multiplayer.cpp, pe/ui/pairing.cpp, pe/ui/profiles.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/pairing.cpp, pe/ui/profiles.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
 msgid "Back"
 msgstr "Quay lại"
 
@@ -171,7 +171,7 @@ msgid "Bilinear"
 msgstr "Bilinear"
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
+#: pe/ui/browse.cpp
 msgid "Browse"
 msgstr "Duyệt"
 
@@ -425,7 +425,7 @@ msgstr "Thư mục mặc định"
 
 #: pe/ui/browse.cpp
 msgid "Default folder saved. Reopen ProsperoEden to use it."
-msgstr "Đã lưu thư mục mặc định. Hãy mở lại ProsperoEden để sử dụng."
+msgstr "Đã lưu thư mục mặc định. Hãy mở lại Switch để sử dụng."
 
 #: pe/ui/library.cpp
 msgid "Delete"
@@ -570,11 +570,6 @@ msgstr "Trình giả lập Eden cho PlayStation 5"
 msgid "Eden's debug messages in the logs of a game."
 msgstr "Thông báo gỡ lỗi của Eden trong nhật ký của trò chơi."
 
-#. A button hint: opens the keyboard to type a number. One short word, and not the word used for Change.
-#: pe/ui/game_options.cpp
-msgid "Edit"
-msgstr "Sửa"
-
 #. Label of the shortcut that ends the running game.
 #: pe/ui/settings.cpp
 msgid "END GAME"
@@ -591,11 +586,6 @@ msgstr "Tiếng Anh (Anh)"
 #: host/fake_services.cpp, settings_store.h
 msgid "English (US)"
 msgstr "Tiếng Anh (Mỹ)"
-
-#. Shown when what was typed for the RNG seed is not such a number.
-#: pe/ui/game_options.cpp
-msgid "Enter a number between 0 and 4294967295."
-msgstr "Nhập một số từ 0 đến 4294967295."
 
 #: pe/ui/multiplayer.cpp
 msgid "Enter a UDP port between 1 and 65535."
@@ -1228,7 +1218,7 @@ msgstr "Không có gì để nhập"
 msgid "Off"
 msgstr "Tắt"
 
-#: pe/ui/multiplayer.cpp, pe/ui/settings.cpp
+#: pe/ui/settings.cpp
 msgid "Offline"
 msgstr "Ngoại tuyến"
 
@@ -1275,7 +1265,7 @@ msgid "Output resolution"
 msgstr "Độ phân giải đầu ra"
 
 #. Button hint: jump a page of the list (L1 / R1).
-#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp, pe/ui/update.cpp
+#: pe/ui/browse.cpp, pe/ui/update.cpp
 msgid "Page"
 msgstr "Trang"
 
@@ -1438,28 +1428,28 @@ msgstr "GHI CÔNG DỰ ÁN"
 
 #: pe/ui/update.cpp
 msgid "ProsperoEden closes now."
-msgstr "ProsperoEden sẽ đóng ngay."
+msgstr "Switch sẽ đóng ngay."
 
 #: pe/ui/update.cpp
 msgid "ProsperoEden closes to finish the update."
-msgstr "ProsperoEden sẽ đóng để hoàn tất cập nhật."
+msgstr "Switch sẽ đóng để hoàn tất cập nhật."
 
 #: eden_services.cpp
 msgid "ProsperoEden could not get access to the console's storage, so it cannot read your settings, saves and games. Nothing was changed. Close ProsperoEden and open it again. (Code {0})"
-msgstr "ProsperoEden không truy cập được bộ nhớ của máy nên không thể đọc cài đặt, dữ liệu lưu và trò chơi của bạn. Không có gì bị thay đổi. Hãy đóng ProsperoEden rồi mở lại. (Mã {0})"
+msgstr "Switch không truy cập được bộ nhớ của máy nên không thể đọc cài đặt, dữ liệu lưu và trò chơi của bạn. Không có gì bị thay đổi. Hãy đóng Switch rồi mở lại. (Mã {0})"
 
 #: pe/ui/browse.cpp
 msgid "ProsperoEden is an unofficial PS5 port brought to you by BlackBearReloaded."
-msgstr "ProsperoEden là bản port PS5 không chính thức do BlackBearReloaded mang đến cho bạn."
+msgstr "Switch là bản port PS5 không chính thức do BlackBearReloaded mang đến cho bạn."
 
 #. Shown on the home screen after the app crashed and started again; {0} is a file.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "ProsperoEden stopped because of an error. A report was saved to {0}."
-msgstr "ProsperoEden đã dừng do xảy ra lỗi. Báo cáo đã được lưu tại {0}."
+msgstr "Switch đã dừng do xảy ra lỗi. Báo cáo đã được lưu tại {0}."
 
 #: pe/ui/update.cpp
 msgid "ProsperoEden was not changed."
-msgstr "ProsperoEden không bị thay đổi."
+msgstr "Switch không bị thay đổi."
 
 #. Why a game did not start.
 #: eden_services.cpp
@@ -1490,11 +1480,6 @@ msgstr "Đang chờ"
 #: pe/ui/remote.cpp
 msgid "Queued, from {0}"
 msgstr "Đang chờ, từ {0}"
-
-#. The usual value of RNG seed: no fixed seed, a new random one at every start of the game.
-#: pe/ui/game_options.cpp
-msgid "Random"
-msgstr "Ngẫu nhiên"
 
 #. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
@@ -1587,11 +1572,6 @@ msgstr "Joy-Con phải"
 #: pe/ui/game_options.cpp
 msgid "Right stick press"
 msgstr "Nhấn cần phải"
-
-#. A game setting. RNG is a random number generator and the seed is the number it starts from. A game with a seed is loaded at the same place in memory at every start, which some mods need. Keep it short; RNG and seed may stay in English where players say them so.
-#: pe/ui/game_options.cpp
-msgid "RNG seed"
-msgstr "Seed RNG"
 
 #: eden_services.cpp, pe/ui/launcher.cpp
 msgid "ROM missing from the game files folder"
@@ -1700,7 +1680,7 @@ msgstr "Đã lưu. Áp dụng khi mở trò chơi."
 
 #: pe/ui/browse.cpp
 msgid "Saved. Reopen ProsperoEden to use this folder."
-msgstr "Đã lưu. Hãy mở lại ProsperoEden để dùng thư mục này."
+msgstr "Đã lưu. Hãy mở lại Switch để dùng thư mục này."
 
 #: pe/ui/pairing.cpp
 msgid "Scan the code with your phone, or open the address below."
@@ -1712,7 +1692,7 @@ msgid "Scroll"
 msgstr "Cuộn"
 
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/multiplayer.cpp, pe/ui/pairing.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
+#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/pairing.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
 msgid "Select"
 msgstr "Chọn"
 
@@ -1757,7 +1737,7 @@ msgstr "Cần thiết lập"
 
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Setup required: {0} Open Settings, Game files to choose the folder that holds your keys, firmware and roms folders (or add the files to {1}), then reopen ProsperoEden."
-msgstr "Cần thiết lập: {0} Hãy mở Cài đặt, Tệp trò chơi để chọn thư mục chứa các thư mục keys, firmware và roms của bạn (hoặc thêm các tệp vào {1}), rồi mở lại ProsperoEden."
+msgstr "Cần thiết lập: {0} Hãy mở Cài đặt, Tệp trò chơi để chọn thư mục chứa các thư mục keys, firmware và roms của bạn (hoặc thêm các tệp vào {1}), rồi mở lại Switch."
 
 #: pe/ui/settings.cpp
 msgid "Setup status and detailed logs."
@@ -1876,11 +1856,6 @@ msgstr "Đồng bộ dữ liệu lưu thêm một lần."
 msgid "Syncing save data"
 msgstr "Đang đồng bộ dữ liệu lưu"
 
-#. A category of a game's settings: how the emulated console itself behaves.
-#: pe/ui/game_options.cpp, pe/ui/library.cpp
-msgid "System"
-msgstr "Hệ thống"
-
 #: eden_services.cpp
 msgid "Taiwan"
 msgstr "Đài Loan"
@@ -1904,7 +1879,7 @@ msgstr "LỜI CẢM ƠN"
 
 #: pe/ui/browse.cpp
 msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make ProsperoEden possible."
-msgstr "Cảm ơn toàn thể cộng đồng homebrew PS5 và mọi nhà phát triển có driver, công cụ và thư viện giúp ProsperoEden thành hiện thực."
+msgstr "Cảm ơn toàn thể cộng đồng homebrew PS5 và mọi nhà phát triển có driver, công cụ và thư viện giúp Switch thành hiện thực."
 
 #: pe/ui/remote.cpp
 msgid "The download stopped"
@@ -1943,7 +1918,7 @@ msgstr "Trò chơi sẽ bắt đầu khi dữ liệu lưu đã đồng bộ."
 msgid "The game starts when the download is done."
 msgstr "Trò chơi sẽ bắt đầu khi tải xong."
 
-#: pe/ui/game_options.cpp, pe/ui/multiplayer.cpp
+#: pe/ui/multiplayer.cpp
 msgid "The keyboard could not be opened."
 msgstr "Không mở được bàn phím."
 
@@ -2351,3 +2326,34 @@ msgstr "{0}/ (NSP hoặc XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (mỗi ID trò chơi một thư mục)"
+
+
+msgid "About Switch"
+msgstr "Giới thiệu về Switch"
+
+msgid "Default folder saved. Reopen Switch to use it."
+msgstr "Đã lưu thư mục mặc định. Hãy mở lại Switch để sử dụng."
+
+msgid "Switch closes now."
+msgstr "Switch sẽ đóng ngay."
+
+msgid "Switch closes to finish the update."
+msgstr "Switch sẽ đóng để hoàn tất cập nhật."
+
+msgid "Switch is an unofficial PS5 port brought to you by BlackBearReloaded."
+msgstr "Switch là bản port PS5 không chính thức do BlackBearReloaded mang đến cho bạn."
+
+msgid "Switch stopped because of an error. A report was saved to {0}."
+msgstr "Switch đã dừng do xảy ra lỗi. Báo cáo đã được lưu tại {0}."
+
+msgid "Switch was not changed."
+msgstr "Switch không bị thay đổi."
+
+msgid "Saved. Reopen Switch to use this folder."
+msgstr "Đã lưu. Hãy mở lại Switch để dùng thư mục này."
+
+msgid "Setup required: {0} Open Settings, Game files to choose the folder that holds your keys, firmware and roms folders (or add the files to {1}), then reopen Switch."
+msgstr "Cần thiết lập: {0} Hãy mở Cài đặt, Tệp trò chơi để chọn thư mục chứa các thư mục keys, firmware và roms của bạn (hoặc thêm các tệp vào {1}), rồi mở lại Switch."
+
+msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make Switch possible."
+msgstr "Cảm ơn toàn thể cộng đồng homebrew PS5 và mọi nhà phát triển có driver, công cụ và thư viện giúp Switch thành hiện thực."

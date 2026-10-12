@@ -121,7 +121,7 @@ inline void Ready(const std::string& logs_folder, bool filesystem_access) {
     (void)std::rename(path.c_str(), (logs_folder + "/boot-trace.prev.txt").c_str());
     // The last run's sandbox trace (that run may have died before it had filesystem access), copied
     // where it can be fetched; with filesystem access the sandbox is seen under /mnt/sandbox.
-    if (int previous = open("/mnt/sandbox/PPSA99008_000/download0/boot-trace.prev.txt", O_RDONLY); previous >= 0) {
+    if (int previous = open("/mnt/sandbox/PPSA99009_000/download0/boot-trace.prev.txt", O_RDONLY); previous >= 0) {
         const int copy = open((logs_folder + "/boot-trace.sandbox-prev.txt").c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
         char buffer[4096];
         for (ssize_t got; (got = read(previous, buffer, sizeof(buffer))) > 0;) detail::WriteAll(copy, buffer, static_cast<size_t>(got));

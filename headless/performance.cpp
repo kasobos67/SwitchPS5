@@ -70,13 +70,6 @@ bool pc_sampling{};
 constexpr size_t runtime_rsp_offset = 248, runtime_rbp_offset = 136;
 using CallerChain = std::array<uintptr_t, 8>;
 std::array<CallerChain, 8192> sampled_callers{};
-// Core0 keeps a chain only for PCs outside our own code: the eboot and the JIT caches name
-// themselves by address, and the rest measured at a tenth of its samples, so a bounded array
-// covers the run without a 4 MB one.
-std::array<CallerChain, 4096> sampled_core_callers{};
-std::array<uintptr_t, 4096> core_caller_pcs{};
-std::atomic<unsigned> core_caller_count{};
-unsigned core_caller_reported{};
 
 CallerChain CaptureCallerChain(uintptr_t rsp, uintptr_t frame, uintptr_t handler_stack) {
     CallerChain callers{};
@@ -113,23 +106,6 @@ void PcSignal(int, siginfo_t*, void* context) {
         if (core_index < sampled_core_pcs.size()) {
             sampled_core_pcs[core_index] = static_cast<const uintptr_t*>(context)[224 / sizeof(uintptr_t)];
             core_pc_count.store(core_index + 1, std::memory_order_release);
-#if defined(EDEN_DEV_WAIT_CALLERS) && defined(PS5_NATIVE)
-            const uintptr_t pc = sampled_core_pcs[core_index];
-            const unsigned caller_index = core_caller_count.load(std::memory_order_relaxed);
-            // Library PCs only: eboot and the JIT caches identify themselves by address.
-            if (caller_index < core_caller_pcs.size() &&
-                (pc < 0x400000 || pc > 0x28c2b30) &&
-                (pc < 0x1200000000 || pc >= 0x1300000000)) {
-                const auto* words = static_cast<const uintptr_t*>(context);
-                char handler_stack_marker;
-                sampled_core_callers[caller_index] = CaptureCallerChain(
-                    words[runtime_rsp_offset / sizeof(uintptr_t)],
-                    words[runtime_rbp_offset / sizeof(uintptr_t)],
-                    reinterpret_cast<uintptr_t>(&handler_stack_marker));
-                core_caller_pcs[caller_index] = pc;
-                core_caller_count.store(caller_index + 1, std::memory_order_release);
-            }
-#endif
         }
         return;
     }
@@ -453,92 +429,6 @@ void ReportGpuThread(unsigned frame) {
                 load(gpu_fence_drain, true), load(gpu_fence_drain, false),
                 load(gpu_present_wait, true), load(gpu_present_wait, false),
                 load(gpu_queue_full, true), load(gpu_queue_full, false), load(rasterizer_draw, true));
-    // What the dispatch is made of: the draw path itself (RasterizerVulkan::PrepareDraw - both
-    // cache locks, pipeline configure, dynamic state, the record) against the guest method
-    // decoding that surrounds it, plus the dispatch's own three phases. A draw whose
-    // EDEN_DEV_DRAW ns is close to EDEN_GPU dispatch_ns is being charged to the rasterizer; one
-    // far below it is being charged to the dma pusher.
-    std::printf("EDEN_DEV_DRAW calls=%llu ns=%llu\n", load(rasterizer_draw, true),
-                load(rasterizer_draw, false));
-    std::printf("EDEN_DEV_PUSH lock_ns=%llu push_ns=%llu dispatch_ns=%llu\n",
-                load(gpu_sched_lock, false), load(gpu_dma_push, false),
-                load(gpu_dma_dispatch, false));
-    // Where that draw time went, in order. flush is FlushWork plus the memory flush; pipeline is
-    // taking the current pipeline; lock_wait is the wait for both cache mutexes (the hold is what
-    // the later phases measure); config is SetEngine plus Configure; state is UpdateDynamicStates
-    // and the query, transform-feedback and counter calls; record is draw_func. unattributed is
-    // the early-return tails the outer Timer charged but no phase marked, so it should be small,
-    // and the _calls columns say how often each phase ran - record below flush is draws that bailed.
-    std::printf("EDEN_DEV_RAST flush_ns=%llu pipeline_ns=%llu lock_wait_ns=%llu config_ns=%llu "
-                "state_ns=%llu record_ns=%llu unattributed_ns=%llu flush_calls=%llu "
-                "pipeline_calls=%llu lock_wait_calls=%llu config_calls=%llu state_calls=%llu "
-                "record_calls=%llu\n",
-                load(draw_flush, false), load(draw_pipeline, false),
-                load(draw_lock_wait, false), load(draw_config, false), load(draw_state, false),
-                load(draw_record, false),
-                load(rasterizer_draw, false) - (load(draw_flush, false) + load(draw_pipeline, false) +
-                                                load(draw_lock_wait, false) +
-                                                load(draw_config, false) + load(draw_state, false) +
-                                                load(draw_record, false)),
-                load(draw_flush, true), load(draw_pipeline, true), load(draw_lock_wait, true),
-                load(draw_config, true), load(draw_state, true), load(draw_record, true));
-    // Where config's time went. sync is the sampler and image table sync plus the uniform-buffer
-    // state; read is the guest-memory handle reads and the view fill; bind is the buffer binds;
-    // desc is the descriptor queue, the pushes and the upload barrier; rt is render targets and
-    // feedback; draw is ConfigureDraw's compare-and-record. These nest inside config, so
-    // unattributed (config less their sum) is the entry clock, SetEngine, the configure_func
-    // pointer call and any early return that left the tail unmarked - a negative value means the
-    // marks themselves cost more than that.
-    std::printf("EDEN_DEV_CFG sync_ns=%llu read_ns=%llu bind_ns=%llu desc_ns=%llu rt_ns=%llu "
-                "draw_ns=%llu unattributed_ns=%llu sync_calls=%llu read_calls=%llu "
-                "bind_calls=%llu desc_calls=%llu rt_calls=%llu draw_calls=%llu\n",
-                load(cfg_sync, false), load(cfg_read, false), load(cfg_bind, false),
-                load(cfg_desc, false), load(cfg_rt, false), load(cfg_draw, false),
-                load(draw_config, false) - (load(cfg_sync, false) + load(cfg_read, false) +
-                                            load(cfg_bind, false) + load(cfg_desc, false) +
-                                            load(cfg_rt, false) + load(cfg_draw, false)),
-                load(cfg_sync, true), load(cfg_read, true), load(cfg_bind, true),
-                load(cfg_desc, true), load(cfg_rt, true), load(cfg_draw, true));
-    // Where cfg_bind's time went: tbo is the texture-buffer loop over the enabled stages, update
-    // is the index, vertex, transform-feedback and per-stage buffer updates, geometry is the host
-    // binds after them. They nest inside cfg_bind, so unattributed (cfg_bind less their sum) is
-    // the transform-feedback check, the two pointer-store statements and the clock itself.
-    std::printf("EDEN_DEV_BIND tbo_ns=%llu update_ns=%llu geometry_ns=%llu "
-                "unattributed_ns=%llu tbo_calls=%llu update_calls=%llu geometry_calls=%llu\n",
-                load(bind_tbo, false), load(bind_update, false), load(bind_geometry, false),
-                load(cfg_bind, false) - (load(bind_tbo, false) + load(bind_update, false) +
-                                         load(bind_geometry, false)),
-                load(bind_tbo, true), load(bind_update, true), load(bind_geometry, true));
-    // The four calls inside cfg_bind's geometry phase: the index buffer (or the quad substitute),
-    // the vertex buffers, transform feedback, and the indirect draw buffers when there is one.
-    // They nest inside cfg_bind's geometry, so unattributed is the clock and the two pointer
-    // stores around it - not the SynchronizeBuffer calls, which are inside the phases themselves.
-    std::printf("EDEN_DEV_GEO index_ns=%llu vertex_ns=%llu xf_ns=%llu indirect_ns=%llu "
-                "unattributed_ns=%llu index_calls=%llu vertex_calls=%llu xf_calls=%llu "
-                "indirect_calls=%llu\n",
-                load(geo_index, false), load(geo_vertex, false), load(geo_xf, false),
-                load(geo_indirect, false),
-                load(bind_geometry, false) - (load(geo_index, false) + load(geo_vertex, false) +
-                                              load(geo_xf, false) + load(geo_indirect, false)),
-                load(geo_index, true), load(geo_vertex, true), load(geo_xf, true),
-                load(geo_indirect, true));
-    // The three inside cfg_bind's update phase: index, vertex and transform-feedback updates; the
-    // six-stage uniform, storage and texture loop; and the indirect update when there is one.
-    std::printf("EDEN_DEV_UPD state_ns=%llu stage_ns=%llu indirect_ns=%llu unattributed_ns=%llu "
-                "state_calls=%llu stage_calls=%llu indirect_calls=%llu\n",
-                load(upd_state, false), load(upd_stage, false), load(upd_indirect, false),
-                load(bind_update, false) - (load(upd_state, false) + load(upd_stage, false) +
-                                            load(upd_indirect, false)),
-                load(upd_state, true), load(upd_stage, true), load(upd_indirect, true));
-    // Texture-cache GC GPU drains since the last report. The fix these counters watch is the
-    // prefetch lookahead (vulkan_gc_downloads.inc): batched drains should cover many images and
-    // unbatched ones should be rare, as each unbatched drain is a full pipeline wait on the GPU
-    // thread for one eviction.
-    std::printf("EDEN_DEV_GC_DRAIN batched_calls=%llu batched_ns=%llu batched_images=%llu "
-                "unbatched_calls=%llu unbatched_ns=%llu\n",
-                load(gc_batched_drain, true), load(gc_batched_drain, false),
-                gc_batched_drain.requested_bytes.load(std::memory_order_relaxed),
-                load(gc_unbatched_drain, true), load(gc_unbatched_drain, false));
     std::printf("EDEN_DEV_GUEST cpu_write_calls=%llu cpu_write_ns=%llu cpu_read_calls=%llu cpu_read_ns=%llu "
                 "sync_calls=%llu sync_ns=%llu dequeue_calls=%llu dequeue_ns=%llu",
                 load(guest_cpu_write, true), load(guest_cpu_write, false),
@@ -566,58 +456,6 @@ void ReportGpuThread(unsigned frame) {
     for (unsigned slot = 0; slot < render_conditions.size(); ++slot)
         std::printf("%s%llu", slot ? "," : "", render_conditions[slot].load(std::memory_order_relaxed));
     std::printf("\n");
-    for (unsigned slot = 0; slot < ipc_threads.size(); ++slot) {
-        const auto calls = ipc_threads[slot].calls.load(std::memory_order_relaxed);
-        if (calls == 0) continue;
-        std::printf("EDEN_DEV_IPC_THREAD slot=%u tid=%llu name=%.23s calls=%llu ns=%llu\n", slot,
-                    ipc_threads[slot].tid.load(std::memory_order_relaxed), ipc_threads[slot].name, calls,
-                    ipc_threads[slot].ns.load(std::memory_order_relaxed));
-    }
-    for (unsigned slot = 0; slot < wait_threads.size(); ++slot) {
-        const auto calls = wait_threads[slot].calls.load(std::memory_order_relaxed);
-        if (calls == 0) continue;
-        const auto tid = wait_threads[slot].tid.load(std::memory_order_relaxed);
-        const char* name = "";
-        for (unsigned islot = 0; islot < ipc_thread_slots; ++islot)
-            if (ipc_threads[islot].tid.load(std::memory_order_relaxed) == tid) {
-                name = ipc_threads[islot].name;
-                break;
-            }
-        // rsn= is this slot's own wait_ns per ThreadWaitReasonForDebugging, same index order as
-        // the histogram line, so a thread's split reads without joining anything by hand.
-        std::printf("EDEN_DEV_WAIT_THREAD tid=%llu name=%.23s calls=%llu ns=%llu waker=%llu rsn=", tid,
-                    name, calls, wait_threads[slot].ns.load(std::memory_order_relaxed),
-                    wait_threads[slot].waker.load(std::memory_order_relaxed));
-        for (unsigned reason = 0; reason < wait_reason_slots; ++reason)
-            std::printf("%s%llu", reason ? "," : "",
-                        wait_threads[slot].reason_ns[reason].load(std::memory_order_relaxed));
-        std::printf("\n");
-    }
-    // tid is the slot index here (performance.h indexes the dispatch table directly by tid).
-    for (unsigned tid = 0; tid < dispatch_slots; ++tid) {
-        const auto dcalls = dispatch_calls[tid].load(std::memory_order_relaxed);
-        if (dcalls == 0) continue;
-        std::printf("EDEN_DEV_DISPATCH tid=%u calls=%llu ns=%llu\n", tid, dcalls,
-                    dispatch_ns[tid].load(std::memory_order_relaxed));
-    }
-    std::printf("EDEN_DEV_DISPATCH overflow_calls=%llu\n",
-                dispatch_overflow_calls.load(std::memory_order_relaxed));
-    // Reason indices are ThreadWaitReasonForDebugging (k_thread.h); named here so a log reads
-    // without the source.
-    std::printf("EDEN_DEV_WAIT reasons=none,sleep,ipc,sync,condvar,arbitration,suspended,other "
-                "overflow_calls=%llu calls=",
-                wait_overflow_calls.load(std::memory_order_relaxed));
-    for (unsigned reason = 0; reason < wait_reason_slots; ++reason)
-        std::printf("%s%llu", reason ? "," : "", wait_reason_calls[reason].load(std::memory_order_relaxed));
-    std::printf(" ns=");
-    for (unsigned reason = 0; reason < wait_reason_slots; ++reason)
-        std::printf("%s%llu", reason ? "," : "", wait_reason_ns[reason].load(std::memory_order_relaxed));
-    std::printf("\n");
-    std::printf("EDEN_DEV_IPCHIST lt50us=%llu lt500us=%llu lt5ms=%llu ge5ms=%llu overflow_calls=%llu "
-                "overflow_ns=%llu\n",
-                ipc_hist[0].load(std::memory_order_relaxed), ipc_hist[1].load(std::memory_order_relaxed),
-                ipc_hist[2].load(std::memory_order_relaxed), ipc_hist[3].load(std::memory_order_relaxed),
-                load(ipc_thread_overflow, true), load(ipc_thread_overflow, false));
     const auto window = Eden::Fastmem::WindowStats();
     std::printf("EDEN_FASTMEM window=%llx pages=%llu chunks=%llu direct_reads=%llu direct_writes=%llu "
                 "faults=%llu maps=%llu unmaps=%llu protects=%llu kernel_calls=%llu kernel_ns=%llu failures=%llu\n",
@@ -753,24 +591,6 @@ void Snapshot() {
     for (const auto& [pc, count] : core_counts)
         std::printf("EDEN_PERF_CORE_PC mono_ns=%lld pc=%llx count=%u\n", mono,
                     static_cast<unsigned long long>(pc), count);
-#if defined(EDEN_DEV_WAIT_CALLERS) && defined(PS5_NATIVE)
-    std::map<std::array<unsigned long long, 9>, unsigned> core_caller_counts;
-    const unsigned core_caller_end = core_caller_count.load(std::memory_order_acquire);
-    while (core_caller_reported < core_caller_end) {
-        const unsigned index = core_caller_reported++;
-        std::array<unsigned long long, 9> key{static_cast<unsigned long long>(core_caller_pcs[index])};
-        for (unsigned i = 0; i < 8; ++i)
-            key[i + 1] = static_cast<unsigned long long>(sampled_core_callers[index][i]);
-        ++core_caller_counts[key];
-    }
-    for (const auto& [chain, count] : core_caller_counts) {
-        std::printf("EDEN_PERF_CORE_CALLERS mono_ns=%lld pc=%llx count=%u callers=", mono,
-                    chain[0], count);
-        for (unsigned i = 1; i < chain.size(); ++i)
-            std::printf("%s%llx", i == 1 ? "" : ",", chain[i]);
-        std::printf("\n");
-    }
-#endif
     // The same samples by guest block: location (A32 PC in the low word), block offset, count.
     if (const std::size_t blocks = core0_blocks ? core0_block_count.load(std::memory_order_acquire) : 0) {
         std::map<std::pair<unsigned long long, unsigned long long>, unsigned> guest_counts;
@@ -918,15 +738,6 @@ void BeginPcSampling() {
     std::printf("EDEN_PERF_LIBC memcpy=%p memset=%p memmove=%p memcmp=%p\n",
                 reinterpret_cast<void*>(&std::memcpy), reinterpret_cast<void*>(&std::memset),
                 reinterpret_cast<void*>(&std::memmove), reinterpret_cast<void*>(&std::memcmp));
-    // Anchors for a sampled PC that falls in a library we hold no symbols for: these bracket
-    // the wait primitives the guest cores and the render thread block in.
-    std::printf("EDEN_PERF_LIBC2 mutex_lock=%p mutex_unlock=%p cond_wait=%p cond_timedwait=%p "
-                "cond_signal=%p cond_broadcast=%p nanosleep=%p clock_gettime=%p sched_yield=%p\n",
-                reinterpret_cast<void*>(&pthread_mutex_lock), reinterpret_cast<void*>(&pthread_mutex_unlock),
-                reinterpret_cast<void*>(&pthread_cond_wait), reinterpret_cast<void*>(&pthread_cond_timedwait),
-                reinterpret_cast<void*>(&pthread_cond_signal), reinterpret_cast<void*>(&pthread_cond_broadcast),
-                reinterpret_cast<void*>(&nanosleep), reinterpret_cast<void*>(&clock_gettime),
-                reinterpret_cast<void*>(&sched_yield));
 }
 
 void PollGpuPc() {

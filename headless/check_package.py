@@ -11,20 +11,16 @@ import sys
 from check import fixture
 
 ROOT = Path(__file__).resolve().parents[1]
-APP = Path(os.environ.get('EDEN_PACKAGE_DIR', ROOT / 'dist/headless/PPSA99008')).resolve()
+APP = Path(os.environ.get('EDEN_PACKAGE_DIR', ROOT / 'dist/headless/PPSA99009')).resolve()
 if 'EDEN_PACKAGE_DIR' in os.environ:
-    assert APP.is_relative_to(ROOT/'build') and APP.name == 'PPSA99008'
+    assert APP.is_relative_to(ROOT/'build') and APP.name == 'PPSA99009'
 OUT = ROOT / 'build/headless-native'
 BASE_REQUIRED = {'eboot.bin', 'core-homebrew.nro', 'sce_module/libc.prx',
             'sce_sys/param.json', 'sce_sys/icon0.png', 'sce_sys/pic0.dds', 'sce_sys/pic1.dds',
-            'sce_sys/snd0.at9', 'lapy.elf', 'lapy-manifest.json', 'licenses/Lapy-MIT.txt',
+            'lapy.elf', 'lapy-manifest.json', 'licenses/Lapy-MIT.txt',
             'self-updater.elf'}
 REQUIRED = set(BASE_REQUIRED)
 REQUIRED.update(p.relative_to(APP).as_posix() for p in (APP / 'ui').rglob('*') if p.is_file())
-# The runner's switches (headless/main.cpp): only a development package carries them, so they
-# are required exactly when the build put them there (tools/package-headless-native.sh).
-if (APP / 'dev-settings.txt').is_file():
-    REQUIRED.add('dev-settings.txt')
 RECEIPT = ROOT / 'HEADLESS_CANDIDATE.json'
 # The pinned OpenGL SDK release (tools/deps.json): digest of its manifest.sha256.
 GL_SDK_MANIFEST_SHA256 = 'f4b91f672be037fbac3f82494f1225deaf4c227a03f37ac3ffa56abb213b943f'
@@ -51,19 +47,18 @@ def check():
     assert {p.relative_to(APP).as_posix() for p in APP.rglob('*') if p.is_file()} == REQUIRED
     assert all(not (APP / p).is_symlink() and (APP / p).stat().st_size for p in REQUIRED)
     param = json.loads((APP / 'sce_sys/param.json').read_text())
-    assert param['titleId'] == 'PPSA99008' and param['contentId'].endswith('PROSPEROEDEN0001')
-    assert param['localizedParameters']['en-US']['titleName'] == 'ProsperoEden'
+    assert param['titleId'] == 'PPSA99009' and param['contentId'].endswith('PROSPEROEDEN0001')
+    assert param['localizedParameters']['en-US']['titleName'] == 'Switch'
     assert param['pubtools']['loudnessSnd0'] == '-28.00'
     lapy = json.loads((APP / 'lapy-manifest.json').read_text())
     assert lapy['schema'] == 'lapy-owned-build/1'
-    assert lapy['target_title'] == 'PPSA99008' and lapy['mode'] == 'elf-helper'
+    assert lapy['target_title'] == 'PPSA99009' and lapy['mode'] == 'elf-helper'
     assert lapy['max_requests'] == 1 and not lapy['service']
     assert lapy['features'] == ['root_layout_probe_retry']
     assert lapy['protocol_sha256'] == LAPY_PROTOCOL_SHA256
     assert lapy['elf_sha256'] == digest(APP / 'lapy.elf')
     assert (APP / 'lapy.elf').read_bytes()[:6] == b'\x7fELF\x02\x01'
-    sound = (APP / 'sce_sys/snd0.at9').read_bytes()
-    assert len(sound) <= 2 * 1024 * 1024 and sound[:4] == b'RIFF' and sound[8:12] == b'WAVE'
+    assert not (APP / 'sce_sys/snd0.at9').exists(), 'package must not include PS5 hover music'
     fixture((APP / 'core-homebrew.nro').read_bytes())
     runpy.run_path(str(ROOT / 'tools/load_alignment.py'))['check_load_alignment']((APP / 'eboot.bin').read_bytes())
     imports = (OUT / 'imports.txt').read_text()
@@ -129,10 +124,10 @@ if __name__ == '__main__':
                     if 'dist/PPSA99121/' + p in old['files']}
         if RECEIPT.exists():
             prior = json.loads(RECEIPT.read_text())
-            previous = ({p: prior['files']['dist/headless/PPSA99008/' + p] for p in prior['package_sizes']}
+            previous = ({p: prior['files']['dist/headless/PPSA99009/' + p] for p in prior['package_sizes']}
                         if prior['hardware_run'] else prior['previous_package'])
         retail_launch = frontend['guest_fixture'] == 'retail-game' or bool(frontend.get('development_rom_id'))
-        value = dict(gate='G7', title_id='PPSA99008', firmware='6.02', hardware_run=False,
+        value = dict(gate='G7', title_id='PPSA99009', firmware='6.02', hardware_run=False,
                      classification='offline-validated', needed_libraries=needed,
                      data_heap_bytes=3072 * 1024**2, guest_backing_bytes=4 * 1024**3,
                      observation_seconds=120 if retail_launch else 60,

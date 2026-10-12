@@ -15,7 +15,7 @@ update_check_result Decide(const std::string& json, const char* installed) {
 }
 
 std::string Answer(const char* status, const char* content_version, const char* version) {
-    std::string json = std::string("{\"title_id\":\"PPSA99008\",\"status\":\"") + status + "\",\"content_version\":";
+    std::string json = std::string("{\"title_id\":\"PPSA99009\",\"status\":\"") + status + "\",\"content_version\":";
     json += content_version ? std::string("\"") + content_version + "\"" : std::string("null");
     json += std::string(",\"version\":\"") + version + "\",\"page\":\"https://homebrew.page/ps5/prosperoeden\"}";
     return json;
@@ -30,9 +30,9 @@ int main() {
 
     // The request names the title and nothing else.
     char url[96];
-    assert(update_check_url(url, sizeof(url), "PPSA99008") != 0);
-    assert(std::strcmp(url, "https://homebrew.page/api/v1/apps/PPSA99008.json") == 0);
-    assert(update_check_url(url, sizeof(url), "../PPSA99008") == 0);
+    assert(update_check_url(url, sizeof(url), "PPSA99009") != 0);
+    assert(std::strcmp(url, "https://homebrew.page/api/v1/apps/PPSA99009.json") == 0);
+    assert(update_check_url(url, sizeof(url), "../PPSA99009") == 0);
 
     // A newer release is listed: its name is what the notification shows.
     update_check_result result = Decide(Answer("available", "01.000.050", "v1.000.050"), "01.000.040");

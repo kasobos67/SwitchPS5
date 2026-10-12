@@ -16,11 +16,6 @@ using audio::Cue;
 namespace
 {
 
-constexpr Rect kListPanel{108.0f, 188.0f, 820.0f, 720.0f};
-constexpr Rect kDetailPanel{980.0f, 188.0f, 820.0f, 720.0f};
-constexpr Rect kWindow{138.0f, 292.0f, 760.0f, 518.0f};
-constexpr float kRowHeight = 78.0f;
-
 std::string join_path(const std::string &directory, const std::string &name)
 {
     return directory == "/" ? "/" + name : directory + "/" + name;
@@ -30,18 +25,6 @@ std::string parent_path(const std::string &directory)
 {
     const std::size_t slash = directory.find_last_of('/');
     return slash == 0 || slash == std::string::npos ? "/" : directory.substr(0, slash);
-}
-
-std::string short_path(const std::string &path, std::size_t limit)
-{
-    return path.size() <= limit ? path : "..." + path.substr(path.size() - (limit - 3));
-}
-
-// "3 games": the count goes where the text says {0}; one and many are separate texts, so a
-// language can word each as it needs.
-std::string counted(int count, const char *one, const char *many)
-{
-    return fill(count == 1 ? one : many, {std::to_string(count)});
 }
 
 // A folder mark from two rounded shapes; `up` adds the arrow of the parent folder.
@@ -98,7 +81,9 @@ void Launcher::press_files(Key key)
     switch (key)
     {
     case Key::circle:
-        open(Screen::settings, false);
+        // Folder navigation stays on this screen, so leaving_ retains its
+        // entry screen: HOME shortcut or the System Settings category.
+        open(leaving_ == Screen::home ? Screen::home : Screen::settings, false);
         return;
     case Key::up:
     case Key::down:
@@ -141,7 +126,7 @@ void Launcher::press_files(Key key)
     case Key::triangle:
     {
         const bool saved = services_.set_files_folder(browse_dir_);
-        say(saved ? tr("Saved. Reopen ProsperoEden to use this folder.") :
+        say(saved ? tr("Saved. Reopen Switch to use this folder.") :
                     tr("Could not save the folder. Please try again."),
             !saved);
         cue(saved ? Cue::saved : Cue::error);
@@ -152,7 +137,7 @@ void Launcher::press_files(Key key)
         const std::string fallback = services_.default_files_folder();
         const bool saved = services_.set_files_folder(fallback);
         (void)browse_to(fallback);
-        say(saved ? tr("Default folder saved. Reopen ProsperoEden to use it.") :
+        say(saved ? tr("Default folder saved. Reopen Switch to use it.") :
                     tr("Could not save the folder. Please try again."),
             !saved);
         cue(saved ? Cue::saved : Cue::error);
@@ -165,125 +150,50 @@ void Launcher::press_files(Key key)
 
 void Launcher::draw_files(Canvas &c)
 {
-    gfx::DrawList &list = c.list;
-    const int count = static_cast<int>(browse_entries_.size());
-    draw_frame(c, tr("Game files"), tr("Choose the folder that holds your keys, firmware and games"));
-
-    // ---- folders ----
-    glass(c, kListPanel, 26.0f, theme::kPanel.with_alpha(0.80f), theme::kPanelEdge.with_alpha(0.55f));
-    text(c, tr("FOLDERS"), 138.0f, baseline(208.0f, 28.0f, theme::kSmall), theme::kSmall,
-         theme::kLimePale, Align::left, 3.0f);
-    text(c, short_path(browse_dir_, 52), 138.0f, baseline(246.0f, 28.0f, theme::kSmall),
-         theme::kSmall, theme::kBody);
-    if (count == 0)
-    {
-        text(c, tr("No folders here."), kListPanel.x + kListPanel.w * 0.5f,
-             baseline(488.0f, 38.0f, theme::kText24), theme::kText24, theme::kCopy, Align::center);
+auto &l=c.list;
+    draw_frame(c,tr("Data Management"),"");
+    text_fit(c,browse_dir_,112,baseline(195,50,26),26,theme::kText,1670);
+    l.line(784,269,784,916,1,theme::kRule.with_alpha(0.6f));
+    const int count=static_cast<int>(browse_entries_.size());
+    l.push_clip({108,280,644,536});
+    const auto top=[&](int row){return 282.0f+files_.pitch*row-files_.scroll();};
+    for(int row=files_.first_row();row<=files_.last_row();++row) {
+        Rect r{112,top(row),628,78};
+        plate(c,kRowPlate,r,row==files_.selected ? 1.0f : 0.0f);
+        const std::string &name=browse_entries_[static_cast<std::size_t>(row)];
+        draw_folder(c,134,r.y+39,theme::kMeta,name=="..");
+        text_fit(c,name,202,baseline(r.y,78,24),24,theme::kText,510);
     }
-    else
-    {
-        list.push_clip({kWindow.x - 24.0f, kWindow.y - 6.0f, kWindow.w + 48.0f, kWindow.h + 12.0f});
-        const auto row_rect = [&](int row) -> Rect
-        {
-            return {kWindow.x, kWindow.y + static_cast<float>(row) * files_.pitch - files_.scroll(),
-                    kWindow.w, kRowHeight};
-        };
-        for (int row = files_.first_row(); row <= files_.last_row(); ++row)
-        {
-            list.push_opacity(files_.row_alpha(row, kRowHeight));
-            plate_rest(c, kListPlate, row_rect(row));
-            list.pop_opacity();
-        }
-        plate_focus(c, kListPlate,
-                    {kWindow.x, kWindow.y + files_.cursor() - files_.scroll(), kWindow.w, kRowHeight},
-                    1.0f);
-        for (int row = files_.first_row(); row <= files_.last_row(); ++row)
-        {
-            const std::string &entry = browse_entries_[static_cast<std::size_t>(row)];
-            const bool up = entry == "..";
-            const Rect r = row_rect(row);
-            list.push_opacity(files_.row_alpha(row, kRowHeight));
-            draw_folder(c, r.x + 24.0f, r.y + kRowHeight * 0.5f,
-                        up ? theme::kLimePale : Color::rgb(0xc9d6bd), up);
-            const float tag = text(c, up ? tr("UP") : tr("OPEN"), r.x + 730.0f,
-                                   baseline(r.y, kRowHeight, theme::kSmall), theme::kSmall,
-                                   theme::kMeta, Align::right);
-            text_fit(c, up ? tr("Parent folder") : entry, r.x + 84.0f,
-                     baseline(r.y, kRowHeight, theme::kText24), theme::kText24,
-                     up ? theme::kLimePale : Color::rgb(0xf3f5e9), 730.0f - 84.0f - tag - 24.0f);
-            list.pop_opacity();
-        }
-        list.pop_clip();
-        scrollbar(c, files_, 910.0f, kWindow.y, kWindow.h);
+    l.pop_clip();
+    if(count==0) text_shrink(c,tr("No folders here."),132,500,24,theme::kCopy,580);
+    scrollbar(c,files_,758,282,518);
+    
+    text_shrink(c,tr("Game Files"),844,baseline(290,52,30),30,theme::kTitle,950);
+    const std::string labels[]={tr("Keys"),tr("Firmware"),tr("Software"),tr("Current Folder")};
+    const std::string values[]={folder_info_.keys ? tr("Ready") : tr("Missing"),
+        folder_info_.firmware>=0 ? std::to_string(folder_info_.firmware) : tr("Missing"),
+        folder_info_.games>=0 ? std::to_string(folder_info_.games) : tr("Missing"),services_.files_folder()};
+    for(int i=0;i<4;++i) {
+        float y=384.0f+i*80.0f;
+        text_shrink(c,labels[i],860,baseline(y,70,24),24,theme::kText,320);
+        text_shrink(c,values[i],1778,baseline(y,70,24),24,theme::kLime,570,Align::right);
+        l.line(844,y+76,1796,y+76,1,theme::kRule.with_alpha(0.5f));
     }
-    text(c, list_position(count > 0 ? files_.selected + 1 : 0, count), 898.0f, baseline(866.0f, 28.0f, theme::kSmall), theme::kSmall,
-         theme::kLimePale, Align::right);
-
-    // ---- what the folder shown holds ----
-    glass(c, kDetailPanel, 26.0f, theme::kPanel.with_alpha(0.80f),
-          theme::kPanelEdge.with_alpha(0.55f));
-    text(c, tr("THIS FOLDER"), 1016.0f, baseline(210.0f, 28.0f, theme::kSmall), theme::kSmall,
-         theme::kLimePale, Align::left, 3.0f);
-    text_block(c, browse_dir_, 1016.0f, baseline(250.0f, 42.0f, theme::kHeading), theme::kHeading,
-               42.0f, theme::kTitle, 748.0f, 2);
-    const float column = value_column(
-        c, {tr("KEYS"), tr("FIRMWARE"), tr("GAMES"), tr("IN USE"), tr("ACCESS")}, 1016.0f, 1216.0f,
-        theme::kSmall, 2.0f);
-    // A line whose value is in the warning colour carries the warning mark too.
-    const auto line = [&](float top, const char *label, const std::string &value, Color color)
-    {
-        text(c, label, 1016.0f, baseline(top, 30.0f, theme::kSmall), theme::kSmall, theme::kLabel,
-             Align::left, 2.0f);
-        notice(c, value, column, baseline(top, 30.0f, theme::kSmall), theme::kSmall, color,
-               1764.0f - column, color.r == theme::kWarning.r && color.g == theme::kWarning.g);
-    };
-    const auto state = [](bool ready) { return ready ? theme::kLimePale : theme::kWarning; };
-    line(378.0f, tr("KEYS"), folder_info_.keys ? tr("prod.keys found") : tr("prod.keys missing"),
-         state(folder_info_.keys));
-    line(434.0f, tr("FIRMWARE"),
-         folder_info_.firmware < 0 ? tr("No firmware folder") :
-                                     counted(folder_info_.firmware, tr("{0} NCA file"), tr("{0} NCA files")),
-         state(folder_info_.firmware > 0));
-    line(490.0f, tr("GAMES"),
-         folder_info_.games < 0 ? tr("No roms folder") : counted(folder_info_.games, tr("{0} game"), tr("{0} games")),
-         state(folder_info_.games > 0));
-    list.rounded_rect({1016.0f, 554.0f, 748.0f, 1.0f}, 0.0f, theme::kRule);
-    const std::string in_use_folder = services_.files_folder();
-    const std::string saved = services_.saved_files_folder();
-    line(578.0f, tr("IN USE"),
-         !saved.empty() && saved != in_use_folder ? fill(tr("Next launch: {0}"), {short_path(saved, 32)}) :
-                                                    short_path(in_use_folder, 40),
-         theme::kValue);
-    const int access = services_.filesystem_access();
-    line(634.0f, tr("ACCESS"),
-         access == 0 ? tr("Full filesystem") :
-                       fill(tr("Sandboxed (code {0}): app folder only"), {std::to_string(access)}),
-         state(access == 0));
-    list.rounded_rect({1016.0f, 698.0f, 748.0f, 1.0f}, 0.0f, theme::kRule);
-    notice_block(c,
-                 message_.empty() ?
-                     tr("Keep keys, firmware and roms folders together. TRIANGLE uses the folder shown.") :
-                     message_,
-                 1016.0f, baseline(722.0f, 36.0f, theme::kText24), theme::kText24, 36.0f,
-                 message_.empty() ? theme::kCopy :
-                 message_warning_ ? theme::kWarning : theme::kLimePale,
-                 748.0f, 3, !message_.empty() && message_warning_);
-
-    static constexpr Hint kHints[] = {{Pad::cross, TR("Open")},
-                                      {Pad::circle, TR("Back")},
-                                      {Pad::triangle, TR("Use this folder")},
-                                      {Pad::square, TR("Default folder")},
-                                      {Pad::updown, TR("Browse")},
-                                      {Pad::l1, TR("Page"), Pad::r1}};
-    draw_footer(c, kHints, 6);
+    text_block(c,tr("Use extracted firmware NCA files. Choose the folder in Settings, Game files; restart the app after changing it."),
+               844,baseline(750,34,22),22,34,theme::kCopy,952,3,kShrink);
+    if(!message_.empty()) notice_block(c,message_,844,872,20,26,
+                message_warning_ ? theme::kWarning : theme::kLime,950,2,message_warning_);
+    static constexpr Hint hints[]={{Pad::l1,TR("Page"),Pad::r1},{Pad::square,TR("Default")},
+        {Pad::triangle,TR("Use this folder")},{Pad::circle,TR("Back")},{Pad::cross,TR("Open")}};
+    draw_footer(c,hints,5);
 }
 
 // ---------------------------------------------------------------- language
 
 void Launcher::enter_language()
 {
-    language_.visible = 6;
-    language_.pitch = 88.0f;
+    language_.visible = 7;
+    language_.pitch = 96.0f;
     language_.reset(static_cast<int>(services_.language_labels().size()), prefs_.language);
     message_.clear();
 }
@@ -335,163 +245,58 @@ void Launcher::press_language(Key key)
 
 void Launcher::draw_language(Canvas &c)
 {
-    gfx::DrawList &list = c.list;
+    auto &list = c.list;
+    draw_frame(c, tr("Language"), "");
     const auto &labels = services_.language_labels();
-    const int count = static_cast<int>(labels.size());
-    draw_frame(c, tr("Language"), tr("Choose the language games use"));
-
-    glass(c, kListPanel, 26.0f, theme::kPanel.with_alpha(0.80f), theme::kPanelEdge.with_alpha(0.55f));
-    text(c, tr("LANGUAGES"), 138.0f, baseline(208.0f, 28.0f, theme::kSmall), theme::kSmall,
-         theme::kLimePale, Align::left, 3.0f);
-    list.push_clip({kWindow.x - 24.0f, kWindow.y - 6.0f, kWindow.w + 48.0f, kWindow.h + 12.0f});
-    const auto row_rect = [&](int row) -> Rect
-    {
-        return {kWindow.x, kWindow.y + static_cast<float>(row) * language_.pitch - language_.scroll(),
-                kWindow.w, kRowHeight};
-    };
+    list.push_clip({552.0f, 204.0f, 1008.0f, 690.0f});
     for (int row = language_.first_row(); row <= language_.last_row(); ++row)
     {
-        list.push_opacity(language_.row_alpha(row, kRowHeight));
-        plate_rest(c, kListPlate, row_rect(row));
-        list.pop_opacity();
-    }
-    plate_focus(c, kListPlate,
-                {kWindow.x, kWindow.y + language_.cursor() - language_.scroll(), kWindow.w,
-                 kRowHeight},
-                1.0f);
-    for (int row = language_.first_row(); row <= language_.last_row(); ++row)
-    {
-        const Rect r = row_rect(row);
-        list.push_opacity(language_.row_alpha(row, kRowHeight));
-        // The language in use carries a lime tag; its name has the room the tag leaves.
-        const float width = text_width(c, tr("IN USE"), 18.0f, 2.0f) + 28.0f;
-        text_shrink(c, labels[static_cast<std::size_t>(row)], r.x + 26.0f,
-                    baseline(r.y, kRowHeight, theme::kText24), theme::kText24, Color::rgb(0xf3f5e9),
-                    row == prefs_.language ? 734.0f - 26.0f - width - 24.0f : 708.0f);
+        const Rect r{570.0f, 210.0f + row * language_.pitch - language_.scroll(), 972.0f, 94.0f};
+        plate(c, kRowPlate, r, row == language_.selected ? 1.0f : 0.0f);
+        text_shrink(c, labels[static_cast<std::size_t>(row)], 606.0f,
+                    baseline(r.y, r.h, 30.0f), 30.0f, theme::kText, 840.0f);
         if (row == prefs_.language)
         {
-            // The tag is as tall as its letters need.
-            const float tall = std::max(30.0f, text_size(18.0f) + 10.0f);
-            const Rect tag{r.x + 734.0f - width, r.y + (kRowHeight - tall) * 0.5f, width, tall};
-            list.bordered_rect(tag, tall * 0.5f, theme::kLime.with_alpha(0.16f), 1.0f,
-                               theme::kLime.with_alpha(0.55f));
-            text(c, tr("IN USE"), tag.x + tag.w * 0.5f, baseline(tag.y, tall, 18.0f), 18.0f,
-                 theme::kLimePale, Align::center, 2.0f);
+            list.line(1460.0f, r.y + 44.0f, 1472.0f, r.y + 56.0f, 4.0f, theme::kLime);
+            list.line(1472.0f, r.y + 56.0f, 1496.0f, r.y + 30.0f, 4.0f, theme::kLime);
         }
-        list.pop_opacity();
     }
     list.pop_clip();
-    scrollbar(c, language_, 910.0f, kWindow.y, kWindow.h);
-    text(c, list_position(language_.selected + 1, count), 898.0f, baseline(866.0f, 28.0f, theme::kSmall), theme::kSmall,
-         theme::kLimePale, Align::right);
-
-    glass(c, kDetailPanel, 26.0f, theme::kPanel.with_alpha(0.80f),
-          theme::kPanelEdge.with_alpha(0.55f));
-    text(c, tr("SELECTED"), 1016.0f, baseline(210.0f, 28.0f, theme::kSmall), theme::kSmall,
-         theme::kLimePale, Align::left, 3.0f);
-    const auto label_at = [&](int index) -> std::string
-    {
-        return index >= 0 && index < count ? labels[static_cast<std::size_t>(index)] : std::string{};
-    };
-    text_shrink(c, label_at(language_.selected), 1016.0f, baseline(250.0f, 42.0f, theme::kHeading),
-                theme::kHeading, theme::kTitle, 748.0f);
-    const float column =
-        value_column(c, {tr("REGION"), tr("IN USE")}, 1016.0f, 1216.0f, theme::kSmall, 2.0f);
-    const auto line = [&](float top, const char *label, const std::string &value, Color color)
-    {
-        text(c, label, 1016.0f, baseline(top, 30.0f, theme::kSmall), theme::kSmall, theme::kLabel,
-             Align::left, 2.0f);
-        text_shrink(c, value, column, baseline(top, 30.0f, theme::kSmall), theme::kSmall, color,
-                    1764.0f - column);
-    };
-    line(378.0f, tr("REGION"), services_.language_region(language_.selected), theme::kLimePale);
-    line(434.0f, tr("IN USE"), label_at(prefs_.language), theme::kValue);
-    list.rounded_rect({1016.0f, 554.0f, 748.0f, 1.0f}, 0.0f, theme::kRule);
-    text_block(c,
-               tr("Games use this language when they offer it, and their own default otherwise. It "
-               "applies when a game starts."),
-               1016.0f, baseline(578.0f, 34.0f, 22.0f), 22.0f, 34.0f, theme::kCopy, 748.0f, 3,
-               kShrink);
+    scrollbar(c, language_, 1560.0f, 210.0f, 672.0f);
     if (!message_.empty())
-        notice_block(c, message_, 1016.0f, baseline(722.0f, 34.0f, 22.0f), 22.0f, 34.0f,
-                     message_warning_ ? theme::kWarning : theme::kLimePale, 748.0f, 2,
-                     message_warning_);
-
-    static constexpr Hint kHints[] = {{Pad::cross, TR("Choose")},
-                                      {Pad::circle, TR("Back")},
-                                      {Pad::updown, TR("Browse")},
-                                      {Pad::l1, TR("Page"), Pad::r1}};
-    draw_footer(c, kHints, 4);
+        notice(c, message_, 570.0f, 930.0f, 24.0f,
+               message_warning_ ? theme::kWarning : theme::kCopy, 972.0f, message_warning_);
+    static constexpr Hint hints[] = {{Pad::circle, TR("Back")}, {Pad::cross, TR("OK")}};
+    draw_footer(c, hints, 2);
 }
 
 // ---------------------------------------------------------------- about
 
 void Launcher::draw_about(Canvas &c)
 {
-    gfx::DrawList &list = c.list;
-    draw_frame(c, tr("About ProsperoEden"), tr("Credits and setup"));
-
-    glass(c, kListPanel, 26.0f, theme::kPanel.with_alpha(0.80f), theme::kPanelEdge.with_alpha(0.55f));
-    text(c, tr("PROJECT CREDITS"), 144.0f, baseline(210.0f, 28.0f, theme::kSmall), theme::kSmall,
-         theme::kLimePale, Align::left, 3.0f);
-    text_shrink(c, tr("Powered by Eden"), 144.0f, baseline(250.0f, 54.0f, theme::kLead),
-                theme::kLead, theme::kTitle, 748.0f);
-    text_block(c, tr("All credit for the Eden emulator goes to its developers and contributors."),
-               144.0f, baseline(310.0f, 36.0f, theme::kText24), theme::kText24, 36.0f, theme::kBody,
-               748.0f, 2, kShrink);
-    text(c, "eden-emu.dev", 144.0f, baseline(384.0f, 36.0f, theme::kText24), theme::kText24,
-         theme::kLimePale);
-    list.rounded_rect({144.0f, 444.0f, 748.0f, 1.0f}, 0.0f, theme::kRule);
-    text(c, tr("THANKS"), 144.0f, baseline(464.0f, 30.0f, theme::kSmall), theme::kSmall,
-         theme::kLimePale, Align::left, 2.0f);
-    text_block(c,
-               tr("Thanks to the whole PS5 homebrew community and to every developer whose drivers, "
-               "tools and libraries make ProsperoEden possible."),
-               144.0f, baseline(500.0f, 36.0f, theme::kText24), theme::kText24, 36.0f, theme::kBody,
-               748.0f, 3, kShrink);
-    list.rounded_rect({144.0f, 628.0f, 748.0f, 1.0f}, 0.0f, theme::kRule);
-    text(c, tr("PS5 EDITION"), 144.0f, baseline(648.0f, 30.0f, theme::kSmall), theme::kSmall,
-         theme::kLimePale, Align::left, 2.0f);
-    text_block(c, tr("ProsperoEden is an unofficial PS5 port brought to you by BlackBearReloaded."),
-               144.0f, baseline(684.0f, 36.0f, theme::kText24), theme::kText24, 36.0f, theme::kBody,
-               748.0f, 2, kShrink);
-    text_shrink(c, tr("Menu sound effects made with ElevenLabs."), 144.0f,
-                baseline(788.0f, 30.0f, theme::kSmall), theme::kSmall, theme::kMeta, 748.0f);
-    text(c, version_, 892.0f, baseline(866.0f, 28.0f, theme::kSmall), theme::kSmall,
-         theme::kLimePale, Align::right);
-
-    glass(c, kDetailPanel, 26.0f, theme::kPanel.with_alpha(0.80f),
-          theme::kPanelEdge.with_alpha(0.55f));
-    text(c, tr("GETTING STARTED"), 1016.0f, baseline(210.0f, 28.0f, theme::kSmall), theme::kSmall,
-         theme::kLimePale, Align::left, 3.0f);
-    text_shrink(c, tr("Supply your own files"), 1016.0f, baseline(262.0f, 54.0f, theme::kLead),
-                theme::kLead, theme::kTitle, 748.0f);
-    const std::string folder = services_.files_folder();
-    const float column = value_column(
-        c, {tr("KEYS"), tr("FIRMWARE"), tr("GAMES"), tr("UPDATES, DLC"), tr("MODS")}, 1016.0f,
-        1232.0f, theme::kSmall);
-    const auto line = [&](float top, const char *label, const std::string &value)
-    {
-        text(c, label, 1016.0f, baseline(top, 30.0f, theme::kSmall), theme::kSmall, theme::kMeta);
-        text_shrink(c, value, column, baseline(top, 34.0f, theme::kText24), theme::kText24,
-                    theme::kValue, 1764.0f - column);
-    };
-    // Five lines above the rule. A game's own mods folder is named after its ID: its settings in
-    // the Library show it (and create it).
-    line(384.0f, tr("KEYS"), short_path(folder + "/keys/prod.keys", 36));
-    line(450.0f, tr("FIRMWARE"), short_path(folder + "/firmware/*.nca", 36));
-    line(516.0f, tr("GAMES"), fill(tr("{0}/ (NSP or XCI)"), {short_path(folder + "/roms", 36)}));
-    line(582.0f, tr("UPDATES, DLC"), fill(tr("{0}/ (NSP or XCI)"), {short_path(folder + "/updates", 36)}));
-    line(648.0f, tr("MODS"), fill(tr("{0}/ (one folder per game ID)"), {short_path(folder + "/mods", 36)}));
-    list.rounded_rect({1016.0f, 712.0f, 748.0f, 1.0f}, 0.0f, theme::kRule);
-    text_block(c,
-               tr("Use extracted firmware NCA files. Choose the folder in Settings, Game files; "
-               "restart the app after changing it."),
-               1016.0f, baseline(740.0f, 36.0f, theme::kText24), theme::kText24, 36.0f,
-               theme::kMeta, 748.0f, 3, kShrink);
-
-    static constexpr Hint kHints[] = {{Pad::circle, TR("Back")}};
-    draw_footer(c, kHints, 1);
+auto &l=c.list;
+    draw_frame(c,tr("About Switch"),"");
+    l.line(740,196,740,916,1,theme::kRule.with_alpha(0.6f));
+    cover(c,{}, {244,270,328,328},0,0);
+    text(c,"Switch",408,666,36,theme::kTitle,Align::center);
+    text(c,tr("PS5 edition"),408,714,24,theme::kMeta,Align::center);
+    text(c,version_,408,856,22,theme::kMeta,Align::center);
+    text_shrink(c,tr("Powered by Eden"),804,baseline(238,62,34),34,theme::kTitle,974);
+    text_block(c,tr("All credit for the Eden emulator goes to its developers and contributors."),
+                   804,baseline(324,34,24),24,34,theme::kCopy,974,2,kShrink);
+    text(c,"PS5 port: BlackBearReloaded",804,430,24,theme::kMeta);
+    text(c,"Menu sounds: supplied Nintendo Switch sound bank",804,478,22,theme::kMeta);
+    l.line(804,520,1796,520,1,theme::kRule);
+    const std::string folder=services_.files_folder();
+    const std::string labels[]={tr("KEYS"),tr("FIRMWARE"),tr("GAMES"),tr("UPDATES, DLC"),tr("MODS")};
+    const std::string values[]={folder+"/keys/prod.keys",folder+"/firmware",folder+"/roms",folder+"/updates",folder+"/mods"};
+    for(int i=0;i<5;++i) {
+        float y=558.0f+i*63.0f;
+        text_shrink(c,labels[i],804,baseline(y,54,22),22,theme::kCopy,240);
+        text_shrink(c,values[i],1780,baseline(y,54,22),22,theme::kText,720,Align::right);
+    }
+    static constexpr Hint hints[]={{Pad::circle,TR("Back")}};
+    draw_footer(c,hints,1);
 }
 
 } // namespace pe::ui

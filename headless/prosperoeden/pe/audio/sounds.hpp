@@ -32,6 +32,26 @@ enum class Cue : std::uint8_t
     welcome,     // the launcher appeared for the first time
     resume,      // the launcher appeared again after a game
     notify,      // a message needs attention
+    // Original qlaunch context cues. Keep the preceding values stable: existing
+    // frame queues and recordings remain compatible, including external callers.
+    focus_menu,
+    focus_navigation,
+    focus_account,
+    focus_applet,
+    focus_library_button,
+    focus_footer,
+    home_scroll,
+    library_open,
+    library_launch,
+    launch_effect,
+    toggle_off,
+    slider_release,
+    account_select,
+    controllers_open,
+    news_open,
+    album_open,
+    profile_open,
+    scroll_limit,
     count,
 };
 constexpr std::size_t kCueCount = static_cast<std::size_t>(Cue::count);
@@ -39,8 +59,8 @@ constexpr std::size_t kCueCount = static_cast<std::size_t>(Cue::count);
 const char *cue_name(Cue cue);
 
 // Recorded cues: "<name>_NN.wav" (NN from 01) in one folder, 48 kHz PCM. Each
-// play takes the next variation with a slight pitch change, so repeated moves
-// do not sound mechanical. A cue without a recording plays a short synthesized tone.
+// play takes the next recorded variation at its original pitch. A cue without a
+// recording plays a short synthesized fallback tone.
 class SoundBank
 {
   public:

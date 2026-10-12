@@ -1,14 +1,12 @@
 // ProsperoEden - Launcher: a game's own settings by category (Library > Game settings > Video,
-// Performance, Audio, Controls, System, Language) and the button mapping (Settings > Controls,
-// or a game's own).
+// Performance, Audio, Controls, Language) and the button mapping (Settings > Controls, or a
+// game's own).
 // Copyright (C) 2026 BlackBearReloaded
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "pe/ui/launcher.hpp"
 
 #include <algorithm>
-#include <chrono>
-#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -21,13 +19,11 @@ namespace
 {
 
 // Placed as the game settings dialog is (library.cpp): five rows show, the list scrolls.
-constexpr Rect kDialog{550.0f, 180.0f, 820.0f, 720.0f};
-constexpr float kRowsTop = 334.0f;
+constexpr float kRowsTop = 300.0f;
 constexpr float kRowPitch = 96.0f;
 constexpr float kRowHeight = 94.0f;
 constexpr int kRowsShown = 5;
-constexpr Rect kWindow{592.0f, kRowsTop, 736.0f, kRowPitch * (kRowsShown - 1) + kRowHeight};
-constexpr float kHints = 848.0f;
+constexpr Rect kWindow{714.0f, kRowsTop, 1086.0f, kRowPitch * (kRowsShown - 1) + kRowHeight};
 
 enum Category : int
 {
@@ -35,17 +31,14 @@ enum Category : int
     category_performance,
     category_audio,
     category_controls,
-    category_system,
     category_language,
 };
 constexpr const char *kCategoryNames[] = {TR("Video"), TR("Performance"), TR("Audio"), TR("Controls"),
-                                          TR("System"), TR("Language")};
+                                          TR("Language")};
 // The Controls category's rows.
 constexpr int kVibrationRow = 0;
 constexpr int kMappingRow = 1;
 constexpr int kControllerRow = 2;
-// The System category's row.
-constexpr int kSeedRow = 0;
 
 // The game's buttons and the DualSense buttons, in the mapping's order (services.hpp). The game's
 // are its own names; the stick presses and the DualSense's named buttons are translated.
@@ -168,12 +161,6 @@ std::vector<Option> options(int category, const GameSettings &game, Preferences 
                          tr("Right Joy-Con")},
                         game.controller, tr("Automatic")});
         break;
-    case category_system:
-        // The seed is a number: the row's one choice is the game's (0 until one is typed, with
-        // Cross). Without a seed the game is loaded at a new random address at every start.
-        rows.push_back({tr("RNG seed"), {std::to_string(std::max<std::int64_t>(game.rng_seed, 0))},
-                        game.rng_seed >= 0 ? 0 : -1, tr("Random")});
-        break;
     default:
         rows.push_back({tr("Language"), services.language_labels(), game.language,
                         pick(services.language_labels(), prefs.language)});
@@ -214,9 +201,6 @@ GameSettings with_option(GameSettings game, int category, int row, int value, co
             game.own_mapping = value >= 0;
         }
         break;
-    case category_system:
-        game.rng_seed = value < 0 ? -1 : std::max<std::int64_t>(game.rng_seed, 0);
-        break;
     default:
         game.language = value;
         break;
@@ -242,8 +226,6 @@ int Launcher::game_overrides(int category) const
         return (game.volume >= 0) + (game.mute >= 0);
     case category_controls:
         return (game.vibration >= 0) + game.own_mapping + (game.controller >= 0);
-    case category_system:
-        return game.rng_seed >= 0;
     default:
         return game.language >= 0;
     }
@@ -258,71 +240,14 @@ void Launcher::open_game_options(int category)
         static_cast<int>(options(game_options_, game_settings_, prefs_, services_, {hertz(0), hertz(1)}).size()), 0);
     option_ = 0;
     modal_ = modal_shown_ = Modal::game_options;
+        modal_elapsed_ = 0.0f;
+        modal_closing_ = false;
     message_.clear();
     cue(Cue::open);
 }
 
-void Launcher::edit_seed()
-{
-    seed_edit_stop_ = false;
-    try
-    {
-        seed_edit_ = std::async(std::launch::async, [this, current = game_settings_.rng_seed] {
-            return services_.ask_seed(current, seed_edit_stop_);
-        });
-    }
-    catch (const std::exception &)
-    {
-        say(tr("The keyboard could not be opened."), true);
-        cue(Cue::error);
-    }
-}
-
-void Launcher::update_game_options()
-{
-    if (!seed_edit_.valid() || seed_edit_.wait_for(std::chrono::seconds{0}) != std::future_status::ready)
-        return;
-    std::optional<std::int64_t> answer;
-    try
-    {
-        answer = seed_edit_.get();
-    }
-    catch (const std::exception &)
-    {
-        say(tr("The keyboard could not be opened."), true);
-        cue(Cue::error);
-        return;
-    }
-    // Cancelled, or the dialog it was for is gone.
-    if (!answer || seed_edit_stop_ || modal_ != Modal::game_options || game_options_ != category_system ||
-        games_.empty())
-        return;
-    if (*answer < 0)
-    {
-        say(tr("Enter a number between 0 and 4294967295."), true);
-        cue(Cue::error);
-        return;
-    }
-    GameSettings next = game_settings_;
-    next.rng_seed = *answer;
-    const bool saved =
-        services_.set_game_settings(games_[static_cast<std::size_t>(library_.selected)].title_id, next);
-    if (saved)
-        game_settings_ = next;
-    say(saved ? tr("Saved for this game. Applies on next launch.") : tr("Could not save. Please try again."),
-        !saved);
-    cue(saved ? Cue::toggle : Cue::error);
-}
-
 void Launcher::press_game_options(Key key)
 {
-    // The keyboard is open: Circle takes it away, nothing else is for this dialog.
-    if (seed_edit_.valid())
-    {
-        if (key == Key::circle)
-            seed_edit_stop_ = true;
-        return;
-    }
     const Game &game = games_[static_cast<std::size_t>(library_.selected)];
     const std::vector<Option> rows = options(game_options_, game_settings_, prefs_, services_, {hertz(0), hertz(1)});
     switch (key)
@@ -330,6 +255,8 @@ void Launcher::press_game_options(Key key)
     case Key::circle:
         // Back to the game's settings, on this category's row.
         modal_ = modal_shown_ = Modal::game;
+        modal_elapsed_ = 0.0f;
+        modal_closing_ = false;
         option_ = game_rows_.selected;
         message_.clear();
         cue(Cue::back);
@@ -358,12 +285,6 @@ void Launcher::press_game_options(Key key)
         open_mapping(true);
         return;
     }
-    // The seed is typed.
-    if (game_options_ == category_system && row == kSeedRow && key == Key::cross)
-    {
-        edit_seed();
-        return;
-    }
     if (option.locked)
     {
         say(tr("Frame generation needs Lossless.dll, from Lossless Scaling, in the lossless folder."), true);
@@ -389,80 +310,52 @@ void Launcher::press_game_options(Key key)
 
 void Launcher::draw_game_options(Canvas &c, float open)
 {
-    gfx::DrawList &list = c.list;
+    auto &list = c.list;
     list.push_opacity(open);
-    list.push_transform(1.0f - 0.03f * (1.0f - open) * motion(), 960.0f, 540.0f, 0.0f,
-                        (1.0f - open) * 26.0f * motion());
-    glass(c, kDialog, 26.0f, theme::kPanel.with_alpha(0.97f), theme::kPanelEdge.with_alpha(0.66f), 1.6f);
-    text_shrink(c, tr(kCategoryNames[game_options_]), 592.0f, baseline(218.0f, 62.0f, theme::kDisplay),
-                theme::kDisplay, theme::kTitle, 736.0f);
+    glass(c, {0.0f, 0.0f, 1920.0f, 1080.0f}, 0.0f, theme::kPanel, theme::kPanelEdge, 0.0f);
     const Game *game = games_.empty() ? nullptr : &games_[static_cast<std::size_t>(library_.selected)];
-    text_fit(c, game != nullptr ? game->name : std::string{}, 592.0f, baseline(291.0f, 32.0f, theme::kSmall),
-             theme::kSmall, Color::rgb(0xbecbb9), 736.0f);
-
-    const std::vector<Option> rows = options(game_options_, game_settings_, prefs_, services_, {hertz(0), hertz(1)});
-    list.push_clip({kWindow.x - 24.0f, kWindow.y - 6.0f, kWindow.w + 48.0f, kWindow.h + 12.0f});
-    const auto row_top = [&](int row)
-    { return kRowsTop + static_cast<float>(row) * kRowPitch - option_rows_.scroll(); };
-    for (int row = option_rows_.first_row(); row <= option_rows_.last_row(); ++row)
+    text_shrink(c, game ? game->name : tr("Options"), 156.0f, 112.0f, 40.0f,
+                theme::kTitle, 1644.0f);
+    list.line(96.0f, 157.0f, 1824.0f, 157.0f, 1.0f, theme::kRule);
+    if (game)
     {
-        list.push_opacity(option_rows_.row_alpha(row, kRowHeight));
-        plate_rest(c, kRowPlate, {592.0f, row_top(row), 736.0f, kRowHeight});
-        list.pop_opacity();
+        cover(c, game->cover, {156.0f, 228.0f, 312.0f, 312.0f}, 0.0f, 0.4f);
+        text_shrink(c, game->name, 312.0f, 596.0f, 27.0f, theme::kCopy, 438.0f, Align::center);
     }
-    plate_focus(c, kRowPlate, {592.0f, kRowsTop + option_rows_.cursor() - option_rows_.scroll(), 736.0f, kRowHeight},
-                1.0f);
+    text(c, tr(kCategoryNames[game_options_]), 750.0f, 256.0f, 30.0f, theme::kText);
+    const auto rows = options(game_options_, game_settings_, prefs_, services_, {hertz(0), hertz(1)});
+    list.push_clip({708.0f, kWindow.y - 6.0f, 1110.0f, kWindow.h + 12.0f});
     for (int row = option_rows_.first_row(); row <= option_rows_.last_row(); ++row)
     {
         if (row >= static_cast<int>(rows.size()))
             break;
-        const Option &option = rows[static_cast<std::size_t>(row)];
-        const float top = row_top(row);
-        list.push_opacity(option_rows_.row_alpha(row, kRowHeight));
-        // The game's own choice, or "Default (what Settings has)".
-        const std::string value = option.locked ? std::string{tr("Unavailable")} :
-            option.value >= 0 ? pick(option.values, option.value) : fill(tr("Default ({0})"), {option.usual});
-        if (option.locked)
-            list.push_opacity(0.38f);
-        const float taken = chooser(c, value, 1296.0f, baseline(top, kRowHeight, theme::kText24),
+        const Rect r{714.0f, kRowsTop + row * kRowPitch - option_rows_.scroll(), 1086.0f, kRowHeight};
+        plate(c, kRowPlate, r, row == option_rows_.selected ? 1.0f : 0.0f);
+        const auto &option = rows[static_cast<std::size_t>(row)];
+        if (option.locked) list.push_opacity(0.38f);
+        const std::string shown = option.locked ? std::string{tr("Unavailable")} : option.value >= 0 ? pick(option.values, option.value) :
+                                 fill(tr("System Settings ({0})"), {option.usual});
+        const float taken = chooser(c, shown, 1768.0f, baseline(r.y, r.h, 30.0f),
                                     row == option_rows_.selected ? 1.0f : 0.0f,
-                                    option.value >= 0 ? theme::kLime : theme::kLimePale);
-        text_shrink(c, option.name, 628.0f, baseline(top, kRowHeight, theme::kText24), theme::kText24,
-                    theme::kValue, 664.0f - taken - 28.0f);
-        if (option.locked)
-            list.pop_opacity();
-        list.pop_opacity();
+                                    option.value >= 0 ? theme::kLime : theme::kCopy);
+        text_shrink(c, option.name, 750.0f, baseline(r.y, r.h, 30.0f), 30.0f,
+                    theme::kText, 1014.0f - taken - 30.0f);
+        if (option.locked) list.pop_opacity();
     }
     list.pop_clip();
-    scrollbar(c, option_rows_, 1340.0f, kWindow.y, kWindow.h);
-
+    scrollbar(c, option_rows_, 1821.0f, kWindow.y, kWindow.h);
+    text_block(c, tr("Settings for this software apply on the next launch."), 750.0f, 841.0f,
+               24.0f, 33.0f, theme::kCopy, 1008.0f, 2, kShrink);
+    if (!message_.empty())
+        notice(c, message_, 714.0f, 925.0f, 24.0f,
+               message_warning_ ? theme::kWarning : theme::kCopy, 1086.0f, message_warning_);
     const bool opens = game_options_ == category_controls && option_rows_.selected == kMappingRow &&
                        game_settings_.own_mapping;
-    const bool types = game_options_ == category_system && option_rows_.selected == kSeedRow;
-    if (!message_.empty())
-    {
-        notice_block(c, message_, 592.0f, kHints - 6.0f, theme::kSmall, 26.0f,
-                     message_warning_ ? theme::kWarning : theme::kLimePale, 736.0f, 2, message_warning_);
-    }
-    else if (opens)
-    {
-        static constexpr Hint kOpen[] = {
-            {Pad::cross, TR("Open")}, {Pad::leftright, TR("Change")}, {Pad::circle, TR("Back")}};
-        draw_hints(c, kOpen, 3, 592.0f, kHints, theme::kCopy, 736.0f);
-    }
-    else if (types)
-    {
-        static constexpr Hint kType[] = {
-            {Pad::cross, TR("Edit")}, {Pad::leftright, TR("Change")}, {Pad::circle, TR("Back")}};
-        draw_hints(c, kType, 3, 592.0f, kHints, theme::kCopy, 736.0f);
-    }
-    else
-    {
-        static constexpr Hint kChange[] = {
-            {Pad::updown, TR("Select")}, {Pad::leftright, TR("Change")}, {Pad::circle, TR("Back")}};
-        draw_hints(c, kChange, 3, 592.0f, kHints, theme::kCopy, 736.0f);
-    }
-    list.pop_transform();
+    static constexpr Hint edit[] = {{Pad::leftright, TR("Change")}, {Pad::circle, TR("Back")},
+                                    {Pad::cross, TR("OK")}};
+    static constexpr Hint mapping[] = {{Pad::leftright, TR("Change")}, {Pad::circle, TR("Back")},
+                                       {Pad::cross, TR("Open")}};
+    draw_footer(c, opens ? mapping : edit, 3);
     list.pop_opacity();
 }
 
@@ -471,12 +364,14 @@ void Launcher::draw_game_options(Canvas &c, float open)
 void Launcher::open_mapping(bool for_game)
 {
     mapping_for_game_ = for_game;
-    mapping_rows_.visible = kRowsShown;
+    mapping_rows_.visible = 6;
     mapping_rows_.pitch = kRowPitch;
     mapping_rows_.reset(kGameButtons, 0);
     modal_ = modal_shown_ = Modal::mapping;
+        modal_elapsed_ = 0.0f;
+        modal_closing_ = false;
     message_.clear();
-    cue(Cue::open);
+    cue(!for_game && screen_ == Screen::home ? Cue::controllers_open : Cue::open);
 }
 
 void Launcher::press_mapping(Key key)
@@ -486,17 +381,23 @@ void Launcher::press_mapping(Key key)
     switch (key)
     {
     case Key::circle:
-        // Back to where the mapping was opened: the game's Controls, or Settings > Controls.
+        // Return to the editor's entry point: HOME, Settings or game Controls.
         if (mapping_for_game_)
         {
             modal_ = modal_shown_ = Modal::game_options;
+        modal_elapsed_ = 0.0f;
+        modal_closing_ = false;
             option_ = option_rows_.selected;
         }
         else
         {
-            modal_ = modal_shown_ = Modal::controls;
-            option_ = 1;
-            option_cursor_.snap(dialog_row_top(Modal::controls, option_));
+            close_modal();
+            if (screen_ == Screen::settings)
+            {
+                settings_content_ = true;
+                option_ = 1;
+                option_cursor_.snap(dialog_row_top(Modal::controls, option_));
+            }
         }
         message_.clear();
         cue(Cue::back);
@@ -552,62 +453,39 @@ void Launcher::press_mapping(Key key)
 
 void Launcher::draw_mapping(Canvas &c, float open)
 {
-    gfx::DrawList &list = c.list;
+    auto &list = c.list;
     list.push_opacity(open);
-    list.push_transform(1.0f - 0.03f * (1.0f - open) * motion(), 960.0f, 540.0f, 0.0f,
-                        (1.0f - open) * 26.0f * motion());
-    glass(c, kDialog, 26.0f, theme::kPanel.with_alpha(0.97f), theme::kPanelEdge.with_alpha(0.66f), 1.6f);
-    text_shrink(c, tr("Button mapping"), 592.0f, baseline(218.0f, 62.0f, theme::kDisplay), theme::kDisplay,
-                theme::kTitle, 736.0f);
+    glass(c, {0.0f, 0.0f, 1920.0f, 1080.0f}, 0.0f, theme::kPanel, theme::kPanelEdge, 0.0f);
+    draw_frame(c, tr("Change Button Mapping"), "");
+    // Authentic Pro Controller diagram describes the emulated controls. Values at the right
+    // are truthful DualSense bindings; the frontend's physical shortcuts are unchanged.
+    controller_icon(c, {156.0f, 324.0f, 360.0f, 250.0f}, 1.0f);
     const Game *game = mapping_for_game_ && !games_.empty() ?
-                           &games_[static_cast<std::size_t>(library_.selected)] : nullptr;
-    text_fit(c, game != nullptr ? game->name : std::string{tr("For every controller. A game can have its own.")},
-             592.0f, baseline(291.0f, 32.0f, theme::kSmall), theme::kSmall, Color::rgb(0xbecbb9), 736.0f);
-
-    const ButtonMapping &mapping = mapping_for_game_ ? game_settings_.mapping : prefs_.mapping;
-    list.push_clip({kWindow.x - 24.0f, kWindow.y - 6.0f, kWindow.w + 48.0f, kWindow.h + 12.0f});
-    const auto row_top = [&](int row)
-    { return kRowsTop + static_cast<float>(row) * kRowPitch - mapping_rows_.scroll(); };
+                       &games_[static_cast<std::size_t>(library_.selected)] : nullptr;
+    text_block(c, game ? game->name : tr("Controller Settings"), 156.0f, 677.0f,
+               30.0f, 42.0f, theme::kText, 438.0f, 3, kShrink);
+    const auto &mapping = mapping_for_game_ ? game_settings_.mapping : prefs_.mapping;
+    list.push_clip({708.0f, 222.0f, 1110.0f, 594.0f});
     for (int row = mapping_rows_.first_row(); row <= mapping_rows_.last_row(); ++row)
     {
-        list.push_opacity(mapping_rows_.row_alpha(row, kRowHeight));
-        plate_rest(c, kRowPlate, {592.0f, row_top(row), 736.0f, kRowHeight});
-        list.pop_opacity();
-    }
-    plate_focus(c, kRowPlate, {592.0f, kRowsTop + mapping_rows_.cursor() - mapping_rows_.scroll(), 736.0f, kRowHeight},
-                1.0f);
-    for (int row = mapping_rows_.first_row(); row <= mapping_rows_.last_row(); ++row)
-    {
-        const float top = row_top(row);
+        const Rect r{714.0f, 228.0f + row * kRowPitch - mapping_rows_.scroll(), 1086.0f, kRowHeight};
+        plate(c, kRowPlate, r, row == mapping_rows_.selected ? 1.0f : 0.0f);
         const int pad = mapping[static_cast<std::size_t>(row)];
-        const bool usual = pad == kDefaultMapping[static_cast<std::size_t>(row)];
-        list.push_opacity(mapping_rows_.row_alpha(row, kRowHeight));
-        // The game's button, and the DualSense button that presses it (brighter when moved).
-        const float taken = chooser(c, tr(kPadButtonNames[std::clamp(pad, 0, kPadButtons - 1)]), 1296.0f,
-                                    baseline(top, kRowHeight, theme::kText24),
+        const float taken = chooser(c, tr(kPadButtonNames[std::clamp(pad, 0, kPadButtons - 1)]),
+                                    1768.0f, baseline(r.y, r.h, 30.0f),
                                     row == mapping_rows_.selected ? 1.0f : 0.0f,
-                                    usual ? theme::kLimePale : theme::kLime);
-        text_shrink(c, tr(kGameButtonNames[row]), 628.0f, baseline(top, kRowHeight, theme::kText24),
-                    theme::kText24, theme::kValue, 664.0f - taken - 28.0f);
-        list.pop_opacity();
+                                    pad == kDefaultMapping[static_cast<std::size_t>(row)] ? theme::kCopy : theme::kLime);
+        text_shrink(c, tr(kGameButtonNames[row]), 750.0f, baseline(r.y, r.h, 30.0f),
+                    30.0f, theme::kText, 1014.0f - taken - 30.0f);
     }
     list.pop_clip();
-    scrollbar(c, mapping_rows_, 1340.0f, kWindow.y, kWindow.h);
-
+    scrollbar(c, mapping_rows_, 1821.0f, 228.0f, 576.0f);
     if (!message_.empty())
-    {
-        notice_block(c, message_, 592.0f, kHints - 6.0f, theme::kSmall, 26.0f,
-                     message_warning_ ? theme::kWarning : theme::kLimePale, 736.0f, 2, message_warning_);
-    }
-    else
-    {
-        static constexpr Hint kHintsRow[] = {{Pad::updown, TR("Select")},
-                                             {Pad::leftright, TR("Change")},
-                                             {Pad::square, TR("Reset")},
-                                             {Pad::circle, TR("Back")}};
-        draw_hints(c, kHintsRow, 4, 592.0f, kHints, theme::kCopy, 736.0f);
-    }
-    list.pop_transform();
+        notice_block(c, message_, 714.0f, 857.0f, 24.0f, 33.0f,
+                     message_warning_ ? theme::kWarning : theme::kCopy, 1086.0f, 2, message_warning_);
+    static constexpr Hint hints[] = {{Pad::square, TR("Reset")}, {Pad::leftright, TR("Change")},
+                                     {Pad::circle, TR("Back")}, {Pad::cross, TR("OK")}};
+    draw_footer(c, hints, 4);
     list.pop_opacity();
 }
 

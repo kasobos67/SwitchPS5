@@ -1,0 +1,2096 @@
+[
+  {
+    "function": "decide_scale",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBtnIconGame_DecideKey.bflan",
+    "source_sha256": "c6607e8e7372b953258a8b7165f02e6bbcf9cc09d549f8277284b5ee92788a33",
+    "pane": "N_DecideKey",
+    "tag": "FLPA",
+    "target": 6,
+    "keys": [
+      [
+        0.0,
+        1.0,
+        -0.04645446687936783
+      ],
+      [
+        2.0,
+        0.9399999976158142,
+        0.0
+      ],
+      [
+        4.0,
+        1.0,
+        0.014821404591202736
+      ],
+      [
+        6.0,
+        1.0099999904632568,
+        -0.002553308382630348
+      ],
+      [
+        8.0,
+        1.0,
+        0.0
+      ]
+    ]
+  },
+  {
+    "function": "decide_flash",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBtnIconGame_DecideKey.bflan",
+    "source_sha256": "c6607e8e7372b953258a8b7165f02e6bbcf9cc09d549f8277284b5ee92788a33",
+    "pane": "P_BtnDecideKey",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        0.0,
+        32.0
+      ],
+      [
+        1.0,
+        32.0,
+        0.0
+      ],
+      [
+        4.0,
+        32.0,
+        0.0
+      ],
+      [
+        4.0,
+        32.0,
+        0.0
+      ],
+      [
+        8.0,
+        0.0,
+        0.0
+      ]
+    ]
+  },
+  {
+    "function": "modal_scale",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/common.szs_unpacked/anim/DBaseNml_In.bflan",
+    "source_sha256": "2fddacfdbeba22087ee3017d7f9104396e4c456fe232ea7d82ae00d9698ee06d",
+    "pane": "N_Root",
+    "tag": "FLPA",
+    "target": 6,
+    "keys": [
+      [
+        0.0,
+        0.9800000190734863,
+        0.002499997615814209
+      ],
+      [
+        8.0,
+        1.0,
+        0.0
+      ]
+    ]
+  },
+  {
+    "function": "screen_in",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/Flaunch.szs_unpacked/anim/FlcSystemFader_In.bflan",
+    "source_sha256": "b1e2b1d9b3c410d7d07280c21ea532397f86a11ff254eaecfb8638c3fdb25c52",
+    "pane": "N_Root",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        0.0,
+        56.23152160644531
+      ],
+      [
+        8.0,
+        255.0,
+        0.0
+      ]
+    ]
+  },
+  {
+    "function": "screen_out",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/Flaunch.szs_unpacked/anim/FlcSystemFader_Out.bflan",
+    "source_sha256": "499f78ba52b6cb1470cb9cfbc60ed5e53decbe5d2836eb6af3e5467052c2dc87",
+    "pane": "N_Root",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        -24.0,
+        255.0,
+        0.0
+      ],
+      [
+        4.0,
+        255.0,
+        0.0
+      ],
+      [
+        4.0,
+        255.0,
+        -50.79533004760742
+      ],
+      [
+        12.0,
+        0.0,
+        0.0
+      ]
+    ]
+  },
+  {
+    "function": "home_focus_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBtnIconGame_FocusKey.bflan",
+    "source_sha256": "4e8c6c76063ad3151bb01e79196bbcf31d35e7c5cb79cb00fe07b60ad8532f17",
+    "pane": "N_BtnFocusKey",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        1.0,
+        0.0,
+        0.0
+      ],
+      [
+        1.0,
+        255.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 1,
+    "loop": false
+  },
+  {
+    "function": "home_focus_base",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBtnIconGame_FocusKey.bflan",
+    "source_sha256": "4e8c6c76063ad3151bb01e79196bbcf31d35e7c5cb79cb00fe07b60ad8532f17",
+    "pane": "P_BtnBase",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        1.0,
+        0.0,
+        0.0
+      ],
+      [
+        1.0,
+        100.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 1,
+    "loop": false
+  },
+  {
+    "function": "home_unfocus_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBtnIconGame_UnfocusKey.bflan",
+    "source_sha256": "df63e2b5aa9d750aad0a7d5acaef1a37e5e81059a59de75d8da63ff19b1bb7a2",
+    "pane": "N_BtnFocusKey",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        255.0,
+        -85.0
+      ],
+      [
+        3.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 3,
+    "loop": false
+  },
+  {
+    "function": "home_unfocus_base",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBtnIconGame_UnfocusKey.bflan",
+    "source_sha256": "df63e2b5aa9d750aad0a7d5acaef1a37e5e81059a59de75d8da63ff19b1bb7a2",
+    "pane": "P_BtnBase",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        100.0,
+        -33.33333206176758
+      ],
+      [
+        3.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 3,
+    "loop": false
+  },
+  {
+    "function": "launch_effect_scale",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBtnIconGame_EffectLaunchIn.bflan",
+    "source_sha256": "968a0b709e263d1a3514e2df99e32fefcfdb42d171dd7ed60356a3cd129c5d15",
+    "pane": "P_EffectDecide",
+    "tag": "FLPA",
+    "target": 6,
+    "keys": [
+      [
+        0.0,
+        1.0,
+        0.1992214024066925
+      ],
+      [
+        5.0,
+        1.414507508277893,
+        0.007083438336849213
+      ],
+      [
+        30.0,
+        1.5,
+        0.0
+      ]
+    ],
+    "duration_frames": 17,
+    "loop": false
+  },
+  {
+    "function": "launch_effect_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBtnIconGame_EffectLaunchIn.bflan",
+    "source_sha256": "968a0b709e263d1a3514e2df99e32fefcfdb42d171dd7ed60356a3cd129c5d15",
+    "pane": "P_EffectDecide",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        60.0,
+        0.0
+      ],
+      [
+        30.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 17,
+    "loop": false
+  },
+  {
+    "function": "home_entry_scale",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBase_Enter.bflan",
+    "source_sha256": "d25f84ecf00edc71239a48146305245265c79e3c257a3e4727d711d2a4200fc1",
+    "pane": "N_Root",
+    "tag": "FLPA",
+    "target": 6,
+    "keys": [
+      [
+        20.0,
+        0.9700000286102295,
+        0.0
+      ],
+      [
+        20.0,
+        0.9700000286102295,
+        0.0
+      ],
+      [
+        20.0,
+        0.9700000286102295,
+        0.0035281453747302294
+      ],
+      [
+        27.0,
+        0.986002504825592,
+        0.0018881314899772406
+      ],
+      [
+        50.0,
+        1.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 50,
+    "loop": false
+  },
+  {
+    "function": "home_entry_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBase_Enter.bflan",
+    "source_sha256": "d25f84ecf00edc71239a48146305245265c79e3c257a3e4727d711d2a4200fc1",
+    "pane": "N_Root",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        20.0,
+        0.0,
+        0.0
+      ],
+      [
+        40.0,
+        255.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 50,
+    "loop": false
+  },
+  {
+    "function": "home_starter_scale",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBase_StarterEnter.bflan",
+    "source_sha256": "be3549224282998341a2f68810872acf567bb7e0dc0f2d1855ebfd9a865e224b",
+    "pane": "N_Root",
+    "tag": "FLPA",
+    "target": 6,
+    "keys": [
+      [
+        60.0,
+        0.9700000286102295,
+        0.0
+      ],
+      [
+        60.0,
+        0.9700000286102295,
+        0.0
+      ],
+      [
+        60.0,
+        0.9700000286102295,
+        0.0035281453747302294
+      ],
+      [
+        67.0,
+        0.986002504825592,
+        0.0018881314899772406
+      ],
+      [
+        90.0,
+        1.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 90,
+    "loop": false
+  },
+  {
+    "function": "home_starter_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBase_StarterEnter.bflan",
+    "source_sha256": "be3549224282998341a2f68810872acf567bb7e0dc0f2d1855ebfd9a865e224b",
+    "pane": "N_Root",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        60.0,
+        0.0,
+        0.0
+      ],
+      [
+        80.0,
+        255.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 90,
+    "loop": false
+  },
+  {
+    "function": "home_game_in_scale",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBase_GameIn.bflan",
+    "source_sha256": "12aae5173d80e8b393380d8a7dd4cb63bdcbd50309311c29963596b916f0d8b2",
+    "pane": "N_Root",
+    "tag": "FLPA",
+    "target": 6,
+    "keys": [
+      [
+        0.0,
+        1.0,
+        0.024515293538570404
+      ],
+      [
+        3.0,
+        1.0434987545013428,
+        0.004861040972173214
+      ],
+      [
+        12.0,
+        1.059999942779541,
+        0.0
+      ]
+    ],
+    "duration_frames": 12,
+    "loop": false
+  },
+  {
+    "function": "home_game_in_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBase_GameIn.bflan",
+    "source_sha256": "12aae5173d80e8b393380d8a7dd4cb63bdcbd50309311c29963596b916f0d8b2",
+    "pane": "N_Root",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        255.0,
+        0.0
+      ],
+      [
+        2.0,
+        255.0,
+        0.0
+      ],
+      [
+        2.0,
+        255.0,
+        -156.57481384277344
+      ],
+      [
+        3.0,
+        106.0,
+        -56.900089263916016
+      ],
+      [
+        6.0,
+        22.0,
+        -16.66277503967285
+      ],
+      [
+        8.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 12,
+    "loop": false
+  },
+  {
+    "function": "home_game_out_scale",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBase_GameOut.bflan",
+    "source_sha256": "a508e9d1fbc66083ff2184fd50906ec8e53eac53483428a3f76219ffd9af03b7",
+    "pane": "N_Root",
+    "tag": "FLPA",
+    "target": 6,
+    "keys": [
+      [
+        0.0,
+        1.059999942779541,
+        -0.020256951451301575
+      ],
+      [
+        4.0,
+        1.015128493309021,
+        -0.004999995231628418
+      ],
+      [
+        12.0,
+        1.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 12,
+    "loop": false
+  },
+  {
+    "function": "home_game_out_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBase_GameOut.bflan",
+    "source_sha256": "a508e9d1fbc66083ff2184fd50906ec8e53eac53483428a3f76219ffd9af03b7",
+    "pane": "N_Root",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        0.0,
+        68.05687713623047
+      ],
+      [
+        4.0,
+        178.0,
+        23.944429397583008
+      ],
+      [
+        10.0,
+        249.0,
+        3.780266046524048
+      ],
+      [
+        12.0,
+        255.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 12,
+    "loop": false
+  },
+  {
+    "function": "home_applet_in_scale",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBase_SystemAppletIn.bflan",
+    "source_sha256": "f249f7e6d63c126c6dc7d95d0fd0c21de29ce255b8f6aaaf09dc6781d90966b3",
+    "pane": "N_Root",
+    "tag": "FLPA",
+    "target": 6,
+    "keys": [
+      [
+        0.0,
+        1.0,
+        0.0
+      ],
+      [
+        21.0,
+        1.0,
+        0.0
+      ],
+      [
+        21.0,
+        1.0,
+        -0.004142473917454481
+      ],
+      [
+        29.0,
+        0.9800000190734863,
+        0.0
+      ]
+    ],
+    "duration_frames": 27,
+    "loop": false
+  },
+  {
+    "function": "home_applet_in_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBase_SystemAppletIn.bflan",
+    "source_sha256": "f249f7e6d63c126c6dc7d95d0fd0c21de29ce255b8f6aaaf09dc6781d90966b3",
+    "pane": "N_Root",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        17.0,
+        255.0,
+        0.0
+      ],
+      [
+        21.0,
+        211.0,
+        -25.5
+      ],
+      [
+        27.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 27,
+    "loop": false
+  },
+  {
+    "function": "home_applet_out_scale",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBase_SystemAppletOut.bflan",
+    "source_sha256": "dbab41d9cacb0073835a0583460a7be9178448f9a735b4581e08904ba3291252",
+    "pane": "N_Root",
+    "tag": "FLPA",
+    "target": 6,
+    "keys": [
+      [
+        0.0,
+        0.9800000190734863,
+        0.002792165381833911
+      ],
+      [
+        20.0,
+        1.0,
+        0.0
+      ],
+      [
+        80.0,
+        1.0,
+        0.0
+      ],
+      [
+        80.0,
+        1.059999942779541,
+        0.0
+      ]
+    ],
+    "duration_frames": 27,
+    "loop": false
+  },
+  {
+    "function": "home_applet_out_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/RdtBase_SystemAppletOut.bflan",
+    "source_sha256": "dbab41d9cacb0073835a0583460a7be9178448f9a735b4581e08904ba3291252",
+    "pane": "N_Root",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        20.0,
+        255.0,
+        0.0
+      ],
+      [
+        80.0,
+        255.0,
+        0.0
+      ],
+      [
+        80.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 27,
+    "loop": false
+  },
+  {
+    "function": "library_decide_flash",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/Flaunch.szs_unpacked/anim/FlcBtnIconGame_DecideKey.bflan",
+    "source_sha256": "1ef40c2f49bc92e262ba3ed1b00ff8cdbab0a3a04c6301aac0786793163c9098",
+    "pane": "P_BtnDecideKey",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        0.0,
+        32.0
+      ],
+      [
+        1.0,
+        32.0,
+        0.0
+      ],
+      [
+        4.0,
+        32.0,
+        0.0
+      ],
+      [
+        4.0,
+        32.0,
+        0.0
+      ],
+      [
+        12.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 12,
+    "loop": false
+  },
+  {
+    "function": "library_focus_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/Flaunch.szs_unpacked/anim/FlcBtnIconGame_FocusKey.bflan",
+    "source_sha256": "5536b0efbf1327fa8ad109c645dcf6439cae546eac3d8f2e30d59e56a06c9d31",
+    "pane": "N_BtnFocusKey",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        1.0,
+        0.0,
+        0.0
+      ],
+      [
+        1.0,
+        255.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 1,
+    "loop": false
+  },
+  {
+    "function": "library_focus_base",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/Flaunch.szs_unpacked/anim/FlcBtnIconGame_FocusKey.bflan",
+    "source_sha256": "5536b0efbf1327fa8ad109c645dcf6439cae546eac3d8f2e30d59e56a06c9d31",
+    "pane": "P_BtnBase",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        1.0,
+        0.0,
+        0.0
+      ],
+      [
+        1.0,
+        100.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 1,
+    "loop": false
+  },
+  {
+    "function": "library_unfocus_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/Flaunch.szs_unpacked/anim/FlcBtnIconGame_UnfocusKey.bflan",
+    "source_sha256": "afb0f8e313cce7c50a9da945c38d30a68dd97ad0419a73909e5d9e7ad199f56b",
+    "pane": "N_BtnFocusKey",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        255.0,
+        -85.0
+      ],
+      [
+        3.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 3,
+    "loop": false
+  },
+  {
+    "function": "library_unfocus_base",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/Flaunch.szs_unpacked/anim/FlcBtnIconGame_UnfocusKey.bflan",
+    "source_sha256": "afb0f8e313cce7c50a9da945c38d30a68dd97ad0419a73909e5d9e7ad199f56b",
+    "pane": "P_BtnBase",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        100.0,
+        -33.33333206176758
+      ],
+      [
+        3.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 3,
+    "loop": false
+  },
+  {
+    "function": "library_focus_shadow",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/Flaunch.szs_unpacked/anim/FlcBtnIconGame_FocusKey.bflan",
+    "source_sha256": "5536b0efbf1327fa8ad109c645dcf6439cae546eac3d8f2e30d59e56a06c9d31",
+    "pane": "P_BtnBase",
+    "tag": "FLEU",
+    "target": 0,
+    "keys": [
+      [
+        0.0,
+        0.0,
+        0.25
+      ],
+      [
+        1.0,
+        0.25,
+        0.0
+      ]
+    ],
+    "duration_frames": 1,
+    "loop": false
+  },
+  {
+    "function": "library_unfocus_shadow",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/Flaunch.szs_unpacked/anim/FlcBtnIconGame_UnfocusKey.bflan",
+    "source_sha256": "afb0f8e313cce7c50a9da945c38d30a68dd97ad0419a73909e5d9e7ad199f56b",
+    "pane": "P_BtnBase",
+    "tag": "FLEU",
+    "target": 0,
+    "keys": [
+      [
+        -49.0,
+        0.25,
+        0.0
+      ],
+      [
+        1.0,
+        0.25,
+        0.0
+      ],
+      [
+        1.0,
+        0.0,
+        -0.004999999888241291
+      ]
+    ],
+    "duration_frames": 3,
+    "loop": false
+  },
+  {
+    "function": "library_header_in",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/Flaunch.szs_unpacked/anim/BaseTop_In.bflan",
+    "source_sha256": "1cde0d70eb9f6168e819b9c2f057956e4f1a06f8e04f18aa14511f8d79099939",
+    "pane": "N_HeaderPos",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        0.0,
+        42.5
+      ],
+      [
+        6.0,
+        255.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 6,
+    "loop": false
+  },
+  {
+    "function": "library_header_out",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/Flaunch.szs_unpacked/anim/BaseTop_Out.bflan",
+    "source_sha256": "689a8ff1467d934906c3fb8f79413a10fe598b37808c54d6c125635ec8575c33",
+    "pane": "N_HeaderPos",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        255.0,
+        -42.5
+      ],
+      [
+        6.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 6,
+    "loop": false
+  },
+  {
+    "function": "library_content_in",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/Flaunch.szs_unpacked/anim/FlcCntMain_In.bflan",
+    "source_sha256": "96e2e74a0589a3bf1bb42841ae285f7a57687fb1414c9ae14be9f32ff464c5ba",
+    "pane": "N_Root",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        0.0,
+        112.45874786376953
+      ],
+      [
+        6.0,
+        255.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 6,
+    "loop": false
+  },
+  {
+    "function": "library_content_out",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/Flaunch.szs_unpacked/anim/FlcCntMain_Out.bflan",
+    "source_sha256": "674c900520cdc0b3023b78385a90eb619b44169bfd0196c66c0049141a9bf498",
+    "pane": "N_Root",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        255.0,
+        -62.12744903564453
+      ],
+      [
+        6.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 6,
+    "loop": false
+  },
+  {
+    "function": "modal_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/common.szs_unpacked/anim/DBaseNml_In.bflan",
+    "source_sha256": "2fddacfdbeba22087ee3017d7f9104396e4c456fe232ea7d82ae00d9698ee06d",
+    "pane": "N_Root",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        0.0,
+        31.875
+      ],
+      [
+        8.0,
+        255.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 8,
+    "loop": false
+  },
+  {
+    "function": "modal_mask_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/common.szs_unpacked/anim/DBaseNml_In.bflan",
+    "source_sha256": "2fddacfdbeba22087ee3017d7f9104396e4c456fe232ea7d82ae00d9698ee06d",
+    "pane": "L_Mask",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        0.0,
+        31.875
+      ],
+      [
+        8.0,
+        255.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 8,
+    "loop": false
+  },
+  {
+    "function": "modal_shadow",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/common.szs_unpacked/anim/DBaseNml_In.bflan",
+    "source_sha256": "2fddacfdbeba22087ee3017d7f9104396e4c456fe232ea7d82ae00d9698ee06d",
+    "pane": "P_Base",
+    "tag": "FLEU",
+    "target": 0,
+    "keys": [
+      [
+        0.0,
+        0.0,
+        0.07500000298023224
+      ],
+      [
+        8.0,
+        0.6000000238418579,
+        0.0
+      ]
+    ],
+    "duration_frames": 8,
+    "loop": false
+  },
+  {
+    "function": "modal_out_scale",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/common.szs_unpacked/anim/DBaseNml_OutNo.bflan",
+    "source_sha256": "6d51c127ad22a73e8450b47d50e89b7d567ba554b9929df1176c3f16d83bd4ef",
+    "pane": "N_Root",
+    "tag": "FLPA",
+    "target": 6,
+    "keys": [
+      [
+        12.0,
+        1.0,
+        0.0
+      ],
+      [
+        12.0,
+        1.0,
+        0.0
+      ],
+      [
+        12.0,
+        1.0,
+        -0.0016666650772094727
+      ],
+      [
+        24.0,
+        0.9800000190734863,
+        0.0
+      ]
+    ],
+    "duration_frames": 24,
+    "loop": false
+  },
+  {
+    "function": "modal_out_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/common.szs_unpacked/anim/DBaseNml_OutNo.bflan",
+    "source_sha256": "6d51c127ad22a73e8450b47d50e89b7d567ba554b9929df1176c3f16d83bd4ef",
+    "pane": "N_Root",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        255.0,
+        0.0
+      ],
+      [
+        12.0,
+        255.0,
+        0.0
+      ],
+      [
+        12.0,
+        255.0,
+        -21.25
+      ],
+      [
+        24.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 24,
+    "loop": false
+  },
+  {
+    "function": "modal_out_mask_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/common.szs_unpacked/anim/DBaseNml_OutNo.bflan",
+    "source_sha256": "6d51c127ad22a73e8450b47d50e89b7d567ba554b9929df1176c3f16d83bd4ef",
+    "pane": "L_Mask",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        255.0,
+        0.0
+      ],
+      [
+        12.0,
+        255.0,
+        0.0
+      ],
+      [
+        12.0,
+        255.0,
+        -21.25
+      ],
+      [
+        24.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 24,
+    "loop": false
+  },
+  {
+    "function": "modal_out_shadow",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/common.szs_unpacked/anim/DBaseNml_OutNo.bflan",
+    "source_sha256": "6d51c127ad22a73e8450b47d50e89b7d567ba554b9929df1176c3f16d83bd4ef",
+    "pane": "P_Base",
+    "tag": "FLEU",
+    "target": 0,
+    "keys": [
+      [
+        0.0,
+        0.6000000238418579,
+        -0.02500000037252903
+      ],
+      [
+        24.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 24,
+    "loop": false
+  },
+  {
+    "function": "modal_confirm_scale",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/common.szs_unpacked/anim/DBaseNml_OutYes.bflan",
+    "source_sha256": "b2d846c0462aa7ac22c10e18fee4f39c2ccd4be4abbab33f7895748dadb4e30f",
+    "pane": "N_Root",
+    "tag": "FLPA",
+    "target": 6,
+    "keys": [
+      [
+        0.0,
+        1.0,
+        0.0
+      ],
+      [
+        12.0,
+        1.0,
+        0.0
+      ],
+      [
+        12.0,
+        1.0,
+        0.0016666650772094727
+      ],
+      [
+        24.0,
+        1.0199999809265137,
+        0.0
+      ]
+    ],
+    "duration_frames": 24,
+    "loop": false
+  },
+  {
+    "function": "modal_confirm_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/common.szs_unpacked/anim/DBaseNml_OutYes.bflan",
+    "source_sha256": "b2d846c0462aa7ac22c10e18fee4f39c2ccd4be4abbab33f7895748dadb4e30f",
+    "pane": "N_Root",
+    "tag": "FLVC",
+    "target": 16,
+    "keys": [
+      [
+        0.0,
+        255.0,
+        0.0
+      ],
+      [
+        12.0,
+        255.0,
+        0.0
+      ],
+      [
+        12.0,
+        255.0,
+        -21.25
+      ],
+      [
+        24.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 24,
+    "loop": false
+  },
+  {
+    "function": "cursor_tl_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/Cursor3_Wait.bflan",
+    "source_sha256": "4c4596aedfba5e27a2445669c8f400f54d33925e586b61a57f8603ccb418f337",
+    "pane": "P_Grow",
+    "tag": "FLVC",
+    "target": 3,
+    "keys": [
+      [
+        -30.0,
+        25.0,
+        0.0
+      ],
+      [
+        30.0,
+        255.0,
+        0.0
+      ],
+      [
+        90.0,
+        25.0,
+        0.0
+      ],
+      [
+        150.0,
+        95.0,
+        0.0
+      ],
+      [
+        210.0,
+        25.0,
+        0.0
+      ],
+      [
+        270.0,
+        255.0,
+        0.0
+      ],
+      [
+        330.0,
+        25.0,
+        0.0
+      ],
+      [
+        390.0,
+        95.0,
+        0.0
+      ],
+      [
+        450.0,
+        25.0,
+        0.0
+      ],
+      [
+        510.0,
+        255.0,
+        0.0
+      ],
+      [
+        570.0,
+        25.0,
+        0.0
+      ],
+      [
+        630.0,
+        95.0,
+        0.0
+      ],
+      [
+        690.0,
+        25.0,
+        0.0
+      ],
+      [
+        750.0,
+        255.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 720,
+    "loop": true
+  },
+  {
+    "function": "cursor_tr_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/Cursor3_Wait.bflan",
+    "source_sha256": "4c4596aedfba5e27a2445669c8f400f54d33925e586b61a57f8603ccb418f337",
+    "pane": "P_Grow",
+    "tag": "FLVC",
+    "target": 7,
+    "keys": [
+      [
+        -30.0,
+        95.0,
+        0.0
+      ],
+      [
+        30.0,
+        25.0,
+        0.0
+      ],
+      [
+        90.0,
+        255.0,
+        0.0
+      ],
+      [
+        150.0,
+        25.0,
+        0.0
+      ],
+      [
+        210.0,
+        95.0,
+        0.0
+      ],
+      [
+        270.0,
+        25.0,
+        0.0
+      ],
+      [
+        330.0,
+        255.0,
+        0.0
+      ],
+      [
+        390.0,
+        25.0,
+        0.0
+      ],
+      [
+        450.0,
+        95.0,
+        0.0
+      ],
+      [
+        510.0,
+        25.0,
+        0.0
+      ],
+      [
+        570.0,
+        255.0,
+        0.0
+      ],
+      [
+        630.0,
+        25.0,
+        0.0
+      ],
+      [
+        690.0,
+        95.0,
+        0.0
+      ],
+      [
+        750.0,
+        25.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 720,
+    "loop": true
+  },
+  {
+    "function": "cursor_bl_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/Cursor3_Wait.bflan",
+    "source_sha256": "4c4596aedfba5e27a2445669c8f400f54d33925e586b61a57f8603ccb418f337",
+    "pane": "P_Grow",
+    "tag": "FLVC",
+    "target": 11,
+    "keys": [
+      [
+        -30.0,
+        255.0,
+        0.0
+      ],
+      [
+        30.0,
+        25.0,
+        0.0
+      ],
+      [
+        90.0,
+        95.0,
+        0.0
+      ],
+      [
+        150.0,
+        25.0,
+        0.0
+      ],
+      [
+        210.0,
+        255.0,
+        0.0
+      ],
+      [
+        270.0,
+        25.0,
+        0.0
+      ],
+      [
+        330.0,
+        95.0,
+        0.0
+      ],
+      [
+        390.0,
+        25.0,
+        0.0
+      ],
+      [
+        450.0,
+        255.0,
+        0.0
+      ],
+      [
+        510.0,
+        25.0,
+        0.0
+      ],
+      [
+        570.0,
+        95.0,
+        0.0
+      ],
+      [
+        630.0,
+        25.0,
+        0.0
+      ],
+      [
+        690.0,
+        255.0,
+        0.0
+      ],
+      [
+        750.0,
+        25.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 720,
+    "loop": true
+  },
+  {
+    "function": "cursor_br_alpha",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/Cursor3_Wait.bflan",
+    "source_sha256": "4c4596aedfba5e27a2445669c8f400f54d33925e586b61a57f8603ccb418f337",
+    "pane": "P_Grow",
+    "tag": "FLVC",
+    "target": 15,
+    "keys": [
+      [
+        -30.0,
+        25.0,
+        0.0
+      ],
+      [
+        30.0,
+        95.0,
+        0.0
+      ],
+      [
+        90.0,
+        25.0,
+        0.0
+      ],
+      [
+        150.0,
+        255.0,
+        0.0
+      ],
+      [
+        210.0,
+        25.0,
+        0.0
+      ],
+      [
+        270.0,
+        95.0,
+        0.0
+      ],
+      [
+        330.0,
+        25.0,
+        0.0
+      ],
+      [
+        390.0,
+        255.0,
+        0.0
+      ],
+      [
+        450.0,
+        25.0,
+        0.0
+      ],
+      [
+        510.0,
+        95.0,
+        0.0
+      ],
+      [
+        570.0,
+        25.0,
+        0.0
+      ],
+      [
+        630.0,
+        255.0,
+        0.0
+      ],
+      [
+        690.0,
+        25.0,
+        0.0
+      ],
+      [
+        750.0,
+        95.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 720,
+    "loop": true
+  },
+  {
+    "function": "cursor_main_rotation",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/Cursor3_Wait.bflan",
+    "source_sha256": "4c4596aedfba5e27a2445669c8f400f54d33925e586b61a57f8603ccb418f337",
+    "pane": "P_Main",
+    "tag": "FLTS",
+    "target": 2,
+    "keys": [
+      [
+        0.0,
+        -90.0,
+        -1.0
+      ],
+      [
+        720.0,
+        -810.0,
+        -1.0
+      ]
+    ],
+    "duration_frames": 720,
+    "loop": true
+  },
+  {
+    "function": "cursor_glow_rotation",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/Cursor3_Wait.bflan",
+    "source_sha256": "4c4596aedfba5e27a2445669c8f400f54d33925e586b61a57f8603ccb418f337",
+    "pane": "P_Grow",
+    "tag": "FLTS",
+    "target": 2,
+    "keys": [
+      [
+        0.0,
+        -90.0,
+        1.125
+      ],
+      [
+        720.0,
+        720.0,
+        1.125
+      ]
+    ],
+    "duration_frames": 720,
+    "loop": true
+  },
+  {
+    "function": "cursor_main_effect",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/Cursor3_Wait.bflan",
+    "source_sha256": "4c4596aedfba5e27a2445669c8f400f54d33925e586b61a57f8603ccb418f337",
+    "pane": "P_Main",
+    "tag": "FLEU",
+    "target": 0,
+    "keys": [
+      [
+        -10.0,
+        0.0,
+        0.0
+      ],
+      [
+        10.0,
+        1.0,
+        0.0
+      ],
+      [
+        12.0,
+        1.0,
+        0.0
+      ],
+      [
+        47.0,
+        0.0,
+        0.0
+      ],
+      [
+        50.0,
+        0.0,
+        0.0
+      ],
+      [
+        70.0,
+        1.0,
+        0.0
+      ],
+      [
+        72.0,
+        1.0,
+        0.0
+      ],
+      [
+        107.0,
+        0.0,
+        0.0
+      ],
+      [
+        110.0,
+        0.0,
+        0.0
+      ],
+      [
+        130.0,
+        1.0,
+        0.0
+      ],
+      [
+        132.0,
+        1.0,
+        0.0
+      ],
+      [
+        167.0,
+        0.0,
+        0.0
+      ],
+      [
+        170.0,
+        0.0,
+        0.0
+      ],
+      [
+        190.0,
+        1.0,
+        0.0
+      ],
+      [
+        192.0,
+        1.0,
+        0.0
+      ],
+      [
+        227.0,
+        0.0,
+        0.0
+      ],
+      [
+        230.0,
+        0.0,
+        0.0
+      ],
+      [
+        250.0,
+        1.0,
+        0.0
+      ],
+      [
+        252.0,
+        1.0,
+        0.0
+      ],
+      [
+        287.0,
+        0.0,
+        0.0
+      ],
+      [
+        290.0,
+        0.0,
+        0.0
+      ],
+      [
+        310.0,
+        1.0,
+        0.0
+      ],
+      [
+        312.0,
+        1.0,
+        0.0
+      ],
+      [
+        347.0,
+        0.0,
+        0.0
+      ],
+      [
+        350.0,
+        0.0,
+        0.0
+      ],
+      [
+        370.0,
+        1.0,
+        0.0
+      ],
+      [
+        372.0,
+        1.0,
+        0.0
+      ],
+      [
+        407.0,
+        0.0,
+        0.0
+      ],
+      [
+        410.0,
+        0.0,
+        0.0
+      ],
+      [
+        430.0,
+        1.0,
+        0.0
+      ],
+      [
+        432.0,
+        1.0,
+        0.0
+      ],
+      [
+        467.0,
+        0.0,
+        0.0
+      ],
+      [
+        470.0,
+        0.0,
+        0.0
+      ],
+      [
+        490.0,
+        1.0,
+        0.0
+      ],
+      [
+        492.0,
+        1.0,
+        0.0
+      ],
+      [
+        527.0,
+        0.0,
+        0.0
+      ],
+      [
+        530.0,
+        0.0,
+        0.0
+      ],
+      [
+        550.0,
+        1.0,
+        0.0
+      ],
+      [
+        552.0,
+        1.0,
+        0.0
+      ],
+      [
+        587.0,
+        0.0,
+        0.0
+      ],
+      [
+        590.0,
+        0.0,
+        0.0
+      ],
+      [
+        610.0,
+        1.0,
+        0.0
+      ],
+      [
+        612.0,
+        1.0,
+        0.0
+      ],
+      [
+        647.0,
+        0.0,
+        0.0
+      ],
+      [
+        650.0,
+        0.0,
+        0.0
+      ],
+      [
+        670.0,
+        1.0,
+        0.0
+      ],
+      [
+        672.0,
+        1.0,
+        0.0
+      ],
+      [
+        707.0,
+        0.0,
+        0.0
+      ],
+      [
+        710.0,
+        0.0,
+        0.0
+      ],
+      [
+        730.0,
+        1.0,
+        0.0
+      ]
+    ],
+    "duration_frames": 720,
+    "loop": true
+  },
+  {
+    "function": "cursor_glow_effect",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/ResidentMenu.szs_unpacked/anim/Cursor3_Wait.bflan",
+    "source_sha256": "4c4596aedfba5e27a2445669c8f400f54d33925e586b61a57f8603ccb418f337",
+    "pane": "P_Grow",
+    "tag": "FLEU",
+    "target": 0,
+    "keys": [
+      [
+        -10.0,
+        0.0,
+        0.0
+      ],
+      [
+        9.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        10.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        44.0,
+        0.0,
+        0.0
+      ],
+      [
+        50.0,
+        0.0,
+        0.0
+      ],
+      [
+        69.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        70.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        104.0,
+        0.0,
+        0.0
+      ],
+      [
+        110.0,
+        0.0,
+        0.0
+      ],
+      [
+        129.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        130.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        164.0,
+        0.0,
+        0.0
+      ],
+      [
+        170.0,
+        0.0,
+        0.0
+      ],
+      [
+        189.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        190.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        224.0,
+        0.0,
+        0.0
+      ],
+      [
+        230.0,
+        0.0,
+        0.0
+      ],
+      [
+        249.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        250.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        284.0,
+        0.0,
+        0.0
+      ],
+      [
+        290.0,
+        0.0,
+        0.0
+      ],
+      [
+        309.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        310.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        344.0,
+        0.0,
+        0.0
+      ],
+      [
+        350.0,
+        0.0,
+        0.0
+      ],
+      [
+        369.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        370.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        404.0,
+        0.0,
+        0.0
+      ],
+      [
+        410.0,
+        0.0,
+        0.0
+      ],
+      [
+        429.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        430.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        464.0,
+        0.0,
+        0.0
+      ],
+      [
+        470.0,
+        0.0,
+        0.0
+      ],
+      [
+        489.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        490.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        524.0,
+        0.0,
+        0.0
+      ],
+      [
+        530.0,
+        0.0,
+        0.0
+      ],
+      [
+        549.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        550.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        584.0,
+        0.0,
+        0.0
+      ],
+      [
+        590.0,
+        0.0,
+        0.0
+      ],
+      [
+        609.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        610.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        644.0,
+        0.0,
+        0.0
+      ],
+      [
+        650.0,
+        0.0,
+        0.0
+      ],
+      [
+        669.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        670.0,
+        0.800000011920929,
+        0.0
+      ],
+      [
+        704.0,
+        0.0,
+        0.0
+      ],
+      [
+        710.0,
+        0.0,
+        0.0
+      ],
+      [
+        729.0,
+        0.800000011920929,
+        0.0
+      ]
+    ],
+    "duration_frames": 720,
+    "loop": true
+  },
+  {
+    "function": "wait_rotation",
+    "source": "dfde2becc61f1849d77aae5ceaaa30d4/romfs/lyt/common.szs_unpacked/anim/Waiticon_Wait.bflan",
+    "source_sha256": "159268cf8832c565956af9832966e5306b95158e6065943a826fa42cf243670b",
+    "pane": "P_Wait",
+    "tag": "FLTS",
+    "target": 2,
+    "keys": [
+      [
+        0.0,
+        -2.0,
+        -6.0
+      ],
+      [
+        60.0,
+        -362.0,
+        -6.0
+      ]
+    ],
+    "duration_frames": 60,
+    "loop": true
+  }
+]

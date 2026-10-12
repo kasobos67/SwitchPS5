@@ -347,7 +347,7 @@ int main() {
                Eden::PreferencesFor(racer, file).controller == -1 && Eden::LoadPreferences(file).controller == -1);
         assert(back.hud == 0 && back.volume == 40 && back.mute == 1 && back.vibration == 0 && back.language == 13 &&
                back.own_mapping && back.mapping == game.mapping && back.performance[2] == 1 &&
-               back.performance[0] == -1 && back.rng_seed == -1);
+               back.performance[0] == -1);
         const auto general = Eden::LoadPreferences(file);
         const auto mine = Eden::PreferencesFor(quest, file);
         assert(!mine.hud && mine.volume == 40 && mine.mute && !mine.vibration && mine.language == 13 &&
@@ -359,26 +359,6 @@ int main() {
         auto wrong = game;
         wrong.volume = 101;
         assert(!Eden::SaveGameSettings(quest, wrong, file));
-        wrong = game;
-        wrong.rng_seed = 0xffffffffLL + 1;
-        assert(!Eden::SaveGameSettings(quest, wrong, file));
-        game.rng_seed = 0;
-        assert(Eden::SaveGameSettings(quest, game, file));
-        assert(Eden::LoadGameSettings(quest, file).rng_seed == 0);
-        game.rng_seed = -1;
-        // A typed seed: digits only, within 32 bits.
-        assert(Eden::RngSeedFromText("0") == 0 && Eden::RngSeedFromText("1234") == 1234 &&
-               Eden::RngSeedFromText("007") == 7 && Eden::RngSeedFromText("4294967295") == 0xffffffffLL);
-        assert(Eden::RngSeedFromText("") == -1 && Eden::RngSeedFromText("4294967296") == -1 &&
-               Eden::RngSeedFromText("99999999999") == -1 && Eden::RngSeedFromText("-1") == -1 &&
-               Eden::RngSeedFromText("+5") == -1 && Eden::RngSeedFromText("12a") == -1 &&
-               Eden::RngSeedFromText(" 12") == -1 && Eden::RngSeedFromText("1.5") == -1);
-        // Every seed a text can name is one the settings take.
-        game.rng_seed = Eden::RngSeedFromText("4294967295");
-        assert(Eden::SaveGameSettings(quest, game, file) &&
-               Eden::LoadGameSettings(quest, file).rng_seed == 0xffffffffLL);
-        game.rng_seed = -1;
-        assert(Eden::SaveGameSettings(quest, game, file) && Eden::LoadGameSettings(quest, file).rng_seed == -1);
         wrong = game;
         wrong.mute = 2;
         assert(!Eden::SaveGameSettings(quest, wrong, file));

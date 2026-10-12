@@ -4,3 +4,9 @@ dist/
 results/
 .local/
 __pycache__/
+
+# Regenerated UI atlas previews and metadata.
+assets/art/stock-button-base.png
+assets/art/stock-ui.png
+assets/art/stock-profiles.png
+assets/firmware-ui-atlas.json

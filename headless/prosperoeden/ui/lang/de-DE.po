@@ -49,7 +49,7 @@ msgstr "Info"
 
 #: pe/ui/browse.cpp
 msgid "About ProsperoEden"
-msgstr "Über ProsperoEden"
+msgstr "Über Switch"
 
 #. Time left while downloading; {0} is a number of minutes. Keep it short.
 #: pe/ui/remote.cpp, pe/ui/update.cpp
@@ -152,7 +152,7 @@ msgid "Automatic"
 msgstr "Automatisch"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/multiplayer.cpp, pe/ui/pairing.cpp, pe/ui/profiles.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/pairing.cpp, pe/ui/profiles.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
 msgid "Back"
 msgstr "Zurück"
 
@@ -171,7 +171,7 @@ msgid "Bilinear"
 msgstr "Bilinear"
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
+#: pe/ui/browse.cpp
 msgid "Browse"
 msgstr "Blättern"
 
@@ -425,7 +425,7 @@ msgstr "Standardordner"
 
 #: pe/ui/browse.cpp
 msgid "Default folder saved. Reopen ProsperoEden to use it."
-msgstr "Standardordner gespeichert. Starte ProsperoEden neu, um ihn zu verwenden."
+msgstr "Standardordner gespeichert. Starte Switch neu, um ihn zu verwenden."
 
 #: pe/ui/library.cpp
 msgid "Delete"
@@ -570,11 +570,6 @@ msgstr "Eden-Emulator für PlayStation 5"
 msgid "Eden's debug messages in the logs of a game."
 msgstr "Edens Debug-Meldungen in den Logs eines Spiels."
 
-#. A button hint: opens the keyboard to type a number. One short word, and not the word used for Change.
-#: pe/ui/game_options.cpp
-msgid "Edit"
-msgstr "Bearbeiten"
-
 #. Label of the shortcut that ends the running game.
 #: pe/ui/settings.cpp
 msgid "END GAME"
@@ -591,11 +586,6 @@ msgstr "Englisch (UK)"
 #: host/fake_services.cpp, settings_store.h
 msgid "English (US)"
 msgstr "Englisch (USA)"
-
-#. Shown when what was typed for the RNG seed is not such a number.
-#: pe/ui/game_options.cpp
-msgid "Enter a number between 0 and 4294967295."
-msgstr "Eine Zahl zwischen 0 und 4294967295 eingeben."
 
 #: pe/ui/multiplayer.cpp
 msgid "Enter a UDP port between 1 and 65535."
@@ -1228,7 +1218,7 @@ msgstr "Nichts zu importieren"
 msgid "Off"
 msgstr "Aus"
 
-#: pe/ui/multiplayer.cpp, pe/ui/settings.cpp
+#: pe/ui/settings.cpp
 msgid "Offline"
 msgstr "Offline"
 
@@ -1275,7 +1265,7 @@ msgid "Output resolution"
 msgstr "Ausgabeauflösung"
 
 #. Button hint: jump a page of the list (L1 / R1).
-#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp, pe/ui/update.cpp
+#: pe/ui/browse.cpp, pe/ui/update.cpp
 msgid "Page"
 msgstr "Seite"
 
@@ -1438,28 +1428,28 @@ msgstr "PROJEKT-CREDITS"
 
 #: pe/ui/update.cpp
 msgid "ProsperoEden closes now."
-msgstr "ProsperoEden wird jetzt geschlossen."
+msgstr "Switch wird jetzt geschlossen."
 
 #: pe/ui/update.cpp
 msgid "ProsperoEden closes to finish the update."
-msgstr "ProsperoEden wird geschlossen, um das Update abzuschließen."
+msgstr "Switch wird geschlossen, um das Update abzuschließen."
 
 #: eden_services.cpp
 msgid "ProsperoEden could not get access to the console's storage, so it cannot read your settings, saves and games. Nothing was changed. Close ProsperoEden and open it again. (Code {0})"
-msgstr "ProsperoEden hat keinen Zugriff auf den Speicher der Konsole erhalten und kann deine Einstellungen, Speicherdaten und Spiele nicht lesen. Es wurde nichts geändert. Schließe ProsperoEden und öffne es erneut. (Code {0})"
+msgstr "Switch hat keinen Zugriff auf den Speicher der Konsole erhalten und kann deine Einstellungen, Speicherdaten und Spiele nicht lesen. Es wurde nichts geändert. Schließe Switch und öffne es erneut. (Code {0})"
 
 #: pe/ui/browse.cpp
 msgid "ProsperoEden is an unofficial PS5 port brought to you by BlackBearReloaded."
-msgstr "ProsperoEden ist eine inoffizielle PS5-Portierung, präsentiert von BlackBearReloaded."
+msgstr "Switch ist eine inoffizielle PS5-Portierung, präsentiert von BlackBearReloaded."
 
 #. Shown on the home screen after the app crashed and started again; {0} is a file.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "ProsperoEden stopped because of an error. A report was saved to {0}."
-msgstr "ProsperoEden wurde wegen eines Fehlers beendet. Ein Bericht wurde unter {0} gespeichert."
+msgstr "Switch wurde wegen eines Fehlers beendet. Ein Bericht wurde unter {0} gespeichert."
 
 #: pe/ui/update.cpp
 msgid "ProsperoEden was not changed."
-msgstr "ProsperoEden wurde nicht verändert."
+msgstr "Switch wurde nicht verändert."
 
 #. Why a game did not start.
 #: eden_services.cpp
@@ -1490,11 +1480,6 @@ msgstr "Wartet"
 #: pe/ui/remote.cpp
 msgid "Queued, from {0}"
 msgstr "Wartet, von {0}"
-
-#. The usual value of RNG seed: no fixed seed, a new random one at every start of the game.
-#: pe/ui/game_options.cpp
-msgid "Random"
-msgstr "Zufällig"
 
 #. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
@@ -1587,11 +1572,6 @@ msgstr "Rechter Joy-Con"
 #: pe/ui/game_options.cpp
 msgid "Right stick press"
 msgstr "Rechten Stick drücken"
-
-#. A game setting. RNG is a random number generator and the seed is the number it starts from. A game with a seed is loaded at the same place in memory at every start, which some mods need. Keep it short; RNG and seed may stay in English where players say them so.
-#: pe/ui/game_options.cpp
-msgid "RNG seed"
-msgstr "RNG-Seed"
 
 #: eden_services.cpp, pe/ui/launcher.cpp
 msgid "ROM missing from the game files folder"
@@ -1700,7 +1680,7 @@ msgstr "Gespeichert. Gilt ab dem nächsten Spielstart."
 
 #: pe/ui/browse.cpp
 msgid "Saved. Reopen ProsperoEden to use this folder."
-msgstr "Gespeichert. Starte ProsperoEden neu, um diesen Ordner zu verwenden."
+msgstr "Gespeichert. Starte Switch neu, um diesen Ordner zu verwenden."
 
 #: pe/ui/pairing.cpp
 msgid "Scan the code with your phone, or open the address below."
@@ -1712,7 +1692,7 @@ msgid "Scroll"
 msgstr "Blättern"
 
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/multiplayer.cpp, pe/ui/pairing.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
+#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/pairing.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
 msgid "Select"
 msgstr "Auswählen"
 
@@ -1757,7 +1737,7 @@ msgstr "Einrichtung erforderlich"
 
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Setup required: {0} Open Settings, Game files to choose the folder that holds your keys, firmware and roms folders (or add the files to {1}), then reopen ProsperoEden."
-msgstr "Einrichtung erforderlich: {0} Öffne Einstellungen > Spieldateien und wähle den Ordner, der deine Ordner keys, firmware und roms enthält (oder lege die Dateien in {1} ab). Starte ProsperoEden danach neu."
+msgstr "Einrichtung erforderlich: {0} Öffne Einstellungen > Spieldateien und wähle den Ordner, der deine Ordner keys, firmware und roms enthält (oder lege die Dateien in {1} ab). Starte Switch danach neu."
 
 #: pe/ui/settings.cpp
 msgid "Setup status and detailed logs."
@@ -1876,11 +1856,6 @@ msgstr "Die Speicherdaten noch einmal abgleichen."
 msgid "Syncing save data"
 msgstr "Speicherdaten werden abgeglichen"
 
-#. A category of a game's settings: how the emulated console itself behaves.
-#: pe/ui/game_options.cpp, pe/ui/library.cpp
-msgid "System"
-msgstr "System"
-
 #: eden_services.cpp
 msgid "Taiwan"
 msgstr "Taiwan"
@@ -1904,7 +1879,7 @@ msgstr "DANKSAGUNG"
 
 #: pe/ui/browse.cpp
 msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make ProsperoEden possible."
-msgstr "Danke an die gesamte PS5-Homebrew-Community und an alle Entwickler, deren Treiber, Tools und Bibliotheken ProsperoEden möglich machen."
+msgstr "Danke an die gesamte PS5-Homebrew-Community und an alle Entwickler, deren Treiber, Tools und Bibliotheken Switch möglich machen."
 
 #: pe/ui/remote.cpp
 msgid "The download stopped"
@@ -1943,7 +1918,7 @@ msgstr "Das Spiel startet, sobald die Speicherdaten abgeglichen sind."
 msgid "The game starts when the download is done."
 msgstr "Das Spiel startet, sobald der Download fertig ist."
 
-#: pe/ui/game_options.cpp, pe/ui/multiplayer.cpp
+#: pe/ui/multiplayer.cpp
 msgid "The keyboard could not be opened."
 msgstr "Die Tastatur konnte nicht geöffnet werden."
 
@@ -2351,3 +2326,34 @@ msgstr "{0}/ (NSP/XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (ein Ordner je Titel-ID)"
+
+
+msgid "About Switch"
+msgstr "Über Switch"
+
+msgid "Default folder saved. Reopen Switch to use it."
+msgstr "Standardordner gespeichert. Starte Switch neu, um ihn zu verwenden."
+
+msgid "Switch closes now."
+msgstr "Switch wird jetzt geschlossen."
+
+msgid "Switch closes to finish the update."
+msgstr "Switch wird geschlossen, um das Update abzuschließen."
+
+msgid "Switch is an unofficial PS5 port brought to you by BlackBearReloaded."
+msgstr "Switch ist eine inoffizielle PS5-Portierung, präsentiert von BlackBearReloaded."
+
+msgid "Switch stopped because of an error. A report was saved to {0}."
+msgstr "Switch wurde wegen eines Fehlers beendet. Ein Bericht wurde unter {0} gespeichert."
+
+msgid "Switch was not changed."
+msgstr "Switch wurde nicht verändert."
+
+msgid "Saved. Reopen Switch to use this folder."
+msgstr "Gespeichert. Starte Switch neu, um diesen Ordner zu verwenden."
+
+msgid "Setup required: {0} Open Settings, Game files to choose the folder that holds your keys, firmware and roms folders (or add the files to {1}), then reopen Switch."
+msgstr "Einrichtung erforderlich: {0} Öffne Einstellungen > Spieldateien und wähle den Ordner, der deine Ordner keys, firmware und roms enthält (oder lege die Dateien in {1} ab). Starte Switch danach neu."
+
+msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make Switch possible."
+msgstr "Danke an die gesamte PS5-Homebrew-Community und an alle Entwickler, deren Treiber, Tools und Bibliotheken Switch möglich machen."

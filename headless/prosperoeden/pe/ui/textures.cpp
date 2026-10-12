@@ -46,12 +46,15 @@ bool Textures::load_art(const std::string &directory)
     const bool brand = load("art/brand.tga", &brand_);
     // Only the home screen's controller display needs this one.
     (void)load("art/controller.tga", &controller_);
+    (void)load("art/stock-icons.tga", &stock_icons_);
+    (void)load("art/stock-ui.tga", &stock_ui_);
+    (void)load("art/stock-profiles.tga", &stock_profiles_);
     return backdrop && blur && brand;
 }
 
 void Textures::release()
 {
-    for (std::uint32_t *texture : {&backdrop_, &backdrop_blur_, &brand_, &controller_})
+    for (std::uint32_t *texture : {&backdrop_, &backdrop_blur_, &brand_, &controller_, &stock_icons_, &stock_ui_, &stock_profiles_})
     {
         batch_.delete_texture(*texture);
         *texture = 0;

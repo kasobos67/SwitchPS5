@@ -1,250 +1,238 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The screen shown while a game loads: a progress bar and the steps of the start, drawn entirely
-// in this shader (no textures). Shared by both graphics backends, which add their own #version
-// line, loading_text.glsl before this file, and a main().
-//
-//   vec3 loading_scene(vec2 pixel, vec2 size, float seconds, uint state[24])
-//
-// pixel has its origin at the bottom left; seconds counts from the start of loading. With 1000
-// added to it nothing on the screen moves (Settings > Accessibility, reduced motion).
-// state comes from hud.h (Loading::State): the step the start is at (1 to 4, 0 before the first),
-// the progress in thousandths, the shaders built and their total, and the seconds the step has
-// lasted.
+// Personal Switch-style loading presentation. Shared by OpenGL and Vulkan.
+// Retains the reduced-motion marker and supports the v110 loading-state interface.
 
-const vec3 kLime = vec3(0.72, 0.95, 0.05);
-const vec3 kGreen = vec3(0.16, 0.70, 0.30);
-const int kLineBrand = 0; // then the four steps: kLine[step]
-const int kLineLoading = 5;
-const int kLineSeconds = 6;
-// The inks of the lettering; from kInkLime on they are lime, before it white.
-const int kInkBrand = 0, kInkDone = 1, kInkNow = 2, kInkLater = 3, kInkWord = 4, kInkFigure = 5, kInkLime = 6,
-          kInkLimeDim = 7;
-
-float hash21(vec2 p)
+float switch_box(vec2 p, vec2 half_size, float radius)
 {
-    p = fract(p * vec2(123.34, 456.21));
-    p += dot(p, p + 45.32);
-    return fract(p.x * p.y);
+    vec2 q = abs(p) - half_size + radius;
+    return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
 }
 
-float glyph_texel(int glyph, int x, int y)
+
+// Packed firmware alpha masks: Nintendo lettering, left and right controller shapes.
+const uint kBootMask[1440] = uint[1440](
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x30300500u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x275f3902u, 0x00000000u, 0x00000000u, 0x40080000u, 0x40404040u, 0x35000004u,
+    0xb3ffffdfu, 0x00000003u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x40080000u, 0x30404040u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0xb3000000u, 0x67fdffffu, 0x00000000u, 0x00000000u, 0xffff2000u,
+    0x0bffffffu, 0xffd40000u, 0x58ffffffu, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0xffff2000u,
+    0x00c0ffffu, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0xffff3e00u, 0x67ffffffu, 0x00000000u,
+    0x00000000u, 0xffffff20u, 0x000bffffu, 0xffffff0bu, 0x008fffffu, 0x00000000u, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x10100000u, 0x000d1010u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u,
+    0x00000000u, 0xffffff20u, 0x0000c0ffu, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0xffffff4eu,
+    0x37f9ffffu, 0x00000000u, 0x20000000u, 0xffffffffu, 0x00000bffu, 0xffffffd4u, 0x000073ffu, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0xffffff00u, 0x0000d0ffu, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x20000000u, 0xffffffffu, 0x000000c0u, 0x00000000u, 0x00000000u, 0x00000000u,
+    0x4e000000u, 0xffffffffu, 0x07c8ffffu, 0x00000000u, 0xff200000u, 0xffffffffu, 0x3300000bu, 0xc1fffff5u,
+    0x00000007u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0xffffffffu, 0x000000d0u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0xff200000u, 0xc0ffffffu, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0xff500000u, 0xffffffffu, 0x00a6ffffu, 0x00000000u, 0xffff2000u, 0x0effffffu,
+    0x1d000000u, 0x00013a56u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0xff000000u,
+    0xd2ffffffu, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0xffff2200u, 0x00c0ffffu,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0xffff5000u, 0xffffffffu, 0x006cffffu, 0x00000000u,
+    0xffffff20u, 0x000effffu, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00070000u, 0x00000000u,
+    0x00000000u, 0xffff0000u, 0x00d2ffffu, 0x00000000u, 0x00000000u, 0x03030000u, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000008u,
+    0xffffff22u, 0x0000c0ffu, 0x00000000u, 0x00000000u, 0x00000004u, 0x00000000u, 0xffffff50u, 0xffffffffu,
+    0x003cfeffu, 0x20000000u, 0xffffffffu, 0x00000effu, 0x90909062u, 0x00001a90u, 0x9090905du, 0xc23b0f90u,
+    0xc4f4ffefu, 0x00000a65u, 0x8f8f1900u, 0xffffff8fu, 0x8e8ee4ffu, 0x0000088eu, 0xa7430000u, 0xe7ffffebu,
+    0x00065ab9u, 0x00000000u, 0x9090905au, 0xa52a2a90u, 0xcdfdfff8u, 0x0000196du, 0x00000000u, 0x0d000000u,
+    0xfff6c668u, 0x2240b8f6u, 0xffffffffu, 0x000000c0u, 0x4e000000u, 0xfffbc99cu, 0x075aadfbu, 0x50000000u,
+    0xffffffffu, 0xffffffffu, 0x000ccdffu, 0xff200000u, 0xffffffffu, 0x9a00000eu, 0xffffffffu, 0xc300003bu,
+    0xffffffffu, 0xffffff95u, 0xffffffffu, 0x000035e2u, 0xffffff30u, 0xffffffffu, 0xffffffffu, 0x12000010u,
+    0xffffffa7u, 0xffffffffu, 0x0030d8ffu, 0xa0000000u, 0xffffffffu, 0xffffffa5u, 0xffffffffu, 0x000044f0u,
+    0x00000000u, 0xfff26800u, 0xffffffffu, 0xffb8ffffu, 0xc0ffffffu, 0x00000000u, 0xffffc327u, 0xffffffffu,
+    0x30d7ffffu, 0xff500000u, 0xffffffffu, 0xffffffffu, 0x00009effu, 0xffff1c00u, 0x10ffffffu, 0xffa00000u,
+    0x30ffffffu, 0xffc00000u, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0x300033f5u, 0xffffffffu, 0xffffffffu,
+    0x15ffffffu, 0xffeb1500u, 0xffffffffu, 0xffffffffu, 0x003ceeffu, 0xff9c0000u, 0xffffffffu, 0xffffffffu,
+    0xffffffffu, 0x00004bfdu, 0xa8000000u, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0x00c0ffffu, 0xf13f0000u,
+    0xffffffffu, 0xffffffffu, 0x62ffffffu, 0xffff5000u, 0xa3d1ffffu, 0xffffffffu, 0x00006dffu, 0xffffff1cu,
+    0x0010ffffu, 0xffffa000u, 0x0030ffffu, 0xffffc000u, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0xff3003c4u,
+    0xffffffffu, 0xffffffffu, 0x0015ffffu, 0xffffffc0u, 0xffffffffu, 0xffffffffu, 0x001ceeffu, 0xffff9c00u,
+    0xffffffffu, 0xffffffffu, 0xffffffffu, 0x00001ffdu, 0xffff9600u, 0xffffffffu, 0xffffffffu, 0xffffffffu,
+    0x0000c0ffu, 0xfffff313u, 0xffffffffu, 0xffffffffu, 0x31f5ffffu, 0xffffff50u, 0xd100d1ffu, 0xffffffffu,
+    0x1c0043ffu, 0xffffffffu, 0x000010ffu, 0xffffffa0u, 0x000030ffu, 0xffffffc0u, 0xaeffffffu, 0xffe28b65u,
+    0xffffffffu, 0x5f5f1163u, 0xffffff5fu, 0x6060e5ffu, 0xff6a0060u, 0xd8ffffffu, 0x4a25255eu, 0xffffffbau,
+    0x0000bcffu, 0xffffff9cu, 0xb3ffffffu, 0xffd07d6fu, 0xffffffffu, 0x32000077u, 0xffffffffu, 0x5881d5ffu,
+    0xffffc558u, 0xffffffffu, 0x990000c0u, 0xffffffffu, 0x6666aeffu, 0xffffff9fu, 0x50c4ffffu, 0xffffffffu,
+    0xff1b00d1u, 0xffffffffu, 0xff1c1ce2u, 0xffffffffu, 0xa0000010u, 0xffffffffu, 0xc0000030u, 0xffffffffu,
+    0x000041f8u, 0xffb60a00u, 0xc4ffffffu, 0x00000000u, 0xffffffffu, 0x000000cau, 0xffffeb00u, 0x000dd8ffu,
+    0x00000000u, 0xffffffa6u, 0x9c003cffu, 0xffffffffu, 0x00005fffu, 0xffa60200u, 0xd0ffffffu, 0xff960000u,
+    0x9dffffffu, 0x00000005u, 0xffff7900u, 0xc0ffffffu, 0xffff1300u, 0x46f1ffffu, 0x00000000u, 0xfffff32eu,
+    0xff50ffffu, 0xe0ffffffu, 0xff4a0000u, 0xffffffffu, 0xffff22bbu, 0x10ffffffu, 0xffa00000u, 0x30ffffffu,
+    0xffc00000u, 0x8fffffffu, 0x00000000u, 0xffff3400u, 0x00e4ffffu, 0xff000000u, 0xd0ffffffu, 0x48000000u,
+    0xffffffffu, 0x1010104eu, 0x1c101010u, 0xfffffff0u, 0xffa00081u, 0xb0ffffffu, 0x00000000u, 0xffff1d00u,
+    0x09ffffffu, 0xfffff009u, 0x0000d6ffu, 0x00000000u, 0xffffb300u, 0x00c0ffffu, 0xffffff6cu, 0x000067ffu,
+    0x00000000u, 0xffffff48u, 0xffff50ffu, 0x00e0ffffu, 0xff900000u, 0xffffffffu, 0xffffff9cu, 0x0010ffffu,
+    0xffffa000u, 0x0030ffffu, 0xffffc000u, 0x003effffu, 0x00000000u, 0xfffff200u, 0x0000faffu, 0xffff0000u,
+    0x00d0ffffu, 0xff770000u, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0xbfffffffu, 0xffffa000u, 0x006bffffu,
+    0x00000000u, 0xffffd100u, 0x3709ffffu, 0xffffffffu, 0x0000005cu, 0x00000000u, 0xffffff45u, 0x9900c0ffu,
+    0xf1ffffffu, 0x0000000bu, 0x00000000u, 0xffffffd8u, 0xffffff50u, 0x0000e0ffu, 0xffbc0000u, 0xffffffffu,
+    0xffffffffu, 0x000010ffu, 0xffffffa0u, 0x000030ffu, 0xffffffc0u, 0x000023ffu, 0x00000000u, 0xffffffccu,
+    0x000000ffu, 0xffffff00u, 0x0000d0ffu, 0xffff9700u, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0x00bfffffu,
+    0xffffffa0u, 0x00003dffu, 0x00000000u, 0xffffffa4u, 0xff3737ffu, 0x33ffffffu, 0x00000000u, 0x2a000000u,
+    0xffffffffu, 0xffb700c0u, 0x00c3ffffu, 0x00000000u, 0x9e000000u, 0x50ffffffu, 0xffffffffu, 0x000000e0u,
+    0xffe90c00u, 0xffffffffu, 0xffffffffu, 0xa0000010u, 0xffffffffu, 0xc0000030u, 0xffffffffu, 0x00000009u,
+    0xcc000000u, 0xffffffffu, 0x00000000u, 0xffffffffu, 0x000000d0u, 0xffffff87u, 0xffffffffu, 0xffffffffu,
+    0xffffffffu, 0xa00063fdu, 0xffffffffu, 0x0000003du, 0xa4000000u, 0xffffffffu, 0xffff3737u, 0x005cffffu,
+    0x00000000u, 0xff2a0000u, 0xc0ffffffu, 0xffffa800u, 0x0000f1ffu, 0x00000000u, 0xffbb0000u, 0xff50ffffu,
+    0xe0ffffffu, 0x00000000u, 0xffff3e00u, 0xffffffffu, 0x10ffffffu, 0xffa00000u, 0x30ffffffu, 0xffc00000u,
+    0x10ffffffu, 0x00000000u, 0xffd00000u, 0x00ffffffu, 0xff000000u, 0xd0ffffffu, 0x74000000u, 0xffffffffu,
+    0x4133335fu, 0x40414141u, 0x17404040u, 0xffa20000u, 0x40ffffffu, 0x00000000u, 0xffb00000u, 0x33ffffffu,
+    0xffffff0cu, 0x00008dffu, 0x00000000u, 0xffff7700u, 0x00c0ffffu, 0xffffff85u, 0x00002effu, 0x00000000u,
+    0xfffff30bu, 0xffff50ffu, 0x00e0ffffu, 0x00000000u, 0xffff6e00u, 0xffffffffu, 0x0010ffffu, 0xffffa000u,
+    0x0030ffffu, 0xffffc000u, 0x0010ffffu, 0x00000000u, 0xffffd000u, 0x0000ffffu, 0xffff0000u, 0x00d0ffffu,
+    0xff1b0000u, 0x8cffffffu, 0x00000000u, 0x40170000u, 0x00000000u, 0xffffa200u, 0x0040ffffu, 0x00000000u,
+    0xffffb000u, 0x0033ffffu, 0xffffffd0u, 0x000044fcu, 0x29000000u, 0xffffffedu, 0x2f00c0ffu, 0xffffffffu,
+    0x000008c7u, 0x96000000u, 0xffffffffu, 0xffffff50u, 0x0000e0ffu, 0x00000000u, 0xffffb700u, 0xffffffffu,
+    0x000010ffu, 0xffffffa0u, 0x000030ffu, 0xffffffc0u, 0x000010ffu, 0x00000000u, 0xffffffd0u, 0x000000ffu,
+    0xffffff00u, 0x0000d0ffu, 0xffa00000u, 0x8cffffffu, 0x00000007u, 0xe6ffe641u, 0x00003293u, 0xffffffa2u,
+    0x000040ffu, 0x00000000u, 0xffffffb0u, 0x5a0033ffu, 0xffffffffu, 0x000a67fcu, 0xffed500au, 0xffffffffu,
+    0xdb0500c0u, 0xffffffffu, 0x000032c7u, 0xffffc432u, 0x50faffffu, 0xffffffffu, 0x000000e0u, 0x00000000u,
+    0xffffe113u, 0xffffffffu, 0xa0000010u, 0xffffffffu, 0xc0000030u, 0xffffffffu, 0x00000010u, 0xd0000000u,
+    0xffffffffu, 0x00000000u, 0xffffffffu, 0x000000d0u, 0xfffa1b00u, 0xe5ffffffu, 0xffd79bb9u, 0xffffffffu,
+    0xa2000086u, 0xffffffffu, 0x00000040u, 0xb0000000u, 0xffffffffu, 0xd0000033u, 0xffffffffu, 0xf3f3ffffu,
+    0xffffffffu, 0xc0ffffffu, 0xff5a0000u, 0xffffffffu, 0xfff2f2ffu, 0xffffffffu, 0xff506fffu, 0xe0ffffffu,
+    0x00000000u, 0x00000000u, 0xffffff41u, 0x0dffffffu, 0xffa00000u, 0x30ffffffu, 0xffbc0000u, 0x10ffffffu,
+    0x00000000u, 0xffd00000u, 0x00ffffffu, 0xff000000u, 0xd0ffffffu, 0x00000000u, 0xffff5e00u, 0xffffffffu,
+    0xffffffffu, 0x08d1ffffu, 0xff9c0000u, 0x40ffffffu, 0x00000000u, 0xffb00000u, 0x2fffffffu, 0xe3290000u,
+    0xffffffffu, 0xffffffffu, 0xffffffffu, 0x00c0ffffu, 0xff890000u, 0xffffffffu, 0xffffffffu, 0xafffffffu,
+    0xffff5004u, 0x00e0ffffu, 0x00000000u, 0x00000000u, 0xffffff67u, 0x0000e5ffu, 0xffffa000u, 0x0030ffffu,
+    0xffffbc00u, 0x0010ffffu, 0x00000000u, 0xffffd000u, 0x0000ffffu, 0xffff0000u, 0x00d0ffffu, 0x00000000u,
+    0xfffe5e00u, 0xffffffffu, 0xffffffffu, 0x000008a8u, 0xffff9c00u, 0x0040ffffu, 0x00000000u, 0xffffb000u,
+    0x002fffffu, 0xe32e0000u, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0x0000c0ffu, 0xff730100u, 0xffffffffu,
+    0xffffffffu, 0x0004a4ffu, 0xf0f0f04bu, 0x0000d2f0u, 0x00000000u, 0x00000000u, 0xe5ffff67u, 0x0000002du,
+    0xffffffa0u, 0x000030ffu, 0xf0f0f0bcu, 0x00000ff0u, 0x00000000u, 0xf0f0f0c3u, 0x000000f0u, 0xf0f0f000u,
+    0x0000c3f0u, 0x00000000u, 0xfea52000u, 0xffffffffu, 0x0058d1ffu, 0x00000000u, 0xf0f0f09cu, 0x00003cf0u,
+    0x00000000u, 0xf0f0f0a5u, 0x00002df0u, 0x88010000u, 0xffffffe3u, 0x46c3ffffu, 0xffffffffu, 0x000000c0u,
+    0xa1440000u, 0xffffffffu, 0x41c5ffffu, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u,
+    0x00002d00u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x4c200000u, 0x28557474u, 0x00000000u, 0x00000000u,
+    0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x01000000u, 0x6077603eu, 0x0000001du,
+    0x00000000u, 0x00000000u, 0x16000000u, 0x5570694fu, 0x00000020u, 0x00000000u, 0x03000000u, 0x56140000u,
+    0xc9c8b792u, 0xc9c9c9c9u, 0xc7c9c9c9u, 0x000098c9u, 0x00030000u, 0xffe58f1fu, 0xffffffffu, 0xffffffffu,
+    0xffffffffu, 0x0000d2ffu, 0x68000201u, 0xfbffffefu, 0xfbfbf9f8u, 0xfbfbfbfbu, 0xfbfdfbfbu, 0x0100c8fdu,
+    0xff930003u, 0xfffbfaffu, 0xffffffffu, 0xffffffffu, 0xfdffffffu, 0x0300caffu, 0xfbff9100u, 0xd8fffffcu,
+    0x4143588cu, 0x43404041u, 0xfcff6840u, 0x0003caffu, 0xfcfaff61u, 0x0765edffu, 0x00000000u, 0x00000000u,
+    0xfcff2a00u, 0x1801caffu, 0xfffcfdf0u, 0x000028dcu, 0x03030304u, 0x06030303u, 0xfcff3703u, 0x8900caffu,
+    0xeefdfaffu, 0x01050025u, 0x00000000u, 0x03000000u, 0xfcff3500u, 0xe60ecaffu, 0x63fffbfeu, 0x00000500u,
+    0x04040402u, 0x03000002u, 0xfcff3500u, 0xff50caffu, 0x03d9fffbu, 0x02000002u, 0x00000000u, 0x03000300u,
+    0xfcff3500u, 0xfe8fcaffu, 0x0085fff8u, 0x00020004u, 0x6f8e782eu, 0x0302001fu, 0xfcff3500u, 0xffb6caffu,
+    0x004dfffau, 0x7f000204u, 0xfffffffcu, 0x05005ff1u, 0xfcff3500u, 0xffc8caffu, 0x0037fffcu, 0xff620006u,
+    0xfafbfbfdu, 0x003effffu, 0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0xfdde0702u, 0xfffffffcu, 0x00b9fffbu,
+    0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0xfffd2900u, 0xffffffffu, 0x0ee8fefeu, 0xfcff3600u, 0xffcacaffu,
+    0x0035fffcu, 0xfffe2c00u, 0xffffffffu, 0x10eafffeu, 0xfcff3600u, 0xffcacaffu, 0x0035fffcu, 0xfde60a01u,
+    0xfffffffdu, 0x00c4fdfbu, 0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0xff770006u, 0xfbfcfbfau, 0x004ffffdu,
+    0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0x9b020203u, 0xffffffffu, 0x05007affu, 0xfcff3500u, 0xffcacaffu,
+    0x0035fffcu, 0x00010003u, 0x8faf9849u, 0x03020037u, 0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0x02000003u,
+    0x00000000u, 0x03000200u, 0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0x00000003u, 0x04030403u, 0x03000003u,
+    0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0x00000003u, 0x00000000u, 0x03000000u, 0xfcff3500u, 0xffcacaffu,
+    0x0035fffcu, 0x00000003u, 0x00000000u, 0x03000000u, 0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0x00000003u,
+    0x00000000u, 0x03000000u, 0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0x00000003u, 0x00000000u, 0x03000000u,
+    0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0x00000003u, 0x00000000u, 0x03000000u, 0xfcff3500u, 0xffcacaffu,
+    0x0035fffcu, 0x00000003u, 0x00000000u, 0x03000000u, 0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0x00000003u,
+    0x00000000u, 0x03000000u, 0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0x00000003u, 0x00000000u, 0x03000000u,
+    0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0x00000003u, 0x00000000u, 0x03000000u, 0xfcff3500u, 0xffcacaffu,
+    0x0035fffcu, 0x00000003u, 0x00000000u, 0x03000000u, 0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0x00000003u,
+    0x00000000u, 0x03000000u, 0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0x00000003u, 0x00000000u, 0x03000000u,
+    0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0x00000003u, 0x00000000u, 0x03000000u, 0xfcff3500u, 0xffcacaffu,
+    0x0035fffcu, 0x00000003u, 0x00000000u, 0x03000000u, 0xfcff3500u, 0xffcacaffu, 0x0035fffcu, 0x00000003u,
+    0x00000000u, 0x03000000u, 0xfcff3500u, 0xffc7caffu, 0x0038fffcu, 0x00000003u, 0x00000000u, 0x03000000u,
+    0xfcff3500u, 0xffb3caffu, 0x0153fff9u, 0x00000004u, 0x00000000u, 0x03000000u, 0xfcff3500u, 0xff88caffu,
+    0x008ffff8u, 0x00000004u, 0x00000000u, 0x03000000u, 0xfcff3500u, 0xff46caffu, 0x08e2fffcu, 0x00000102u,
+    0x00000000u, 0x03000000u, 0xfcff3500u, 0xdd09caffu, 0x77fffafeu, 0x00000600u, 0x00000000u, 0x03000000u,
+    0xfcff3500u, 0x7900caffu, 0xf7fdfaffu, 0x01060039u, 0x00000000u, 0x03000000u, 0xfcff3500u, 0x0f02caffu,
+    0xfffbfee5u, 0x00003fecu, 0x04040403u, 0x07040404u, 0xfcff3804u, 0x0003caffu, 0xfcfbff4cu, 0x1984fbffu,
+    0x00000000u, 0x00000000u, 0xfcff2800u, 0x0300caffu, 0xfcff7700u, 0xedfffffbu, 0x5f6278acu, 0x615f5f5fu,
+    0xfcff805fu, 0x0000caffu, 0xff760004u, 0xfffafaffu, 0xffffffffu, 0xffffffffu, 0xfdffffffu, 0x0000caffu,
+    0x4b000300u, 0xfeffffdau, 0xf9f8f8f9u, 0xf9f8f8f8u, 0xfafcf9f9u, 0x0000c8fcu, 0x00030000u, 0xfdce700cu,
+    0xffffffffu, 0xffffffffu, 0xffffffffu, 0x0000d4ffu, 0x03000000u, 0x37020000u, 0xa7a6956fu, 0xa7a7a7a7u,
+    0xa6a7a7a7u, 0xc9997da7u, 0xc9c9c9c7u, 0xb5c8c9c9u, 0x0010518eu, 0x00000300u, 0xd1000000u, 0xffffffffu,
+    0xffffffffu, 0xe1ffffffu, 0x03001a89u, 0x00000000u, 0xfdfbfdc7u, 0xfdfdfdfdu, 0xfefcfdfdu, 0x60ebffffu,
+    0x00010200u, 0xfdffc900u, 0xffffffffu, 0xffffffffu, 0xfffbfeffu, 0x03008affu, 0xffc90000u, 0xfffffffdu,
+    0xffffffffu, 0xffffffffu, 0x8afffbfdu, 0xc9000300u, 0xfffffdffu, 0xffffffffu, 0xffffffffu, 0xfafeffffu,
+    0x03005affu, 0xfffdffc9u, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0x15edfdfdu, 0xfdffc901u, 0xffffffffu,
+    0xffffffffu, 0xffffffffu, 0xfffbffffu, 0xffc90084u, 0xfffffffdu, 0xffffffffu, 0xffffffffu, 0xfdffffffu,
+    0xc90de3feu, 0xfffffdffu, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0x4dfffeffu, 0xfffdffc9u, 0xffffffffu,
+    0xffffffffu, 0xffffffffu, 0xfffcffffu, 0xfdffc98cu, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0xfdffffffu,
+    0xffc9b5ffu, 0xfffffffdu, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0xc9c7fffdu, 0xfffffdffu, 0xffffffffu,
+    0xffffffffu, 0xffffffffu, 0xc9fffdffu, 0xfffdffc9u, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0xfffdffffu,
+    0xfdffc9c9u, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0xfdffffffu, 0xffc9c9ffu, 0xfffffffdu, 0xffffffffu,
+    0xffffffffu, 0xffffffffu, 0xc9c9fffdu, 0xfffffdffu, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0xc9fffdffu,
+    0xfffdffc9u, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0xfffdffffu, 0xfdffc9c9u, 0xffffffffu, 0xffffffffu,
+    0xffffffffu, 0xfdffffffu, 0xffc9c9ffu, 0xfffffffdu, 0xfbfcfeffu, 0xfffefcfbu, 0xffffffffu, 0xc9c9fffdu,
+    0xfffffdffu, 0xfffffdffu, 0xffffffffu, 0xfffffffdu, 0xc9fffdffu, 0xfffdffc9u, 0xfbfffdffu, 0xb88380b3u,
+    0xfffdffffu, 0xfffdffffu, 0xfdffc9c9u, 0xd2fffdffu, 0x00000032u, 0xffdd3b00u, 0xfdfffffdu, 0xffc9c9ffu,
+    0xe5fefdfdu, 0x04040018u, 0x25000404u, 0xfffefeeeu, 0xc9c9fffdu, 0xfffbfdffu, 0x0006006bu, 0x06000000u,
+    0xfbff7e00u, 0xc9fffdffu, 0xfffcffc9u, 0x020122fau, 0x00000000u, 0xfe310203u, 0xfffdfffeu, 0xfcffc9c9u,
+    0x0013efffu, 0x00000001u, 0x20000200u, 0xfdfefffau, 0xffc9c9ffu, 0x24fbfffdu, 0x00000201u, 0x02030000u,
+    0xfffeff33u, 0xc9c9fffdu, 0xfffbfdffu, 0x00060071u, 0x06000000u, 0xfbff8500u, 0xc9fffdffu, 0xfdfdffc9u,
+    0x001feafeu, 0x03040403u, 0xfef22c00u, 0xfffdfffeu, 0xfdffc9c9u, 0xdafffdffu, 0x0000003cu, 0xffe44600u,
+    0xfdfffffeu, 0xffc9c9ffu, 0xfdfffffdu, 0x8ebfffffu, 0xffffc490u, 0xfffffffeu, 0xc9c9fffdu, 0xfffffdffu,
+    0xfffffdffu, 0xfeffffffu, 0xfffffffeu, 0xc9fffdffu, 0xfffdffc9u, 0xfeffffffu, 0xfcfbfbfcu, 0xffffffffu,
+    0xfffdffffu, 0xfdffc9c9u, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0xfdffffffu, 0xffc9c9ffu, 0xfffffffdu,
+    0xffffffffu, 0xffffffffu, 0xffffffffu, 0xc9c9fffdu, 0xfffffdffu, 0xffffffffu, 0xffffffffu, 0xffffffffu,
+    0xc7fffdffu, 0xfffdffc9u, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0xfffdffffu, 0xfdffc9b5u, 0xffffffffu,
+    0xffffffffu, 0xffffffffu, 0xfcffffffu, 0xffc98cfeu, 0xfffffffdu, 0xffffffffu, 0xffffffffu, 0xffffffffu,
+    0xc94dfffeu, 0xfffffdffu, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0x0de3fefdu, 0xfffdffc9u, 0xffffffffu,
+    0xffffffffu, 0xffffffffu, 0x84fffbffu, 0xfdffc900u, 0xffffffffu, 0xffffffffu, 0xffffffffu, 0xedfdfdffu,
+    0xffc90115u, 0xfffffffdu, 0xffffffffu, 0xffffffffu, 0xfffafeffu, 0xc903005au, 0xfffffdffu, 0xffffffffu,
+    0xffffffffu, 0xfffbfdffu, 0x0003008au, 0xfffdffc9u, 0xffffffffu, 0xffffffffu, 0xfffffbfeu, 0x0004008bu,
+    0xfbfdc700u, 0xfdfdfdfdu, 0xfcfdfdfdu, 0xebfffffeu, 0x01030060u, 0xffd10000u, 0xffffffffu, 0xffffffffu,
+    0x88e0ffffu, 0x0003001au, 0x97000000u, 0xc9c9c7c9u, 0xc8c9c9c9u, 0x10518eb5u, 0x00030000u, 0x00000000u
+);
+
+float boot_texel(ivec2 p, ivec2 dimensions, int offset)
 {
-    x = clamp(x, 0, kGlyphWidth - 1);
-    y = clamp(y, 0, kGlyphHeight - 1);
-    int at = y * kGlyphWidth + x;
-    return float((glyph_word(glyph, at >> 3) >> uint((at & 7) * 4)) & 0xfu) / 15.0;
+    if (p.x < 0 || p.y < 0 || p.x >= dimensions.x || p.y >= dimensions.y) return 0.0;
+    int index = offset + p.y * dimensions.x + p.x;
+    return float((kBootMask[index >> 2] >> uint((index & 3) * 8)) & 255u) / 255.0;
 }
 
-// The lettering is read in one place only, at the end of loading_scene: the console's shader
-// compiler copes badly with the glyph table being read from many. So the text is laid out first,
-// which only decides which glyph, if any, this pixel falls in (a Pick), and what ink it gets.
-struct Pick
+float boot_mask(vec2 at, ivec2 dimensions, int offset)
 {
-    int glyph;   // -1: no text here
-    int ink;
-    vec2 st;     // where in the glyph's field, in texels
-    float texel; // pixels per texel
-};
-
-float pen_step(int glyph, float cap, float tracking)
-{
-    return (glyph < 0 ? 0.30 * kGlyphCap / 0.70 : kAdvance[glyph]) * cap / kGlyphCap + tracking * cap;
+    if (at.x < -1.0 || at.y < -1.0 || at.x > float(dimensions.x) || at.y > float(dimensions.y)) return 0.0;
+    vec2 st = at - 0.5;
+    ivec2 p = ivec2(floor(st));
+    vec2 f = fract(st);
+    return mix(mix(boot_texel(p, dimensions, offset), boot_texel(p + ivec2(1,0), dimensions, offset), f.x),
+               mix(boot_texel(p + ivec2(0,1), dimensions, offset), boot_texel(p + ivec2(1,1), dimensions, offset), f.x), f.y);
 }
 
-// Takes the pixel for this glyph when it lies between the glyph's pen and the next one.
-// at is where the pen stands (left end of the baseline), cap the height of a capital in pixels.
-void pick_glyph(inout Pick pick, int glyph, int ink, vec2 pixel, vec2 at, float cap, float tracking)
+vec3 loading_scene(vec2 pixel, vec2 size, float seconds)
 {
-    float texel = cap / kGlyphCap;
-    float step = pen_step(glyph, cap, tracking);
-    if (pixel.x < at.x - 0.5 * tracking * cap || pixel.x >= at.x + step - 0.5 * tracking * cap)
-        return;
-    pick.glyph = glyph;
-    pick.ink = ink;
-    pick.st = vec2((pixel.x - at.x) / texel + kGlyphLeft,
-                   float(kGlyphHeight) - ((pixel.y - at.y) / texel + kGlyphBase)) - 0.5;
-    pick.texel = texel;
+    float unit = max(size.y / 1080.0, 0.001);
+    vec2 at = vec2(pixel.x, size.y - pixel.y) / unit;
+    // Black boot screen with corner branding. No new textures, uniforms or GPU resources.
+    float capsule = abs(switch_box(at - vec2(180.0,89.0), vec2(84.0,23.0), 23.0)) - 1.5;
+    float brand = 1.0 - smoothstep(-0.5,0.5,capsule);
+    brand = max(brand,boot_mask(at - vec2(112.5,76.0),ivec2(135,26),0));
+
+    // The existing frontend encodes Reduce motion by adding 1000 seconds.
+    // Calm mode is a stationary mark; normal mode slides the right half into place.
+    bool calm = seconds >= 1000.0;
+    float phase = mod(max(seconds,0.0),1.8);
+    float lift = calm ? 0.0 : -14.0 * (1.0 - smoothstep(0.18,0.46,phase));
+    float visibility = calm ? 1.0 : smoothstep(0.0,0.12,phase) * (1.0 - smoothstep(1.30,1.70,phase));
+    vec2 origin = vec2(size.x / unit - 142.0, size.y / unit - 140.0);
+    float icon = max(boot_mask(at-origin,ivec2(24,50),3510),
+                     boot_mask(at-origin-vec2(30.0,lift),ivec2(21,50),4710));
+    return vec3(max(brand,icon*visibility));
 }
 
-float line_width(int line, float cap, float tracking)
-{
-    float width = 0.0;
-    for (int i = 0; i < kLine[line].y; ++i)
-        width += pen_step(kText[kLine[line].x + i], cap, tracking);
-    return width - tracking * cap;
-}
-
-// A line of text with the left end of its baseline at `at`.
-void pick_line(inout Pick pick, int line, int ink, vec2 pixel, vec2 at, float cap, float tracking)
-{
-    if (pixel.y < at.y - 0.4 * cap || pixel.y > at.y + 1.4 * cap || pixel.x < at.x - cap)
-        return;
-    float pen = at.x;
-    for (int i = 0; i < kLine[line].y; ++i)
-    {
-        int glyph = kText[kLine[line].x + i];
-        if (glyph >= 0)
-            pick_glyph(pick, glyph, ink, pixel, vec2(pen, at.y), cap, tracking);
-        pen += pen_step(glyph, cap, tracking);
-    }
-}
-
-float number_width(uint value, float cap, float tracking)
-{
-    float width = 0.0;
-    for (int i = 0; i < 6; ++i)
-    {
-        width += pen_step(kDigit + int(value % 10u), cap, tracking);
-        value /= 10u;
-        if (value == 0u)
-            break;
-    }
-    return width - tracking * cap;
-}
-
-// A number with the right end of its baseline at `at`.
-void pick_number(inout Pick pick, uint value, int ink, vec2 pixel, vec2 at, float cap, float tracking)
-{
-    if (pixel.y < at.y - 0.4 * cap || pixel.y > at.y + 1.4 * cap)
-        return;
-    float pen = at.x + tracking * cap;
-    for (int i = 0; i < 6; ++i)
-    {
-        int glyph = kDigit + int(value % 10u);
-        pen -= pen_step(glyph, cap, tracking);
-        pick_glyph(pick, glyph, ink, pixel, vec2(pen, at.y), cap, tracking);
-        value /= 10u;
-        if (value == 0u)
-            break;
-    }
-}
-
-// A box with round ends: how much of a pixel it covers.
-float pill(vec2 pixel, vec2 from, vec2 to, float radius)
-{
-    vec2 a = vec2(from.x + radius, 0.5 * (from.y + to.y));
-    vec2 b = vec2(max(to.x - radius, a.x), a.y);
-    float along = clamp(pixel.x, a.x, b.x);
-    return clamp(radius - length(pixel - vec2(along, a.y)) + 0.5, 0.0, 1.0);
-}
-
+// v1.000.110 backend entry; the Switch boot presentation remains unchanged.
 vec3 loading_scene(vec2 pixel, vec2 size, float seconds, uint state[24])
 {
-    bool calm = seconds >= 1000.0;
-    if (calm)
-        seconds -= 1000.0;
-    int step = int(min(state[0], 4u));
-    float progress = clamp(float(state[1]) / 1000.0, 0.0, 1.0);
-    float unit = size.y / 1080.0; // one design pixel
-    float left = 120.0 * unit;
-    float right = size.x - 120.0 * unit;
-    vec2 uv = pixel / size;
-    Pick pick = Pick(-1, 0, vec2(0.0), 1.0);
-
-    // ---- the backdrop: near black, a little lighter towards the top, lit faintly from the bar ----
-    vec3 color = mix(vec3(0.012, 0.015, 0.020), vec3(0.030, 0.038, 0.050), smoothstep(0.0, 1.0, uv.y));
-    vec2 glow_from = (pixel - vec2(mix(left, right, progress), 168.0 * unit)) / (size.y * vec2(1.6, 0.9));
-    color += kLime * 0.030 * exp(-dot(glow_from, glow_from) * 6.0);
-    color *= 1.0 - 0.35 * smoothstep(0.45, 1.05, length((uv - 0.5) * vec2(1.0, 1.15)));
-
-    // ---- the name, top left ----
-    pick_line(pick, kLineBrand, kInkBrand, pixel, vec2(left, size.y - 132.0 * unit), 15.0 * unit, 0.34);
-
-    // ---- the steps, one under the other ----
-    for (int i = 1; i <= 4; ++i)
-    {
-        float y = (486.0 - float(i - 1) * 58.0) * unit;
-        vec2 centre = vec2(left + 9.0 * unit, y + 9.0 * unit);
-        float away = length(pixel - centre);
-        float ring = clamp(1.6 * unit - abs(away - 8.0 * unit) + 0.5, 0.0, 1.0);
-        float dot_cover = clamp(4.2 * unit - away + 0.5, 0.0, 1.0);
-        pick_line(pick, i, i < step ? kInkDone : i == step ? kInkNow : kInkLater, pixel,
-                  vec2(left + 44.0 * unit, y), 18.0 * unit, 0.16);
-        if (i < step)
-        {
-            // Done: a filled mark.
-            color = mix(color, kGreen, 0.85 * clamp(8.8 * unit - away + 0.5, 0.0, 1.0));
-        }
-        else if (i == step)
-        {
-            float breath = calm ? 1.0 : 0.82 + 0.18 * sin(seconds * 3.2);
-            color = mix(color, kLime, ring);
-            color = mix(color, kLime, dot_cover * breath);
-        }
-        else
-        {
-            color = mix(color, vec3(1.0), 0.16 * ring);
-        }
-    }
-
-    // ---- above the bar: the word on the left, the figure on the right ----
-    float baseline = 196.0 * unit;
-    float small = 15.0 * unit;
-    pick_line(pick, kLineLoading, kInkWord, pixel, vec2(left, baseline), small, 0.34);
-    float percent_step = pen_step(kPercent, 34.0 * unit, 0.04);
-    if (pixel.y > baseline - 14.0 * unit && pixel.y < baseline + 48.0 * unit)
-        pick_glyph(pick, kPercent, kInkFigure, pixel, vec2(right - percent_step, baseline), 34.0 * unit, 0.04);
-    pick_number(pick, uint(progress * 100.0 + 0.001), kInkFigure, pixel, vec2(right - percent_step, baseline),
-                34.0 * unit, 0.04);
-    // Beside the word: the shaders built of their total, or the seconds a slow step has lasted.
-    float detail_at = left + line_width(kLineLoading, small, 0.34) + 26.0 * unit;
-    if (step == 3 && state[3] > 0u)
-    {
-        float built_to = detail_at + number_width(state[2], small, 0.10);
-        float slash_at = built_to + 7.0 * unit;
-        float total_to = slash_at + pen_step(kSlash, small, 0.0) + 7.0 * unit + number_width(state[3], small, 0.10);
-        pick_number(pick, state[2], kInkLime, pixel, vec2(built_to, baseline), small, 0.10);
-        if (pixel.y > baseline - 0.4 * small && pixel.y < baseline + 1.4 * small)
-            pick_glyph(pick, kSlash, kInkLimeDim, pixel, vec2(slash_at, baseline), small, 0.0);
-        pick_number(pick, state[3], kInkLimeDim, pixel, vec2(total_to, baseline), small, 0.10);
-    }
-    else if (state[4] >= 20u)
-    {
-        float number_to = detail_at + number_width(state[4], small, 0.10);
-        pick_number(pick, state[4], kInkLime, pixel, vec2(number_to, baseline), small, 0.10);
-        pick_line(pick, kLineSeconds, kInkLime, pixel, vec2(number_to + 6.0 * unit, baseline), small, 0.0);
-    }
-
-    // ---- the bar ----
-    vec2 bar_from = vec2(left, 150.0 * unit);
-    vec2 bar_to = vec2(right, 158.0 * unit);
-    float radius = 4.0 * unit;
-    color = mix(color, vec3(1.0), 0.10 * pill(pixel, bar_from, bar_to, radius));
-    float filled_to = mix(left + 2.0 * radius, right, progress);
-    float fill = pill(pixel, bar_from, vec2(filled_to, bar_to.y), radius);
-    float along = clamp((pixel.x - left) / max(filled_to - left, 1.0), 0.0, 1.0);
-    vec3 fill_color = mix(kGreen, kLime, along);
-    if (!calm)
-    {
-        // A light passing along the filled part.
-        float sweep = fract(seconds * 0.45) * 1.4 - 0.2;
-        fill_color += vec3(0.30) * exp(-pow((along - sweep) * 7.0, 2.0));
-    }
-    color = mix(color, fill_color, fill);
-    // The glow of the filled part, strongest at its end.
-    float under = exp(-abs(pixel.y - 154.0 * unit) / (9.0 * unit)) *
-                  smoothstep(left - 20.0 * unit, left, pixel.x) * (1.0 - smoothstep(filled_to, filled_to + 26.0 * unit, pixel.x));
-    color += kLime * 0.10 * under * (0.35 + 0.65 * along) * (1.0 - fill);
-
-    // ---- the lettering: the one place the glyph table is read ----
-    if (pick.glyph >= 0 && pick.st.x > -1.0 && pick.st.y > -1.0 && pick.st.x < float(kGlyphWidth) &&
-        pick.st.y < float(kGlyphHeight))
-    {
-        ivec2 i = ivec2(floor(pick.st));
-        vec2 f = pick.st - vec2(i);
-        float value = mix(mix(glyph_texel(pick.glyph, i.x, i.y), glyph_texel(pick.glyph, i.x + 1, i.y), f.x),
-                          mix(glyph_texel(pick.glyph, i.x, i.y + 1), glyph_texel(pick.glyph, i.x + 1, i.y + 1), f.x),
-                          f.y);
-        float cover = clamp((value - 0.5) * 2.0 * kGlyphSpread * pick.texel + 0.5, 0.0, 1.0);
-        vec3 ink = pick.ink >= kInkLime ? kLime : vec3(1.0);
-        float strength = pick.ink == kInkBrand ? 0.34 : pick.ink == kInkDone ? 0.42 : pick.ink == kInkNow ? 0.96 :
-                         pick.ink == kInkLater ? 0.20 : pick.ink == kInkWord ? 0.52 : pick.ink == kInkFigure ? 0.96 :
-                         pick.ink == kInkLime ? 0.90 : 0.54;
-        color = mix(color, ink, strength * cover);
-    }
-
-    // Arrive out of the dark; a little noise keeps the gradients from banding.
-    color *= smoothstep(0.0, 0.5, seconds);
-    color += (hash21(pixel + fract(seconds) * 61.0) - 0.5) / 255.0 * 1.4;
-    return clamp(color, 0.0, 1.0);
+    return loading_scene(pixel, size, seconds);
 }

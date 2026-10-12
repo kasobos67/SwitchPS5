@@ -111,6 +111,10 @@ Phase FromKit(self_update_phase phase) {
 } // namespace
 
 void Start() {
+    // Upstream catalog updates are integrated and tested before a new build is released.
+    // Applying them directly would overwrite this app's interface and assets.
+    return;
+
     {
         const std::lock_guard guard(lock);
         if (started) return;

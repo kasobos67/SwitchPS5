@@ -339,7 +339,6 @@ struct GameSettings
     // The Performance switches, in the order of Preferences: block list, async shaders, fast GPU,
     // unsafe CPU, unsafe DMA, reactive flushing, skip invalidation.
     std::array<int, 7> performance{-1, -1, -1, -1, -1, -1, -1};
-    int64_t rng_seed = -1;
 };
 
 // One cheat of a mod that lists several: each is chosen on its own.
@@ -652,11 +651,6 @@ class Services
     virtual void remember_room(const Eden::Multiplayer::Connection&, bool /*private_room*/) {}
     virtual void leave_room() {}
     virtual std::optional<std::string> room_text(int, const std::string&, const std::atomic<bool>&)
-    { return std::nullopt; }
-    // Asks for a game's RNG seed on the system keyboard (digits only), starting from the seed it
-    // has (-1: none). The seed typed; -1 when what was typed is not a seed (0 to 4294967295);
-    // nothing when the keyboard was cancelled. Throws when the keyboard cannot be opened.
-    virtual std::optional<std::int64_t> ask_seed(std::int64_t /*current*/, const std::atomic<bool>& /*stop*/)
     { return std::nullopt; }
     virtual bool can_launch_game() { return true; }
 

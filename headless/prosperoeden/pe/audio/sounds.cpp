@@ -42,6 +42,24 @@ constexpr CueInfo kCues[kCueCount] = {
     {"welcome", Wave::sine, 392, 784, 0.6f, 0.3f},
     {"resume", Wave::sine, 523, 660, 0.3f, 0.28f},
     {"notify", Wave::sine, 660, 990, 0.3f, 0.32f},
+    {"focus_menu", Wave::sine, 660, 700, 0.035f, 0.22f},
+    {"focus_navigation", Wave::sine, 660, 700, 0.035f, 0.22f},
+    {"focus_account", Wave::sine, 660, 700, 0.035f, 0.22f},
+    {"focus_applet", Wave::sine, 660, 700, 0.035f, 0.22f},
+    {"focus_library_button", Wave::sine, 660, 700, 0.035f, 0.22f},
+    {"focus_footer", Wave::sine, 660, 700, 0.035f, 0.22f},
+    {"home_scroll", Wave::sine, 560, 640, 0.035f, 0.22f},
+    {"library_open", Wave::sine, 420, 660, 0.16f, 0.3f},
+    {"library_launch", Wave::sine, 300, 900, 0.5f, 0.34f},
+    {"launch_effect", Wave::sine, 300, 900, 0.3f, 0.2f},
+    {"toggle_off", Wave::triangle, 700, 700, 0.05f, 0.28f},
+    {"slider_release", Wave::sine, 900, 900, 0.03f, 0.2f},
+    {"account_select", Wave::triangle, 740, 880, 0.08f, 0.36f},
+    {"controllers_open", Wave::sine, 420, 660, 0.16f, 0.3f},
+    {"news_open", Wave::sine, 420, 660, 0.16f, 0.3f},
+    {"album_open", Wave::sine, 420, 660, 0.16f, 0.3f},
+    {"profile_open", Wave::sine, 420, 660, 0.16f, 0.3f},
+    {"scroll_limit", Wave::soft_square, 200, 160, 0.08f, 0.28f},
 };
 
 } // namespace
@@ -93,9 +111,9 @@ void SoundBank::play(Mixer &mixer, Cue cue)
     auto &set = sets_[index];
     if (!set.empty())
     {
-        // +-3 % pitch keeps repeated sounds from feeling mechanical.
+        // Supplied Switch menu effects play at their original pitch.
         jitter_state_ = jitter_state_ * 1664525u + 1013904223u;
-        params.pitch = 0.97f + 0.06f * static_cast<float>(jitter_state_ >> 8) / 16777216.0f;
+        params.pitch = 1.0f;
         const Sound &sound = *set[next_[index] % set.size()];
         next_[index] = (next_[index] + 1) % set.size();
         mixer.play_clip(&sound.clip, params);

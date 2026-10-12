@@ -635,7 +635,7 @@ void Launcher::draw_update(Canvas &c, float open)
             centred(fill_text(tr("Download size: {0}"), megabytes(update_.size)), 606.0f, 30.0f, theme::kSmall,
                     theme::kLimePale);
         centred(tr("Your games, saves and settings are kept."), 640.0f, 28.0f, theme::kSmall, theme::kCopy);
-        centred(tr("ProsperoEden closes to finish the update."), 668.0f, 28.0f, theme::kSmall, theme::kCopy);
+        centred(tr("Switch closes to finish the update."), 668.0f, 28.0f, theme::kSmall, theme::kCopy);
         if (update_.notes.empty())
             buttons({TR("Update now"), TR("Skip")});
         else
@@ -715,7 +715,7 @@ void Launcher::draw_update(Canvas &c, float open)
                 const float seconds =
                     static_cast<float>(update_status_.total - update_status_.done) / update_rate_;
                 const int whole = std::max(1, static_cast<int>(std::ceil(seconds)));
-                line += "  ·  ";
+                line += "  \xC2\xB7  ";
                 line += whole < 90 ? fill_text(tr("About {0} s left"), std::to_string(whole))
                                    : fill_text(tr("About {0} min left"), std::to_string((whole + 59) / 60));
             }
@@ -748,7 +748,7 @@ void Launcher::draw_update(Canvas &c, float open)
         list.pop_transform();
 
         centred(tr("Update ready"), 506.0f, 60.0f, theme::kDisplay, theme::kTitle);
-        centred(tr("ProsperoEden closes now."), 568.0f, 34.0f, theme::kText24, theme::kValue);
+        centred(tr("Switch closes now."), 568.0f, 34.0f, theme::kText24, theme::kValue);
         centred(fill_text(tr("Open it again to use version {0}."), update_version_), 602.0f, 30.0f, theme::kSmall,
                 theme::kCopy);
         // The time until it closes.
@@ -766,7 +766,7 @@ void Launcher::draw_update(Canvas &c, float open)
         list.circle(kCenterX + shake, kRingY + 38.0f, 7.0f, accent);
 
         centred(tr("The update could not finish"), 506.0f, 60.0f, theme::kHeading, theme::kTitle);
-        centred(tr("ProsperoEden was not changed."), 570.0f, 34.0f, theme::kText24, theme::kValue);
+        centred(tr("Switch was not changed."), 570.0f, 34.0f, theme::kText24, theme::kValue);
         if (!update_status_.error.empty())
             centred(update_status_.error, 612.0f, 30.0f, theme::kSmall, theme::kCopy.with_alpha(0.8f));
         buttons({TR("Try again"), TR("Close")});

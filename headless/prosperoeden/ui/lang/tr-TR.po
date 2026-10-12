@@ -49,7 +49,7 @@ msgstr "Hakkında"
 
 #: pe/ui/browse.cpp
 msgid "About ProsperoEden"
-msgstr "ProsperoEden hakkında"
+msgstr "Switch hakkında"
 
 #. Time left while downloading; {0} is a number of minutes. Keep it short.
 #: pe/ui/remote.cpp, pe/ui/update.cpp
@@ -152,7 +152,7 @@ msgid "Automatic"
 msgstr "Otomatik"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/multiplayer.cpp, pe/ui/pairing.cpp, pe/ui/profiles.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/pairing.cpp, pe/ui/profiles.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
 msgid "Back"
 msgstr "Geri"
 
@@ -171,7 +171,7 @@ msgid "Bilinear"
 msgstr "Bilineer"
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
+#: pe/ui/browse.cpp
 msgid "Browse"
 msgstr "Göz at"
 
@@ -425,7 +425,7 @@ msgstr "Varsayılan klasör"
 
 #: pe/ui/browse.cpp
 msgid "Default folder saved. Reopen ProsperoEden to use it."
-msgstr "Varsayılan klasör kaydedildi. Kullanmak için ProsperoEden'i yeniden açın."
+msgstr "Varsayılan klasör kaydedildi. Kullanmak için Switch'i yeniden açın."
 
 #: pe/ui/library.cpp
 msgid "Delete"
@@ -570,11 +570,6 @@ msgstr "PlayStation 5 için Eden emülatörü"
 msgid "Eden's debug messages in the logs of a game."
 msgstr "Eden'in hata ayıklama iletileri bir oyunun günlüklerinde."
 
-#. A button hint: opens the keyboard to type a number. One short word, and not the word used for Change.
-#: pe/ui/game_options.cpp
-msgid "Edit"
-msgstr "Düzenle"
-
 #. Label of the shortcut that ends the running game.
 #: pe/ui/settings.cpp
 msgid "END GAME"
@@ -591,11 +586,6 @@ msgstr "İngilizce (İngiltere)"
 #: host/fake_services.cpp, settings_store.h
 msgid "English (US)"
 msgstr "İngilizce (ABD)"
-
-#. Shown when what was typed for the RNG seed is not such a number.
-#: pe/ui/game_options.cpp
-msgid "Enter a number between 0 and 4294967295."
-msgstr "0 ile 4294967295 arasında bir sayı girin."
 
 #: pe/ui/multiplayer.cpp
 msgid "Enter a UDP port between 1 and 65535."
@@ -1228,7 +1218,7 @@ msgstr "İçe aktarılacak kayıt yok"
 msgid "Off"
 msgstr "Kapalı"
 
-#: pe/ui/multiplayer.cpp, pe/ui/settings.cpp
+#: pe/ui/settings.cpp
 msgid "Offline"
 msgstr "Çevrimdışı"
 
@@ -1275,7 +1265,7 @@ msgid "Output resolution"
 msgstr "Çıkış çözünürlüğü"
 
 #. Button hint: jump a page of the list (L1 / R1).
-#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp, pe/ui/update.cpp
+#: pe/ui/browse.cpp, pe/ui/update.cpp
 msgid "Page"
 msgstr "Sayfa"
 
@@ -1438,28 +1428,28 @@ msgstr "EMEĞİ GEÇENLER"
 
 #: pe/ui/update.cpp
 msgid "ProsperoEden closes now."
-msgstr "ProsperoEden şimdi kapanıyor."
+msgstr "Switch şimdi kapanıyor."
 
 #: pe/ui/update.cpp
 msgid "ProsperoEden closes to finish the update."
-msgstr "Güncellemeyi tamamlamak için ProsperoEden kapanır."
+msgstr "Güncellemeyi tamamlamak için Switch kapanır."
 
 #: eden_services.cpp
 msgid "ProsperoEden could not get access to the console's storage, so it cannot read your settings, saves and games. Nothing was changed. Close ProsperoEden and open it again. (Code {0})"
-msgstr "ProsperoEden konsolun depolama alanına erişemedi; bu yüzden ayarlarını, kayıtlarını ve oyunlarını okuyamıyor. Hiçbir şey değiştirilmedi. ProsperoEden'i kapatıp yeniden aç. (Kod {0})"
+msgstr "Switch konsolun depolama alanına erişemedi; bu yüzden ayarlarını, kayıtlarını ve oyunlarını okuyamıyor. Hiçbir şey değiştirilmedi. Switch'i kapatıp yeniden aç. (Kod {0})"
 
 #: pe/ui/browse.cpp
 msgid "ProsperoEden is an unofficial PS5 port brought to you by BlackBearReloaded."
-msgstr "ProsperoEden, BlackBearReloaded tarafından sunulan resmi olmayan bir PS5 portudur."
+msgstr "Switch, BlackBearReloaded tarafından sunulan resmi olmayan bir PS5 portudur."
 
 #. Shown on the home screen after the app crashed and started again; {0} is a file.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "ProsperoEden stopped because of an error. A report was saved to {0}."
-msgstr "ProsperoEden bir hata nedeniyle durdu. Rapor şuraya kaydedildi: {0}."
+msgstr "Switch bir hata nedeniyle durdu. Rapor şuraya kaydedildi: {0}."
 
 #: pe/ui/update.cpp
 msgid "ProsperoEden was not changed."
-msgstr "ProsperoEden değiştirilmedi."
+msgstr "Switch değiştirilmedi."
 
 #. Why a game did not start.
 #: eden_services.cpp
@@ -1490,11 +1480,6 @@ msgstr "Sırada"
 #: pe/ui/remote.cpp
 msgid "Queued, from {0}"
 msgstr "Sırada, kaynak: {0}"
-
-#. The usual value of RNG seed: no fixed seed, a new random one at every start of the game.
-#: pe/ui/game_options.cpp
-msgid "Random"
-msgstr "Rastgele"
 
 #. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
@@ -1587,11 +1572,6 @@ msgstr "Sağ Joy-Con"
 #: pe/ui/game_options.cpp
 msgid "Right stick press"
 msgstr "Sağ çubuğa basma"
-
-#. A game setting. RNG is a random number generator and the seed is the number it starts from. A game with a seed is loaded at the same place in memory at every start, which some mods need. Keep it short; RNG and seed may stay in English where players say them so.
-#: pe/ui/game_options.cpp
-msgid "RNG seed"
-msgstr "RNG çekirdeği"
 
 #: eden_services.cpp, pe/ui/launcher.cpp
 msgid "ROM missing from the game files folder"
@@ -1700,7 +1680,7 @@ msgstr "Kaydedildi. Oyun başlatıldığında geçerli olur."
 
 #: pe/ui/browse.cpp
 msgid "Saved. Reopen ProsperoEden to use this folder."
-msgstr "Kaydedildi. Bu klasörü kullanmak için ProsperoEden'i yeniden açın."
+msgstr "Kaydedildi. Bu klasörü kullanmak için Switch'i yeniden açın."
 
 #: pe/ui/pairing.cpp
 msgid "Scan the code with your phone, or open the address below."
@@ -1712,7 +1692,7 @@ msgid "Scroll"
 msgstr "Kaydır"
 
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/multiplayer.cpp, pe/ui/pairing.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
+#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/pairing.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
 msgid "Select"
 msgstr "Seç"
 
@@ -1757,7 +1737,7 @@ msgstr "Kurulum gerekli"
 
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Setup required: {0} Open Settings, Game files to choose the folder that holds your keys, firmware and roms folders (or add the files to {1}), then reopen ProsperoEden."
-msgstr "Kurulum gerekli: {0} Ayarlar, Oyun dosyaları bölümünü açıp keys, firmware ve roms klasörlerinizi içeren klasörü seçin (veya dosyaları {1} konumuna ekleyin), ardından ProsperoEden'i yeniden açın."
+msgstr "Kurulum gerekli: {0} Ayarlar, Oyun dosyaları bölümünü açıp keys, firmware ve roms klasörlerinizi içeren klasörü seçin (veya dosyaları {1} konumuna ekleyin), ardından Switch'i yeniden açın."
 
 #: pe/ui/settings.cpp
 msgid "Setup status and detailed logs."
@@ -1876,11 +1856,6 @@ msgstr "Kaydedilen verileri bir kez daha eşitle."
 msgid "Syncing save data"
 msgstr "Kaydedilen veriler eşitleniyor"
 
-#. A category of a game's settings: how the emulated console itself behaves.
-#: pe/ui/game_options.cpp, pe/ui/library.cpp
-msgid "System"
-msgstr "Sistem"
-
 #: eden_services.cpp
 msgid "Taiwan"
 msgstr "Tayvan"
@@ -1904,7 +1879,7 @@ msgstr "TEŞEKKÜRLER"
 
 #: pe/ui/browse.cpp
 msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make ProsperoEden possible."
-msgstr "Tüm PS5 homebrew topluluğuna ve sürücüleri, araçları ve kütüphaneleriyle ProsperoEden'i mümkün kılan her geliştiriciye teşekkürler."
+msgstr "Tüm PS5 homebrew topluluğuna ve sürücüleri, araçları ve kütüphaneleriyle Switch'i mümkün kılan her geliştiriciye teşekkürler."
 
 #: pe/ui/remote.cpp
 msgid "The download stopped"
@@ -1943,7 +1918,7 @@ msgstr "Oyun, kaydedilen verileri eşitlenince başlar."
 msgid "The game starts when the download is done."
 msgstr "Oyun, indirme bitince başlar."
 
-#: pe/ui/game_options.cpp, pe/ui/multiplayer.cpp
+#: pe/ui/multiplayer.cpp
 msgid "The keyboard could not be opened."
 msgstr "Klavye açılamadı."
 
@@ -2351,3 +2326,34 @@ msgstr "{0}/ (NSP veya XCI)"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/ (her oyun kimliği için bir klasör)"
+
+
+msgid "About Switch"
+msgstr "Switch hakkında"
+
+msgid "Default folder saved. Reopen Switch to use it."
+msgstr "Varsayılan klasör kaydedildi. Kullanmak için Switch'i yeniden açın."
+
+msgid "Switch closes now."
+msgstr "Switch şimdi kapanıyor."
+
+msgid "Switch closes to finish the update."
+msgstr "Güncellemeyi tamamlamak için Switch kapanır."
+
+msgid "Switch is an unofficial PS5 port brought to you by BlackBearReloaded."
+msgstr "Switch, BlackBearReloaded tarafından sunulan resmi olmayan bir PS5 portudur."
+
+msgid "Switch stopped because of an error. A report was saved to {0}."
+msgstr "Switch bir hata nedeniyle durdu. Rapor şuraya kaydedildi: {0}."
+
+msgid "Switch was not changed."
+msgstr "Switch değiştirilmedi."
+
+msgid "Saved. Reopen Switch to use this folder."
+msgstr "Kaydedildi. Bu klasörü kullanmak için Switch'i yeniden açın."
+
+msgid "Setup required: {0} Open Settings, Game files to choose the folder that holds your keys, firmware and roms folders (or add the files to {1}), then reopen Switch."
+msgstr "Kurulum gerekli: {0} Ayarlar, Oyun dosyaları bölümünü açıp keys, firmware ve roms klasörlerinizi içeren klasörü seçin (veya dosyaları {1} konumuna ekleyin), ardından Switch'i yeniden açın."
+
+msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make Switch possible."
+msgstr "Tüm PS5 homebrew topluluğuna ve sürücüleri, araçları ve kütüphaneleriyle Switch'i mümkün kılan her geliştiriciye teşekkürler."

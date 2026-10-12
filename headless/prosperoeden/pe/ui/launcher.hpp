@@ -7,6 +7,7 @@
 #include "pe/audio/sounds.hpp"
 #include "pe/ui/qr_code.hpp"
 #include "pe/ui/widgets.hpp"
+#include "pe/ui/presentation.hpp"
 
 #include <array>
 #include <future>
@@ -23,7 +24,8 @@ class Launcher
 {
   public:
     // first_start: the app just opened (false after returning from a game).
-    Launcher(Services &services, Textures &textures, const Fonts &fonts, bool first_start);
+    Launcher(Services &services, Textures &textures, const Fonts &fonts, bool first_start,
+             std::string presentation_file = {});
     ~Launcher();
     Launcher(const Launcher &) = delete;
     Launcher &operator=(const Launcher &) = delete;
@@ -83,6 +85,7 @@ class Launcher
         game_options, // one category of a game's own settings, opened from its settings
         mapping,      // the button mapping: Settings > Controls', or a game's own
         profiles,     // who is playing: Settings > Profiles
+        settings_choice,
         update,       // a newer release of the app: install it or not (update.cpp)
         download,     // a game from a download source, started once it is downloaded (remote.cpp)
         source,       // which source a game is downloaded from, when several have it (remote.cpp)
@@ -105,18 +108,18 @@ class Launcher
     };
 
     // ---- shell (launcher.cpp) ----
-    void cue(audio::Cue value)
-    {
-        cues_.push_back(value);
-    }
+    void cue(audio::Cue value);
     void open(Screen screen, bool forward);
     void open_modal(Modal modal);
     void close_modal();
     void say(const std::string &text, bool warning = false);
     // Starts a game: its save data is synced first when the profile syncs it (save_sync.cpp).
     void launch(const std::string &file, const std::string &title, const std::string &cover);
-    // Starts it now.
+    void request_launch(const std::string &file, const std::string &title, const std::string &cover);
+    void launch_pending();
     void start_game(const std::string &file, const std::string &title, const std::string &cover);
+    bool set_ui_theme(bool white);
+    bool set_profile_avatar(const std::string &name, int icon, int color);
     void draw_screen(Canvas &c, Screen screen);
     void draw_frame(Canvas &c, const char *title, const char *copy);
     void draw_footer(Canvas &c, const Hint *hints, int count);
@@ -137,6 +140,21 @@ class Launcher
     void draw_home(Canvas &c);
     void draw_controllers(Canvas &c);
     void open_library_at_last();
+    void rebuild_home_tiles();
+    int home_recent_count() const;
+    static constexpr int kHomeGames = 7;
+    static constexpr int kHomeFirstRecent = 7;
+    static constexpr int kHomeAllSoftware = 13;
+    static constexpr float kHomeTileSize = 384.0f;
+    static constexpr float kHomeTilePitch = 405.0f;
+    static constexpr float kHomeTileX = 160.5f;
+    static constexpr float kHomeTileY = 291.0f;
+    static constexpr int kLibraryColumns = 6;
+    static constexpr int kLibraryRows = 3;
+    static constexpr float kLibraryTileSize = 261.0f;
+    static constexpr float kLibraryTilePitch = 276.0f;
+    static constexpr float kLibraryTileX = 138.0f;
+    static constexpr float kLibraryTileY = 278.0f;
 
     // ---- library and game settings (library.cpp) ----
     // The game list is read beside the menu: reading every game takes a moment.
@@ -173,20 +191,17 @@ class Launcher
 
     // ---- a game's own settings by category, and the button mapping (game_options.cpp) ----
     // Categories, in the order of the game settings' rows: video, performance, audio, controls,
-    // system, language.
-    static constexpr int kGameOptionCategories = 6;
+    // language.
+    static constexpr int kGameOptionCategories = 5;
     void open_game_options(int category);
     void press_game_options(Key key);
-    // The RNG seed is typed on the system keyboard: opens it, and takes its answer when it closes.
-    void edit_seed();
-    void update_game_options();
     void draw_game_options(Canvas &c, float open);
     // How many of a category's settings the game has of its own.
     int game_overrides(int category) const;
     // ---- profiles (profiles.cpp) ----
     void read_profiles();
     int profile_row_count() const;
-    void open_profiles();
+    void open_profiles(bool for_launch = false);
     void press_profiles(Key key);
     void draw_profiles(Canvas &c, float open);
     void open_mapping(bool for_game);
@@ -200,6 +215,11 @@ class Launcher
     void draw_dialog(Canvas &c, Modal modal, float open);
     int dialog_rows(Modal modal) const;
     float dialog_row_top(Modal modal, int row) const;
+    Modal settings_modal() const;
+    void enter_settings_content();
+    void open_settings_choice();
+    void press_settings_choice(Key key);
+    void draw_settings_choice(Canvas &c, float open);
 
     // ---- a newer release of the app (update.cpp) ----
     // Takes the update check's answer when it comes, and opens the dialog once the menu is free.
@@ -296,6 +316,8 @@ class Launcher
     Services &services_;
     Textures &textures_;
     Fonts fonts_;
+    PresentationState presentation_;
+    std::string presentation_file_;
     Backdrop backdrop_;
     std::vector<audio::Cue> cues_;
     float time_ = 0.0f;
@@ -354,6 +376,9 @@ class Launcher
     Modal modal_ = Modal::none;
     Modal modal_shown_ = Modal::none; // still drawn while it closes
     tween::Spring modal_open_;
+    float modal_elapsed_ = 0.0f;
+    bool modal_closing_ = false;
+    bool draw_chrome_ = true;
     tween::Spring dim_;   // darkness over the art behind full screens
     float press_ = 0.0f;  // 1 at a confirm, then decays: the focused item dips
     std::string message_; // the last result ("Saved..."), shown where the screen has room
@@ -367,15 +392,24 @@ class Launcher
     tween::Timer launch_;
     bool done_ = false;
 
-    // home: 0 continue, 1-3 header, 4 game details, 5-8 recent, 9 view all
+    // HOME: 0 first game, 1-4 shortcuts, 5-10 remaining games, 11 All Software.
     Home home_;
+    std::vector<Recent> home_tiles_; // presentation only: history, then scanned library
     // The controllers connected now (bit 0 is player 1), and how lit each one's icon is.
     unsigned controllers_ = 0;
     bool controllers_known_ = false;
     std::array<tween::Spring, 4> controller_lit_{};
     std::array<float, 4> controller_pop_{}; // 1 when a controller appears, then decays
     int home_focus_ = 0;
-    std::array<tween::Spring, 10> home_springs_{};
+    bool home_profile_focus_ = false;
+    int home_profile_ = 0;
+    bool screen_off_ = false;
+    float focus_elapsed_ = 0.0f;
+    int previous_home_focus_ = -1;
+    int previous_home_profile_ = -1;
+    int previous_library_focus_ = -1;
+    std::array<tween::Spring, kHomeAllSoftware + 1> home_springs_{};
+    tween::Spring home_strip_; // visual scroll only; no game/service mutation
     float intro_ = 0.0f;
     bool first_start_ = true;
 
@@ -384,6 +418,10 @@ class Launcher
     std::future<std::vector<Game>> scan_; // the list being read
     bool games_loaded_ = false;
     ListView library_;
+    tween::Spring library_scroll_;
+    bool library_sort_open_ = false;
+    int library_sort_ = 0;
+    int library_sort_choice_ = 0;
     bool selected_docked_ = true;
     tween::Spring mode_;   // 0 docked .. 1 handheld
     tween::Spring mods_switch_; // the selected game's Mods switch: 0 off .. 1 on
@@ -391,6 +429,10 @@ class Launcher
 
     // settings and dialogs
     Preferences prefs_;
+    bool settings_content_ = false;
+    ListView setting_choice_rows_;
+    int setting_choice_category_ = 0;
+    int setting_choice_option_ = 0;
     ListView settings_;
     tween::Spring section_;
     int option_ = 0;
@@ -415,12 +457,16 @@ class Launcher
     ListView mod_rows_;
     int game_options_ = 0;          // the category a game's own settings dialog shows
     ListView option_rows_;          // its rows
-    std::atomic<bool> seed_edit_stop_{false};
-    std::future<std::optional<std::int64_t>> seed_edit_;  // the keyboard, while it is open
     bool mapping_for_game_ = false; // the mapping dialog edits the game's own mapping
     ListView mapping_rows_;
     std::vector<Profile> profiles_; // the people who play on this console
     std::string playing_;           // the one games start as
+    Recent pending_launch_;
+    bool profile_for_launch_ = false;
+    bool profile_editing_ = false;
+    bool profile_edit_color_ = false;
+    int profile_avatar_choice_ = 0;
+    int profile_color_choice_ = 0;
     ListView profile_rows_;
     int profile_remove_ = -1;       // the row Square was pressed on once (asked twice)
 

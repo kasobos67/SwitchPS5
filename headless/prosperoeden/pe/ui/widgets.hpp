@@ -49,6 +49,7 @@ struct Canvas
     Textures &textures;
     const Backdrop &backdrop;
     float time = 0.0f; // seconds since the launcher appeared
+    float dialog_shadow = 0.6f; // authored dialog effect strength, independent of opacity
 };
 
 // ---- text ----
@@ -60,6 +61,8 @@ float text_width(Canvas &c, std::string_view value, float size, float tracking =
 // One line, ending in an ellipsis when it would pass max_width.
 float text_fit(Canvas &c, std::string_view value, float x, float baseline, float size, Color color,
                float max_width, Align align = Align::left);
+void text_marquee(Canvas &c, std::string_view value, const Rect &r, float size, Color color,
+                  float elapsed, Align align = Align::left);
 // How far the letters of translated text may shrink to fit their place.
 constexpr float kShrink = 0.78f;
 // One line of the launcher's own text: a translation longer than max_width gets smaller letters
@@ -118,9 +121,10 @@ void plate_focus(Canvas &c, const Plate &style, const Rect &r, float amount);
 
 // A cover (or the app icon while it loads or when there is none), with rounded corners.
 void cover(Canvas &c, const std::string &path, const Rect &r, float radius, float shadow = 0.0f);
-// An arc from `start` (radians, 0 at the right, clockwise on screen) over `sweep`: a ring that
-// fills, or a part of one that turns while something works.
+void stock_focus(Canvas &c, const Rect &r, float amount, float elapsed, bool circular = false);
 void arc(gfx::DrawList &list, float cx, float cy, float radius, float width, float start, float sweep, Color color);
+void applet_symbol(Canvas &c, int symbol, float x, float y, Color ink);
+void profile_avatar(Canvas &c, int icon, int color, const Rect &r, bool circular = true);
 
 // A controller r.w wide (r.h is 25/36 of that): a faint outline at lit 0, white with its light
 // bar glowing at lit 1.
@@ -132,6 +136,8 @@ void level_bar(Canvas &c, float right, float cy, float width, float level, float
 // "< value >" for an option row; the chevrons appear with focus. Returns the width it took.
 float chooser(Canvas &c, std::string_view value, float right, float baseline, float focus,
               Color color);
+
+void home_symbol(Canvas &c, int symbol, float x, float y, Color ink);
 
 // ---- controller hints ----
 enum class Pad : std::uint8_t
@@ -146,6 +152,7 @@ enum class Pad : std::uint8_t
     leftright,
     l1,
     r1,
+    options,
 };
 struct Hint
 {
@@ -159,6 +166,8 @@ void draw_pad(Canvas &c, Pad button, float x, float cy, float size, float alpha 
 // drawn smaller when they would pass max_width (0: no limit).
 float draw_hints(Canvas &c, const Hint *hints, int count, float x, float cy, Color color,
                  float max_width = 0.0f);
+float hints_width(Canvas &c, const Hint *hints, int count);
+void draw_hints_right(Canvas &c, const Hint *hints, int count, float right, float cy, Color color);
 
 // "3 OF 12" under a list.
 std::string list_position(int selected, int count);

@@ -19,33 +19,46 @@ namespace theme
 {
 
 // Backgrounds
-inline const Color kBase = Color::rgb(0x06090a);
-inline const Color kScrim = Color::rgb(0x010806);
-inline const Color kGlass = Color::rgb(0x16221d);  // home panels
-inline const Color kPanel = Color::rgb(0x0b1713);  // screens and dialogs
-inline const Color kPanelEdge = Color::rgb(0x768e75);
-inline const Color kRow = Color::rgb(0x17241e);
-inline const Color kRowEdge = Color::rgb(0x6a8267);
-inline const Color kRowFocus = Color::rgb(0x294433);
+inline Color kBase = Color::rgb(0x2d2d2d);
+inline const Color kScrim = Color::rgb(0x000000);
+inline Color kGlass = Color::rgb(0x353535);
+inline Color kPanel = Color::rgb(0x2d2d2d);
+inline Color kPanelEdge = Color::rgb(0x555555);
+inline Color kRow = Color::rgb(0x2d2d2d);
+inline Color kRowEdge = Color::rgb(0x515151);
+inline Color kRowFocus = Color::rgb(0x414141);
+inline Color kShortcut = Color::rgb(0x505050);
 
-// The accent: lime to deep green, left to right.
-inline const Color kLime = Color::rgb(0xa9db63);
-inline const Color kLimeDeep = Color::rgb(0x245d4a);
-inline const Color kLimePale = Color::rgb(0xdfe8a6);
-inline const Color kSun = Color::rgb(0xffd76a);
+// The accent: Switch HOME turquoise focus.
+inline const Color kLime = Color::rgb(0x30d5c8);
+inline const Color kLimeDeep = Color::rgb(0x30d5c8);
+inline const Color kLimePale = Color::rgb(0x55ded3);
+inline const Color kSun = Color::rgb(0xffffff);
 
 // Text
-inline const Color kText = Color::rgb(0xf0f5f2);
-inline const Color kTitle = Color::rgb(0xfffcef);
-inline const Color kValue = Color::rgb(0xf2f4e9);
-inline const Color kBody = Color::rgb(0xe2e8d7);
-inline const Color kCopy = Color::rgb(0xc5d0bd);
-inline const Color kMeta = Color::rgb(0xb7c6b5);
-inline const Color kLabel = Color::rgb(0xaebdaa);
-inline const Color kMuted = Color::rgb(0xaab8ac);
-inline const Color kFaint = Color::rgb(0x8c9e90);
-inline const Color kWarning = Color::rgb(0xe8b39a);
-inline const Color kRule = Color::rgb(0x536b55);
+inline Color kText = Color::rgb(0xf5f5f5);
+inline Color kTitle = Color::rgb(0xffffff);
+inline Color kValue = Color::rgb(0xf5f5f5);
+inline Color kBody = Color::rgb(0xeeeeee);
+inline Color kCopy = Color::rgb(0xcfcfcf);
+inline Color kMeta = Color::rgb(0xbdbdbd);
+inline Color kLabel = Color::rgb(0xbdbdbd);
+inline Color kMuted = Color::rgb(0xb6b6b6);
+inline Color kFaint = Color::rgb(0x999999);
+inline const Color kWarning = Color::rgb(0xffb36a);
+inline Color kRule = Color::rgb(0x555555);
+
+inline void set_white(bool white)
+{
+    kBase = kPanel = kRow = Color::rgb(white ? 0xebebeb : 0x2d2d2d);
+    kGlass = kRowFocus = Color::rgb(white ? 0xffffff : 0x414141);
+    kShortcut = Color::rgb(white ? 0xffffff : 0x505050);
+    kPanelEdge = kRowEdge = kRule = Color::rgb(white ? 0xc7c7c7 : 0x555555);
+    kText = kTitle = kValue = Color::rgb(white ? 0x252525 : 0xf5f5f5);
+    kBody = Color::rgb(white ? 0x303030 : 0xeeeeee);
+    kCopy = kMeta = kLabel = kMuted = Color::rgb(white ? 0x646464 : 0xbdbdbd);
+    kFaint = Color::rgb(white ? 0x888888 : 0x999999);
+}
 
 // Type sizes (Montserrat Medium)
 constexpr float kDisplay = 48.0f;
@@ -60,7 +73,7 @@ constexpr float kSmall = 20.0f;
 constexpr float kFocusSpring = 20.0f;
 constexpr float kCursorSpring = 26.0f;
 constexpr float kScrollSpring = 16.0f;
-constexpr float kScreenSeconds = 0.30f;
+constexpr float kScreenSeconds = 0.22f;
 constexpr float kLaunchSeconds = 0.95f;
 
 } // namespace theme
@@ -71,6 +84,7 @@ struct Look
     bool large_text = false;    // small text is drawn larger
     bool high_contrast = false; // solid panels, brighter text, an outlined highlight
     bool reduce_motion = false; // nothing drifts, slides or zooms: screens fade
+    bool white_theme = false;
 };
 inline Look &look()
 {

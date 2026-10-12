@@ -29,6 +29,16 @@ class FakeServices final : public ui::Services
     bool has_history = true;
     bool import_available = true;
     ui::SaveSource import_source = ui::SaveSource::ryujinx;
+    // Failure injection and call observations for the host-only menu contract checks.
+    bool fail_settings = false;
+    bool fail_folder = false;
+    bool fail_save = false;
+    std::string unreadable_folder;
+    int imports = 0;
+    int exports = 0;
+    int made_mod_folders = 0;
+    std::uint64_t last_game_settings_title = 0;
+    std::uint64_t last_save_title = 0;
     unsigned connected_controllers = 0b0011;
     Eden::Multiplayer::Snapshot room;
     Eden::Multiplayer::Connection last_room_connection;
@@ -72,7 +82,7 @@ class FakeServices final : public ui::Services
     }
     std::string version() override
     {
-        return "v1.000.040";
+        return "v1.000.110";
     }
     // The people who play on the preview's console.
     std::vector<ui::Profile> people{{"Eden", true}};
@@ -132,7 +142,7 @@ class FakeServices final : public ui::Services
         "during the loading screen is fixed.\n- Saves are written to a temporary file first, so a power loss "
         "while saving no longer damages them.\n- Better text fitting in Greek, Hungarian and Finnish.\n\n"
         "Note: Your settings, saves and profiles stay where they are; nothing needs to be moved.\n\n"
-        "Upgrading\nCopy the PPSA99008 folder from the ZIP over the one you have, or install it from the "
+        "Upgrading\nCopy the PPSA99009 folder from the ZIP over the one you have, or install it from the "
         "update dialog. See the README for every step: "
         "https://github.com/blackbearreloaded/ProsperoEden/blob/main/README.md#updating\n\n"
         "Thanks\nThank you to everyone who tested this release and reported what they found.";
@@ -235,17 +245,12 @@ class FakeServices final : public ui::Services
     {
         return game_settings_;
     }
-    bool set_game_settings(std::uint64_t, const ui::GameSettings &settings) override
+    bool set_game_settings(std::uint64_t title, const ui::GameSettings &settings) override
     {
+        last_game_settings_title = title;
+        if (fail_settings) return false;
         game_settings_ = settings;
         return true;
-    }
-    // What the keyboard gives the next time a game's RNG seed is asked for: a seed, -1 for a
-    // text that is no seed, nothing for a cancelled keyboard.
-    std::optional<std::int64_t> typed_seed;
-    std::optional<std::int64_t> ask_seed(std::int64_t, const std::atomic<bool> &) override
-    {
-        return typed_seed;
     }
     ui::Preferences preferences() override
     {
@@ -253,6 +258,7 @@ class FakeServices final : public ui::Services
     }
     bool set_preferences(const ui::Preferences &preferences) override
     {
+        if (fail_settings) return false;
         preferences_ = preferences;
         return true;
     }
@@ -278,6 +284,7 @@ class FakeServices final : public ui::Services
     }
     bool set_files_folder(const std::string &directory) override
     {
+        if (fail_folder) return false;
         saved_folder_ = directory;
         return true;
     }
@@ -293,13 +300,17 @@ class FakeServices final : public ui::Services
     {
         return import_source;
     }
-    bool save_import(std::uint64_t, std::string *message) override
+    bool save_import(std::uint64_t title, std::string *message) override
     {
+        ++imports; last_save_title = title;
+        if (fail_save) { *message = tr("Import failed. The current save is unchanged."); return false; }
         *message = tr("Imported. The save it replaced was backed up.");
         return true;
     }
-    bool save_export(std::uint64_t, std::string *message) override
+    bool save_export(std::uint64_t title, std::string *message) override
     {
+        ++exports; last_save_title = title;
+        if (fail_save) { *message = tr("This game has no save to export yet."); return false; }
         *message = fill(tr("Exported to {0}."), {"save-export/0100A00B00003000-20261001-213000"});
         return true;
     }
@@ -326,6 +337,7 @@ class FakeServices final : public ui::Services
     }
     bool make_mods_folder(std::uint64_t) override
     {
+        ++made_mod_folders;
         return true;
     }
     bool load_image(const std::string &path, gfx::Image *image) override

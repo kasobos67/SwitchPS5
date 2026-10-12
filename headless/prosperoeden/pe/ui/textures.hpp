@@ -55,6 +55,13 @@ class Textures
     {
         return controller_;
     }
+    // Selectively converted HOME symbols from the supplied firmware.
+    std::uint32_t stock_icons() const
+    {
+        return stock_icons_;
+    }
+    std::uint32_t stock_ui() const { return stock_ui_; }
+    std::uint32_t stock_profiles() const { return stock_profiles_; }
 
     // The cover drawn `size` virtual pixels wide. Queues it on first use.
     Cover cover(const std::string &path, float size);
@@ -85,6 +92,9 @@ class Textures
     std::uint32_t backdrop_blur_ = 0;
     std::uint32_t brand_ = 0;
     std::uint32_t controller_ = 0;
+    std::uint32_t stock_icons_ = 0;
+    std::uint32_t stock_ui_ = 0;
+    std::uint32_t stock_profiles_ = 0;
     std::unordered_map<std::string, Entry> covers_;
     std::vector<std::string> queue_;
     std::uint64_t frame_ = 0;

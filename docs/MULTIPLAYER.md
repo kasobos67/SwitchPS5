@@ -1,9 +1,8 @@
 # Experimental local-wireless multiplayer
 
-This guide describes the implementation proposed for [issue #98](https://github.com/blackbearreloaded/ProsperoEden/issues/98).
-It is not a claim that the current release supports multiplayer. Host tests and native
-builds pass; PS5 gameplay, internet play and Tailscale forwarding remain unqualified.
-See [validation status](MULTIPLAYER_IMPLEMENTATION.md) for the evidence and remaining gates.
+This guide describes the experimental local-wireless room support in v1.000.110.
+Compatibility varies by game and network setup. Host tests and native builds pass;
+internet play and Tailscale forwarding require separate qualification.
 
 ## What connects to what
 
@@ -131,8 +130,7 @@ does not require LAN broadcast to cross Tailscale.
 The holdmysocks relay has a two-minute idle threshold and a 256-datagram queue per flow.
 These are not a total daemon memory bound or a guarantee of game performance. Qualification
 must cover cross-process loopback access, two clients, lobby idle/reconnection, packet sizes,
-payload restart, and both direct and DERP-relayed paths. The complete matrix is in the
-[implementation plan](MULTIPLAYER_PLAN.md#8-validation-matrix-and-evidence).
+payload restart, and both direct and DERP-relayed paths.
 
 ## Troubleshooting during qualification
 

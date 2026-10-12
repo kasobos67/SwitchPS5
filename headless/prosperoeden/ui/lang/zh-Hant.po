@@ -49,7 +49,7 @@ msgstr "關於"
 
 #: pe/ui/browse.cpp
 msgid "About ProsperoEden"
-msgstr "關於 ProsperoEden"
+msgstr "關於 Switch"
 
 #. Time left while downloading; {0} is a number of minutes. Keep it short.
 #: pe/ui/remote.cpp, pe/ui/update.cpp
@@ -152,7 +152,7 @@ msgid "Automatic"
 msgstr "自動"
 
 #. Button hint: go back one screen.
-#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/multiplayer.cpp, pe/ui/pairing.cpp, pe/ui/profiles.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
+#: pe/ui/browse.cpp, pe/ui/game_options.cpp, pe/ui/library.cpp, pe/ui/pairing.cpp, pe/ui/profiles.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
 msgid "Back"
 msgstr "返回"
 
@@ -171,7 +171,7 @@ msgid "Bilinear"
 msgstr "雙線性"
 
 #. Button hint: move through the list.
-#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp
+#: pe/ui/browse.cpp
 msgid "Browse"
 msgstr "瀏覽"
 
@@ -425,7 +425,7 @@ msgstr "預設資料夾"
 
 #: pe/ui/browse.cpp
 msgid "Default folder saved. Reopen ProsperoEden to use it."
-msgstr "預設資料夾已儲存。重新開啟 ProsperoEden 後生效。"
+msgstr "預設資料夾已儲存。重新開啟 Switch 後生效。"
 
 #: pe/ui/library.cpp
 msgid "Delete"
@@ -570,11 +570,6 @@ msgstr "適用於 PlayStation 5 的 Eden 模擬器"
 msgid "Eden's debug messages in the logs of a game."
 msgstr "遊戲記錄中包含 Eden 的除錯訊息。"
 
-#. A button hint: opens the keyboard to type a number. One short word, and not the word used for Change.
-#: pe/ui/game_options.cpp
-msgid "Edit"
-msgstr "編輯"
-
 #. Label of the shortcut that ends the running game.
 #: pe/ui/settings.cpp
 msgid "END GAME"
@@ -591,11 +586,6 @@ msgstr "英文（英國）"
 #: host/fake_services.cpp, settings_store.h
 msgid "English (US)"
 msgstr "英文（美國）"
-
-#. Shown when what was typed for the RNG seed is not such a number.
-#: pe/ui/game_options.cpp
-msgid "Enter a number between 0 and 4294967295."
-msgstr "請輸入 0 到 4294967295 之間的數字。"
 
 #: pe/ui/multiplayer.cpp
 msgid "Enter a UDP port between 1 and 65535."
@@ -1228,7 +1218,7 @@ msgstr "沒有可匯入的內容"
 msgid "Off"
 msgstr "關"
 
-#: pe/ui/multiplayer.cpp, pe/ui/settings.cpp
+#: pe/ui/settings.cpp
 msgid "Offline"
 msgstr "離線"
 
@@ -1275,7 +1265,7 @@ msgid "Output resolution"
 msgstr "輸出解析度"
 
 #. Button hint: jump a page of the list (L1 / R1).
-#: pe/ui/browse.cpp, pe/ui/multiplayer.cpp, pe/ui/update.cpp
+#: pe/ui/browse.cpp, pe/ui/update.cpp
 msgid "Page"
 msgstr "翻頁"
 
@@ -1438,28 +1428,28 @@ msgstr "專案製作名單"
 
 #: pe/ui/update.cpp
 msgid "ProsperoEden closes now."
-msgstr "ProsperoEden 現在將關閉。"
+msgstr "Switch 現在將關閉。"
 
 #: pe/ui/update.cpp
 msgid "ProsperoEden closes to finish the update."
-msgstr "ProsperoEden 將關閉以完成更新。"
+msgstr "Switch 將關閉以完成更新。"
 
 #: eden_services.cpp
 msgid "ProsperoEden could not get access to the console's storage, so it cannot read your settings, saves and games. Nothing was changed. Close ProsperoEden and open it again. (Code {0})"
-msgstr "ProsperoEden 無法存取主機的儲存空間，因此無法讀取你的設定、存檔和遊戲。沒有任何內容被變更。請關閉 ProsperoEden 後重新開啟。（代碼 {0}）"
+msgstr "Switch 無法存取主機的儲存空間，因此無法讀取你的設定、存檔和遊戲。沒有任何內容被變更。請關閉 Switch 後重新開啟。（代碼 {0}）"
 
 #: pe/ui/browse.cpp
 msgid "ProsperoEden is an unofficial PS5 port brought to you by BlackBearReloaded."
-msgstr "ProsperoEden 是由 BlackBearReloaded 帶來的非官方 PS5 移植版。"
+msgstr "Switch 是由 BlackBearReloaded 帶來的非官方 PS5 移植版。"
 
 #. Shown on the home screen after the app crashed and started again; {0} is a file.
 #: eden_services.cpp, host/fake_services.cpp
 msgid "ProsperoEden stopped because of an error. A report was saved to {0}."
-msgstr "ProsperoEden 因錯誤而停止。報告已儲存至 {0}。"
+msgstr "Switch 因錯誤而停止。報告已儲存至 {0}。"
 
 #: pe/ui/update.cpp
 msgid "ProsperoEden was not changed."
-msgstr "ProsperoEden 未被變更。"
+msgstr "Switch 未被變更。"
 
 #. Why a game did not start.
 #: eden_services.cpp
@@ -1490,11 +1480,6 @@ msgstr "排隊中"
 #: pe/ui/remote.cpp
 msgid "Queued, from {0}"
 msgstr "排隊中，來自 {0}"
-
-#. The usual value of RNG seed: no fixed seed, a new random one at every start of the game.
-#: pe/ui/game_options.cpp
-msgid "Random"
-msgstr "隨機"
 
 #. A switch, on by default: what a game reads back from the graphics processor is kept exact. Keep the term the language's emulator players use, or translate it plainly.
 #: pe/ui/game_options.cpp, pe/ui/settings.cpp
@@ -1587,11 +1572,6 @@ msgstr "右 Joy-Con"
 #: pe/ui/game_options.cpp
 msgid "Right stick press"
 msgstr "按下右類比搖桿"
-
-#. A game setting. RNG is a random number generator and the seed is the number it starts from. A game with a seed is loaded at the same place in memory at every start, which some mods need. Keep it short; RNG and seed may stay in English where players say them so.
-#: pe/ui/game_options.cpp
-msgid "RNG seed"
-msgstr "亂數種子"
 
 #: eden_services.cpp, pe/ui/launcher.cpp
 msgid "ROM missing from the game files folder"
@@ -1700,7 +1680,7 @@ msgstr "已儲存。啟動遊戲時生效。"
 
 #: pe/ui/browse.cpp
 msgid "Saved. Reopen ProsperoEden to use this folder."
-msgstr "已儲存。重新開啟 ProsperoEden 後使用此資料夾。"
+msgstr "已儲存。重新開啟 Switch 後使用此資料夾。"
 
 #: pe/ui/pairing.cpp
 msgid "Scan the code with your phone, or open the address below."
@@ -1712,7 +1692,7 @@ msgid "Scroll"
 msgstr "捲動"
 
 #. Button hint: choose the highlighted item (not the Select button).
-#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/multiplayer.cpp, pe/ui/pairing.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
+#: pe/ui/game_options.cpp, pe/ui/home.cpp, pe/ui/library.cpp, pe/ui/pairing.cpp, pe/ui/remote.cpp, pe/ui/save_sync.cpp, pe/ui/settings.cpp, pe/ui/update.cpp
 msgid "Select"
 msgstr "確定"
 
@@ -1757,7 +1737,7 @@ msgstr "需要設定"
 
 #: eden_services.cpp, host/fake_services.cpp
 msgid "Setup required: {0} Open Settings, Game files to choose the folder that holds your keys, firmware and roms folders (or add the files to {1}), then reopen ProsperoEden."
-msgstr "需要設定：{0} 請開啟「設定」中的「遊戲檔案」，選擇存放 keys、firmware 與 roms 資料夾的資料夾（或將檔案放入 {1}），然後重新開啟 ProsperoEden。"
+msgstr "需要設定：{0} 請開啟「設定」中的「遊戲檔案」，選擇存放 keys、firmware 與 roms 資料夾的資料夾（或將檔案放入 {1}），然後重新開啟 Switch。"
 
 #: pe/ui/settings.cpp
 msgid "Setup status and detailed logs."
@@ -1876,11 +1856,6 @@ msgstr "再次同步存檔資料。"
 msgid "Syncing save data"
 msgstr "正在同步存檔資料"
 
-#. A category of a game's settings: how the emulated console itself behaves.
-#: pe/ui/game_options.cpp, pe/ui/library.cpp
-msgid "System"
-msgstr "系統"
-
 #: eden_services.cpp
 msgid "Taiwan"
 msgstr "台灣"
@@ -1904,7 +1879,7 @@ msgstr "致謝"
 
 #: pe/ui/browse.cpp
 msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make ProsperoEden possible."
-msgstr "感謝整個 PS5 自製軟體社群，以及讓 ProsperoEden 得以實現的驅動程式、工具與程式庫的每一位開發者。"
+msgstr "感謝整個 PS5 自製軟體社群，以及讓 Switch 得以實現的驅動程式、工具與程式庫的每一位開發者。"
 
 #: pe/ui/remote.cpp
 msgid "The download stopped"
@@ -1943,7 +1918,7 @@ msgstr "存檔資料同步後遊戲即會啟動。"
 msgid "The game starts when the download is done."
 msgstr "下載完成後遊戲即會啟動。"
 
-#: pe/ui/game_options.cpp, pe/ui/multiplayer.cpp
+#: pe/ui/multiplayer.cpp
 msgid "The keyboard could not be opened."
 msgstr "無法開啟鍵盤。"
 
@@ -2351,3 +2326,34 @@ msgstr "{0}/（NSP 或 XCI）"
 #: pe/ui/browse.cpp
 msgid "{0}/ (one folder per game ID)"
 msgstr "{0}/（每個遊戲 ID 一個資料夾）"
+
+
+msgid "About Switch"
+msgstr "關於 Switch"
+
+msgid "Default folder saved. Reopen Switch to use it."
+msgstr "預設資料夾已儲存。重新開啟 Switch 後生效。"
+
+msgid "Switch closes now."
+msgstr "Switch 現在將關閉。"
+
+msgid "Switch closes to finish the update."
+msgstr "Switch 將關閉以完成更新。"
+
+msgid "Switch is an unofficial PS5 port brought to you by BlackBearReloaded."
+msgstr "Switch 是由 BlackBearReloaded 帶來的非官方 PS5 移植版。"
+
+msgid "Switch stopped because of an error. A report was saved to {0}."
+msgstr "Switch 因錯誤而停止。報告已儲存至 {0}。"
+
+msgid "Switch was not changed."
+msgstr "Switch 未被變更。"
+
+msgid "Saved. Reopen Switch to use this folder."
+msgstr "已儲存。重新開啟 Switch 後使用此資料夾。"
+
+msgid "Setup required: {0} Open Settings, Game files to choose the folder that holds your keys, firmware and roms folders (or add the files to {1}), then reopen Switch."
+msgstr "需要設定：{0} 請開啟「設定」中的「遊戲檔案」，選擇存放 keys、firmware 與 roms 資料夾的資料夾（或將檔案放入 {1}），然後重新開啟 Switch。"
+
+msgid "Thanks to the whole PS5 homebrew community and to every developer whose drivers, tools and libraries make Switch possible."
+msgstr "感謝整個 PS5 自製軟體社群，以及讓 Switch 得以實現的驅動程式、工具與程式庫的每一位開發者。"
