@@ -108,6 +108,16 @@ int main() {
     assert(video.resolution == 1 && video.upscaling_filter == 1 && video.volume == 40);
     assert(Read(file).find("\"resolution\": \"0.75x\"") != std::string::npos);
     assert(Read(file).find("\"upscaling_filter\": \"fsr\"") != std::string::npos);
+    // ASTC textures: compressed unless the file says full; nothing beyond the list is saved.
+    assert(video.astc_textures == 0);
+    assert(Read(file).find("\"astc_textures\": \"compressed\"") != std::string::npos);
+    video.astc_textures = 1;
+    assert(Eden::SavePreferences(video, file));
+    assert(Eden::LoadPreferences(file).astc_textures == 1);
+    assert(Read(file).find("\"astc_textures\": \"full\"") != std::string::npos);
+    video.astc_textures = 2;
+    assert(!Eden::SavePreferences(video, file));
+    video.astc_textures = 1;
     // The largest scale is 4x; nothing beyond the list is saved.
     video.resolution = 6;
     assert(Eden::SavePreferences(video, file) && Eden::LoadPreferences(file).resolution == 6);
@@ -202,6 +212,18 @@ int main() {
     game = Eden::LoadGameSettings(racer, file);
     assert(game.renderer == -1 && game.resolution == 4 && game.upscaling_filter == -1);
     assert(!Eden::SaveGameSettings(0, {}, file) && !Eden::SaveGameSettings(racer, {2, -1, -1}, file));
+    // The same for the ASTC textures: a game's own choice wins over Settings (full, saved above).
+    assert(game.astc_textures == -1 && Eden::PreferencesFor(racer, file).astc_textures == 1);
+    game.astc_textures = 0;
+    assert(Eden::SaveGameSettings(racer, game, file));
+    assert(Eden::LoadGameSettings(racer, file).astc_textures == 0);
+    assert(Eden::PreferencesFor(racer, file).astc_textures == 0);
+    assert(Eden::PreferencesFor(quest, file).astc_textures == 1);
+    game.astc_textures = 2;
+    assert(!Eden::SaveGameSettings(racer, game, file));
+    game.astc_textures = -1;
+    assert(Eden::SaveGameSettings(racer, game, file));
+    assert(Read(file).find("\"astc_textures\": \"compressed\"") == std::string::npos);
     // The same for the refresh rate.
     assert(game.refresh == -1);
     assert(Eden::SaveGameSettings(racer, {-1, 4, -1, 1}, file));
@@ -347,7 +369,7 @@ int main() {
                Eden::PreferencesFor(racer, file).controller == -1 && Eden::LoadPreferences(file).controller == -1);
         assert(back.hud == 0 && back.volume == 40 && back.mute == 1 && back.vibration == 0 && back.language == 13 &&
                back.own_mapping && back.mapping == game.mapping && back.performance[2] == 1 &&
-               back.performance[0] == -1);
+               back.performance[0] == -1 && back.rng_seed == -1);
         const auto general = Eden::LoadPreferences(file);
         const auto mine = Eden::PreferencesFor(quest, file);
         assert(!mine.hud && mine.volume == 40 && mine.mute && !mine.vibration && mine.language == 13 &&
@@ -359,6 +381,26 @@ int main() {
         auto wrong = game;
         wrong.volume = 101;
         assert(!Eden::SaveGameSettings(quest, wrong, file));
+        wrong = game;
+        wrong.rng_seed = 0xffffffffLL + 1;
+        assert(!Eden::SaveGameSettings(quest, wrong, file));
+        game.rng_seed = 0;
+        assert(Eden::SaveGameSettings(quest, game, file));
+        assert(Eden::LoadGameSettings(quest, file).rng_seed == 0);
+        game.rng_seed = -1;
+        // A typed seed: digits only, within 32 bits.
+        assert(Eden::RngSeedFromText("0") == 0 && Eden::RngSeedFromText("1234") == 1234 &&
+               Eden::RngSeedFromText("007") == 7 && Eden::RngSeedFromText("4294967295") == 0xffffffffLL);
+        assert(Eden::RngSeedFromText("") == -1 && Eden::RngSeedFromText("4294967296") == -1 &&
+               Eden::RngSeedFromText("99999999999") == -1 && Eden::RngSeedFromText("-1") == -1 &&
+               Eden::RngSeedFromText("+5") == -1 && Eden::RngSeedFromText("12a") == -1 &&
+               Eden::RngSeedFromText(" 12") == -1 && Eden::RngSeedFromText("1.5") == -1);
+        // Every seed a text can name is one the settings take.
+        game.rng_seed = Eden::RngSeedFromText("4294967295");
+        assert(Eden::SaveGameSettings(quest, game, file) &&
+               Eden::LoadGameSettings(quest, file).rng_seed == 0xffffffffLL);
+        game.rng_seed = -1;
+        assert(Eden::SaveGameSettings(quest, game, file) && Eden::LoadGameSettings(quest, file).rng_seed == -1);
         wrong = game;
         wrong.mute = 2;
         assert(!Eden::SaveGameSettings(quest, wrong, file));

@@ -127,6 +127,7 @@ constexpr const char *kResolutionLabels[] = {"0.5x (faster, softer)", "0.75x (fa
                                              "3x (slower)", "4x (slowest)"};
 const std::vector<std::string> kResolutionKeys = {"0.5x", "0.75x", "1x", "1.5x", "2x", "3x", "4x"};
 constexpr const char *kFilterLabels[] = {"Bilinear", "AMD FSR", "Bicubic", "Nearest"};
+constexpr const char *kAstcLabels[] = {"Compressed", "Full quality"};
 constexpr const char *kLanguageLabels[] = {
     "English (US)", "English (UK)", "French", "French (Canada)", "German", "Italian", "Spanish",
     "Spanish (Latin America)", "Portuguese", "Portuguese (Brazil)", "Dutch", "Russian", "Polish",
@@ -289,6 +290,11 @@ const std::vector<std::string> &FakeServices::resolution_keys()
 const std::vector<std::string> &FakeServices::filter_labels()
 {
     static const std::vector<std::string> labels = translated(kFilterLabels);
+    return labels;
+}
+const std::vector<std::string> &FakeServices::astc_labels()
+{
+    static const std::vector<std::string> labels = translated(kAstcLabels);
     return labels;
 }
 const std::vector<std::string> &FakeServices::language_labels()

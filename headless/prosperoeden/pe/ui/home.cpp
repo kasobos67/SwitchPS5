@@ -53,6 +53,10 @@ void Launcher::rebuild_home_tiles()
         add({game.file, game.name, game.cover});
     home_tiles_ = std::move(tiles);
     if (selected >= 0) {
+        if (home_tiles_.empty()) {
+            home_focus_ = home_.setup_ready ? kHomeAllSoftware : 5;
+            return;
+        }
         const int visible = home_.status.empty() ? static_cast<int>(home_tiles_.size()) :
                                                   std::min(1, static_cast<int>(home_tiles_.size()));
         int slot = std::min(selected, std::max(0, visible - 1));

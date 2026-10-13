@@ -33,6 +33,18 @@ struct ThreadManager {
  void NotifyShutdown();
  void Stop() { stop_source.request_stop(); }
 };
+// headless/CMakeLists.txt times a push that found the queue full (gpu_queue_full), so the body
+// below carries Eden's Timer. This standalone TU does not include headless/performance.h - whose
+// clock is an extern the test would have to link - so the Timer is stubbed here: two atomics and
+// a clock read on scope exit cannot change what the queue does.
+namespace Eden::Performance {
+struct Totals { std::atomic<unsigned long long> calls{}, nanoseconds{}, requested_bytes{}; };
+inline Totals gpu_queue_full;
+class Timer {
+public:
+    explicit Timer(Totals&, unsigned long long = 0) {}
+};
+} // namespace Eden::Performance
 '''+body+r'''
 int main() {
  ThreadManager manager;

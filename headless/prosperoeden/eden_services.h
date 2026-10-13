@@ -46,6 +46,7 @@ public:
     const std::vector<std::string>& resolution_labels() override;
     const std::vector<std::string>& resolution_keys() override;
     const std::vector<std::string>& filter_labels() override;
+    const std::vector<std::string>& astc_labels() override;
     int frame_gen_state() override;
     const std::vector<std::string>& language_labels() override;
     std::string language_region(int language) override;
@@ -111,6 +112,7 @@ public:
     void remember_room(const Eden::Multiplayer::Connection&, bool private_room) override;
     void leave_room() override;
     std::optional<std::string> room_text(int, const std::string&, const std::atomic<bool>&) override;
+    std::optional<std::int64_t> ask_seed(std::int64_t, const std::atomic<bool>&) override;
     bool can_launch_game() override;
 private:
     Eden::Multiplayer::RoomClient& rooms_;

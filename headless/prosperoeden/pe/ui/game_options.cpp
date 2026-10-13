@@ -1,5 +1,5 @@
 // ProsperoEden - Launcher: a game's own settings by category (Library > Game settings > Video,
-// Performance, Audio, Controls, Language) and the button mapping (Settings > Controls, or a
+// Performance, Audio, Controls, System, Language) and the button mapping (Settings > Controls, or a
 // game's own).
 // Copyright (C) 2026 BlackBearReloaded
 // SPDX-License-Identifier: GPL-3.0-or-later
@@ -7,6 +7,8 @@
 #include "pe/ui/launcher.hpp"
 
 #include <algorithm>
+#include <chrono>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -31,10 +33,14 @@ enum Category : int
     category_performance,
     category_audio,
     category_controls,
+    category_system,
     category_language,
 };
 constexpr const char *kCategoryNames[] = {TR("Video"), TR("Performance"), TR("Audio"), TR("Controls"),
-                                          TR("Language")};
+                                          TR("System"), TR("Language")};
+constexpr int kAstcRow = 3;
+constexpr int kRefreshRow = 4;
+constexpr int kSeedRow = 0;
 // The Controls category's rows.
 constexpr int kVibrationRow = 0;
 constexpr int kMappingRow = 1;
@@ -102,6 +108,8 @@ std::vector<Option> options(int category, const GameSettings &game, Preferences 
                         usual_resolution.substr(0, usual_resolution.find(' '))});
         rows.push_back({tr("Upscaling filter"), services.filter_labels(), game.filter,
                         pick(services.filter_labels(), prefs.filter)});
+        rows.push_back({tr("ASTC textures"), services.astc_labels(), game.astc,
+                        pick(services.astc_labels(), prefs.astc)});
         rows.push_back({tr("Refresh rate"), rates, game.refresh, pick(rates, prefs.refresh)});
         rows.push_back({tr("FPS overlay"), off_on, game.hud, on_off(prefs.hud)});
         // Appended last on purpose: the rows above keep the indexes with_option() and the
@@ -161,6 +169,10 @@ std::vector<Option> options(int category, const GameSettings &game, Preferences 
                          tr("Right Joy-Con")},
                         game.controller, tr("Automatic")});
         break;
+    case category_system:
+        rows.push_back({tr("RNG seed"), {std::to_string(std::max<std::int64_t>(game.rng_seed, 0))},
+                        game.rng_seed >= 0 ? 0 : -1, tr("Random")});
+        break;
     default:
         rows.push_back({tr("Language"), services.language_labels(), game.language,
                         pick(services.language_labels(), prefs.language)});
@@ -176,8 +188,8 @@ GameSettings with_option(GameSettings game, int category, int row, int value, co
     {
     case category_video:
         (row == 0 ? game.renderer : row == 1 ? game.resolution : row == 2 ? game.filter :
-         row == 3 ? game.refresh : row == 4 ? game.hud : row == 5 ? game.frame_gen :
-         row == 6 ? game.frame_gen_target : game.frame_gen_multiplier) = value;
+         row == kAstcRow ? game.astc : row == kRefreshRow ? game.refresh : row == 5 ? game.hud :
+         row == 6 ? game.frame_gen : row == 7 ? game.frame_gen_target : game.frame_gen_multiplier) = value;
         break;
     case category_performance:
         game.performance[static_cast<std::size_t>(std::clamp(row, 0, 6))] = value;
@@ -201,6 +213,9 @@ GameSettings with_option(GameSettings game, int category, int row, int value, co
             game.own_mapping = value >= 0;
         }
         break;
+    case category_system:
+        game.rng_seed = value < 0 ? -1 : std::max<std::int64_t>(game.rng_seed, 0);
+        break;
     default:
         game.language = value;
         break;
@@ -216,7 +231,7 @@ int Launcher::game_overrides(int category) const
     switch (category)
     {
     case category_video:
-        return (game.renderer >= 0) + (game.resolution >= 0) + (game.filter >= 0) + (game.refresh >= 0) +
+        return (game.renderer >= 0) + (game.resolution >= 0) + (game.filter >= 0) + (game.astc >= 0) + (game.refresh >= 0) +
                (game.hud >= 0) + (game.frame_gen >= 0) + (game.frame_gen_target >= 0) +
                (game.frame_gen_multiplier >= 0);
     case category_performance:
@@ -226,6 +241,8 @@ int Launcher::game_overrides(int category) const
         return (game.volume >= 0) + (game.mute >= 0);
     case category_controls:
         return (game.vibration >= 0) + game.own_mapping + (game.controller >= 0);
+    case category_system:
+        return game.rng_seed >= 0;
     default:
         return game.language >= 0;
     }
@@ -246,8 +263,71 @@ void Launcher::open_game_options(int category)
     cue(Cue::open);
 }
 
+void Launcher::edit_seed()
+{
+    if (seed_edit_.valid() || games_.empty() || library_.selected < 0 ||
+        library_.selected >= static_cast<int>(games_.size()))
+        return;
+    seed_edit_stop_ = false;
+    seed_edit_title_id_ = games_[static_cast<std::size_t>(library_.selected)].title_id;
+    try
+    {
+        seed_edit_ = std::async(std::launch::async, [this, current = game_settings_.rng_seed] {
+            return services_.ask_seed(current, seed_edit_stop_);
+        });
+    }
+    catch (const std::exception &)
+    {
+        say(tr("The keyboard could not be opened."), true);
+        cue(Cue::error);
+    }
+}
+
+void Launcher::update_game_options()
+{
+    if (!seed_edit_.valid() || seed_edit_.wait_for(std::chrono::seconds{0}) != std::future_status::ready)
+        return;
+    std::optional<std::int64_t> answer;
+    try
+    {
+        answer = seed_edit_.get();
+    }
+    catch (const std::exception &)
+    {
+        say(tr("The keyboard could not be opened."), true);
+        cue(Cue::error);
+        return;
+    }
+    if (!answer || seed_edit_stop_ || modal_ != Modal::game_options || game_options_ != category_system ||
+        games_.empty() || library_.selected < 0 || library_.selected >= static_cast<int>(games_.size()) ||
+        games_[static_cast<std::size_t>(library_.selected)].title_id != seed_edit_title_id_)
+        return;
+    if (*answer < 0 || *answer > 4294967295LL)
+    {
+        say(tr("Enter a number between 0 and 4294967295."), true);
+        cue(Cue::error);
+        return;
+    }
+    GameSettings next = game_settings_;
+    next.rng_seed = *answer;
+    const bool saved = services_.set_game_settings(seed_edit_title_id_, next);
+    if (saved)
+        game_settings_ = next;
+    say(saved ? tr("Saved for this game. Applies on next launch.") : tr("Could not save. Please try again."),
+        !saved);
+    cue(saved ? Cue::toggle : Cue::error);
+}
+
 void Launcher::press_game_options(Key key)
 {
+    if (seed_edit_.valid())
+    {
+        if (key == Key::circle)
+            seed_edit_stop_ = true;
+        return;
+    }
+    if (games_.empty() || library_.selected < 0 || library_.selected >= static_cast<int>(games_.size()))
+        return;
     const Game &game = games_[static_cast<std::size_t>(library_.selected)];
     const std::vector<Option> rows = options(game_options_, game_settings_, prefs_, services_, {hertz(0), hertz(1)});
     switch (key)
@@ -291,6 +371,11 @@ void Launcher::press_game_options(Key key)
         cue(Cue::error);
         return;
     }
+    if (game_options_ == category_system && row == kSeedRow && key == Key::cross)
+    {
+        edit_seed();
+        return;
+    }
     // Settings' value (-1), then each of the game's choices.
     const int count = static_cast<int>(option.values.size());
     const int step = key == Key::left ? -1 : 1;
@@ -300,9 +385,12 @@ void Launcher::press_game_options(Key key)
     if (saved)
         game_settings_ = next;
     // 120 Hz is a request: the display has the last word.
-    const bool fast = saved && game_options_ == category_video && row == 3 &&
+    const bool fast = saved && game_options_ == category_video && row == kRefreshRow &&
                       (game_settings_.refresh >= 0 ? game_settings_.refresh : prefs_.refresh) == 1;
+    const bool full = saved && game_options_ == category_video && row == kAstcRow &&
+                      (game_settings_.astc >= 0 ? game_settings_.astc : prefs_.astc) == 1;
     say(fast ? tr("Saved. A display that cannot show 120 Hz stays at 60 Hz.") :
+        full ? tr("Saved. Full quality uses four times the graphics memory for these textures and can run out above 1x.") :
         saved ? tr("Saved for this game. Applies on next launch.") : tr("Could not save. Please try again."),
         !saved);
     cue(saved ? Cue::toggle : Cue::error);
@@ -333,7 +421,8 @@ void Launcher::draw_game_options(Canvas &c, float open)
         plate(c, kRowPlate, r, row == option_rows_.selected ? 1.0f : 0.0f);
         const auto &option = rows[static_cast<std::size_t>(row)];
         if (option.locked) list.push_opacity(0.38f);
-        const std::string shown = option.locked ? std::string{tr("Unavailable")} : option.value >= 0 ? pick(option.values, option.value) :
+        const std::string shown = game_options_ == category_system && option.value < 0 ? std::string{tr("Random")} :
+                                 option.locked ? std::string{tr("Unavailable")} : option.value >= 0 ? pick(option.values, option.value) :
                                  fill(tr("System Settings ({0})"), {option.usual});
         const float taken = chooser(c, shown, 1768.0f, baseline(r.y, r.h, 30.0f),
                                     row == option_rows_.selected ? 1.0f : 0.0f,
@@ -344,7 +433,8 @@ void Launcher::draw_game_options(Canvas &c, float open)
     }
     list.pop_clip();
     scrollbar(c, option_rows_, 1821.0f, kWindow.y, kWindow.h);
-    text_block(c, tr("Settings for this software apply on the next launch."), 750.0f, 841.0f,
+    text_block(c, game_options_ == category_system ? tr("A fixed RNG seed loads this software at the same address on each launch. Choose Random to use a new address.") :
+               tr("Settings for this software apply on the next launch."), 750.0f, 841.0f,
                24.0f, 33.0f, theme::kCopy, 1008.0f, 2, kShrink);
     if (!message_.empty())
         notice(c, message_, 714.0f, 925.0f, 24.0f,
@@ -355,7 +445,9 @@ void Launcher::draw_game_options(Canvas &c, float open)
                                     {Pad::cross, TR("OK")}};
     static constexpr Hint mapping[] = {{Pad::leftright, TR("Change")}, {Pad::circle, TR("Back")},
                                        {Pad::cross, TR("Open")}};
-    draw_footer(c, opens ? mapping : edit, 3);
+    static constexpr Hint seed[] = {{Pad::leftright, TR("Change")}, {Pad::circle, TR("Back")},
+                                    {Pad::cross, TR("Enter")}};
+    draw_footer(c, game_options_ == category_system ? seed : opens ? mapping : edit, 3);
     list.pop_opacity();
 }
 

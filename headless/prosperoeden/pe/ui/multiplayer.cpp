@@ -30,7 +30,7 @@ void Launcher::press_multiplayer(Key key) {
         room_password_join_ = false;
         room_connection_.password.clear();
         if (room_page_ == RoomPage::choice) close_modal();
-        else { room_page_ = RoomPage::choice; room_row_ = 0; message_.clear(); }
+        else { room_page_ = RoomPage::choice; room_row_ = 0; message_.clear(); cue(Cue::back); }
         return;
     }
     if (room_edit_.valid()) return;
@@ -40,7 +40,10 @@ void Launcher::press_multiplayer(Key key) {
         return;
     }
     if (room_page_ == RoomPage::choice) {
-        if (key == Key::up || key == Key::down) { room_row_ = 1 - room_row_; cue(Cue::focus); }
+        if (key == Key::up || key == Key::down) {
+            const int next = key == Key::down ? 1 : 0;
+            if (next != room_row_) { room_row_ = next; cue(Cue::focus); }
+        }
         if (key == Key::cross) {
             room_page_ = room_row_ == 0 ? RoomPage::public_rooms : RoomPage::private_room;
             room_row_ = 0;
@@ -49,6 +52,7 @@ void Launcher::press_multiplayer(Key key) {
                 room_connection_.password.clear();
                 refresh_public_rooms();
             }
+            cue(Cue::open);
         }
         return;
     }
@@ -68,7 +72,8 @@ void Launcher::press_multiplayer(Key key) {
             cue(Cue::focus);
         }
         if (key == Key::left || key == Key::right) { // a page at a time: public lists are long
-            room_row_ = std::clamp(room_row_ + (key == Key::right ? 6 : -6), 0,
+            const int visible = room_status_.error.empty() ? 6 : 4;
+            room_row_ = std::clamp(room_row_ + (key == Key::right ? visible : -visible), 0,
                                    static_cast<int>(room_directory_.rooms.size()));
             cue(Cue::focus);
         }
@@ -164,7 +169,7 @@ void Launcher::update_multiplayer() {
     }
     if (modal_ == Modal::multiplayer) {
         auto next = services_.room_status();
-        if (next.phase != room_status_.phase) room_row_ = 0;
+        if (next.phase != room_status_.phase && room_page_ != RoomPage::choice) room_row_ = 0;
         room_status_ = std::move(next);
         if (room_status_.phase == Phase::Connected && room_page_ != RoomPage::choice)
             room_row_ = std::min(room_row_, std::max(0,

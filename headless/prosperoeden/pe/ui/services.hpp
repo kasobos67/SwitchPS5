@@ -292,6 +292,7 @@ struct Preferences
     int renderer = 1; // 0 OpenGL, 1 Vulkan
     int resolution = 2;
     int filter = 0;
+    int astc = 0; // ASTC textures: 0 kept compressed, 1 full quality (four times the memory)
     int refresh = 0; // the output while a game runs: 0 60 Hz, 1 120 Hz
     int output = 0;  // the size of the picture, menu and games: 0 1080p, 1 1440p, 2 2160p
     // Lossless Scaling frame generation (Vulkan only): between a game's own frames, show
@@ -324,6 +325,7 @@ struct GameSettings
     int renderer = -1;   // 0 OpenGL, 1 Vulkan
     int resolution = -1; // index into Services::resolution_labels
     int filter = -1;     // index into Services::filter_labels
+    int astc = -1;       // index into Services::astc_labels
     int refresh = -1;    // 0 60 Hz, 1 120 Hz
     int hud = -1;        // FPS overlay
     int frame_gen = -1;  // Lossless Scaling frame generation (Vulkan only)
@@ -339,6 +341,7 @@ struct GameSettings
     // The Performance switches, in the order of Preferences: block list, async shaders, fast GPU,
     // unsafe CPU, unsafe DMA, reactive flushing, skip invalidation.
     std::array<int, 7> performance{-1, -1, -1, -1, -1, -1, -1};
+    int64_t rng_seed = -1;
 };
 
 // One cheat of a mod that lists several: each is chosen on its own.
@@ -436,6 +439,7 @@ class Services
     virtual const std::vector<std::string> &resolution_labels() = 0; // "1x (native)"
     virtual const std::vector<std::string> &resolution_keys() = 0;   // "1x"
     virtual const std::vector<std::string> &filter_labels() = 0;
+    virtual const std::vector<std::string> &astc_labels() = 0; // "Compressed", "Full quality"
     // Frame generation: 0 this build has none (its settings are not shown), 1 the user's
     // Lossless.dll is missing (they are shown greyed out), 2 ready.
     virtual int frame_gen_state()
@@ -651,6 +655,11 @@ class Services
     virtual void remember_room(const Eden::Multiplayer::Connection&, bool /*private_room*/) {}
     virtual void leave_room() {}
     virtual std::optional<std::string> room_text(int, const std::string&, const std::atomic<bool>&)
+    { return std::nullopt; }
+    // Asks for a game's RNG seed on the system keyboard (digits only), starting from the seed it
+    // has (-1: none). The seed typed; -1 when what was typed is not a seed (0 to 4294967295);
+    // nothing when the keyboard was cancelled. Throws when the keyboard cannot be opened.
+    virtual std::optional<std::int64_t> ask_seed(std::int64_t /*current*/, const std::atomic<bool>& /*stop*/)
     { return std::nullopt; }
     virtual bool can_launch_game() { return true; }
 

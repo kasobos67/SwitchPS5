@@ -33,6 +33,22 @@ function(write_derived path content)
     file(WRITE "${path}.in" "${content}")
     configure_file("${path}.in" "${path}" COPYONLY)
 endfunction()
+# Eden's helper that hands a small vector on (FixSmallVectorADL, texture_cache/util.h) has two
+# forms: the vector itself, or - for a GCC 12 bug with an old Boost - a copy of it on the heap.
+# Boost's version chooses, and the header reads it without including <boost/version.hpp>: where
+# nothing else has, the version reads as 0 and the copy is made. That was every draw that follows
+# a guest write of GPU memory, every texture upload and every buffer copy: 2,300 of the GPU
+# thread's 3,400 allocations a frame in a large open-world game. With the include, the vector
+# itself (the bundled Boost is recent).
+file(READ "${PROJECT_SOURCE_DIR}/src/video_core/texture_cache/util.h" texture_util_header)
+string(REPLACE "#include <boost/container/small_vector.hpp>"
+    "#include <boost/container/small_vector.hpp>\n#include <boost/version.hpp>"
+    texture_util_derived "${texture_util_header}")
+if(texture_util_derived STREQUAL texture_util_header OR NOT texture_util_header MATCHES "FixSmallVectorADL")
+    message(FATAL_ERROR "Pinned texture cache util.h layout changed")
+endif()
+write_derived("${PORT_BUILD_DIR}/small-vector/video_core/texture_cache/util.h" "${texture_util_derived}")
+target_include_directories(video_core BEFORE PRIVATE "${PORT_BUILD_DIR}/small-vector")
 set(MULTIPLAYER_SOURCE "${PROJECT_SOURCE_DIR}")
 set(MULTIPLAYER_OUTPUT "${PORT_BUILD_DIR}/multiplayer")
 include("${EDEN_PORT_DIR}/multiplayer_packets.cmake")
@@ -130,6 +146,36 @@ string(REPLACE "    to.impl->previous_fiber = weak_from.lock();"
 string(REPLACE "    // \"from\" might no longer be valid if the thread was killed\n    if (auto from = weak_from.lock()) {"
     "    if (auto* from = static_cast<Fiber*>(transfer.data)) {" fiber_source "${fiber_source}")
 write_derived("${PORT_BUILD_DIR}/fiber.cpp" "${fiber_source}")
+# Eden writes a log line on the thread that logs it, and flushes the file to storage after every
+# error line. On the console a flush is a storage write of about 0.7 ms, and a game that reads
+# unmapped memory logs an error for each read: a large open-world game does it six hundred to twelve
+# hundred times at a stretch, which held a guest core inside the logger for 0.4 to 0.9 s while no
+# frame was shown (33 such frames in a session of five and a half minutes). An error is flushed at
+# once when the last flush is 100 ms old, as a lone error always is; in a burst the lines in between
+# wait for the next flush (the next error after 100 ms, a full buffer, or the logger's own Flush).
+file(READ "${PROJECT_SOURCE_DIR}/src/common/logging.cpp" logging_source)
+set(old_error_flush "            if (write_limit_exceeded)\n                enabled = false;\n            file->Flush();")
+set(old_log_file "    std::optional<FS::IOFile> file;")
+foreach(pinned IN ITEMS old_error_flush old_log_file)
+    string(FIND "${logging_source}" "${${pinned}}" pinned_at)
+    if(pinned_at LESS 0)
+        message(FATAL_ERROR "Pinned log file backend changed (${pinned}); review the flush of error lines.")
+    endif()
+endforeach()
+string(REPLACE "${old_error_flush}" [=[            if (write_limit_exceeded)
+                enabled = false;
+            const long long flush_now = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now().time_since_epoch()).count();
+            if (write_limit_exceeded || flush_now - error_flushed_ms.load(std::memory_order_relaxed) >= 100) {
+                error_flushed_ms.store(flush_now, std::memory_order_relaxed);
+                file->Flush();
+            }]=] logging_source "${logging_source}")
+string(REPLACE "${old_log_file}" "    std::optional<FS::IOFile> file;\n    std::atomic<long long> error_flushed_ms{-1000};  // when an error line was last flushed" logging_source "${logging_source}")
+write_derived("${PORT_BUILD_DIR}/logging.cpp" "#include <atomic>\n#include <chrono>\n${logging_source}")
+get_target_property(common_sources common SOURCES)
+list(REMOVE_ITEM common_sources logging.cpp)
+list(APPEND common_sources "${PORT_BUILD_DIR}/logging.cpp")
+set_property(TARGET common PROPERTY SOURCES "${common_sources}")
 get_target_property(common_sources common SOURCES)
 list(REMOVE_ITEM common_sources fiber.cpp)
 list(APPEND common_sources "${PORT_BUILD_DIR}/fiber.cpp")
@@ -617,6 +663,22 @@ foreach(bits 32 64)
         if(inline_exclusive_at LESS 0)
             message(FATAL_ERROR "Pinned exclusive-access configuration changed")
         endif()
+        # Eden's Unsafe CPU mode (Settings > Performance > Faster CPU emulation) clears this again, twice:
+        # cpuopt_unsafe_host_mmu is false on every platform but Apple, Linux, Android and Windows, so the
+        # Unsafe case and the closing IsFastmemEnabled() check both drop fastmem_exclusive_access, and every
+        # LDXR/STXR then left JIT code for the global-monitor helpers (14% of the core time in Pokemon Violet,
+        # measured). The pointer reset stays; the inline page-table path needs no fastmem pointer.
+        set(unsafe_old "        if (!Settings::values.cpuopt_unsafe_host_mmu) {\n            config.fastmem_pointer = std::nullopt;\n            config.fastmem_exclusive_access = false;\n        }")
+        set(unsafe_new "        if (!Settings::values.cpuopt_unsafe_host_mmu) {\n            config.fastmem_pointer = std::nullopt;\n        }")
+        set(final_old "    if (!Settings::IsFastmemEnabled()) {\n        config.fastmem_pointer = std::nullopt;\n        config.fastmem_exclusive_access = false;\n    }")
+        set(final_new "    if (!Settings::IsFastmemEnabled()) {\n        config.fastmem_pointer = std::nullopt;\n    }")
+        foreach(pair IN ITEMS unsafe final)
+            string(FIND "${wrapper}" "${${pair}_old}" unsafe_at)
+            if(unsafe_at LESS 0)
+                message(FATAL_ERROR "Pinned Unsafe CPU mode fastmem handling changed (${pair}, arm_dynarmic_${bits})")
+            endif()
+            string(REPLACE "${${pair}_old}" "${${pair}_new}" wrapper "${wrapper}")
+        endforeach()
     endif()
       string(REPLACE "std::uint32_t(512_MiB)" "std::uint32_t(16_MiB)" wrapper "${wrapper}")
       # Guest cores 0-2 share a 640 MiB code budget. A64: 256/192/192, since a large
@@ -641,9 +703,16 @@ foreach(bits 32 64)
             set(sample_pc "m_jit->Regs()[15]")
             set(sample_fp "m_jit->Fpscr()")
         endif()
+        # NoteRunning must sit before Run(): stamped at SetState, consumed on entry, so the delta
+        # is time spent runnable-but-unscheduled. After Run() it would also count the slice the
+        # thread then executes, which for a main loop is the larger half of the reading.
         string(REPLACE "    return TranslateHaltReason(m_jit->Run());"
-            "    const auto halt = m_jit->Run();\n    ::Eden::Performance::SampleCpu(m_core_index, 0, ${sample_pc}, GetSvcNumber(), ${sample_fp});\n    return TranslateHaltReason(halt);"
+            "    const auto guest_tid = thread ? thread->GetThreadId() : 0;\n    ::Eden::Performance::NoteRunning(guest_tid, ::Eden::Performance::NowNs());\n    const auto halt = m_jit->Run();\n    ::Eden::Performance::SampleCpu(m_core_index, guest_tid, ${sample_pc}, GetSvcNumber(), ${sample_fp});\n    return TranslateHaltReason(halt);"
             wrapper "${wrapper}")
+        string(FIND "${wrapper}" "NoteRunning(guest_tid" note_running_at)
+        if(note_running_at LESS 0)
+            message(FATAL_ERROR "Pinned RunThread dispatch sampling changed")
+        endif()
         if(bits EQUAL 32)
             foreach(counted IN ITEMS "u64 DynarmicCallbacks32::MemoryRead(u32 vaddr, size_t size) {|reads"
                     "void DynarmicCallbacks32::MemoryWrite(Dynarmic::A32::VAddr vaddr, u64 value, size_t size) {|writes")
@@ -750,6 +819,34 @@ string(REPLACE "${prefetch_old}"
     physical_core_source "${physical_core_source}")
 write_derived("${PORT_BUILD_DIR}/physical_core.cpp"
     "#include \"${EDEN_PORT_DIR}/guest_fault.h\"\n#include \"${EDEN_PORT_DIR}/performance.h\"\n#include \"core/arm/debug.h\"\n${physical_core_source}")
+# The guest's tick counter gives when a frame is a little late (headless/guest_clock.h): its
+# rate is applied where Eden applies its own clock settings, and it follows the frames the
+# game hands in (BufferQueueProducer::QueueBuffer, below).
+file(READ "${PROJECT_SOURCE_DIR}/src/core/core_timing.cpp" core_timing_source)
+set(guest_clock_old "    if (::Settings::values.sync_core_speed.GetValue()) {")
+string(FIND "${core_timing_source}" "${guest_clock_old}" guest_clock_at)
+if(guest_clock_at LESS 0)
+    message(FATAL_ERROR "Pinned CoreTiming::GetClockTicks changed")
+endif()
+string(REPLACE "${guest_clock_old}"
+    "    fres = ::Eden::GuestClock::Scale(fres);\n${guest_clock_old}"
+    core_timing_source "${core_timing_source}")
+write_derived("${PORT_BUILD_DIR}/core_timing.cpp" "#include \"${EDEN_PORT_DIR}/guest_clock.h\"\n${core_timing_source}")
+file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp" producer_source)
+set(queue_old "    input.Deflate(&timestamp, &is_auto_timestamp, &crop, &scaling_mode, &transform, &sticky_transform_, &async, &swap_interval, &fence);")
+string(FIND "${producer_source}" "${queue_old}" queue_at)
+if(queue_at LESS 0)
+    message(FATAL_ERROR "Pinned buffer queue hand-off changed")
+endif()
+string(REPLACE "${queue_old}" "${queue_old}\n    ::Eden::GuestClock::FrameQueued(swap_interval);" producer_source "${producer_source}")
+# (A development build adds its counters to the same source and writes it below.)
+if(NOT EDEN_DEV_PROFILE)
+    write_derived("${PORT_BUILD_DIR}/buffer_queue_producer.cpp" "#include \"${EDEN_PORT_DIR}/guest_clock.h\"\n${producer_source}")
+    list(REMOVE_ITEM core_sources "hle/service/nvnflinger/buffer_queue_producer.cpp")
+    list(APPEND core_sources "${PORT_BUILD_DIR}/buffer_queue_producer.cpp")
+endif()
+list(REMOVE_ITEM core_sources "core_timing.cpp")
+list(APPEND core_sources "${PORT_BUILD_DIR}/core_timing.cpp")
 list(REMOVE_ITEM core_sources "hle/kernel/physical_core.cpp")
 list(APPEND core_sources "${PORT_BUILD_DIR}/physical_core.cpp")
 if(EDEN_DEV_PROFILE)
@@ -765,14 +862,13 @@ if(EDEN_DEV_PROFILE)
     write_derived("${PORT_BUILD_DIR}/nvhost_ctrl.cpp" "#include \"${EDEN_PORT_DIR}/performance.h\"\n${ctrl_source}")
     list(REMOVE_ITEM core_sources "hle/service/nvdrv/devices/nvhost_ctrl.cpp")
     list(APPEND core_sources "${PORT_BUILD_DIR}/nvhost_ctrl.cpp")
-    file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/service/nvnflinger/buffer_queue_producer.cpp" producer_source)
     set(producer_old "        Status status = WaitForFreeSlotThenRelock(async, &found, &return_flags, lock);")
     string(FIND "${producer_source}" "${producer_old}" producer_at)
     if(producer_at LESS 0)
         message(FATAL_ERROR "Pinned buffer queue dequeue changed")
     endif()
     string(REPLACE "${producer_old}" "        const auto dequeue_start = ::Eden::Performance::NowNs();\n${producer_old}\n        ::Eden::Performance::AddSince(::Eden::Performance::guest_dequeue_wait, dequeue_start);" producer_source "${producer_source}")
-    write_derived("${PORT_BUILD_DIR}/buffer_queue_producer.cpp" "#include \"${EDEN_PORT_DIR}/performance.h\"\n${producer_source}")
+    write_derived("${PORT_BUILD_DIR}/buffer_queue_producer.cpp" "#include \"${EDEN_PORT_DIR}/guest_clock.h\"\n#include \"${EDEN_PORT_DIR}/performance.h\"\n${producer_source}")
     list(REMOVE_ITEM core_sources "hle/service/nvnflinger/buffer_queue_producer.cpp")
     list(APPEND core_sources "${PORT_BUILD_DIR}/buffer_queue_producer.cpp")
     # Guest asset streaming: time and bytes of fsp-srv IFile/IStorage backend reads.
@@ -844,8 +940,25 @@ if(EDEN_DEV_PROFILE)
     if(ipc_at LESS 0)
         message(FATAL_ERROR "Pinned SendSyncRequest changed")
     endif()
-    string(REPLACE "${ipc_old}" "    const auto ipc_start = ::Eden::Performance::NowNs();\n    const Result ipc_result = session->SendSyncRequest(kernel, message, buffer_size);\n    ::Eden::Performance::AddSince(::Eden::Performance::guest_ipc_wait, ipc_start);\n    R_RETURN(ipc_result);" ipc_source "${ipc_source}")
-    write_derived("${PORT_BUILD_DIR}/svc_ipc.cpp" "#include \"${EDEN_PORT_DIR}/performance.h\"\n${ipc_source}")
+    # Which guest thread is waiting, not only how long the waits summed to: a frame held up by one
+    # thread and a frame with a dozen idle helpers reporting the same total look identical without
+    # this, and only one of them can be costing the frame (performance.h).
+    string(REPLACE "${ipc_old}" [=[    const auto ipc_start = ::Eden::Performance::NowNs();
+    const Result ipc_result = session->SendSyncRequest(kernel, message, buffer_size);
+    const long long ipc_ns = ::Eden::Performance::NowNs() - ipc_start;
+    ::Eden::Performance::AddNs(::Eden::Performance::guest_ipc_wait, ipc_ns);
+    {
+        bool fresh = false;
+        const unsigned ipc_slot =
+            ::Eden::Performance::IpcThreadSlotFor(GetCurrentThread(kernel).GetThreadId(), &fresh);
+        if (fresh) {
+            if (const auto ipc_name = Core::GetThreadName(&GetCurrentThread(kernel)))
+                ::Eden::Performance::SetIpcThreadName(ipc_slot, ipc_name->c_str());
+        }
+        ::Eden::Performance::AddIpcThread(ipc_slot, ipc_ns);
+    }
+    R_RETURN(ipc_result);]=] ipc_source "${ipc_source}")
+    write_derived("${PORT_BUILD_DIR}/svc_ipc.cpp" "#include \"${EDEN_PORT_DIR}/performance.h\"\n#include \"core/arm/debug.h\"\n${ipc_source}")
     list(REMOVE_ITEM core_sources "hle/kernel/svc/svc_ipc.cpp")
     list(APPEND core_sources "${PORT_BUILD_DIR}/svc_ipc.cpp")
 endif()
@@ -862,21 +975,30 @@ if(EDEN_A32_FASTMEM)
     write_derived("${PORT_BUILD_DIR}/memory.cpp" "${arena_source}")
     list(REMOVE_ITEM core_sources "memory.cpp")
     list(APPEND core_sources "${PORT_BUILD_DIR}/memory.cpp")
-    # Upstream places code at any 4 KiB offset below 16 MiB, which leaves three of four
-    # layouts with every module page out of 16 KiB phase with its backing. Keep the same
-    # range with 16 KiB steps so module chunks can alias.
-    file(READ "${PROJECT_SOURCE_DIR}/src/core/loader/deconstructed_rom_directory.cpp" aslr_source)
-    set(aslr_old "? ::Settings::values.rng_seed.GetValue() : Common::Random::Random64(0)) << 12) & 0xfff000;")
-    string(FIND "${aslr_source}" "${aslr_old}" aslr_at)
-    if(aslr_at LESS 0)
-        message(FATAL_ERROR "Pinned code ASLR offset changed")
-    endif()
-    string(REPLACE "${aslr_old}" "? ::Settings::values.rng_seed.GetValue() : Common::Random::Random64(0)) << 14) & 0xffc000;"
-        aslr_source "${aslr_source}")
-    write_derived("${PORT_BUILD_DIR}/deconstructed_rom_directory.cpp" "${aslr_source}")
-    list(REMOVE_ITEM core_sources "loader/deconstructed_rom_directory.cpp")
-    list(APPEND core_sources "${PORT_BUILD_DIR}/deconstructed_rom_directory.cpp")
 endif()
+# Where a game's code is loaded: at a random offset, or at the one the game's seed gives
+# (load_address.h). Upstream takes the seed from its RNG seed setting, which also seeds the
+# random numbers a game is given; the port's seed fixes the offset alone.
+# With the A32 fastmem window the offset moves in 16 KiB steps over the same range: upstream
+# places code at any 4 KiB offset below 16 MiB, which leaves three of four layouts with every
+# module page out of 16 KiB phase with its backing, and module chunks could not alias.
+file(READ "${PROJECT_SOURCE_DIR}/src/core/loader/deconstructed_rom_directory.cpp" aslr_source)
+set(aslr_old "((::Settings::values.rng_seed_enabled.GetValue()\n        ? ::Settings::values.rng_seed.GetValue() : Common::Random::Random64(0)) << 12) & 0xfff000;")
+string(FIND "${aslr_source}" "${aslr_old}" aslr_at)
+if(aslr_at LESS 0)
+    message(FATAL_ERROR "Pinned code ASLR offset changed")
+endif()
+if(EDEN_A32_FASTMEM)
+    set(aslr_steps "<< 14) & 0xffc000")
+else()
+    set(aslr_steps "<< 12) & 0xfff000")
+endif()
+string(REPLACE "${aslr_old}" "((::Eden::code_seed.load() >= 0 ? static_cast<u64>(::Eden::code_seed.load())\n        : Common::Random::Random64(0)) ${aslr_steps};"
+    aslr_source "${aslr_source}")
+write_derived("${PORT_BUILD_DIR}/deconstructed_rom_directory.cpp"
+    "#include \"${EDEN_PORT_DIR}/load_address.h\"\n${aslr_source}")
+list(REMOVE_ITEM core_sources "loader/deconstructed_rom_directory.cpp")
+list(APPEND core_sources "${PORT_BUILD_DIR}/deconstructed_rom_directory.cpp")
 # GetPseudoDeviceId read the seed through the control data without checking that there is
 # any (a game without control data, such as a homebrew NRO): seed 0 then, as for other
 # NACP fields Eden defaults when the metadata is missing.
@@ -1299,7 +1421,69 @@ if(finish_offset LESS 0)
     message(FATAL_ERROR "Pinned thread termination changed; review finalization lock scope.")
 endif()
 string(REPLACE "${old_finish}" "        {\n            KScopedSchedulerLock sl{kernel};\n            m_signaled = true;\n            KSynchronizationObject::NotifyAvailable(kernel);\n        }\n\n        // Finalization may block; scheduling must be enabled here.\n        this->Close(kernel);" thread_source "${thread_source}")
-write_derived("${PORT_BUILD_DIR}/k_thread.cpp" "${thread_source}")
+
+# Which guest thread was blocked, on what, and for how long. A core with nothing to run reads the
+# same whether its thread is asleep until a timeout or waiting on something only the GPU thread can
+# signal, and only one of those is ours to fix. BeginWait stamps the thread; SetState is the single
+# place the wait reason is cleared, so the reason read there is the one the wait actually ran under.
+set(wait_begin [=[    void KThread::BeginWait(KernelCore& kernel, KThreadQueue* queue) {
+        // Set our state as waiting.
+        this->SetState(kernel, ThreadState::Waiting);
+
+        // Set our wait queue.
+        m_wait_queue = queue;
+    }]=])
+string(FIND "${thread_source}" "${wait_begin}" wait_begin_at)
+if(wait_begin_at LESS 0)
+    message(FATAL_ERROR "Pinned KThread::BeginWait changed")
+endif()
+string(REPLACE "${wait_begin}" [=[    void KThread::BeginWait(KernelCore& kernel, KThreadQueue* queue) {
+        // Set our state as waiting.
+        this->SetState(kernel, ThreadState::Waiting);
+
+        // Set our wait queue.
+        m_wait_queue = queue;
+
+        // No name lookup here: this runs under the scheduler lock, and a thread's name lives in
+        // guest memory. Every thread that matters sends requests, so the IPC path names it.
+        // Counted in development builds only (performance.h, dev_marks).
+        if (::Eden::Performance::dev_marks.load(std::memory_order_relaxed))
+            ::Eden::Performance::WaitBegin(GetThreadId(), ::Eden::Performance::NowNs());
+    }]=] thread_source "${thread_source}")
+
+set(wait_end [=[    void KThread::SetState(KernelCore& kernel, ThreadState state) {
+        KScopedSchedulerLock sl{kernel};
+        // Clear debugging state
+        this->SetWaitReasonForDebugging({});
+        const ThreadState old_state = m_thread_state.load(std::memory_order_relaxed);]=])
+string(FIND "${thread_source}" "${wait_end}" wait_end_at)
+if(wait_end_at LESS 0)
+    message(FATAL_ERROR "Pinned KThread::SetState changed")
+endif()
+string(REPLACE "${wait_end}" [=[    void KThread::SetState(KernelCore& kernel, ThreadState state) {
+        KScopedSchedulerLock sl{kernel};
+        // Close any wait this thread was under. SetState is the only place the reason is cleared,
+        // so reading it here attributes the wait to the reason it ran under (performance.h).
+        const bool marks = ::Eden::Performance::dev_marks.load(std::memory_order_relaxed);
+        if (const auto wait_reason = this->GetWaitReasonForDebugging();
+            marks && wait_reason != ThreadWaitReasonForDebugging::None) {
+            const auto* waker = GetCurrentThreadPointer(kernel);
+            ::Eden::Performance::WaitEnd(GetThreadId(), static_cast<unsigned>(wait_reason),
+                                         ::Eden::Performance::NowNs(),
+                                         waker ? waker->GetThreadId() : 0);
+        }
+        // Clear debugging state
+        this->SetWaitReasonForDebugging({});
+        const ThreadState old_state = m_thread_state.load(std::memory_order_relaxed);
+        // Only the transition into Runnable is stamped: a thread already running that gets
+        // re-marked Runnable must not report its own remaining execution as time spent waiting to
+        // be scheduled (performance.h).
+        if (marks && (old_state & ThreadState::Mask) != ThreadState::Runnable &&
+            (state & ThreadState::Mask) == ThreadState::Runnable) {
+            ::Eden::Performance::NoteRunnable(GetThreadId(), ::Eden::Performance::NowNs());
+        }]=] thread_source "${thread_source}")
+
+write_derived("${PORT_BUILD_DIR}/k_thread.cpp" "#include \"${EDEN_PORT_DIR}/performance.h\"\n${thread_source}")
 get_target_property(core_sources core SOURCES)
 list(REMOVE_ITEM core_sources hle/kernel/k_thread.cpp)
 list(APPEND core_sources "${PORT_BUILD_DIR}/k_thread.cpp")
@@ -2010,6 +2194,47 @@ write_derived("${PORT_BUILD_DIR}/shader_environment.cpp"
     "${shader_environment_head}#include \"${EDEN_PORT_DIR}/shader_cache_reader.inc\"\n\n${shader_environment_tail}")
 set_property(SOURCE "${PORT_BUILD_DIR}/shader_environment.cpp" APPEND PROPERTY OBJECT_DEPENDS
     "${EDEN_PORT_DIR}/shader_cache_reader.inc")
+# Eden recompresses an ASTC texture to BC1 or BC3 a mip level at a time: every layer of the level
+# is decoded into one buffer, four bytes a pixel, and then compressed. For a texture array of 121
+# layers that buffer is 484 MiB, asked of the pool the CPU shares with the GPU at the moment a game
+# loads new textures (a session ended there with the pool at 620 MiB in one piece), and the heap
+# keeps what it grew by. A layer at a time needs 4 MiB and writes the same bytes: both steps
+# already work layer by layer, each layer at its own offset.
+file(READ "${PROJECT_SOURCE_DIR}/src/video_core/texture_cache/util.cpp" texture_util_source)
+set(recompress_old [=[            decode_scratch.resize_destructive(level_size);
+
+            Tegra::Texture::ASTC::Decompress(
+                input_offset, copy.image_extent.width, copy.image_extent.height,
+                copy.image_subresource.num_layers * copy.image_extent.depth, tile_size.width,
+                tile_size.height, decode_scratch);
+
+            compress(decode_scratch, copy.image_extent.width, copy.image_extent.height,
+                     copy.image_subresource.num_layers * copy.image_extent.depth,
+                     output.subspan(output_offset));
+]=])
+string(FIND "${texture_util_source}" "${recompress_old}" recompress_at)
+if(recompress_at LESS 0)
+    message(FATAL_ERROR "Pinned ASTC recompression changed (texture_cache/util.cpp, ConvertImage)")
+endif()
+string(REPLACE "${recompress_old}" [=[            // A layer at a time (headless/CMakeLists.txt): ASTC blocks are 16 bytes, BC blocks
+            // cover 4x4 pixels.
+            const u32 layers = copy.image_subresource.num_layers * copy.image_extent.depth;
+            const u32 layer_input = Common::DivideUp(copy.image_extent.width, tile_size.width) *
+                                    Common::DivideUp(copy.image_extent.height, tile_size.height) * 16;
+            const u32 layer_output = Common::AlignUp(copy.image_extent.width, 4) *
+                                     Common::AlignUp(copy.image_extent.height, 4) / bpp_div;
+            decode_scratch.resize_destructive(level_size / (std::max)(layers, 1u));
+            for (u32 layer = 0; layer < layers; ++layer) {
+                Tegra::Texture::ASTC::Decompress(
+                    input_offset.subspan(layer * layer_input), copy.image_extent.width,
+                    copy.image_extent.height, 1, tile_size.width, tile_size.height, decode_scratch);
+                compress(decode_scratch, copy.image_extent.width, copy.image_extent.height, 1,
+                         output.subspan(output_offset + layer * layer_output));
+            }
+]=] texture_util_source "${texture_util_source}")
+write_derived("${PORT_BUILD_DIR}/texture_cache_util.cpp" "${texture_util_source}")
+list(REMOVE_ITEM video_sources texture_cache/util.cpp)
+list(APPEND video_sources "${PORT_BUILD_DIR}/texture_cache_util.cpp")
 list(REMOVE_ITEM video_sources shader_environment.cpp)
 list(APPEND video_sources "${PORT_BUILD_DIR}/shader_environment.cpp")
 set_property(TARGET video_core PROPERTY SOURCES "${video_sources}")
@@ -2219,7 +2444,7 @@ void Initialize() {
         "${EDEN_PORT_DIR}/heap_pages.cpp" "${EDEN_PORT_DIR}/performance.cpp"
         "${EDEN_PORT_DIR}/crash_report.cpp" "${EDEN_PORT_DIR}/stop_limit.cpp"
         "${EDEN_PORT_DIR}/elevation/elevation.cpp"
-        "${eden_app_crt}" "${PORT_ROOT}/src/lifecycle.c"
+        "${eden_app_crt}" "${PORT_ROOT}/src/lifecycle.c" "${PORT_ROOT}/src/direct_memory.c"
         "${PORT_BUILD_DIR}/app_heap.c")
     target_compile_definitions(eden-headless PRIVATE PS5_NATIVE=1)
     set_property(TARGET eden-headless APPEND PROPERTY LINK_DEPENDS
@@ -2372,14 +2597,14 @@ if(EDEN_PS5_OPENGL)
         message(FATAL_ERROR "PS5 graphics requires the native OpenGL build")
     endif()
     # The pinned PS5 OpenGL 4.6 SDK release (tools/deps.json, make deps).
-    set(gl46 "${PORT_ROOT}/.deps/ps5-opengl-sdk-1.0.0/sdk")
-    set(gl46_expected "d0c5accb58e07f1359fecfd9e4313df08acb86af71fb80052da3e9f06203fdc8")
+    set(gl46 "${PORT_ROOT}/.deps/ps5-opengl-sdk-1.0.2/sdk")
+    set(gl46_expected "7fd5d7a1beb7bf5af42e6a6936b88b1266cba3f224d3a60c3a6a09285e339ae1")
     if(NOT EXISTS "${gl46}/lib/libps5_opengl_core33.a")
         message(FATAL_ERROR "Missing the PS5 OpenGL SDK in ${gl46}; run make deps")
     endif()
     file(SHA256 "${gl46}/lib/libps5_opengl_core33.a" gl46_hash)
     if(EDEN_DEV_PROFILE)
-        target_compile_definitions(eden-headless PRIVATE EDEN_DEV_GL_VERSION="${gl46_hash}-sdk-1.0.0")
+        target_compile_definitions(eden-headless PRIVATE EDEN_DEV_GL_VERSION="${gl46_hash}-sdk-1.0.2")
     endif()
     if(NOT gl46_hash STREQUAL gl46_expected)
         message(FATAL_ERROR "Frozen OpenGL 4.6 runtime changed")

@@ -8,7 +8,9 @@
 #include "pe/ui/services.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -24,6 +26,8 @@ class FakeServices final : public ui::Services
 
     // What the preview varies between pictures.
     bool setup_ready = true;
+    int available_frame_gen = 0;
+    int frame_gen_state() override { return available_frame_gen; }
     std::string launch_error;
     std::string crash_report; // the previous run's crash report, when it left one
     bool has_history = true;
@@ -82,7 +86,7 @@ class FakeServices final : public ui::Services
     }
     std::string version() override
     {
-        return "v1.000.110";
+        return "v1.001.000";
     }
     // The people who play on the preview's console.
     std::vector<ui::Profile> people{{"Eden", true}};
@@ -252,6 +256,22 @@ class FakeServices final : public ui::Services
         game_settings_ = settings;
         return true;
     }
+    std::optional<std::int64_t> typed_seed;
+    std::atomic<bool> seed_wait_for_cancel{false};
+    std::atomic<unsigned> seed_queries{0};
+    std::atomic<std::int64_t> last_seed_current{-1};
+    std::optional<std::int64_t> ask_seed(std::int64_t current, const std::atomic<bool> &stop) override
+    {
+        last_seed_current = current;
+        ++seed_queries;
+        if (seed_wait_for_cancel)
+        {
+            while (!stop)
+                std::this_thread::sleep_for(std::chrono::milliseconds{1});
+            return std::nullopt;
+        }
+        return typed_seed;
+    }
     ui::Preferences preferences() override
     {
         return preferences_;
@@ -265,6 +285,7 @@ class FakeServices final : public ui::Services
     const std::vector<std::string> &resolution_labels() override;
     const std::vector<std::string> &resolution_keys() override;
     const std::vector<std::string> &filter_labels() override;
+    const std::vector<std::string> &astc_labels() override;
     const std::vector<std::string> &language_labels() override;
     std::string language_region(int language) override;
     std::string setup_details() override;

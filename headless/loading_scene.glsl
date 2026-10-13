@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Personal Switch-style loading presentation. Shared by OpenGL and Vulkan.
-// Retains the reduced-motion marker and supports the v110 loading-state interface.
+// Switch loading presentation, shared by OpenGL and Vulkan.
+// The renderer supplies progress state; the scene retains the reduced-motion marker.
 
 float switch_box(vec2 p, vec2 half_size, float radius)
 {
@@ -231,7 +231,7 @@ vec3 loading_scene(vec2 pixel, vec2 size, float seconds)
     return vec3(max(brand,icon*visibility));
 }
 
-// v1.000.110 backend entry; the Switch boot presentation remains unchanged.
+// Loading-state entry shared by both graphics backends.
 vec3 loading_scene(vec2 pixel, vec2 size, float seconds, uint state[24])
 {
     return loading_scene(pixel, size, seconds);

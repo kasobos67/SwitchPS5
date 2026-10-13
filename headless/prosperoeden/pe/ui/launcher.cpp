@@ -57,6 +57,8 @@ Launcher::Launcher(Services &services, Textures &textures, const Fonts &fonts, b
 
 Launcher::~Launcher()
 {
+    seed_edit_stop_ = true;
+    if (seed_edit_.valid()) seed_edit_.wait();
     room_directory_stop_ = true;
     if (room_directory_request_.valid()) room_directory_request_.wait();
     room_edit_stop_ = true;
@@ -318,6 +320,7 @@ void Launcher::update(float dt)
     poll_pairing(dt);
     refresh_sync_setup(dt);
     update_multiplayer();
+    update_game_options();
     update_controllers(dt);
     transition_.update(dt);
     press_ = std::max(0.0f, press_ - dt / 0.18f);

@@ -1,6 +1,6 @@
 # SwitchPS5
 
-Switch-style PS5 UI based on [ProsperoEden](https://github.com/blackbearreloaded/ProsperoEden). The complete modified source is browseable in this repository. Download the installable [`Switch-PPSA99009-v1.000.110.zip`](https://github.com/kasobos67/SwitchPS5/releases/tag/v1.000.110) from the release page; it contains the `PPSA99009/` folder.
+Switch-style PS5 UI based on [ProsperoEden v1.000.110](https://github.com/blackbearreloaded/ProsperoEden). The complete modified source is browseable in this repository. Download the installable [`Switch-PPSA99009-v1.000.110.zip`](https://github.com/kasobos67/SwitchPS5/releases/tag/v1.000.110) from the release page; it contains the `PPSA99009/` folder.
 
 ## Screenshots
 

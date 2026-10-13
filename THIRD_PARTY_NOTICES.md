@@ -1,6 +1,6 @@
 # Third-party notices
 
-ProsperoEden is licensed under GPL-3.0-or-later (see [LICENSE](LICENSE)). It
+SwitchPS5 derives from [ProsperoEden](https://github.com/blackbearreloaded/ProsperoEden) by BlackBearReloaded, licensed under GPL-3.0-or-later (see [LICENSE](LICENSE)). It
 builds on the following projects, each under its own license.
 
 ## Emulator
@@ -74,8 +74,9 @@ builds on the following projects, each under its own license.
   in the app, reads the console's system fonts for the scripts Montserrat does
   not have. `stb_image_write` saves the PC previews and is not part of the app.
 - The Switch-style interface uses selected Nintendo Switch HOME Menu audio,
-  UI symbols, profile artwork, animation data, and fonts. The app icon and the PS5 background pattern are based on Nintendo Switch
-  artwork and branding. These assets retain their original rights; the software license does not relicense them.
+  UI symbols, profile artwork, animation data, and fonts. The app icon and PS5
+  background are custom artwork. These assets retain their original rights;
+  the software license does not relicense them.
 - `third_party/ps5_pad.hpp` comes from
   [ps5-native-gamepad-input-research](https://github.com/blackbearreloaded/ps5-native-gamepad-input-research),
   and `third_party/native_audio.hpp` from

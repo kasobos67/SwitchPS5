@@ -191,9 +191,11 @@ class Launcher
 
     // ---- a game's own settings by category, and the button mapping (game_options.cpp) ----
     // Categories, in the order of the game settings' rows: video, performance, audio, controls,
-    // language.
-    static constexpr int kGameOptionCategories = 5;
+    // system, language.
+    static constexpr int kGameOptionCategories = 6;
     void open_game_options(int category);
+    void edit_seed();
+    void update_game_options();
     void press_game_options(Key key);
     void draw_game_options(Canvas &c, float open);
     // How many of a category's settings the game has of its own.
@@ -457,6 +459,9 @@ class Launcher
     ListView mod_rows_;
     int game_options_ = 0;          // the category a game's own settings dialog shows
     ListView option_rows_;          // its rows
+    std::atomic<bool> seed_edit_stop_{false};
+    std::future<std::optional<std::int64_t>> seed_edit_;
+    std::uint64_t seed_edit_title_id_ = 0;
     bool mapping_for_game_ = false; // the mapping dialog edits the game's own mapping
     ListView mapping_rows_;
     std::vector<Profile> profiles_; // the people who play on this console

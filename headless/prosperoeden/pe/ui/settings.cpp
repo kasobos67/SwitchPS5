@@ -45,6 +45,7 @@ enum VideoRow : int
     video_output,
     video_resolution,
     video_filter,
+    video_astc,
     video_refresh,
     video_overlay,
     video_frame_gen,
@@ -121,9 +122,11 @@ void Launcher::enter_settings_content()
     message_.clear();
     video_rows_.visible = kVideoRowsShown;
     video_rows_.pitch = kVideoRowPitch;
+    video_rows_.wrap = false;
     video_rows_.reset(dialog_rows(Modal::video), 0);
     performance_rows_.visible = kPerformanceRowsShown;
     performance_rows_.pitch = kVideoRowPitch;
+    performance_rows_.wrap = false;
     performance_rows_.reset(kPerformanceRows, 0);
     option_cursor_.snap(dialog_row_top(settings_modal(), 0));
     const auto states = switch_states(settings_modal());
@@ -341,6 +344,7 @@ SettingChoices setting_choices(int category, int option, const Preferences &pref
         case video_output: return {tr("Output resolution"), {"1080p", "1440p", "2160p"}, prefs.output};
         case video_resolution: return {tr("Resolution"), services.resolution_labels(), prefs.resolution};
         case video_filter: return {tr("Upscaling filter"), services.filter_labels(), prefs.filter};
+        case video_astc: return {tr("ASTC textures"), services.astc_labels(), prefs.astc};
         case video_frame_gen: return {tr("Frame generation"), {tr("Off"),tr("On")},prefs.frame_gen ? 1 : 0};
         case video_frame_gen_target: return {tr("Frame gen target"),{tr("Auto"),"60 Hz","90 Hz","120 Hz","144 Hz","240 Hz"},prefs.frame_gen_target};
         case video_frame_gen_multiplier: return {tr("Frame gen multiplier"),{"2x","3x","4x"},prefs.frame_gen_multiplier};
@@ -394,6 +398,7 @@ void Launcher::press_settings_choice(Key key)
         case video_output: prefs_.output = value; break;
         case video_resolution: prefs_.resolution = value; break;
         case video_filter: prefs_.filter = value; break;
+        case video_astc: prefs_.astc = value; break;
         case video_frame_gen: prefs_.frame_gen = value != 0; break;
         case video_frame_gen_target: prefs_.frame_gen_target = value; break;
         case video_frame_gen_multiplier: prefs_.frame_gen_multiplier = value; break;
@@ -413,6 +418,10 @@ void Launcher::press_settings_choice(Key key)
     apply_look();
     close_modal();
     option_ = setting_choice_option_;
+    if (setting_choice_category_ == kVideo && setting_choice_option_ == video_refresh && prefs_.refresh == 1)
+        say(tr("Saved. A display that cannot show 120 Hz stays at 60 Hz."));
+    else if (setting_choice_category_ == kVideo && setting_choice_option_ == video_astc && prefs_.astc == 1)
+        say(tr("Saved. Full quality uses four times the graphics memory for these textures and can run out above 1x."));
     cue(Cue::saved);
 }
 
@@ -458,9 +467,9 @@ int Launcher::dialog_rows(Modal modal) const
     case Modal::accessibility:
         return 3;
     case Modal::game:
-        // Console mode, video, performance, audio, controls, language, mods; save data in builds
+        // Console mode, video, performance, audio, controls, system, language, mods; save data in builds
         // that move saves.
-        return (services_.save_transfer_available() ? 8 : 7) +
+        return (services_.save_transfer_available() ? 9 : 8) +
                (library_.selected < static_cast<int>(games_.size()) &&
                 !games_[static_cast<std::size_t>(library_.selected)].sources.empty() &&
                 !games_[static_cast<std::size_t>(library_.selected)].remote ? 1 : 0);
@@ -549,6 +558,8 @@ void Launcher::press_dialog(Key key)
             const int count = static_cast<int>(services_.filter_labels().size());
             prefs_.filter = (prefs_.filter + step + count) % count;
         }
+        else if (option_ == video_astc)
+            prefs_.astc = prefs_.astc != 0 ? 0 : 1;
         else if (option_ == video_refresh)
             prefs_.refresh = prefs_.refresh != 0 ? 0 : 1;
         else if(option_ >= video_frame_gen) {
@@ -623,6 +634,10 @@ void Launcher::press_dialog(Key key)
         // 120 Hz is a request: the display has the last word.
         say(tr("Saved. A display that cannot show 120 Hz stays at 60 Hz."));
     }
+    else if (modal_ == Modal::video && option_ == video_astc && prefs_.astc == 1)
+    {
+        say(tr("Saved. Full quality uses four times the graphics memory for these textures and can run out above 1x."));
+    }
     apply_look();
     if (sound == Cue::toggle)
     {
@@ -672,11 +687,11 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         const std::string values[] = {
             prefs_.renderer != 0 ? "Vulkan" : "OpenGL", output_name(prefs_.output),
             pick(services_.resolution_labels(), prefs_.resolution),
-            pick(services_.filter_labels(), prefs_.filter), hertz(prefs_.refresh), std::string{}, on_off(prefs_.frame_gen),
+            pick(services_.filter_labels(), prefs_.filter), pick(services_.astc_labels(), prefs_.astc), hertz(prefs_.refresh), std::string{}, on_off(prefs_.frame_gen),
             prefs_.frame_gen_target <= 0 ? std::string{tr("Auto")} : fill(tr("{0} Hz"),{std::vector<std::string>{"Auto","60","90","120","144","240"}[static_cast<std::size_t>(std::clamp(prefs_.frame_gen_target,1,5))]}),
             std::vector<std::string>{"2x","3x","4x"}[static_cast<std::size_t>(std::clamp(prefs_.frame_gen_multiplier,0,2))]};
         static constexpr const char *names[] = {TR("Renderer"), TR("Output resolution"),
-            TR("Resolution"), TR("Upscaling filter"), TR("Refresh rate"), TR("FPS overlay"), TR("Frame generation"), TR("Frame gen target"), TR("Frame gen multiplier")};
+            TR("Resolution"), TR("Upscaling filter"), TR("ASTC textures"), TR("Refresh rate"), TR("FPS overlay"), TR("Frame generation"), TR("Frame gen target"), TR("Frame gen multiplier")};
         for (int row = first; row <= last; ++row)
             if (row == video_overlay)
                 switch_row(row, tr(names[row]), prefs_.hud);

@@ -247,6 +247,8 @@ class WideLibraryServices final : public pe::ui::Services
     const std::vector<std::string> &resolution_labels() override { return base_.resolution_labels(); }
     const std::vector<std::string> &resolution_keys() override { return base_.resolution_keys(); }
     const std::vector<std::string> &filter_labels() override { return base_.filter_labels(); }
+    const std::vector<std::string> &astc_labels() override { return base_.astc_labels(); }
+    int frame_gen_state() override { return base_.frame_gen_state(); }
     const std::vector<std::string> &language_labels() override { return base_.language_labels(); }
     std::string language_region(int n) override { return base_.language_region(n); }
     std::string setup_details() override { return base_.setup_details(); }
@@ -586,6 +588,18 @@ void switch_home_checks(Stage &s)
             selected(games[0], "single-game HOME leading clamp");
         }
     }
+    // A game removed while HOME is active must repair focus to All Software.
+    s.launcher.reset(); s.services.removed = saved_removed;
+    for (std::size_t i = 1; i < games.size(); ++i) s.services.removed.push_back(games[i].file);
+    ready_home();
+    s.services.removed.push_back(games.front().file); s.wait(2.2f);
+    s.press({Key::cross}); s.wait(.7f); s.render();
+    check(!s.launcher->done() && s.launcher->selected_game().empty(),
+          "removing the final HOME game left a launchable missing tile");
+    const auto empty_library = cover_quads(s);
+    check(std::none_of(empty_library.begin(), empty_library.end(), visible_cover),
+          "removing the final HOME game retained stale library covers");
+    s.shoot("switch-home-final-game-removed");
     s.launcher.reset();
     s.services.removed = saved_removed; s.services.has_history = saved_history;
     ready_home(); right(6);
@@ -755,7 +769,11 @@ void switch_navigation_checks(Stage &s)
     const auto prior_saved_room = s.services.saved_room;
     const auto signal_pixels=[&]() {
         std::uint64_t hash=1469598103934665603ull;
-        for(int y=82;y<128;++y) for(int x=1830;x<1882;++x) {
+        const int left = static_cast<int>(1830.0f * s.width / 1920.0f);
+        const int right = static_cast<int>(std::ceil(1882.0f * s.width / 1920.0f));
+        const int top = static_cast<int>(82.0f * s.height / 1080.0f);
+        const int bottom = static_cast<int>(std::ceil(128.0f * s.height / 1080.0f));
+        for(int y=top;y<bottom;++y) for(int x=left;x<right;++x) {
             const std::size_t p=(static_cast<std::size_t>(s.height-1-y)*s.width+x)*4;
             for(int channel=0;channel<3;++channel)
                 hash=(hash^s.pixels[p+channel])*1099511628211ull;
@@ -882,6 +900,7 @@ void switch_menu_checks(Stage &s)
     s.press({Key::down});choice((video.output+1)%3);check(s.launcher->output()==(video.output+1)%3,"output resolution");
     s.press({Key::down});choice((video.resolution+1)%static_cast<int>(s.services.resolution_labels().size()));check(s.services.preferences().resolution==(video.resolution+1)%static_cast<int>(s.services.resolution_labels().size()),"render resolution");
     s.press({Key::down});choice((video.filter+1)%static_cast<int>(s.services.filter_labels().size()));check(s.services.preferences().filter==(video.filter+1)%static_cast<int>(s.services.filter_labels().size()),"upscaling filter");
+    s.press({Key::down});choice(1-video.astc);check(s.services.preferences().astc!=video.astc,"ASTC texture quality");
     s.press({Key::down});choice(1-video.refresh);check(s.services.preferences().refresh!=video.refresh,"refresh rate");
     s.press({Key::down,Key::cross});check(s.services.preferences().hud!=video.hud,"FPS overlay");
     category(3);
@@ -936,11 +955,11 @@ void switch_menu_checks(Stage &s)
     s.wait(0.3f);s.shoot("switch-game-save-failed");
     s.services.fail_settings=false;s.press({Key::right});
     check(s.services.game_settings(0).mute==1,"per-game rollback");
-    open_game(5);s.press({Key::cross,Key::right});check(s.services.game_settings(0).language==0,"per-game language");
+    open_game(6);s.press({Key::cross,Key::right});check(s.services.game_settings(0).language==0,"per-game language");
     s.press({Key::left});check(s.services.game_settings(0).language==-1,"per-game follows Settings");
     s.services.set_game_settings(0,game_prefs);
 
-    open_game(7);
+    open_game(8);
     const int imports=s.services.imports,exports=s.services.exports;
     s.press({Key::cross});check(s.services.imports==imports,"save import skipped confirmation");
     s.press({Key::cross});check(s.services.imports==imports+1 && s.services.last_save_title==games[0].title_id,"confirmed save import target");
@@ -951,7 +970,7 @@ void switch_menu_checks(Stage &s)
     s.services.fail_save=true;s.press({Key::square});s.wait(0.3f);s.shoot("switch-save-export-failed");
     check(!s.launcher->done() && s.launcher->selected_game().empty(),"save failure launched or closed the app");
     s.services.fail_save=false;
-    s.services.import_available=false;open_game(7);s.press({Key::cross});
+    s.services.import_available=false;open_game(8);s.press({Key::cross});
     check(s.services.imports==imports+1,"unavailable save transfer invoked import");
     s.services.import_available=true;
 
@@ -963,7 +982,7 @@ void switch_menu_checks(Stage &s)
         const bool master=s.services.mods_enabled(modded->title_id);
         s.press({Key::square});check(s.services.mods_enabled(modded->title_id)!=master,"library Mods master switch");
         s.press({Key::square});
-        s.press({Key::triangle});for(int i=0;i<6;++i) s.press({Key::down});s.press({Key::cross});
+        s.press({Key::triangle});for(int i=0;i<7;++i) s.press({Key::down});s.press({Key::cross});
         const auto mods=s.services.mods(modded->title_id);
         s.press({Key::cross});check(s.services.mods(modded->title_id)[0].enabled!=mods[0].enabled,"mod switch");
         s.press({Key::cross});
@@ -1297,7 +1316,7 @@ void update110_workflow_checks(Stage &s)
     check(installed,"downloaded game becomes a local game");
     select_game("Lighthouse Keeper");
     s.press({Key::triangle}); s.wait(.5f);
-    for(int i=0;i<8;++i) s.press({Key::down});
+    for(int i=0;i<9;++i) s.press({Key::down});
     s.wait(.5f); s.shoot("110-08-delete-downloaded-game");
     s.press({Key::cross});
     bool still_installed=false;
@@ -1377,7 +1396,165 @@ void update110_workflow_checks(Stage &s)
     std::fprintf(stderr,"v1.000.110 workflow checks completed: %d checks\n",checks);
 }
 
-void pictures(Stage &s,const std::string &assets)
+void update1000_settings_checks(Stage &s)
+{
+    int checks = 0;
+    const auto check = [&](bool passed, const char *what) {
+        ++checks;
+        if (!passed) { std::fprintf(stderr, "error: v1000 settings: %s\n", what); s.ok = false; }
+    };
+    const auto original_prefs = s.services.preferences();
+    const auto original_game = s.services.game_settings(0);
+    const int original_frame_gen = s.services.available_frame_gen;
+    const auto game = s.services.games().front();
+    s.services.set_game_settings(0, {});
+    const auto global_video = [&] {
+        s.restart(); s.wait(.8f); home_settings(s, .3f);
+        s.press({Key::down, Key::cross}); s.wait(.3f);
+    };
+    const auto picker = [&](int value) {
+        s.press({Key::cross});
+        for (int i = 0; i < 24; ++i) s.press({Key::up});
+        for (int i = 0; i < value; ++i) s.press({Key::down});
+        s.press({Key::cross}); s.wait(.2f);
+    };
+    const auto open_game = [&](int root_row) {
+        s.restart(); s.wait(.8f); home_library(s, .4f); s.press({Key::triangle});
+        for (int i = 0; i < root_row; ++i) s.press({Key::down});
+        s.press({Key::cross}); s.wait(.2f);
+    };
+    const auto render_ok = [&](const char *where) {
+        s.shoot(where);
+        check(glGetError() == GL_NO_ERROR, "settings render reported a GL error");
+    };
+
+    // Settings are changed through the launcher's real row navigation and writer.
+    global_video();
+    for (int i = 0; i < 4; ++i) s.press({Key::down});
+    picker(1);
+    check(s.services.preferences().astc == 1, "global ASTC did not reach preferences");
+    check(s.services.game_settings(0).astc == -1, "global ASTC changed a game's override");
+    global_video();
+    for (int i = 0; i < 4; ++i) s.press({Key::down});
+    s.press({Key::cross, Key::cross}); s.wait(.2f);
+    check(s.services.preferences().astc == 1, "reopened global ASTC lost its saved value");
+    picker(0);
+    check(s.services.preferences().astc == 0, "reopened global ASTC choice did not persist");
+    picker(1);
+    s.services.fail_settings = true; picker(0);
+    check(s.services.preferences().astc == 1, "rejected global ASTC write was retained");
+    s.services.fail_settings = false;
+    render_ok("v1000-global-astc");
+
+    open_game(1);
+    for (int i = 0; i < 3; ++i) s.press({Key::down});
+    s.press({Key::right, Key::right});
+    check(s.services.game_settings(0).astc == 1 && s.services.last_game_settings_title == game.title_id,
+          "per-game ASTC changed the wrong title or field");
+    check(s.services.preferences().astc == 1, "per-game ASTC changed global preferences");
+    open_game(1);
+    for (int i = 0; i < 3; ++i) s.press({Key::down});
+    s.press({Key::left});
+    check(s.services.game_settings(0).astc == 0, "reopened per-game ASTC lost its saved value");
+    s.press({Key::left});
+    check(s.services.game_settings(0).astc == -1, "per-game ASTC cannot follow global Settings");
+    s.services.fail_settings = true; s.press({Key::right});
+    check(s.services.game_settings(0).astc == -1, "rejected per-game ASTC write was retained");
+    s.services.fail_settings = false; s.press({Key::right});
+    check(s.services.game_settings(0).astc == 0, "per-game ASTC did not roll back after rejection");
+    render_ok("v1000-game-astc");
+
+    // The final visible row depends on whether frame generation exists and is ready.
+    for (const int availability : {0, 1, 2}) {
+        s.services.available_frame_gen = availability;
+        global_video();
+        const auto before = s.services.preferences();
+        for (int i = 0; i < 40; ++i) s.press({Key::down});
+        if (availability == 0) {
+            s.press({Key::cross});
+            check(s.services.preferences().hud != before.hud,
+                  "global Video bounds do not end at overlay without frame generation");
+        } else if (availability == 1) {
+            s.press({Key::right, Key::cross});
+            check(s.services.preferences().frame_gen_multiplier == before.frame_gen_multiplier,
+                  "unavailable frame generation accepted a setting");
+        } else {
+            picker(2);
+            check(s.services.preferences().frame_gen_multiplier == 2,
+                  "global Video bounds lost the frame generation multiplier row");
+        }
+        check(s.services.preferences().astc == before.astc,
+              "global Video bounds wrote ASTC instead of the final row");
+        render_ok(("v1000-video-bottom-" + std::to_string(availability)).c_str());
+        s.press({Key::circle, Key::circle}); s.wait(.7f); s.render();
+        const auto covers = cover_quads(s);
+        check(std::any_of(covers.begin(), covers.end(), [](const auto &q) {
+            return visible_cover(q) && std::fabs(q.rect.w - 384.0f) < .5f;
+        }), "Video Back did not return through Settings to HOME");
+    }
+    s.services.available_frame_gen = original_frame_gen;
+
+    open_game(5);
+    for (int i = 0; i < 40; ++i) s.press({Key::down});
+    s.press({Key::right});
+    check(s.services.game_settings(0).rng_seed == 0, "RNG right did not enable seed zero");
+    const auto type_seed = [&](std::optional<std::int64_t> answer) {
+        const auto queries = s.services.seed_queries.load();
+        s.services.typed_seed = answer;
+        s.press({Key::cross});
+        for (int i = 0; i < 100 && s.services.seed_queries == queries; ++i)
+            std::this_thread::sleep_for(std::chrono::milliseconds{1});
+        std::this_thread::sleep_for(std::chrono::milliseconds{5});
+        s.wait(.25f);
+        check(s.services.seed_queries == queries + 1, "RNG row did not call the keyboard service");
+    };
+    type_seed(0);
+    check(s.services.game_settings(0).rng_seed == 0 && s.services.last_seed_current == 0,
+          "RNG keyboard cannot keep seed zero");
+    type_seed(4294967295LL);
+    check(s.services.game_settings(0).rng_seed == 4294967295LL, "RNG keyboard rejected uint32 maximum");
+    for (const auto invalid : {-1LL, -2LL, 4294967296LL}) {
+        type_seed(invalid);
+        check(s.services.game_settings(0).rng_seed == 4294967295LL,
+              "invalid RNG input replaced the saved seed");
+    }
+    type_seed(std::nullopt);
+    check(s.services.game_settings(0).rng_seed == 4294967295LL,
+          "cancelled RNG keyboard replaced the saved seed");
+    s.services.fail_settings = true; type_seed(1234);
+    check(s.services.game_settings(0).rng_seed == 4294967295LL,
+          "rejected RNG settings write was retained");
+    s.services.fail_settings = false; type_seed(1234);
+    check(s.services.game_settings(0).rng_seed == 1234 && s.services.last_game_settings_title == game.title_id,
+          "RNG accepted input did not persist for the selected title");
+    render_ok("v1000-game-system-seed");
+    open_game(5);
+    s.press({Key::left});
+    check(s.services.game_settings(0).rng_seed == -1, "RNG left cannot restore Random after reopening");
+    s.press({Key::right});
+    const auto queries = s.services.seed_queries.load();
+    s.services.seed_wait_for_cancel = true; s.press({Key::cross});
+    for (int i = 0; i < 100 && s.services.seed_queries == queries; ++i)
+        std::this_thread::sleep_for(std::chrono::milliseconds{1});
+    check(s.services.seed_queries == queries + 1, "pending RNG keyboard never started");
+    s.press({Key::circle});
+    std::this_thread::sleep_for(std::chrono::milliseconds{5}); s.wait(.25f);
+    s.services.seed_wait_for_cancel = false;
+    check(s.services.game_settings(0).rng_seed == 0, "Back during pending RNG input saved a stale answer");
+    s.press({Key::circle}); s.wait(.3f); s.press({Key::circle}); s.wait(.7f); s.render();
+    check(!s.launcher->done() && s.launcher->selected_game().empty(),
+          "closing RNG settings launched a game");
+    const auto covers = cover_quads(s);
+    check(std::any_of(covers.begin(), covers.end(), [](const auto &q) {
+        return visible_cover(q) && std::fabs(q.rect.w - 261.0f) < .5f;
+    }), "RNG settings Back lost the library return destination");
+    check(s.services.preferences().astc == 1, "RNG editing changed global ASTC");
+    s.services.set_preferences(original_prefs); s.services.set_game_settings(0, original_game);
+    s.services.typed_seed.reset(); s.restart();
+    std::fprintf(stderr, "v1.001.000 ASTC, RNG, bounds and navigation checks completed: %d checks\n", checks);
+}
+
+void integration_checks(Stage &s, const std::string &assets)
 {
     switch_home_checks(s);
     switch_navigation_checks(s);
@@ -1386,6 +1563,12 @@ void pictures(Stage &s,const std::string &assets)
     switch_presentation_contract_checks(s);
     switch_home_launch_alignment_checks(s,assets);
     update110_workflow_checks(s);
+    update1000_settings_checks(s);
+}
+
+void pictures(Stage &s,const std::string &assets)
+{
+    integration_checks(s, assets);
     // Home, as it settles after the app opens.
     s.restart(true);
     s.wait(0.42f);
@@ -1440,7 +1623,9 @@ void pictures(Stage &s,const std::string &assets)
     s.press({Key::right});
     s.wait(0.6f);
     s.shoot("10-game-settings-changed");
-    s.press({Key::down, Key::down, Key::down, Key::right, Key::right});
+    s.press({Key::down, Key::down, Key::down});
+    s.wait(.6f);s.shoot("v1000-game-astc-row");
+    s.press({Key::down, Key::right, Key::right});
     s.wait(0.6f);
     s.shoot("40-game-refresh");
     // Its own Performance: Compile ahead switched on for this game only.
@@ -1468,7 +1653,7 @@ void pictures(Stage &s,const std::string &assets)
     s.wait(0.6f);
     s.shoot("53-game-settings-changed");
     // The game's mods: the row, the list, one switched on, and a game that has none.
-    s.press({Key::down, Key::down});
+    s.press({Key::down, Key::down, Key::down});
     s.wait(0.6f);
     s.shoot("35-game-mods-row");
     s.press({Key::cross});
@@ -1674,10 +1859,12 @@ void pictures(Stage &s,const std::string &assets)
     s.press({Key::down});picture_choice(1);
     s.wait(0.6f);
     s.shoot("15-video-saved");
-    s.press({Key::down, Key::down, Key::down});picture_choice(1);
+    s.press({Key::down, Key::down, Key::down});
+    s.wait(.6f);s.shoot("v1000-video-astc-row");
+    s.press({Key::down});picture_choice(1);
     s.wait(0.6f);
     s.shoot("41-video-refresh");
-    // The sixth row: the list scrolls to it.
+    // The seventh row: the list scrolls to it.
     s.press({Key::down});
     s.wait(0.6f);
     s.shoot("43-video-overlay");
@@ -1984,6 +2171,11 @@ class InteractiveLibraryServices final : public pe::ui::Services
     const std::vector<std::string> &resolution_labels() override {return base_.resolution_labels();}
     const std::vector<std::string> &resolution_keys() override {return base_.resolution_keys();}
     const std::vector<std::string> &filter_labels() override {return base_.filter_labels();}
+    const std::vector<std::string> &astc_labels() override {return base_.astc_labels();}
+    int frame_gen_state() override {return base_.frame_gen_state();}
+    std::optional<std::int64_t> ask_seed(std::int64_t current, const std::atomic<bool> &stop) override {
+        return base_.ask_seed(current, stop);
+    }
     const std::vector<std::string> &language_labels() override {return base_.language_labels();}
     std::string language_region(int n) override {return base_.language_region(n);}
     std::string setup_details() override {return base_.setup_details();}
@@ -2153,7 +2345,7 @@ int main(int argc, char **argv)
 {
     if (argc < 3)
     {
-        std::fprintf(stderr, "usage: %s <ui assets dir> <output dir> [--tour] [width height]\n",
+        std::fprintf(stderr, "usage: %s <ui assets dir> <output dir> [--tour|--interactive|--checks] [width height]\n",
                      argv[0]);
         return 2;
     }
@@ -2162,7 +2354,8 @@ int main(int argc, char **argv)
     int argument = 3;
     const bool make_tour = argc > argument && std::strcmp(argv[argument], "--tour") == 0;
     const bool make_interactive = argc > argument && std::strcmp(argv[argument], "--interactive") == 0;
-    if (make_tour || make_interactive)
+    const bool checks_only = argc > argument && std::strcmp(argv[argument], "--checks") == 0;
+    if (make_tour || make_interactive || checks_only)
         ++argument;
     const int width = argc > argument + 1 ? std::atoi(argv[argument]) : 1920;
     const int height = argc > argument + 1 ? std::atoi(argv[argument + 1]) : 1080;
@@ -2334,6 +2527,11 @@ int main(int argc, char **argv)
     stage.pixels.resize(static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 4);
     stbi_flip_vertically_on_write(1);
     if (make_interactive) return interactive(stage,assets);
+    if (checks_only) {
+        integration_checks(stage, assets);
+        std::fprintf(stderr, "launcher integration checks: %s\n", stage.ok ? "passed" : "failed");
+        return stage.ok ? 0 : 1;
+    }
     const char *which_tour = std::getenv("PE_TOUR");
     if (make_tour && which_tour && std::strcmp(which_tour, "update") == 0)
         update_tour(stage);

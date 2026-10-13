@@ -33,6 +33,7 @@ enum GameRow : int
     row_performance,
     row_audio,
     row_controls,
+    row_system,
     row_language,
     row_mods,
     row_save,   // in builds that move saves
@@ -171,7 +172,7 @@ void Launcher::read_home()
 void Launcher::check_games_present()
 {
     // The home screen: its game, or one of its recent ones, is gone. Its focus stays where it can.
-    if (screen_ == Screen::home && modal_ == Modal::none)
+    if (screen_ == Screen::home && modal_ == Modal::none && modal_shown_ == Modal::none)
     {
         bool gone = home_.last_exists && !services_.game_exists(home_.last_file);
         for (const Recent &recent : home_tiles_)
@@ -179,12 +180,10 @@ void Launcher::check_games_present()
         if (gone)
         {
             read_home();
-            if (home_focus_ == 4 && !home_.last_exists)
-                home_focus_ = 0;
         }
     }
     // The Library's list, whatever screen shows: a game's own dialogs stay with their game.
-    if (modal_ == Modal::none)
+    if (modal_ == Modal::none && modal_shown_ == Modal::none)
         drop_missing_games();
 }
 
@@ -695,6 +694,7 @@ void Launcher::draw_game(Canvas &c, float open)
         changed(row_performance - row_video),
         changed(row_audio - row_video),
         changed(row_controls - row_video),
+        changed(row_system - row_video),
         changed(row_language - row_video),
         // With the game's Mods switch off (the Library's), none of them is on.
         mods_.empty() ? std::string{tr("No mods")} :
@@ -708,7 +708,7 @@ void Launcher::draw_game(Canvas &c, float open)
         game != nullptr ? game->size : std::string{},
     };
     static constexpr const char *kLabels[] = {TR("Console mode"), TR("Video"),    TR("Performance"),
-                                              TR("Audio"),        TR("Controls"), TR("Language"),
+                                              TR("Audio"),        TR("Controls"), TR("System"), TR("Language"),
                                               TR("Mods"),         TR("Save data"), TR("Delete from console")};
     const float top=228.0f;
     list.push_clip({586,top-6,1228,5*96.0f+12});
