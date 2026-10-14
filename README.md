@@ -22,6 +22,6 @@ These launcher previews use placeholder games and profiles.
 
 The PS5 app is named **Switch** and uses title ID **PPSA99009**, changed from the upstream app. You can install it on its own or alongside ProsperoEden. Both use the established `/data/prosperoeden` folder for games, settings, keys, firmware, and saves, so switching between the apps does not require moving that data.
 
-The **emulation engine and game execution core are unchanged from ProsperoEden **. This project changes the UI, its launcher integration, branding, package identity, and update behavior. The UI uses selected art, fonts, motion data, and sounds extracted from decrypted Switch firmware. No complete firmware, keys, game dumps, or saves are included.
+The **emulation engine and game execution core are unchanged from ProsperoEden**. This project changes the UI, its launcher integration, branding, package identity, and update behavior. The UI uses selected art, fonts, motion data, and sounds extracted from decrypted Switch firmware. No complete firmware, keys, game dumps, or saves are included.
 
 ProsperoEden creator: **[BlackBearReloaded](https://github.com/blackbearreloaded/ProsperoEden)**. Emulator core: [Eden and contributors](https://github.com/eden-emulator/mirror). See the [release notes](https://github.com/kasobos67/SwitchPS5/releases/tag/v1.000.110), the upstream credits, and the source licenses. This is unofficial and is not affiliated with Nintendo or Sony.
