@@ -2397,3 +2397,95 @@ msgstr "Opgeslagen. Volledige kwaliteit gebruikt vier keer zoveel grafisch geheu
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "Systeem"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "Renderer"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "Linksonder"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "Rechtsonder"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "Hoek"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU per kern"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "Kleuren inschakelen"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "Frametijd"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "Groot"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "Middel"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "Geheugen"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "Hoek van de teller"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "Opties van de teller"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "Grootte van de teller"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "Normaal"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "Grootte"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "Snelheid"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "Linksboven"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "Rechtsboven"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "Trilsterkte"

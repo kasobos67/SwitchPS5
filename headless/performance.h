@@ -16,8 +16,32 @@ void SetSecondaryPlacement(bool enabled);
 void PlatformChecks();
 // Main thread only, between GPU readiness and guest shutdown.
 void Snapshot();
+// How busy each of the four emulated cores' threads was over the last quarter of a second, as a
+// percentage of one CPU (~0u: not known). A game is limited by these four, each on a CPU of
+// its own, so the busiest of them says whether the CPU is what holds a game back; a share of
+// every CPU of the console (HostCpuPercent) stays low even then.
+void GuestCoreLoads(unsigned loads[4]);
+// Called by a core's own thread each time it leaves the guest's code: when GuestCoreLoads has
+// asked since its last reading, it writes that thread's CPU time; otherwise it only compares a
+// number. GuestCoreLoads asks while the overlay is on, so with it off nothing is read.
+void SampleCoreCpu(unsigned core);
 // GPU worker only: firmware rejects cross-thread CPU-time sampling.
 void SampleGpuFrame(unsigned frame);
+// What the overlay's line says about the machine (hud.h, HudMachine). The two percentages are
+// read every frame and worked out every quarter of a second, so the clock reads cost nothing and
+// one slow frame does not swing them; the pool is looked at once a second. A percentage the
+// platform cannot give is ~0u, a memory pool it cannot give a total of 0, and the overlay shows
+// those as "--".
+unsigned HostCpuPercent();
+unsigned GpuBusyPercent();
+// The GPU's own time, by timestamps the Vulkan scheduler writes at the start and the end of
+// each command buffer while the overlay asks for them (tools/prepare-vulkan-port.py): the
+// nanoseconds the GPU has spent between them, how many command buffers that is, and whether
+// the driver gave up on them.
+inline std::atomic<bool> gpu_time_wanted{false};
+inline std::atomic<unsigned long long> gpu_time_busy_ns{0}, gpu_time_results{0};
+inline std::atomic<bool> gpu_time_failed{false};
+void MemoryPool(unsigned long long* free_bytes, unsigned long long* total_bytes);
 #ifdef EDEN_DEV_PROFILE
 void BeginPcSampling();
 void PollGpuPc();
@@ -316,6 +340,11 @@ void RecordHle(const char* service, unsigned command, long long ns);
 // direct memory (what the next allocation needs) is under kShortMemory.
 // dev-settings gc_dirty=upstream restores Eden's rule.
 inline std::atomic<bool> gc_keep_dirty{true};
+// The collector's per-run budget counts evictions, not visits (tools/
+// prepare-vulkan-port.py): skipped images used to burn it and stop the scan,
+// so kept images shielded everything behind them. dev-settings gc_scan=upstream
+// restores Eden's visit counting.
+inline std::atomic<bool> gc_count_visits{false};
 inline std::atomic<bool> graphics_memory_short{false};
 // 1 GiB: the pool is the CPU's too, and the largest thing a game asked of it at once was a
 // block of 486 MiB (a texture array of 121 layers, decoded before it is uploaded). With 384 MiB
@@ -339,6 +368,10 @@ inline std::atomic<bool (*)()> graphics_memory_probe{nullptr};
 // caches evict at half the use they were set to. dev-settings graphics_usage=driver restores
 // the driver's count.
 inline std::atomic<unsigned long long (*)()> graphics_memory_free{nullptr};
+// The memory the graphics allocator holds in its blocks now, installed by the Vulkan renderer
+// while it has an allocator (tools/prepare-vulkan-port.py): the part of the pool that grows as
+// scenery loads, and the one the FPS overlay shows beside the pool.
+inline std::atomic<unsigned long long (*)()> graphics_memory_held{nullptr};
 inline std::atomic<bool> graphics_usage_from_pool{true};
 // GPU thread only (the collector).
 inline bool KeepDirtyTextures() {
@@ -418,11 +451,14 @@ inline std::atomic<unsigned> capture_passes{};
 // in a cost run. Only development reports read the totals, and timers sit on hot paths: one a
 // draw on the GPU thread, one for every guest read of memory the GPU caches follow (several
 // thousand of each a frame in a large game). Elsewhere a Timer is one look at this flag.
+// `always` is for the four producer-side GPU waits the overlay reads from every build: they sit
+// on waits that already block, and turning the whole flag on would put a clock read a draw too.
 inline std::atomic<bool> timers_on{false};
 class Timer {
 public:
-    explicit Timer(Totals& target, unsigned long long bytes = 0)
-        : totals(target), requested_bytes(bytes), on(timers_on.load(std::memory_order_relaxed)),
+    explicit Timer(Totals& target, unsigned long long bytes = 0, bool always = false)
+        : totals(target), requested_bytes(bytes),
+          on(always || timers_on.load(std::memory_order_relaxed)),
           start(on ? Common::g_wall_clock.GetTimeNS() : std::chrono::nanoseconds{}) {}
     Timer(const Timer&) = delete;
     Timer& operator=(const Timer&) = delete;

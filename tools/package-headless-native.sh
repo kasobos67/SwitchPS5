@@ -88,7 +88,15 @@ built = re.search(r'EDEN_APP_VERSION "([0-9.]+)"',
 assert built == value['contentVersion'], f'the program says {built}, param.json {value["contentVersion"]}'
 # The console gives a 120 Hz output (Settings > Video, headless/display_refresh.h) only to a title
 # that declares it. Declaring it changes nothing by itself: the output stays at 60 Hz until asked.
-assert int(value['attribute3']) & 0x80040 == 0x80040, 'param.json no longer declares the 120 Hz output'
+# With it goes bit 18, a variable refresh rate as system software 6.02 already knows it: bit 19
+# (the newer way to say so) is refused there as an unknown parameter, and the title is then
+# listed without a variable refresh rate at all.
+assert int(value['attribute3']) & 0x40040 == 0x40040, 'param.json no longer declares the 120 Hz output'
+# Bit 22: PS5 Pro memory mode, a 13,504 MiB direct memory pool instead of 12,288 MiB on a Pro.
+assert int(value['attribute3']) & 0x400000, 'param.json no longer asks for PS5 Pro memory mode'
+# The flexible memory pool: what it is smaller than the system's 448 MiB goes to the direct pool,
+# which is the one games run out of. A game session was measured to use 203 MiB of it.
+assert value['kernel']['flexibleMemorySize'] == 320 << 20, 'param.json no longer sets the flexible memory pool'
 runpy.run_path(str(root / 'tools/load_alignment.py'))['check_load_alignment']((app / 'eboot.bin').read_bytes())
 profile = (root / 'build/headless-native/CMakeCache.txt').read_text()
 assert sum(profile.count('EDEN_DEVICE_FRONTEND:BOOL=' + v) for v in ('ON', 'OFF')) == 1

@@ -214,6 +214,15 @@ if(PS5_NATIVE)
     string(REPLACE "    GenRunCode(rcp);"
         "    std::printf(\"EDEN_JIT_FEATURES mask=%x cache_bytes=%zu\\n\", unsigned(GetHostFeatures()), total_code_size);\n    GenRunCode(rcp);" code_source "${code_source}")
 endif()
+  # A cache takes its memory as it fills (src/memory_pages.cpp): the JIT asks before every
+  # block, and before it takes room for constants, how far it is about to write.
+  set(commit_site "void BlockOfCode::EnsureMemoryCommitted([[maybe_unused]] size_t codesize) {\n")
+  string(FIND "${code_source}" "${commit_site}" commit_at)
+  if(commit_at LESS 0)
+      message(FATAL_ERROR "Pinned JIT memory commit changed")
+  endif()
+  string(REPLACE "${commit_site}"
+      "${commit_site}    commitMemory(std::min<size_t>(maxSize_, size_ + codesize));\n" code_source "${code_source}")
   # ConstantPool has completed construction before this body. Isolate its last
   # page from executable prelude, without accessing fields during construction.
   string(REPLACE "    EnableWriting();\n    EnsureMemoryCommitted(PRELUDE_COMMIT_SIZE);"
@@ -666,7 +675,7 @@ foreach(bits 32 64)
         # Eden's Unsafe CPU mode (Settings > Performance > Faster CPU emulation) clears this again, twice:
         # cpuopt_unsafe_host_mmu is false on every platform but Apple, Linux, Android and Windows, so the
         # Unsafe case and the closing IsFastmemEnabled() check both drop fastmem_exclusive_access, and every
-        # LDXR/STXR then left JIT code for the global-monitor helpers (14% of the core time in Pokemon Violet,
+        # LDXR/STXR then left JIT code for the global-monitor helpers (14% of the core time in one game,
         # measured). The pointer reset stays; the inline page-table path needs no fastmem pointer.
         set(unsafe_old "        if (!Settings::values.cpuopt_unsafe_host_mmu) {\n            config.fastmem_pointer = std::nullopt;\n            config.fastmem_exclusive_access = false;\n        }")
         set(unsafe_new "        if (!Settings::values.cpuopt_unsafe_host_mmu) {\n            config.fastmem_pointer = std::nullopt;\n        }")
@@ -694,6 +703,23 @@ foreach(bits 32 64)
           string(REPLACE "std::uint32_t(16_MiB)" "std::uint32_t(${jit_cache_sizes})" wrapper "${wrapper}")
       endif()
     set(derived "${PORT_BUILD_DIR}/arm_dynarmic_${bits}.cpp")
+    # The overlay's four core loads (performance.h, SampleCoreCpu): each core reads its own CPU
+    # time after a run when the overlay has asked, which on the console only the thread itself
+    # can. The development build reads more at the same place (SampleCpu, below).
+    if(NOT EDEN_DEV_PROFILE)
+        string(PREPEND wrapper "#include \"${EDEN_PORT_DIR}/performance.h\"
+")
+        set(core_run_site "    return TranslateHaltReason(m_jit->Run());")
+        string(FIND "${wrapper}" "${core_run_site}" core_run_at)
+        if(core_run_at LESS 0)
+            message(FATAL_ERROR "Pinned RunThread dispatch changed; the overlay's core loads read there")
+        endif()
+        string(REPLACE "${core_run_site}"
+            "    const auto halt = m_jit->Run();
+    ::Eden::Performance::SampleCoreCpu(m_core_index);
+    return TranslateHaltReason(halt);"
+            wrapper "${wrapper}")
+    endif()
     if(EDEN_DEV_PROFILE)
         string(PREPEND wrapper "#include \"${EDEN_PORT_DIR}/performance.h\"\n")
         if(bits EQUAL 64)
@@ -1526,6 +1552,39 @@ set_property(TARGET core PROPERTY SOURCES "${page_table_core_sources}")
 # A server's stopped flag only covers its inner request loop; stopping the CPU
 # immediately after it fires can abandon the applet destructor mid-cleanup.
 file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/kernel/kernel.cpp" kernel_source)
+# The guest's memory is backed where it is used (src/memory_pages.cpp). Here: everything outside
+# the pools, as soon as the kernel knows where the pools are and before its first write (the
+# slab heaps). A pool's pages follow when they are handed out (k_memory_manager.cpp below).
+set(guest_backing_site "        DeriveInitialMemoryLayout();\n        Init::InitializeSlabHeaps(system, *memory_layout);")
+string(FIND "${kernel_source}" "${guest_backing_site}" guest_backing_at)
+if(guest_backing_at LESS 0)
+    message(FATAL_ERROR "Pinned kernel start changed; review where the guest's memory is backed.")
+endif()
+string(REPLACE "${guest_backing_site}"
+    "        DeriveInitialMemoryLayout();\n        for (const auto& region : memory_layout->GetPhysicalMemoryRegionTree()) {\n            const u64 dram = Core::DramMemoryMap::Base;\n            if (region.IsDerivedFrom(KMemoryRegionType_DramUserPool) || region.GetLastAddress() < dram) continue;\n            const u64 start = std::max<u64>(region.GetAddress(), dram);\n            ::Common::CommitGuestMemory(start - dram, region.GetLastAddress() - start + 1);\n        }\n        Init::InitializeSlabHeaps(system, *memory_layout);"
+    kernel_source "${kernel_source}")
+string(PREPEND kernel_source "#include <algorithm>\n#include <cstddef>\n#include <cstdint>\n#include \"core/device_memory.h\"\nnamespace Common { void CommitGuestMemory(std::uint64_t offset, std::size_t bytes) noexcept; }\n")
+file(READ "${PROJECT_SOURCE_DIR}/src/core/hle/kernel/k_memory_manager.cpp" pool_source)
+string(PREPEND pool_source "#include <cstddef>\n#include <cstdint>\nnamespace Common { void CommitGuestMemory(std::uint64_t offset, std::size_t bytes) noexcept; }\n")
+# Its two places: a run of pages in one piece, and the blocks of a page group.
+set(continuous_site "    // If we failed to allocate, quit now.\n    if (allocated_block == 0) {\n        return 0;\n    }\n")
+set(group_site "                KPhysicalAddress allocated_block = cur_manager->AllocateBlock(index, random);\n                if (allocated_block == 0) {\n                    break;\n                }\n")
+string(FIND "${pool_source}" "${continuous_site}" continuous_at)
+string(FIND "${pool_source}" "${group_site}" group_at)
+if(continuous_at LESS 0 OR group_at LESS 0)
+    message(FATAL_ERROR "Pinned guest page allocation changed; review where the guest's memory is backed.")
+endif()
+string(REPLACE "${continuous_site}"
+    "${continuous_site}    ::Common::CommitGuestMemory(GetInteger(allocated_block) - Core::DramMemoryMap::Base, num_pages * PageSize);\n"
+    pool_source "${pool_source}")
+string(REPLACE "${group_site}"
+    "${group_site}                ::Common::CommitGuestMemory(GetInteger(allocated_block) - Core::DramMemoryMap::Base, pages_per_alloc * PageSize);\n"
+    pool_source "${pool_source}")
+write_derived("${PORT_BUILD_DIR}/k_memory_manager.cpp" "${pool_source}")
+get_target_property(pool_core_sources core SOURCES)
+list(REMOVE_ITEM pool_core_sources hle/kernel/k_memory_manager.cpp)
+list(APPEND pool_core_sources "${PORT_BUILD_DIR}/k_memory_manager.cpp")
+set_property(TARGET core PROPERTY SOURCES "${pool_core_sources}")
 string(REPLACE "    void Shutdown(KernelCore& kernel) {" "    void Shutdown(KernelCore& kernel) {\n        worker_task_manager.WaitForRequests();" kernel_source "${kernel_source}")
 string(REPLACE "    ASSERT(R_SUCCEEDED(thread->Run(*this)));\n}"
     "    impl->service_threads.push_back(thread);\n    ASSERT(R_SUCCEEDED(thread->Run(*this)));\n}" kernel_source "${kernel_source}")
@@ -2085,25 +2144,30 @@ if(EDEN_PS5_OPENGL)
         string(PREPEND gpu_worker "namespace VideoCore { class RendererBase; }\nnamespace Eden { bool LoadingTick(VideoCore::RendererBase&, bool idle); }\n")
         string(REPLACE "${hud_wait}"
             "            if (Eden::LoadingTick(renderer, false)) {\n                if (!state.queue.TryPop(next)) {\n                    Eden::LoadingTick(renderer, true);\n                    std::this_thread::sleep_for(std::chrono::milliseconds(1));\n                    continue;\n                }\n            } else {\n${hud_wait}\n            }" gpu_worker "${gpu_worker}")
+        # The overlay's GPU share reads the producer-side waits from every build, so these two
+        # scopes are not development-only and pass `always` to Performance::Timer, which is
+        # otherwise off outside a development build because its timers sit on hot paths. Each
+        # wraps a wait that already blocks, so a clock read either side costs nothing.
+        string(PREPEND gpu_worker "#include \"${EDEN_PORT_DIR}/performance.h\"\n")
+        string(REPLACE "${hud_wait}"
+            "            { ::Eden::Performance::Timer idle_timer(::Eden::Performance::gpu_queue_wait, 0, true);\n${hud_wait}\n            }"
+            gpu_worker "${gpu_worker}")
+        # Time guest-side back-pressure: pushes that found the 8-entry queue full. The pattern
+        # has to be exactly what the EmplaceWait rewrite above left behind.
+        set(full_wait "    while (!stop_source.stop_requested() &&\n           !state.queue.TryEmplace(std::move(command_data), fence, block))\n        std::this_thread::sleep_for(std::chrono::microseconds(100));")
+        string(FIND "${gpu_worker}" "${full_wait}" full_wait_offset)
+        if(full_wait_offset LESS 0)
+            message(FATAL_ERROR "Pinned GPU queue push changed")
+        endif()
+        string(REPLACE "${full_wait}"
+            "    if (stop_source.stop_requested() ||\n        !state.queue.TryEmplace(std::move(command_data), fence, block)) {\n        ::Eden::Performance::Timer full_timer(::Eden::Performance::gpu_queue_full, 0, true);\n${full_wait}\n    }"
+            gpu_worker "${gpu_worker}")
         if(EDEN_DEV_PROFILE)
-            string(PREPEND gpu_worker "#include \"${EDEN_PORT_DIR}/performance.h\"\n")
-            string(REPLACE "${hud_wait}"
-                "            { ::Eden::Performance::Timer idle_timer(::Eden::Performance::gpu_queue_wait);\n${hud_wait}\n            }"
-                gpu_worker "${gpu_worker}")
             string(REPLACE "${dispatch_call}"
                 "                { ::Eden::Performance::Timer dispatch_timer(::Eden::Performance::gpu_dispatch);\n${dispatch_call}\n                }"
                 gpu_worker "${gpu_worker}")
             string(REPLACE "if (count <= 3) LOG_INFO(Render_OpenGL, \"EDEN_GPU_DISPATCH_"
                 "if (count <= 3 || ::Eden::Performance::BootTrace()) LOG_INFO(Render_OpenGL, \"EDEN_GPU_DISPATCH_"
-                gpu_worker "${gpu_worker}")
-            # Time guest-side back-pressure: pushes that found the 8-entry queue full.
-            set(full_wait "    while (!stop_source.stop_requested() &&\n           !state.queue.TryEmplace(std::move(command_data), fence, block))\n        std::this_thread::sleep_for(std::chrono::microseconds(100));")
-            string(FIND "${gpu_worker}" "${full_wait}" full_wait_offset)
-            if(full_wait_offset LESS 0)
-                message(FATAL_ERROR "Pinned GPU queue push changed")
-            endif()
-            string(REPLACE "${full_wait}"
-                "    if (stop_source.stop_requested() ||\n        !state.queue.TryEmplace(std::move(command_data), fence, block)) {\n        ::Eden::Performance::Timer full_timer(::Eden::Performance::gpu_queue_full);\n${full_wait}\n    }"
                 gpu_worker "${gpu_worker}")
         endif()
         write_derived("${PORT_BUILD_DIR}/gpu_thread.cpp" "${gpu_worker}")
@@ -2620,6 +2684,10 @@ if(EDEN_PS5_OPENGL)
         "${EDEN_PORT_DIR}/loading_text.glsl" "${EDEN_PORT_DIR}/loading_scene.glsl")
     write_derived("${PORT_BUILD_DIR}/include/loading_scene_glsl.h"
         "// Generated from loading_text.glsl and loading_scene.glsl.\n#pragma once\ninline constexpr const char* kLoadingSceneGlsl = R\"glsl(\n${loading_wordmark}${loading_scene})glsl\";\n")
+    # The baked font alone, for the overlay (the loading screen's shader carries the whole scene
+    # and its picture sampler, which the overlay has no use for).
+    write_derived("${PORT_BUILD_DIR}/include/loading_text_glsl.h"
+        "// Generated from loading_text.glsl.\n#pragma once\ninline constexpr const char* kLoadingTextGlsl = R\"glsl(\n${loading_wordmark})glsl\";\n")
     target_compile_definitions(eden-headless PRIVATE EDEN_PS5_OPENGL=1)
     target_link_libraries(eden-headless PRIVATE PS5OpenGL::OpenGL glad)
 endif()

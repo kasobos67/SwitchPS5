@@ -2397,3 +2397,95 @@ msgstr "Αποθηκεύτηκε. Η πλήρης ποιότητα θέλει τ
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "Σύστημα"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "Απόδοση γραφικών"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "Κάτω αριστερά"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "Κάτω δεξιά"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "Γωνία"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU ανά πυρήνα"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "Ενεργοποίηση χρωμάτων"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "Χρόνος καρέ"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "Μεγάλο"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "Μεσαίο"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "Μνήμη"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "Γωνία ένδειξης"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "Επιλογές ένδειξης"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "Μέγεθος ένδειξης"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "Κανονικό"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "Μέγεθος"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "Ταχύτητα"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "Πάνω αριστερά"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "Πάνω δεξιά"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "Ένταση δόνησης"

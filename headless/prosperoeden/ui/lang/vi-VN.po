@@ -2397,3 +2397,95 @@ msgstr "Đã lưu. Chất lượng đầy đủ dùng gấp bốn lần bộ nh�
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "Hệ thống"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "Trình kết xuất"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "Dưới trái"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "Dưới phải"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "Góc"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU theo từng nhân"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "Bật màu"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "Thời gian khung hình"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "Lớn"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "Vừa"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "Bộ nhớ"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "Góc bộ đếm"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "Tùy chọn bộ đếm"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "Kích thước bộ đếm"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "Thường"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "Kích thước"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "Tốc độ"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "Trên trái"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "Trên phải"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "Cường độ rung"

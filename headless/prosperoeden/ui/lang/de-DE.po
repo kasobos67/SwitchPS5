@@ -2397,3 +2397,95 @@ msgstr "Gespeichert. Volle Qualität braucht für diese Texturen viermal so viel
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "System"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "Renderer"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "Unten links"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "Unten rechts"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "Ecke"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU pro Kern"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "Farben aktivieren"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "Bildzeit"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "Groß"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "Mittel"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "Speicher"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "Ecke der Anzeige"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "Optionen der Anzeige"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "Größe der Anzeige"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "Normal"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "Größe"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "Geschwindigkeit"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "Oben links"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "Oben rechts"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "Vibrationsstärke"

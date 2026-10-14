@@ -2397,3 +2397,95 @@ msgstr "Tallennettu. Täysi laatu käyttää näihin tekstuureihin nelinkertaise
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "Järjestelmä"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "Renderöijä"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "Vasen alakulma"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "Oikea alakulma"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "Kulma"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU ytimittäin"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "Ota värit käyttöön"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "Kuva-aika"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "Suuri"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "Keskikoko"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "Muisti"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "Laskurin kulma"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "Laskurin asetukset"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "Laskurin koko"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "Tavallinen"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "Koko"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "Nopeus"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "Vasen yläkulma"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "Oikea yläkulma"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "Värinän voimakkuus"

@@ -103,7 +103,7 @@ void RasterizerVulkan::DispatchCompute() {"""),
     # The upstream code has an __ANDROID__ ifdef for DRAWS_TO_DISPATCH (512 vs 4096) and
     # CHECK_MASK (3 vs 7). Neither branch applies: replace the whole block. 512 draws per
     # command buffer submission: 4,096 exceeds the PS5 GPU watchdog timeout in shader-heavy
-    # scenes (VK_ERROR_DEVICE_LOST in Xenoblade 2's cities). CHECK_MASK is the configurable
+    # scenes (VK_ERROR_DEVICE_LOST in one game's cities). CHECK_MASK is the configurable
     # dispatch interval (dev-settings dispatch_draws=N); default 64 draws between hand-offs.
     ('#ifdef __ANDROID__\n    static constexpr u32 DRAWS_TO_DISPATCH = 512;\n    static constexpr u32 CHECK_MASK = 3;\n#else\n    static constexpr u32 DRAWS_TO_DISPATCH = 4096;\n    static constexpr u32 CHECK_MASK = 7;\n#endif // __ANDROID__\n\n    static_assert(DRAWS_TO_DISPATCH % (CHECK_MASK + 1) == 0);\n',
      '    static constexpr u32 DRAWS_TO_DISPATCH = 512;\n    const u32 CHECK_MASK = ::Eden::Performance::dispatch_mask.load(std::memory_order_relaxed);\n    recorded_tick = scheduler.CurrentTick();\n\n'),
@@ -174,7 +174,7 @@ void RasterizerVulkan::DispatchCompute() {"""),
     # every older fence. Time only that producer-side drain.
     ('    fence_manager.WaitPendingFences(force);',
      '''    if (force) {
-        ::Eden::Performance::Timer drain_timer(::Eden::Performance::gpu_fence_drain);
+        ::Eden::Performance::Timer drain_timer(::Eden::Performance::gpu_fence_drain, 0, true);
         fence_manager.WaitPendingFences(force);
     } else {
         fence_manager.WaitPendingFences(force);
@@ -402,7 +402,7 @@ adapt('src/video_core/renderer_vulkan/vk_present_manager.cpp', 'vulkan_present_m
     # GetRenderFrame runs on the GPU thread: time its free-frame and
     # present-completion waits (FIFO back-pressure on the producer).
     ('    // Wait for free presentation frames\n    std::unique_lock lock{free_mutex};',
-     '    // Wait for free presentation frames\n    ::Eden::Performance::Timer present_wait_timer(::Eden::Performance::gpu_present_wait);\n    std::unique_lock lock{free_mutex};'),
+     '    // Wait for free presentation frames\n    ::Eden::Performance::Timer present_wait_timer(::Eden::Performance::gpu_present_wait, 0, true);\n    std::unique_lock lock{free_mutex};'),
     ('PresentThread(token);', '''try {
             PresentThread(token);
         } catch (...) {
@@ -508,7 +508,8 @@ adapt('src/video_core/vulkan_common/vulkan_device.cpp', 'vulkan_device.cpp', [
 # submission, so the CPU never records against work the GPU has not finished.
 GPU_TIME_HELPERS = r'''
 namespace {
-// Development GPU execution time (dev_vulkan.h gpu_time): timestamps at the start and end
+// GPU execution time, for the FPS overlay (performance.h, gpu_time_wanted) and for the
+// development report (dev_vulkan.h gpu_time): timestamps at the start and end
 // of every scheduler command buffer, summed once the GPU has run them and printed every
 // 5 s as EDEN_GPU_TIME. Worker thread only.
 struct GpuTimeProbe {
@@ -521,16 +522,26 @@ struct GpuTimeProbe {
     u64 busy_ns{}, max_ns{}, submissions{};
     std::chrono::steady_clock::time_point report{};
     bool failed{};
+    bool stamped{}; // the command buffer being recorded has its first timestamp
 } gpu_time;
 
+bool GpuTimeWanted() {
+    return ::Eden::DevVulkan::gpu_time || ::Eden::Performance::gpu_time_wanted.load(std::memory_order_relaxed);
+}
+void GpuTimeGaveUp() {
+    gpu_time.failed = true;
+    ::Eden::Performance::gpu_time_failed.store(true, std::memory_order_relaxed);
+}
+
 void GpuTimeBegin(const Device& device, vk::CommandBuffer cmdbuf) {
-    if (!::Eden::DevVulkan::gpu_time || gpu_time.failed) return;
+    gpu_time.stamped = false;
+    if (!GpuTimeWanted() || gpu_time.failed) return;
     if (!gpu_time.write) {
         const auto& dld = device.GetDispatchLoader();
         gpu_time.write = reinterpret_cast<PFN_vkCmdWriteTimestamp>(
             dld.vkGetDeviceProcAddr(*device.GetLogical(), "vkCmdWriteTimestamp"));
         gpu_time.period_ns = device.GetPhysical().GetProperties().limits.timestampPeriod;
-        if (!gpu_time.write || gpu_time.period_ns <= 0) { gpu_time.failed = true; return; }
+        if (!gpu_time.write || gpu_time.period_ns <= 0) { GpuTimeGaveUp(); return; }
         gpu_time.pool = device.GetLogical().CreateQueryPool({
             .sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
             .pNext = nullptr,
@@ -542,22 +553,23 @@ void GpuTimeBegin(const Device& device, vk::CommandBuffer cmdbuf) {
         gpu_time.report = std::chrono::steady_clock::now();
     }
     if (gpu_time.next - gpu_time.first_pending >= GpuTimeProbe::SLOTS) {
-        gpu_time.failed = true; // results stopped arriving; never overwrite a pending slot
+        GpuTimeGaveUp(); // results stopped arriving; never overwrite a pending slot
         std::printf("EDEN_GPU_TIME failed=ring\n");
         return;
     }
     gpu_time.current = static_cast<u32>(gpu_time.next++ % GpuTimeProbe::SLOTS);
     cmdbuf.ResetQueryPool(*gpu_time.pool, gpu_time.current * 2, 2);
     gpu_time.write(*cmdbuf, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, *gpu_time.pool, gpu_time.current * 2);
+    gpu_time.stamped = true;
 }
 
 void GpuTimeEnd(vk::CommandBuffer cmdbuf) {
-    if (!::Eden::DevVulkan::gpu_time || gpu_time.failed || !gpu_time.write) return;
+    if (!gpu_time.stamped) return;
     gpu_time.write(*cmdbuf, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, *gpu_time.pool, gpu_time.current * 2 + 1);
 }
 
 void GpuTimeCollect(const Device& device) {
-    if (!::Eden::DevVulkan::gpu_time || gpu_time.failed || !gpu_time.write) return;
+    if (gpu_time.failed || !gpu_time.write) return;
     while (gpu_time.first_pending + 1 < gpu_time.next) {
         const u32 slot = static_cast<u32>(gpu_time.first_pending % GpuTimeProbe::SLOTS);
         std::array<u64, 2> stamps{};
@@ -566,13 +578,15 @@ void GpuTimeCollect(const Device& device) {
         const u64 ns = stamps[1] > stamps[0]
                            ? static_cast<u64>(double(stamps[1] - stamps[0]) * gpu_time.period_ns) : 0;
         gpu_time.busy_ns += ns;
+        ::Eden::Performance::gpu_time_busy_ns.fetch_add(ns, std::memory_order_relaxed);
+        ::Eden::Performance::gpu_time_results.fetch_add(1, std::memory_order_relaxed);
         gpu_time.max_ns = (std::max)(gpu_time.max_ns, ns);
         ++gpu_time.submissions;
         ++gpu_time.first_pending;
     }
     const auto now = std::chrono::steady_clock::now();
     const auto wall = std::chrono::duration_cast<std::chrono::nanoseconds>(now - gpu_time.report).count();
-    if (wall >= 5'000'000'000) {
+    if (wall >= 5'000'000'000 && ::Eden::DevVulkan::gpu_time) {
         std::printf("EDEN_GPU_TIME wall_ms=%.1f busy_ms=%.1f submissions=%llu max_ms=%.2f\n", wall / 1e6,
                     gpu_time.busy_ns / 1e6, static_cast<unsigned long long>(gpu_time.submissions),
                     gpu_time.max_ns / 1e6);
@@ -583,7 +597,7 @@ void GpuTimeCollect(const Device& device) {
 } // namespace
 '''
 adapt('src/video_core/renderer_vulkan/vk_scheduler.cpp', 'vulkan_scheduler.cpp', [
-    ('#include <memory>', '#include <memory>\n#include <array>\n#include <chrono>\n#include <cstdio>\n#include "dev_vulkan.h"'),
+    ('#include <memory>', '#include <memory>\n#include <array>\n#include <atomic>\n#include <chrono>\n#include <cstdio>\n#include "dev_vulkan.h"\n#include "performance.h"'),
     ('namespace Vulkan {\n', 'namespace Vulkan {\n' + GPU_TIME_HELPERS),
     ('        .pInheritanceInfo = nullptr,\n    });\n    current_upload_cmdbuf = vk::CommandBuffer(command_pool->Commit(), device.GetDispatchLoader());',
      '        .pInheritanceInfo = nullptr,\n    });\n    GpuTimeBegin(device, current_cmdbuf);\n'
@@ -751,6 +765,34 @@ for call in ('vmaCreateImage(allocator, &ci, &alloc_ci, &handle, &allocation, &a
         .replace('VALUES', 'ci.extent.width, ci.extent.height, ci.extent.depth, ci.arrayLayers, ci.mipLevels, '
                  'unsigned(ci.samples), int(ci.format)' if 'Image' in call
                  else 'static_cast<unsigned long long>(ci.size), unsigned(ci.usage)'))
+# What the allocator holds in its blocks, for the FPS overlay (performance.h, graphics_memory_held):
+# asked while there is an allocator, a sum of counters it keeps.
+held_ctor = ('MemoryAllocator::MemoryAllocator(const Device &device_)\n', 'MemoryAllocator::~MemoryAllocator() = default;\n',
+             '                    device_.GetPhysical().GetProperties().limits.bufferImageGranularity} {\n')
+for anchor in held_ctor:
+    if allocator.count(anchor) != 1:
+        raise RuntimeError(f'Pinned Vulkan allocator changed: {anchor[:40]} is there {allocator.count(anchor)} times')
+allocator = allocator.replace(held_ctor[0], (
+    'namespace {\n'
+    'std::atomic<VmaAllocator> overlay_allocator{nullptr};\n'
+    'unsigned long long GraphicsMemoryHeld() {\n'
+    '    const VmaAllocator allocator = overlay_allocator.load(std::memory_order_acquire);\n'
+    '    if (allocator == nullptr) return 0;\n'
+    '    VmaBudget held[VK_MAX_MEMORY_HEAPS]{};\n'
+    '    vmaGetHeapBudgets(allocator, held);\n'
+    '    unsigned long long blocks = 0;\n'
+    '    for (const VmaBudget& heap : held) blocks += heap.statistics.blockBytes;\n'
+    '    return blocks;\n'
+    '}\n'
+    '} // namespace\n\n') + held_ctor[0])
+allocator = allocator.replace(held_ctor[2], held_ctor[2] + (
+    '    overlay_allocator.store(allocator, std::memory_order_release);\n'
+    '    ::Eden::Performance::graphics_memory_held.store(&GraphicsMemoryHeld, std::memory_order_release);\n'))
+allocator = allocator.replace(held_ctor[1], (
+    'MemoryAllocator::~MemoryAllocator() {\n'
+    '    ::Eden::Performance::graphics_memory_held.store(nullptr, std::memory_order_release);\n'
+    '    overlay_allocator.store(nullptr, std::memory_order_release);\n'
+    '}\n'))
 include = '#include "video_core/vulkan_common/vulkan_memory_allocator.h"\n'
 if allocator.count(include) != 1:
     raise RuntimeError('Pinned Vulkan allocator changed: its own include')
@@ -834,6 +876,22 @@ for old, new in [
     ('(!high_priority_mode && must_download)) {', '(!DirtyEvictions() && must_download)) {'),
     ('    Configure(false);', '    Configure(false);\n    PrefetchDownloads();'),
     ('        Configure(true);', '        Configure(true);\n        PrefetchDownloads();'),
+    # The eviction budget counts visits, not evictions: skipped images (decoding,
+    # costly, or dirty images kept below the critical mark) burn it and stop the
+    # scan, so kept images shield everything behind them. Count evictions; bound
+    # the scan separately. gc_scan=upstream restores visit counting.
+    ('    size_t num_iterations = 0;',
+     '    size_t num_iterations = 0;\n    size_t num_scanned = 0;\n    constexpr size_t max_scanned = 8192;'),
+    ('        if (num_iterations == 0) {\n            return true;\n        }\n        --num_iterations;',
+     '        if (num_iterations == 0 || num_scanned >= max_scanned) {\n            return true;\n        }\n        ++num_scanned;\n        if (::Eden::Performance::gc_count_visits.load(std::memory_order_relaxed)) {\n            --num_iterations;\n        }'),
+    ('        if ((!aggressive_mode && True(image.flags & ImageFlagBits::CostlyLoad)) || (!DirtyEvictions() && must_download)) {\n            return false;\n        }',
+     '        if ((!aggressive_mode && True(image.flags & ImageFlagBits::CostlyLoad)) || (!DirtyEvictions() && must_download)) {\n            return false;\n        }\n        if (!::Eden::Performance::gc_count_visits.load(std::memory_order_relaxed)) {\n            --num_iterations;\n        }'),
+    # The aggressive pass gets its own scan allowance: Configure resets the
+    # eviction budget per pass, and the scan counter must reset with it, or a
+    # first pass spent on skips would stillborn the second one. Runs after the
+    # Configure(true) pair above, whose first line this matches.
+    ('        Configure(true);',
+     '        Configure(true);\n        num_scanned = 0;'),
 ]:
     if gc.count(old) != 1:
         raise RuntimeError(f'Pinned GC anchor changed: {old}')

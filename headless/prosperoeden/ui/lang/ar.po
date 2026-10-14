@@ -2397,3 +2397,95 @@ msgstr "تم الحفظ. الجودة الكاملة تستهلك أربعة أ�
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "النظام"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "محرّك العرض"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "أسفل اليسار"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "أسفل اليمين"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "الزاوية"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU لكل نواة"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "تفعيل الألوان"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "زمن الإطار"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "كبير"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "متوسط"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "الذاكرة"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "زاوية العدّاد"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "خيارات العدّاد"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "حجم العدّاد"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "عادي"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "الحجم"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "السرعة"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "أعلى اليسار"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "أعلى اليمين"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "شدة الاهتزاز"

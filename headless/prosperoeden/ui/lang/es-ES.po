@@ -2397,3 +2397,95 @@ msgstr "Guardado. La calidad completa usa el cuádruple de memoria gráfica para
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "Sistema"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "Renderizador"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "Abajo a la izquierda"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "Abajo a la derecha"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "Esquina"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU por núcleo"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "Activar colores"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "Tiempo de fotograma"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "Grande"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "Mediano"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "Memoria"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "Esquina del contador"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "Opciones del contador"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "Tamaño del contador"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "Normal"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "Tamaño"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "Velocidad"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "Arriba a la izquierda"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "Arriba a la derecha"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "Intensidad de la vibración"

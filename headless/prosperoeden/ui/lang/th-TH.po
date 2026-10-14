@@ -2397,3 +2397,95 @@ msgstr "บันทึก​แล้ว คุณภาพ​เต็ม​�
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "ระบบ"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "ตัวเรนเดอร์"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "ล่างซ้าย"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "ล่างขวา"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "มุม"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU แยกตามคอร์"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "เปิดใช้สี"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "เวลาต่อเฟรม"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "ใหญ่"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "กลาง"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "หน่วยความจำ"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "มุมของตัวแสดง"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "ตัวเลือกตัวแสดง"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "ขนาดตัวแสดง"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "ปกติ"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "ขนาด"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "ความเร็ว"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "บนซ้าย"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "บนขวา"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "ความแรงของการสั่น"

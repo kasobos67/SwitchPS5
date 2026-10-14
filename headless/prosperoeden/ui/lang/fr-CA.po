@@ -2397,3 +2397,95 @@ msgstr "Enregistré. La pleine qualité utilise quatre fois plus de mémoire gra
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "Système"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "Moteur de rendu"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "En bas à gauche"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "En bas à droite"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "Coin"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU par cœur"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "Activer les couleurs"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "Temps d'image"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "Grand"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "Moyen"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "Mémoire"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "Coin du compteur"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "Options du compteur"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "Taille du compteur"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "Normal"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "Taille"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "Vitesse"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "En haut à gauche"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "En haut à droite"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "Intensité de la vibration"

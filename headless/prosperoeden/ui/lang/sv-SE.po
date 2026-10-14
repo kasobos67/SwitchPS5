@@ -2397,3 +2397,95 @@ msgstr "Sparat. Full kvalitet använder fyra gånger så mycket grafikminne för
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "System"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "Renderare"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "Nere till vänster"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "Nere till höger"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "Hörn"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU per kärna"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "Aktivera färger"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "Bildtid"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "Stor"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "Mellan"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "Minne"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "Räknarens hörn"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "Räknaralternativ"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "Räknarens storlek"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "Normal"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "Storlek"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "Hastighet"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "Uppe till vänster"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "Uppe till höger"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "Vibrationsstyrka"

@@ -2397,3 +2397,95 @@ msgstr "已保存。完整画质会让这些纹理占用四倍的图形内存，
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "系统"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "渲染器"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "左下"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "右下"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "角落"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "按核心显示 CPU"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "启用颜色"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "帧时间"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "大"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "中"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "内存"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "显示位置"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "显示选项"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "显示大小"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "延迟"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "常规"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "大小"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "速度"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "左上"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "右上"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "振动强度"

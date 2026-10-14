@@ -428,6 +428,13 @@ class FakeServices final : public ui::Services
     }
     bool unlink_profile(int profile) override;
 
+  public:
+    int last_vibration_pulse = 0;
+    unsigned vibration_pulses = 0;
+    void vibration_pulse(int percent) override {
+        last_vibration_pulse = percent;
+        ++vibration_pulses;
+    }
   private:
     ui::PairingStatus pair_;
     int pair_looks_ = 0;

@@ -2397,3 +2397,95 @@ msgstr "保存しました。フル品質ではこれらのテクスチャに4�
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "システム"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "レンダラー"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "左下"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "右下"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "表示位置"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "コアごとのCPU"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "色を付ける"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "フレーム時間"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "大"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "中"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "メモリ"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "表示の位置"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "表示のオプション"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "表示のサイズ"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "標準"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "サイズ"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "速度"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "左上"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "右上"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "振動の強さ"

@@ -2397,3 +2397,95 @@ msgstr "Сохранено. Полное качество требует вче�
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "Система"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "Рендерер"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "Слева внизу"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "Справа внизу"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "Угол"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU по ядрам"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "Включить цвета"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "Время кадра"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "Крупный"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "Средний"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "Память"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "Угол счетчика"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "Параметры счетчика"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "Размер счетчика"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Пинг"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "Обычный"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "Размер"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "Скорость"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "Слева вверху"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "Справа вверху"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "Сила вибрации"

@@ -2397,3 +2397,95 @@ msgstr "Gemt. Fuld kvalitet bruger fire gange så meget grafikhukommelse til dis
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "System"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "Renderer"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "Nederst til venstre"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "Nederst til højre"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "Hjørne"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU pr. kerne"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "Slå farver til"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "Billedtid"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "Stor"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "Mellem"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "Hukommelse"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "Tællerens hjørne"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "Tællerindstillinger"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "Tællerens størrelse"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "Normal"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "Størrelse"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "Hastighed"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "Øverst til venstre"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "Øverst til højre"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "Vibrationsstyrke"

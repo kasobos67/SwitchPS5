@@ -2397,3 +2397,95 @@ msgstr "Uloženo. Plná kvalita zabere pro tyto textury čtyřikrát víc grafic
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "Systém"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "Renderer"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "Vlevo dole"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "Vpravo dole"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "Roh"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU po jádrech"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "Zapnout barvy"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "Čas snímku"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "Velké"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "Střední"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "Paměť"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "Roh počítadla"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "Možnosti počítadla"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "Velikost počítadla"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "Běžné"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "Velikost"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "Rychlost"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "Vlevo nahoře"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "Vpravo nahoře"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "Síla vibrací"

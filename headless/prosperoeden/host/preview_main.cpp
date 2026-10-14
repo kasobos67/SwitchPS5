@@ -1027,7 +1027,7 @@ void switch_menu_checks(Stage &s)
     s.press({Key::cross,Key::right});
     check(s.services.preferences().mapping==mapped,"HOME mapping Back lost Controllers shortcut focus");
     s.services.set_preferences(mapping_start);
-    category(4);s.press({Key::down,Key::cross,Key::circle});s.wait(0.4f);
+    category(4);s.press({Key::down,Key::down,Key::cross,Key::circle});s.wait(0.4f);
     s.press({Key::cross,Key::right});
     check(s.services.preferences().mapping==mapped,"Settings mapping Back no longer returns to its Controls row");
     s.services.set_preferences(mapping_start);
@@ -1472,8 +1472,11 @@ void update1000_settings_checks(Stage &s)
         for (int i = 0; i < 40; ++i) s.press({Key::down});
         if (availability == 0) {
             s.press({Key::cross});
+            check(s.services.preferences().hud == before.hud,
+                  "opening overlay options changed the overlay switch");
+            s.press({Key::circle, Key::up, Key::cross});
             check(s.services.preferences().hud != before.hud,
-                  "global Video bounds do not end at overlay without frame generation");
+                  "overlay options Back did not return to Video above its opener");
         } else if (availability == 1) {
             s.press({Key::right, Key::cross});
             check(s.services.preferences().frame_gen_multiplier == before.frame_gen_multiplier,
@@ -1554,6 +1557,71 @@ void update1000_settings_checks(Stage &s)
     std::fprintf(stderr, "v1.001.000 ASTC, RNG, bounds and navigation checks completed: %d checks\n", checks);
 }
 
+void update2000_settings_checks(Stage &s)
+{
+    int checks = 0;
+    const auto check = [&](bool passed, const char *what) {
+        ++checks;
+        if (!passed) { std::fprintf(stderr, "error: v2000 settings: %s\n", what); s.ok = false; }
+    };
+    const auto original = s.services.preferences();
+    const auto game = s.services.game_settings(0);
+    const auto category = [&](int index) {
+        s.restart(); s.wait(.8f); home_settings(s, .3f);
+        for (int i = 0; i < index; ++i) s.press({Key::down});
+        s.press({Key::cross}); s.wait(.3f);
+    };
+    auto prefs = original;
+    prefs.vibration = true; prefs.vibration_strength = 100;
+    s.services.set_preferences(prefs);
+    const auto strength = [&](int value) {
+        s.press({Key::cross});
+        for (int i = 0; i < 5; ++i) s.press({Key::up});
+        for (int i = 0; i < value; ++i) s.press({Key::down});
+        s.press({Key::cross}); s.wait(.3f);
+    };
+    category(4); s.press({Key::down}); strength(2);
+    check(s.services.preferences().vibration_strength == 75, "vibration strength not saved");
+    check(s.services.last_vibration_pulse == 75, "strength preview did not match saved setting");
+    s.services.fail_settings = true;
+    const auto pulses = s.services.vibration_pulses;
+    strength(1);
+    check(s.services.preferences().vibration_strength == 75 && s.services.vibration_pulses == pulses,
+          "rejected strength write changed controls or pulsed");
+    s.services.fail_settings = false;
+    s.press({Key::circle}); s.wait(.3f); strength(0);
+    check(s.services.preferences().vibration_strength == 25, "strength lower bound");
+    s.press({Key::up, Key::cross, Key::down}); strength(1);
+    check(!s.services.preferences().vibration && s.services.preferences().vibration_strength == 50,
+          "disabled vibration prevented strength persistence");
+    const auto muted_pulses = s.services.vibration_pulses;
+    strength(2);
+    check(s.services.vibration_pulses == muted_pulses, "disabled vibration still pulsed");
+    s.wait(.8f); s.shoot("v2000-vibration-strength");
+    category(1);
+    for (int i = 0; i < 7; ++i) s.press({Key::down});
+    s.press({Key::cross}); s.wait(.3f);
+    const auto before = s.services.preferences();
+    s.press({Key::cross, Key::down, Key::right, Key::down, Key::right});
+    const auto changed = s.services.preferences();
+    check(changed.hud_colors != before.hud_colors && changed.hud_size == (before.hud_size + 1) % 3 &&
+          changed.hud_corner == (before.hud_corner + 1) % 4, "overlay presentation controls");
+    s.services.fail_settings = true; s.press({Key::right});
+    check(s.services.preferences().hud_corner == changed.hud_corner, "rejected corner change was retained");
+    s.services.fail_settings = false;
+    for (int row = 0; row < 9; ++row) s.press({Key::down, Key::cross});
+    check(s.services.preferences().hud_fields == (before.hud_fields ^ 0x1ff), "overlay field mask");
+    s.wait(.8f); s.shoot("v2000-overlay-options-end");
+    s.press({Key::circle, Key::up, Key::cross});
+    check(s.services.preferences().hud != before.hud, "overlay Back lost Video selection");
+    s.restart(); s.wait(.8f);
+    check(s.services.preferences().hud_corner == changed.hud_corner, "overlay choice lost on reopen");
+    check(s.services.game_settings(0).hud_size == game.hud_size &&
+          s.services.game_settings(0).hud_corner == game.hud_corner, "global overlay changed per-game overrides");
+    s.services.set_preferences(original);
+    std::fprintf(stderr, "v1.002.000 vibration and overlay checks completed: %d checks\n", checks);
+}
+
 void integration_checks(Stage &s, const std::string &assets)
 {
     switch_home_checks(s);
@@ -1564,6 +1632,7 @@ void integration_checks(Stage &s, const std::string &assets)
     switch_home_launch_alignment_checks(s,assets);
     update110_workflow_checks(s);
     update1000_settings_checks(s);
+    update2000_settings_checks(s);
 }
 
 void pictures(Stage &s,const std::string &assets)
@@ -1913,7 +1982,7 @@ void pictures(Stage &s,const std::string &assets)
     s.wait(0.8f);
     s.shoot("17-controls");
     // The button mapping: B moved to Circle takes A's place (A gets Cross), then all back.
-    s.press({Key::down});
+    s.press({Key::down, Key::down});
     s.wait(0.4f);
     s.shoot("54-controls-mapping-row");
     s.press({Key::cross, Key::down, Key::right});

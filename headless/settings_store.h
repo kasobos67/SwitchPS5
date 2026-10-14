@@ -9,7 +9,8 @@
 //                "output_resolution": "1080p", "frame_gen": false,
 //                "frame_gen_target": "auto", "frame_gen_multiplier": "2" },
 //     "audio": { "volume": 100, "mute": false, "menu_volume": 70 },
-//     "controls": { "vibration": true, "mapping": { "a": "cross", "b": "circle" } },
+//     "controls": { "vibration": true, "vibration_strength": 100,
+//                   "mapping": { "a": "cross", "b": "circle" } },
 //     "system": { "language": "en-US" },
 //     "accessibility": { "large_text": false, "high_contrast": false, "reduce_motion": false },
 //     "diagnostics": { "detailed_logging": false, "immediate_logs": false },
@@ -92,6 +93,17 @@ static_assert(std::size(kFrameGenTargetKeys) == std::size(kFrameGenTargetHz));
 inline constexpr const char* kFrameGenMultiplierKeys[] = {"2", "3", "4"};
 inline constexpr int kFrameGenMultiplierValue[] = {2, 3, 4};
 static_assert(std::size(kFrameGenMultiplierKeys) == std::size(kFrameGenMultiplierValue));
+// Settings > Video > Overlay size: how large the overlay's chip is drawn. "regular" is the size
+// every earlier build drew; "medium" is one and a half times it; "large" is twice it, for reading
+// the line from across a room. The corner it stands in is a switch of its own
+// (Preferences::hud_corner), and the order here is the one the launchers walk
+// (hud.h's kHudCornerCount). The value is the chip's scale times two, as hud.h's field carries it.
+inline constexpr const char* kHudSizeKeys[] = {"regular", "medium", "large"};
+inline constexpr int kHudSizeValue[] = {2, 3, 4};
+static_assert(std::size(kHudSizeKeys) == std::size(kHudSizeValue));
+// Settings > Video > Overlay corner: which corner of the picture the chip is drawn against.
+inline constexpr const char* kHudCornerKeys[] = {"top_left", "top_right", "bottom_left", "bottom_right"};
+static_assert(std::size(kHudCornerKeys) == 4);
 // Settings > Video: the size of the picture the app puts out, for the menu and for a game (its
 // frame after the upscaling filter). The console scales it to what the TV shows.
 inline constexpr const char* kOutputKeys[] = {"1080p", "1440p", "2160p"};
@@ -126,6 +138,7 @@ struct Preferences {
     int frame_gen_target = 0;            // index into kFrameGenTargetKeys (0 is "auto")
     int frame_gen_multiplier = 0;        // index into kFrameGenMultiplierKeys (0 is 2x)
     bool vibration = true;
+    int vibration_strength = 100;        // percent of what a game asks for: 25, 50, 75 or 100
     int language = 0;                    // index into kLanguageKeys (English (US), Eden's default)
     int menu_volume = 70;                // the launcher's own sounds, 0 (off) to 100
     bool large_text = false;             // Settings > Accessibility: the launcher's look
@@ -134,6 +147,14 @@ struct Preferences {
     ButtonMapping mapping = kDefaultMapping;  // Settings > Controls > Button mapping
     int controller = -1;                 // a game's own Controller type (kControllerKeys); -1: automatic
     bool immediate_logs = false;         // Settings > Diagnostics: log lines written as they come
+    // Settings > Video: the overlay's chip, which draws over whatever the game shows. Kept at the
+    // end so the aggregate initialisations the checks use still mean what they did.
+    int hud_size = 0;        // index into kHudSizeKeys: 0 regular, 1 medium, 2 large
+    int hud_corner = 0;      // index into kHudCornerKeys: which corner of the picture it stands in
+    bool hud_colors = true;  // the line in its inks rather than one (bake-loading-text.py)
+    // What the overlay's line may say, bit by bit (hud.h's kHudField*): the pieces the user has
+    // chosen to show. All of them by default.
+    int hud_fields = 0xff;
 };
 
 inline int KeyIndex(const std::string& value, const char* const* keys, int count, int fallback) {
@@ -333,6 +354,15 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     const Json document = Settings::Load(file);
     Preferences result;
     result.hud = Settings::Bool(document, Json::json_pointer("/video/fps_overlay"), result.hud);
+    result.hud_size = KeyIndex(Settings::String(document, Json::json_pointer("/video/fps_overlay_size")),
+                               kHudSizeKeys, int(std::size(kHudSizeKeys)), result.hud_size);
+    result.hud_corner = KeyIndex(Settings::String(document, Json::json_pointer("/video/fps_overlay_corner")),
+                                 kHudCornerKeys, int(std::size(kHudCornerKeys)), result.hud_corner);
+    result.hud_colors = Settings::Bool(document, Json::json_pointer("/video/fps_overlay_colors"),
+                                       result.hud_colors);
+    const int hud_fields =
+        Settings::Int(document, Json::json_pointer("/video/fps_overlay_fields"), result.hud_fields);
+    if (hud_fields >= 0 && hud_fields <= 0x1ff) result.hud_fields = hud_fields;
     result.backend = Settings::String(document, Json::json_pointer("/video/renderer")) == "opengl" ?
         GraphicsBackend::OpenGL : GraphicsBackend::Vulkan;
     const int volume = Settings::Int(document, Json::json_pointer("/audio/volume"), result.volume);
@@ -363,6 +393,10 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
         Settings::String(document, Json::json_pointer("/video/frame_gen_multiplier")),
         kFrameGenMultiplierKeys, int(std::size(kFrameGenMultiplierKeys)), result.frame_gen_multiplier);
     result.vibration = Settings::Bool(document, Json::json_pointer("/controls/vibration"), result.vibration);
+    // A strength between the steps is read as the step below it; out of range as the nearest end.
+    result.vibration_strength = std::clamp(
+        Settings::Int(document, Json::json_pointer("/controls/vibration_strength"), result.vibration_strength), 25,
+        100) / 25 * 25;
     result.language = KeyIndex(Settings::String(document, Json::json_pointer("/system/language")),
                                kLanguageKeys, int(std::size(kLanguageKeys)), result.language);
     result.large_text = Settings::Bool(document, Json::json_pointer("/accessibility/large_text"), false);
@@ -381,11 +415,17 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
         value.refresh < 0 || value.refresh >= int(std::size(kRefreshKeys)) ||
         value.output < 0 || value.output >= int(std::size(kOutputKeys)) ||
         value.language < 0 || value.language >= int(std::size(kLanguageKeys)) ||
-        !ValidMapping(value.mapping)) return false;
+        value.hud_size < 0 || value.hud_size >= int(std::size(kHudSizeKeys)) ||
+        value.hud_corner < 0 || value.hud_corner >= int(std::size(kHudCornerKeys)) ||
+        value.hud_fields < 0 || value.hud_fields > 0x1ff || !ValidMapping(value.mapping)) return false;
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
     document["video"]["renderer"] = value.backend == GraphicsBackend::Vulkan ? "vulkan" : "opengl";
     document["video"]["fps_overlay"] = value.hud;
+    document["video"]["fps_overlay_size"] = kHudSizeKeys[value.hud_size];
+    document["video"]["fps_overlay_corner"] = kHudCornerKeys[value.hud_corner];
+    document["video"]["fps_overlay_colors"] = value.hud_colors;
+    document["video"]["fps_overlay_fields"] = value.hud_fields;
     document["video"]["resolution"] = kResolutionKeys[value.resolution];
     document["video"]["upscaling_filter"] = kUpscalingFilterKeys[value.upscaling_filter];
     document["video"]["astc_textures"] = kAstcTextureKeys[value.astc_textures];
@@ -398,6 +438,7 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     document["audio"]["mute"] = value.mute;
     document["audio"]["menu_volume"] = value.menu_volume;
     document["controls"]["vibration"] = value.vibration;
+    document["controls"]["vibration_strength"] = value.vibration_strength;
     if (value.mapping == kDefaultMapping) document["controls"].erase("mapping");
     else document["controls"]["mapping"] = Settings::MappingJson(value.mapping);
     document["system"]["language"] = kLanguageKeys[value.language];
@@ -444,6 +485,8 @@ struct GameSettings {
     int upscaling_filter = -1;  // index into kUpscalingFilterKeys
     int refresh = -1;           // index into kRefreshKeys
     int hud = -1;               // FPS overlay
+    int hud_size = -1;          // index into kHudSizeKeys
+    int hud_corner = -1;        // index into kHudCornerKeys
     int frame_gen = -1;         // Lossless Scaling frame generation (Vulkan only)
     int frame_gen_target = -1;  // index into kFrameGenTargetKeys
     int frame_gen_multiplier = -1;  // index into kFrameGenMultiplierKeys
@@ -487,6 +530,9 @@ inline GameSettings LoadGameSettings(uint64_t title_id, const std::string& file 
                                        int(std::size(kUpscalingFilterKeys)), -1);
     result.astc_textures = KeyIndex(key("astc_textures"), kAstcTextureKeys, int(std::size(kAstcTextureKeys)), -1);
     result.refresh = KeyIndex(key("refresh_rate"), kRefreshKeys, int(std::size(kRefreshKeys)), -1);
+    result.hud_size = KeyIndex(key("fps_overlay_size"), kHudSizeKeys, int(std::size(kHudSizeKeys)), -1);
+    result.hud_corner = KeyIndex(key("fps_overlay_corner"), kHudCornerKeys,
+                                 int(std::size(kHudCornerKeys)), -1);
     result.frame_gen_target = KeyIndex(key("frame_gen_target"), kFrameGenTargetKeys,
                                        int(std::size(kFrameGenTargetKeys)), -1);
     result.frame_gen_multiplier = KeyIndex(key("frame_gen_multiplier"), kFrameGenMultiplierKeys,
@@ -530,7 +576,10 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
         value.frame_gen_target >= int(std::size(kFrameGenTargetKeys)) ||
         value.frame_gen_multiplier >= int(std::size(kFrameGenMultiplierKeys)) ||
         value.volume > 100 || value.rng_seed < -1 || value.rng_seed > 0xffffffffLL ||
-        !flag_ok(value.hud) || !flag_ok(value.frame_gen) || !flag_ok(value.mute) ||
+        value.hud_size >= int(std::size(kHudSizeKeys)) ||
+        value.hud_corner >= int(std::size(kHudCornerKeys)) ||
+        !flag_ok(value.hud) || !flag_ok(value.frame_gen) ||
+        !flag_ok(value.mute) ||
         !flag_ok(value.vibration) ||
         !std::all_of(value.performance.begin(), value.performance.end(), flag_ok) ||
         (value.own_mapping && !ValidMapping(value.mapping))) return false;
@@ -547,6 +596,8 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
     store("upscaling_filter", value.upscaling_filter, kUpscalingFilterKeys);
     store("astc_textures", value.astc_textures, kAstcTextureKeys);
     store("refresh_rate", value.refresh, kRefreshKeys);
+    store("fps_overlay_size", value.hud_size, kHudSizeKeys);
+    store("fps_overlay_corner", value.hud_corner, kHudCornerKeys);
     store("frame_gen_target", value.frame_gen_target, kFrameGenTargetKeys);
     store("frame_gen_multiplier", value.frame_gen_multiplier, kFrameGenMultiplierKeys);
     store("language", value.language, kLanguageKeys);
@@ -583,6 +634,8 @@ inline Preferences PreferencesFor(uint64_t title_id, const std::string& file = S
     if (game.astc_textures >= 0) result.astc_textures = game.astc_textures;
     if (game.refresh >= 0) result.refresh = game.refresh;
     if (game.hud >= 0) result.hud = game.hud == 1;
+    if (game.hud_size >= 0) result.hud_size = game.hud_size;
+    if (game.hud_corner >= 0) result.hud_corner = game.hud_corner;
     if (game.frame_gen >= 0) result.frame_gen = game.frame_gen == 1;
     if (game.frame_gen_target >= 0) result.frame_gen_target = game.frame_gen_target;
     if (game.frame_gen_multiplier >= 0) result.frame_gen_multiplier = game.frame_gen_multiplier;

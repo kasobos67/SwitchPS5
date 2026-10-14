@@ -658,6 +658,9 @@ std::string EdenServices::clock() {
 }
 
 unsigned EdenServices::controllers() { return radio_input_controllers(); }
+void EdenServices::vibration_pulse(int percent) {
+    if (percent > 0) radio_input_pulse(static_cast<unsigned>(percent));
+}
 
 std::string EdenServices::version() {
     // "01.000.040" reads as v1.000.040.
@@ -899,6 +902,8 @@ pe::ui::GameSettings EdenServices::game_settings(std::uint64_t title_id) {
     result.astc = saved.astc_textures;
     result.refresh = saved.refresh;
     result.hud = saved.hud;
+    result.hud_size = saved.hud_size;
+    result.hud_corner = saved.hud_corner;
     result.frame_gen = saved.frame_gen;
     result.frame_gen_target = saved.frame_gen_target;
     result.frame_gen_multiplier = saved.frame_gen_multiplier;
@@ -922,6 +927,8 @@ bool EdenServices::set_game_settings(std::uint64_t title_id, const pe::ui::GameS
     value.astc_textures = settings.astc;
     value.refresh = settings.refresh;
     value.hud = settings.hud;
+    value.hud_size = settings.hud_size;
+    value.hud_corner = settings.hud_corner;
     value.frame_gen = settings.frame_gen;
     value.frame_gen_target = settings.frame_gen_target;
     value.frame_gen_multiplier = settings.frame_gen_multiplier;
@@ -943,6 +950,10 @@ pe::ui::Preferences EdenServices::preferences() {
     const Eden::Preferences saved = Eden::LoadPreferences();
     pe::ui::Preferences result;
     result.hud = saved.hud;
+    result.hud_size = saved.hud_size;
+    result.hud_corner = saved.hud_corner;
+    result.hud_colors = saved.hud_colors;
+    result.hud_fields = saved.hud_fields;
     result.volume = saved.volume;
     result.mute = saved.mute;
     result.detailed_logging = saved.detailed_logging;
@@ -957,6 +968,7 @@ pe::ui::Preferences EdenServices::preferences() {
     result.frame_gen_target = saved.frame_gen_target;
     result.frame_gen_multiplier = saved.frame_gen_multiplier;
     result.vibration = saved.vibration;
+    result.vibration_strength = saved.vibration_strength;
     result.language = saved.language;
     result.menu_volume = saved.menu_volume;
     result.large_text = saved.large_text;
@@ -978,6 +990,10 @@ pe::ui::Preferences EdenServices::preferences() {
 bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     Eden::Preferences value;
     value.hud = preferences.hud;
+    value.hud_size = preferences.hud_size;
+    value.hud_corner = preferences.hud_corner;
+    value.hud_colors = preferences.hud_colors;
+    value.hud_fields = preferences.hud_fields;
     value.volume = preferences.volume;
     value.mute = preferences.mute;
     value.detailed_logging = preferences.detailed_logging;
@@ -992,6 +1008,7 @@ bool EdenServices::set_preferences(const pe::ui::Preferences& preferences) {
     value.frame_gen_target = preferences.frame_gen_target;
     value.frame_gen_multiplier = preferences.frame_gen_multiplier;
     value.vibration = preferences.vibration;
+    value.vibration_strength = preferences.vibration_strength;
     value.language = preferences.language;
     value.menu_volume = preferences.menu_volume;
     value.large_text = preferences.large_text;

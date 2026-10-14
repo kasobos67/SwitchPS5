@@ -75,6 +75,7 @@ class Launcher
     {
         none,
         video,
+        hud,
         performance,
         audio,
         controls,
@@ -440,7 +441,8 @@ class Launcher
     int option_ = 0;
     tween::Spring option_cursor_; // highlight position in pixels
     std::array<tween::Spring, 7> switches_{};
-    ListView video_rows_; // the Video dialog's rows (more than it shows)
+    ListView video_rows_;
+    ListView hud_rows_; // the Video dialog's rows (more than it shows)
     ListView performance_rows_; // the Performance dialog's rows (more than it shows)
     GameSettings game_settings_;
     bool game_docked_ = true;

@@ -48,10 +48,16 @@ enum VideoRow : int
     video_astc,
     video_refresh,
     video_overlay,
+    video_overlay_options,
     video_frame_gen,
     video_frame_gen_target,
     video_frame_gen_multiplier,
     kVideoRows,
+};
+enum HudRow : int {
+    hud_colors_row, hud_size_row, hud_corner_row, hud_backend_row, hud_fps_row,
+    hud_ms_row, hud_speed_row, hud_cpu_row, hud_gpu_row, hud_mem_row, hud_ping_row,
+    hud_cores_row, kHudRows
 };
 constexpr float kVideoRowsTop = 228.0f;
 constexpr float kVideoRowPitch = 96.0f;
@@ -201,8 +207,17 @@ void Launcher::press_settings(Key key)
     }
     if (key == Key::cross || key == Key::right)
     {
+        if (editor == Modal::video && option_ == video_overlay_options) {
+            hud_rows_.visible = kVideoRowsShown;
+            hud_rows_.pitch = kVideoRowPitch;
+            hud_rows_.wrap = false;
+            hud_rows_.reset(kHudRows, 0);
+            option_ = 0;
+            open_modal(Modal::hud);
+            return;
+        }
         const bool choice = (editor == Modal::video && option_ != video_overlay) ||
-            (editor == Modal::audio && option_ != 1);
+            (editor == Modal::audio && option_ != 1) || (editor == Modal::controls && option_ == 1);
         if (choice)
         {
             if(editor == Modal::video && option_ >= video_frame_gen && services_.frame_gen_state() != 2) {
@@ -351,6 +366,9 @@ SettingChoices setting_choices(int category, int option, const Preferences &pref
         default: return {tr("Refresh rate"), {"60 Hz", "120 Hz"}, prefs.refresh};
         }
     }
+    if (category == kControls)
+        return {tr("Vibration strength"), {percent(25), percent(50), percent(75), percent(100)},
+                std::clamp(prefs.vibration_strength / 25 - 1, 0, 3)};
     SettingChoices choices;
     choices.title = option == 0 ? tr("Game volume") : tr("Menu sounds");
     for (int volume = 0; volume <= 100; volume += 10)
@@ -405,6 +423,8 @@ void Launcher::press_settings_choice(Key key)
         default: prefs_.refresh = value; break;
         }
     }
+    else if (setting_choice_category_ == kControls)
+        prefs_.vibration_strength = (value + 1) * 25;
     else if (setting_choice_option_ == 0)
         prefs_.volume = value * 10;
     else
@@ -415,6 +435,8 @@ void Launcher::press_settings_choice(Key key)
         cue(Cue::error);
         return;
     }
+    if (setting_choice_category_ == kControls && prefs_.vibration)
+        services_.vibration_pulse(prefs_.vibration_strength);
     apply_look();
     close_modal();
     option_ = setting_choice_option_;
@@ -461,6 +483,7 @@ int Launcher::dialog_rows(Modal modal) const
     {
     case Modal::video:
         return services_.frame_gen_state() == 0 ? static_cast<int>(video_frame_gen) : static_cast<int>(kVideoRows);
+    case Modal::hud: return kHudRows;
     case Modal::performance:
         return kPerformanceRows;
     case Modal::audio:
@@ -473,10 +496,8 @@ int Launcher::dialog_rows(Modal modal) const
                (library_.selected < static_cast<int>(games_.size()) &&
                 !games_[static_cast<std::size_t>(library_.selected)].sources.empty() &&
                 !games_[static_cast<std::size_t>(library_.selected)].remote ? 1 : 0);
-    case Modal::diagnostics:
-    case Modal::controls:
-        // Two logging switches, or vibration and mapping.
-        return 2;
+    case Modal::controls: return 3;
+    case Modal::diagnostics: return 2;
     default:
         return 1;
     }
@@ -493,10 +514,12 @@ float Launcher::dialog_row_top(Modal modal, int row) const
         return kVideoRowsTop + kVideoRowPitch * static_cast<float>(row) - performance_rows_.scroll();
     case Modal::video: // five of its rows show; the list scrolls to the others
         return kVideoRowsTop + kVideoRowPitch * static_cast<float>(row) - video_rows_.scroll();
+    case Modal::hud:
+        return kVideoRowsTop + kVideoRowPitch * static_cast<float>(row) - hud_rows_.scroll();
     case Modal::game:
         return 334.0f + 96.0f * static_cast<float>(row);
     case Modal::controls: // under the shortcuts
-        return 560.0f + 96.0f * static_cast<float>(row);
+        return 528.0f + 96.0f * static_cast<float>(row);
     case Modal::diagnostics: return 648.0f + 96.0f * row;
     default:
         return 744.0f;
@@ -511,12 +534,19 @@ void Launcher::press_dialog(Key key)
     const int step = key == Key::left ? -1 : 1;
     if (key == Key::circle)
     {
+        if (modal_ == Modal::hud) {
+            modal_ = modal_shown_ = Modal::none;
+            option_ = video_overlay_options;
+            message_.clear();
+            cue(Cue::back);
+            return;
+        }
         close_modal();
         return;
     }
-    if ((key == Key::up || key == Key::down) && (modal_ == Modal::video || modal_ == Modal::performance))
+    if ((key == Key::up || key == Key::down) && (modal_ == Modal::video || modal_ == Modal::performance || modal_ == Modal::hud))
     {
-        ListView &rows_view = modal_ == Modal::video ? video_rows_ : performance_rows_;
+        ListView &rows_view = modal_ == Modal::video ? video_rows_ : modal_ == Modal::hud ? hud_rows_ : performance_rows_;
         if (rows_view.move(key == Key::down ? 1 : -1))
         {
             option_ = rows_view.selected;
@@ -562,6 +592,7 @@ void Launcher::press_dialog(Key key)
             prefs_.astc = prefs_.astc != 0 ? 0 : 1;
         else if (option_ == video_refresh)
             prefs_.refresh = prefs_.refresh != 0 ? 0 : 1;
+        else if (option_ == video_overlay_options) return;
         else if(option_ >= video_frame_gen) {
             if(services_.frame_gen_state() != 2) { say(tr("Frame generation needs Lossless.dll, from Lossless Scaling, in the lossless folder."),true); cue(Cue::error); return; }
             if(option_ == video_frame_gen) prefs_.frame_gen = !prefs_.frame_gen;
@@ -570,6 +601,16 @@ void Launcher::press_dialog(Key key)
         }
         else
             prefs_.hud = !prefs_.hud;
+        break;
+    case Modal::hud:
+        if (option_ == hud_colors_row) prefs_.hud_colors = !prefs_.hud_colors;
+        else if (option_ == hud_size_row) prefs_.hud_size = (std::clamp(prefs_.hud_size, 0, 2) + step + 3) % 3;
+        else if (option_ == hud_corner_row) prefs_.hud_corner = (std::clamp(prefs_.hud_corner, 0, 3) + step + 4) % 4;
+        else prefs_.hud_fields ^= 1 << (option_ - hud_backend_row);
+        sound = option_ == hud_size_row || option_ == hud_corner_row ? Cue::slider :
+            (option_ == hud_colors_row ? prefs_.hud_colors :
+             (((prefs_.hud_fields & (1 << (option_ - hud_backend_row))) != 0) != (option_ == hud_cores_row))) ?
+                Cue::toggle : Cue::toggle_off;
         break;
     case Modal::audio:
         if (option_ == 0)
@@ -599,7 +640,13 @@ void Launcher::press_dialog(Key key)
         break;
     }
     case Modal::controls:
-        if (option_ == 1)
+        if (option_ == 1) {
+            if (!adjust) return;
+            prefs_.vibration_strength = std::clamp(prefs_.vibration_strength + 25 * step, 25, 100);
+            sound = Cue::slider;
+            break;
+        }
+        if (option_ == 2)
         {
             // The button mapping has its own list (game_options.cpp).
             if (activate)
@@ -638,8 +685,10 @@ void Launcher::press_dialog(Key key)
     {
         say(tr("Saved. Full quality uses four times the graphics memory for these textures and can run out above 1x."));
     }
+    if (modal_ == Modal::controls && option_ == 1 && sound != Cue::error && prefs_.vibration)
+        services_.vibration_pulse(prefs_.vibration_strength);
     apply_look();
-    if (sound == Cue::toggle)
+    if (sound == Cue::toggle && modal_ != Modal::hud)
     {
         const auto states = switch_states(modal_);
         const int state = modal_ == Modal::video || modal_ == Modal::controls || modal_ == Modal::diagnostics ? 0 :
@@ -654,12 +703,12 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     auto &list = c.list;
     list.push_opacity(open);
     const int rows = dialog_rows(modal);
-    const bool scrolls = modal == Modal::video || modal == Modal::performance;
-    const ListView &view = modal == Modal::performance ? performance_rows_ : video_rows_;
+    const bool scrolls = modal == Modal::video || modal == Modal::performance || modal == Modal::hud;
+    const ListView &view = modal == Modal::performance ? performance_rows_ : modal == Modal::hud ? hud_rows_ : video_rows_;
     const Rect &window = modal == Modal::performance ? kPerformanceWindow : kVideoWindow;
     const int first = scrolls ? view.first_row() : 0;
     const int last = scrolls ? view.last_row() : rows - 1;
-    const bool focus = settings_content_ && modal_ == Modal::none;
+    const bool focus = settings_content_ && (modal_ == Modal::none || modal_ == Modal::hud);
     if (scrolls)
         list.push_clip({708.0f, window.y - 6.0f, 1110.0f, window.h + 12.0f});
     for (int row = first; row <= last; ++row)
@@ -687,17 +736,30 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         const std::string values[] = {
             prefs_.renderer != 0 ? "Vulkan" : "OpenGL", output_name(prefs_.output),
             pick(services_.resolution_labels(), prefs_.resolution),
-            pick(services_.filter_labels(), prefs_.filter), pick(services_.astc_labels(), prefs_.astc), hertz(prefs_.refresh), std::string{}, on_off(prefs_.frame_gen),
+            pick(services_.filter_labels(), prefs_.filter), pick(services_.astc_labels(), prefs_.astc), hertz(prefs_.refresh), std::string{}, ">", on_off(prefs_.frame_gen),
             prefs_.frame_gen_target <= 0 ? std::string{tr("Auto")} : fill(tr("{0} Hz"),{std::vector<std::string>{"Auto","60","90","120","144","240"}[static_cast<std::size_t>(std::clamp(prefs_.frame_gen_target,1,5))]}),
             std::vector<std::string>{"2x","3x","4x"}[static_cast<std::size_t>(std::clamp(prefs_.frame_gen_multiplier,0,2))]};
         static constexpr const char *names[] = {TR("Renderer"), TR("Output resolution"),
-            TR("Resolution"), TR("Upscaling filter"), TR("ASTC textures"), TR("Refresh rate"), TR("FPS overlay"), TR("Frame generation"), TR("Frame gen target"), TR("Frame gen multiplier")};
+            TR("Resolution"), TR("Upscaling filter"), TR("ASTC textures"), TR("Refresh rate"), TR("FPS overlay"), TR("Overlay options"), TR("Frame generation"), TR("Frame gen target"), TR("Frame gen multiplier")};
         for (int row = first; row <= last; ++row)
             if (row == video_overlay)
                 switch_row(row, tr(names[row]), prefs_.hud);
             else if(row >= video_frame_gen && services_.frame_gen_state() != 2) {
                 list.push_opacity(.38f); value(row,tr(names[row]),tr("Unavailable")); list.pop_opacity();
             } else value(row, tr(names[row]), values[row]);
+        break;
+    }
+    case Modal::hud:
+    {
+        static constexpr const char *names[kHudRows] = {TR("Enable colors"), TR("Size"), TR("Corner"),
+            TR("Backend"), TR("FPS"), TR("Frame time"), TR("Speed"), TR("CPU"), TR("GPU"),
+            TR("Memory"), TR("Ping"), TR("CPU by core")};
+        for (int row = first; row <= last; ++row) {
+            if (row == hud_colors_row) switch_row(row, tr(names[row]), prefs_.hud_colors);
+            else if (row == hud_size_row) value(row, tr(names[row]), tr(kHudSizeNames[std::clamp(prefs_.hud_size, 0, 2)]));
+            else if (row == hud_corner_row) value(row, tr(names[row]), tr(kHudCornerNames[std::clamp(prefs_.hud_corner, 0, 3)]));
+            else switch_row(row, tr(names[row]), ((prefs_.hud_fields & (1 << (row - hud_backend_row))) != 0) != (row == hud_cores_row));
+        }
         break;
     }
     case Modal::performance:
@@ -739,12 +801,13 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         }
         text_shrink(c, tr("Connected controllers"), 750.0f, 511.0f, 24.0f, theme::kCopy, 1008.0f);
         switch_row(0, tr("Vibration"), prefs_.vibration);
-        value(1, tr("Change Button Mapping"), prefs_.mapping == kDefaultMapping ? tr("Default") : tr("Changed"));
-        list.line(714.0f, 780.0f, 1800.0f, 780.0f, 1.0f, theme::kRule);
+        value(1, tr("Vibration strength"), percent(prefs_.vibration_strength));
+        value(2, tr("Change Button Mapping"), prefs_.mapping == kDefaultMapping ? tr("Default") : tr("Changed"));
+        list.line(714.0f, 826.0f, 1800.0f, 826.0f, 1.0f, theme::kRule);
         text_shrink(c, std::string(tr("Touchpad")) + " + L1  " + tr("End the game and return to this menu"),
-                    750.0f, 823.0f, 24.0f, theme::kCopy, 1008.0f);
+                    750.0f, 858.0f, 24.0f, theme::kCopy, 1008.0f);
         text_shrink(c, std::string(tr("Touchpad")) + " + R1  " + tr("Show or hide the FPS overlay"),
-                    750.0f, 867.0f, 24.0f, theme::kCopy, 1008.0f);
+                    750.0f, 902.0f, 24.0f, theme::kCopy, 1008.0f);
         break;
     }
     case Modal::accessibility:

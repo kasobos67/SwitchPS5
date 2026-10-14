@@ -282,6 +282,13 @@ struct Profile
     bool playing = false; // games start as this one
 };
 
+// The overlay's chip corners, in the order Preferences::hud_corner counts them (settings_store.h
+// persists the same four by key). Shared by Settings > Video and a game's own Video settings.
+inline constexpr const char *kHudCornerNames[] = {"Top left", "Top right", "Bottom left", "Bottom right"};
+// The overlay's chip sizes, in the order Preferences::hud_size counts them (settings_store.h
+// persists the same three by key): regular is 1x, medium one and a half, large twice over.
+inline constexpr const char *kHudSizeNames[] = {"Regular", "Medium", "Large"};
+
 struct Preferences
 {
     bool hud = true;
@@ -301,6 +308,7 @@ struct Preferences
     int frame_gen_target = 0;      // index into kFrameGenTargetKeys: 0 auto, then 60/90/120/144/240
     int frame_gen_multiplier = 0;  // index into kFrameGenMultiplierKeys: 2x, 3x, 4x
     bool vibration = true;
+    int vibration_strength = 100; // percent of what a game asks for: 25, 50, 75 or 100
     int language = 0;
     int menu_volume = 70; // launcher sounds, 0-100
     // Accessibility: how the launcher itself is shown (theme.hpp, Look).
@@ -316,6 +324,13 @@ struct Preferences
     bool reactive_flushing = true;  // off is faster; some effects break
     bool skip_invalidation = false; // fewer invalidations of what the GPU caches hold
     ButtonMapping mapping = kDefaultMapping; // Settings > Controls > Button mapping
+    // Settings > Video: the overlay's chip (the same values Eden::Preferences keeps).
+    int hud_size = 0;   // 0 regular, 1 medium, 2 large
+    int hud_corner = 0; // 0 top left, 1 top right, 2 bottom left, 3 bottom right
+    bool hud_colors = true;  // the line in its inks rather than one
+    // What the overlay's line may say, bit by bit (hud.h's kHudField*): the pieces the user has
+    // chosen to show. All of them by default.
+    int hud_fields = 0xff;
 };
 
 // What one game does differently from Settings (Library > Game settings). Each value is -1 while
@@ -328,6 +343,8 @@ struct GameSettings
     int astc = -1;       // index into Services::astc_labels
     int refresh = -1;    // 0 60 Hz, 1 120 Hz
     int hud = -1;        // FPS overlay
+    int hud_size = -1;   // the overlay's chip: 0 regular, 1 large
+    int hud_corner = -1; // 0 top left, 1 top right, 2 bottom left, 3 bottom right
     int frame_gen = -1;  // Lossless Scaling frame generation (Vulkan only)
     int frame_gen_target = -1;      // index into kFrameGenTargetKeys
     int frame_gen_multiplier = -1;  // index into kFrameGenMultiplierKeys
@@ -388,6 +405,12 @@ class Services
     virtual unsigned controllers()
     {
         return 1u;
+    }
+    // A short vibration of the controller at `percent` of full strength: what the strength
+    // being set in Settings > Controls feels like.
+    virtual void vibration_pulse(int percent)
+    {
+        (void)percent;
     }
     virtual std::string version() = 0; // "v1.000.040"
     // A newer release than this one is listed (asked once per launch): handed over once, when the

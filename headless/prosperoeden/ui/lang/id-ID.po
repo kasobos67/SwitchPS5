@@ -2397,3 +2397,95 @@ msgstr "Tersimpan. Kualitas penuh memakai empat kali memori grafis untuk tekstur
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "Sistem"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "Renderer"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "Kiri bawah"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "Kanan bawah"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "Sudut"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU per inti"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "Aktifkan warna"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "Waktu frame"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "Besar"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "Sedang"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "Memori"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "Sudut penghitung"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "Opsi penghitung"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "Ukuran penghitung"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "Biasa"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "Ukuran"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "Kecepatan"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "Kiri atas"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "Kanan atas"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "Kekuatan getaran"

@@ -2397,3 +2397,95 @@ msgstr "Zapisano. Pełna jakość zużywa na te tekstury cztery razy więcej pam
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "System"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "Renderer"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "Lewy dolny"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "Prawy dolny"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "Róg"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU na rdzeń"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "Włącz kolory"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "Czas klatki"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "Duży"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "Średni"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "Pamięć"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "Róg licznika"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "Opcje licznika"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "Rozmiar licznika"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "Zwykły"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "Rozmiar"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "Szybkość"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "Lewy górny"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "Prawy górny"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "Siła wibracji"

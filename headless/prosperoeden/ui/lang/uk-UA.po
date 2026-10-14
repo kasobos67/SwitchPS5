@@ -2397,3 +2397,95 @@ msgstr "Збережено. Повна якість потребує вчетв�
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "Система"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "Рендерер"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "Зліва внизу"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "Справа внизу"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "Кут"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU за ядрами"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "Увімкнути кольори"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "Час кадру"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "Великий"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "Середній"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "Пам'ять"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "Кут лічильника"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "Параметри лічильника"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "Розмір лічильника"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Пінг"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "Звичайний"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "Розмір"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "Швидкість"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "Зліва вгорі"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "Справа вгорі"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "Сила вібрації"

@@ -2397,3 +2397,95 @@ msgstr "Mentve. A teljes minőség négyszer annyi grafikus memóriát használ 
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "Rendszer"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "Renderelő"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "Bal alsó"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "Jobb alsó"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "Sarok"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "CPU magonként"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "Színek bekapcsolása"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "Képkockaidő"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "Nagy"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "Közepes"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "Memória"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "A kijelző sarka"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "A kijelző beállításai"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "A kijelző mérete"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "Normál"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "Méret"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "Sebesség"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "Bal felső"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "Jobb felső"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "Rezgés erőssége"

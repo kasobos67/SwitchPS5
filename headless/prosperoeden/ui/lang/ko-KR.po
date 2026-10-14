@@ -2397,3 +2397,95 @@ msgstr "저장했습니다. 전체 품질은 이 텍스처에 그래픽 메모�
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "시스템"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "렌더러"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "왼쪽 아래"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "오른쪽 아래"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "위치"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "코어별 CPU"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "색 사용"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "프레임 시간"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "크게"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "중간"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "메모리"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "표시 위치"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "표시 옵션"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "표시 크기"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "핑"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "보통"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "크기"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "속도"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "왼쪽 위"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "오른쪽 위"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "진동 세기"

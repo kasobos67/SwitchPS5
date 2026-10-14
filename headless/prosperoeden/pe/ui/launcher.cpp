@@ -359,6 +359,7 @@ void Launcher::update(float dt)
     files_.update(dt);
     language_.update(dt);
     video_rows_.update(dt);
+    hud_rows_.update(dt);
     performance_rows_.update(dt);
     game_rows_.update(dt);
     mod_rows_.update(dt);
@@ -584,7 +585,7 @@ void Launcher::draw(gfx::DrawList &list)
     {
         const float frame=modal_elapsed_*60.0f;
         const float opened=(modal_closing_ ? stock_motion::modal_out_alpha(frame) : stock_motion::modal_alpha(frame))/255.0f;
-        const bool settings_page = modal_shown_ == Modal::video || modal_shown_ == Modal::performance ||
+        const bool settings_page = modal_shown_ == Modal::hud || modal_shown_ == Modal::video || modal_shown_ == Modal::performance ||
             modal_shown_ == Modal::audio || modal_shown_ == Modal::controls ||
             modal_shown_ == Modal::accessibility || modal_shown_ == Modal::diagnostics;
         const bool full_page = modal_shown_ == Modal::game || modal_shown_ == Modal::game_options ||
@@ -611,6 +612,13 @@ void Launcher::draw(gfx::DrawList &list)
         else if (modal_shown_ == Modal::multiplayer) draw_multiplayer(c,opened);
         else if (modal_shown_ == Modal::sync_setup) draw_sync_setup(c,opened);
         else if (modal_shown_ == Modal::pairing) draw_pairing(c,opened);
+        else if (modal_shown_ == Modal::hud) {
+            list.rounded_rect({700.0f,196.0f,1136.0f,721.0f},0.0f,theme::kBase);
+            draw_dialog(c,modal_shown_,opened);
+            static constexpr Hint hints[] = {{Pad::updown,TR("Select")},
+                {Pad::leftright,TR("Change")},{Pad::circle,TR("Back")}};
+            draw_footer(c,hints,3);
+        }
         else draw_dialog(c,modal_shown_,opened);
         list.pop_transform();
     }

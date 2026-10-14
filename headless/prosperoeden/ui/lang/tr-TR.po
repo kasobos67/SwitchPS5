@@ -2397,3 +2397,95 @@ msgstr "Kaydedildi. Tam kalite bu dokular için dört kat grafik belleği kullan
 #: pe/ui/library.cpp
 msgid "System"
 msgstr "Sistem"
+
+#: pe/ui/settings.cpp
+msgid "Backend"
+msgstr "İşleyici"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom left"
+msgstr "Sol alt"
+
+#: pe/ui/game_options.cpp
+msgid "Bottom right"
+msgstr "Sağ alt"
+
+#: pe/ui/settings.cpp
+msgid "Corner"
+msgstr "Köşe"
+
+#: pe/ui/settings.cpp
+msgid "CPU"
+msgstr "CPU"
+
+#: pe/ui/settings.cpp
+msgid "CPU by core"
+msgstr "Çekirdek başına CPU"
+
+#: pe/ui/settings.cpp
+msgid "Enable colors"
+msgstr "Renkleri etkinleştir"
+
+#: pe/ui/settings.cpp
+msgid "FPS"
+msgstr "FPS"
+
+#: pe/ui/settings.cpp
+msgid "Frame time"
+msgstr "Kare süresi"
+
+#: pe/ui/settings.cpp
+msgid "GPU"
+msgstr "GPU"
+
+#: pe/ui/game_options.cpp
+msgid "Large"
+msgstr "Büyük"
+
+#: pe/ui/game_options.cpp
+msgid "Medium"
+msgstr "Orta"
+
+#: pe/ui/settings.cpp
+msgid "Memory"
+msgstr "Bellek"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay corner"
+msgstr "Sayaç köşesi"
+
+#: pe/ui/settings.cpp
+msgid "Overlay options"
+msgstr "Sayaç seçenekleri"
+
+#: pe/ui/game_options.cpp
+msgid "Overlay size"
+msgstr "Sayaç boyutu"
+
+#: pe/ui/settings.cpp
+msgid "Ping"
+msgstr "Ping"
+
+#: pe/ui/game_options.cpp
+msgid "Regular"
+msgstr "Normal"
+
+#: pe/ui/settings.cpp
+msgid "Size"
+msgstr "Boyut"
+
+#: pe/ui/settings.cpp
+msgid "Speed"
+msgstr "Hız"
+
+#: pe/ui/game_options.cpp
+msgid "Top left"
+msgstr "Sol üst"
+
+#: pe/ui/game_options.cpp
+msgid "Top right"
+msgstr "Sağ üst"
+
+#: pe/ui/settings.cpp
+msgid "Vibration strength"
+msgstr "Titreşim gücü"
