@@ -282,6 +282,14 @@ void home_settings(Stage &s, float settle = 0.6f)
     s.wait(settle);
 }
 
+void home_shortcut(Stage &s, int position, float settle = 0.8f)
+{
+    s.press({Key::down});
+    for (int i = 1; i < position; ++i) s.press({Key::right});
+    s.press({Key::cross});
+    s.wait(settle);
+}
+
 void switch_library_fidelity_checks(Stage &s)
 {
     int checks = 0;
@@ -340,6 +348,21 @@ void switch_library_fidelity_checks(Stage &s)
     };
     ready();
     const auto initial=check_grid("initial library",true);
+    const auto check_top_return = [&](std::initializer_list<Key> down,
+                                      std::initializer_list<Key> up, const char *where) {
+        ready(); s.press(down); s.wait(0.6f);
+        s.press(up); s.wait(0.8f); s.render();
+        const auto returned = check_grid(where,true);
+        check(!initial.empty() && !returned.empty() &&
+                  std::fabs(initial.front().rect.y-returned.front().rect.y)<0.5f,
+              std::string{where}+" did not restore the opening scroll position");
+        check(!returned.empty() && returned.front().rect.y-84.0f>=returned.front().clip.y,
+              std::string{where}+" clips the selected title bubble");
+    };
+    check_top_return({Key::down,Key::down},{Key::up,Key::up},"arrow return to top");
+    check_top_return({Key::r1,Key::r1},{Key::l1,Key::l1},"shoulder return to top");
+    s.shoot("switch-library-returned-top");
+    ready();
     s.shoot("switch-library-six-by-three");
     s.press({Key::options});s.wait(.3f);s.shoot("switch-library-sort");
     s.press({Key::circle});s.wait(.3f);
@@ -818,8 +841,7 @@ void switch_navigation_checks(Stage &s)
     s.press({Key::circle,Key::circle});s.services.room=prior_room;
     s.services.last_room_connection=prior_room_connection;
     s.services.saved_room=prior_saved_room;
-    // HOME shortcut exit routes preserve the HOME strip and its focus. The
-    // same folder browser entered through Settings still returns to Settings.
+    // HOME shortcut exit routes preserve the HOME strip and its focus.
     for (int shortcut : {0,1}) {
         s.restart();s.wait(1.0f);s.press({Key::down});
         if(shortcut==1)s.press({Key::right});
@@ -833,14 +855,13 @@ void switch_navigation_checks(Stage &s)
                              "switch-shortcut-files-returned-home");
     }
     s.restart();s.wait(1.0f);home_settings(s);
-    for(int i=0;i<7;++i)s.press({Key::down});
-    s.press({Key::cross,Key::cross});s.wait(0.7f);
-    s.press({Key::circle});s.wait(0.7f);
-    s.press({Key::left,Key::up,Key::up,Key::up,Key::cross});
-    const bool vibration=s.services.preferences().vibration;
+    for(int i=0;i<4;++i)s.press({Key::down});
     s.press({Key::cross});
-    check(s.services.preferences().vibration!=vibration,
-          "Game Files entered from Settings did not return to Settings");
+    const auto accessibility=s.services.preferences();
+    s.press({Key::cross});
+    check(s.services.preferences().large_text!=accessibility.large_text &&
+          s.services.preferences().vibration==accessibility.vibration,
+          "the removed Controls category still occupies its System Settings row");
     s.press({Key::cross});
     // HOME scroll remains presentation-only. The circular end button still
     // opens the same library; returning and scrolling left reaches the first game.
@@ -917,14 +938,17 @@ void switch_menu_checks(Stage &s)
     s.press({Key::down,Key::cross});check(s.services.preferences().mute!=prefs.mute,"mute");
     s.press({Key::down});choice(prefs.menu_volume/10-1);check(s.launcher->menu_volume()==prefs.menu_volume-10,"immediate menu sound level");
     s.wait(0.3f);s.shoot("switch-audio-changed");
-    category(4);s.press({Key::cross});check(s.services.preferences().vibration!=prefs.vibration,"vibration");
-    category(5);s.press({Key::cross});check(s.services.preferences().large_text!=prefs.large_text,"larger text");
+    s.restart();s.wait(.8f);home_shortcut(s,4);
+    s.render();check(cover_quads(s).empty(),"Controllers page leaves HOME artwork visible");
+    s.shoot("switch-home-controller-settings");
+    s.press({Key::cross});check(s.services.preferences().vibration!=prefs.vibration,"vibration");
+    category(4);s.press({Key::cross});check(s.services.preferences().large_text!=prefs.large_text,"larger text");
     s.press({Key::down,Key::cross});check(s.services.preferences().high_contrast!=prefs.high_contrast,"high contrast");
     s.press({Key::down,Key::cross});check(s.services.preferences().reduce_motion!=prefs.reduce_motion,"reduce motion");
     s.services.set_preferences(prefs);
-    category(6);s.press({Key::cross});check(s.services.preferences().detailed_logging!=prefs.detailed_logging,"detailed logging");
-    category(8);s.press({Key::cross,Key::down,Key::cross});check(s.services.preferences().language!=prefs.language,"game language");
-    category(7);s.press({Key::cross});
+    category(5);s.press({Key::cross});check(s.services.preferences().detailed_logging!=prefs.detailed_logging,"detailed logging");
+    category(6);s.press({Key::cross,Key::down,Key::cross});check(s.services.preferences().language!=prefs.language,"game language");
+    s.restart();s.wait(.8f);home_shortcut(s,2);
     check(s.services.saved_files_folder()==saved,"browsing saved a folder without selecting it");
     s.press({Key::triangle});check(s.services.saved_files_folder()==s.services.files_folder(),"Use this folder");
     s.press({Key::square});check(s.services.saved_files_folder()=="/data/prosperoeden","Default folder");
@@ -932,11 +956,16 @@ void switch_menu_checks(Stage &s)
     check(s.services.saved_files_folder()=="/data/prosperoeden","failed folder write");
     s.services.fail_folder=false;
     s.services.set_files_folder(saved);
-    category(7);s.press({Key::cross});s.services.unreadable_folder="/mnt/ext1/eden/firmware";
+    s.restart();s.wait(.8f);home_shortcut(s,2);s.services.unreadable_folder="/mnt/ext1/eden/firmware";
     s.press({Key::down,Key::cross});s.wait(0.3f);s.shoot("switch-folder-open-failed");
     s.press({Key::triangle});check(s.services.saved_files_folder()==s.services.files_folder(),"failed folder open changed current directory");
     s.services.unreadable_folder.clear();
     s.services.set_files_folder(saved);
+    s.press({Key::circle});s.wait(.8f);s.render();
+    const auto file_return=cover_quads(s);
+    check(std::any_of(file_return.begin(),file_return.end(),[](const auto &q) {
+        return visible_cover(q) && std::fabs(q.rect.w-384.0f)<.5f;
+    }),"Game Files Back did not return to HOME");
     category(0);s.press({Key::cross,Key::triangle});check(s.services.profiles()[0].name!=people[0].name,"profile naming");
     s.services.people=people;
 
@@ -997,18 +1026,18 @@ void switch_menu_checks(Stage &s)
     }
     s.services.set_preferences(prefs);s.services.set_game_settings(0,game_prefs);
     s.services.people=people;s.services.set_files_folder(saved);
-    // The HOME Controllers shortcut edits global mapping without entering
-    // Settings. Opening/closing cannot change bindings; rejected writes roll
-    // back through the same preference writer as the Settings entry point.
+    // The controller page and nested mapping preserve the original preference
+    // writer, rejected-write rollback, and independent per-game overrides.
     const auto mapping_start=s.services.preferences();
     s.restart();s.wait(0.8f);
-    s.press({Key::down,Key::right,Key::right,Key::right,Key::cross});s.wait(0.4f);
+    home_shortcut(s,4);
+    s.press({Key::down,Key::down,Key::cross});s.wait(0.4f);
     s.shoot("switch-home-mapping");
     check(s.services.preferences().mapping==mapping_start.mapping,"opening HOME mapping changed bindings");
     s.press({Key::right});
     const auto mapped=pe::ui::assign_button(mapping_start.mapping,0,
         (mapping_start.mapping[0]+1)%pe::ui::kPadButtons);
-    check(s.services.preferences().mapping==mapped,"HOME Controllers did not open global button mapping");
+    check(s.services.preferences().mapping==mapped,"Controllers mapping action did not edit global bindings");
     check(s.services.game_settings(0).mapping==game_prefs.mapping &&
           s.services.game_settings(0).own_mapping==game_prefs.own_mapping,
           "HOME mapping changed per-game settings");
@@ -1018,18 +1047,20 @@ void switch_menu_checks(Stage &s)
     check(s.services.preferences().mapping==mapping_start.mapping,"rejected HOME mapping write changed bindings");
     s.services.fail_settings=false;s.press({Key::right});
     check(s.services.preferences().mapping==mapped,"HOME mapping did not roll back after a rejected write");
-    s.press({Key::left,Key::circle});s.wait(0.7f);s.render();
+    s.press({Key::left,Key::circle});s.wait(.6f);s.render();
+    check(cover_quads(s).empty(),"mapping Back skipped the Controllers page");
+    s.press({Key::cross,Key::right});
+    check(s.services.preferences().mapping==mapped,"mapping Back lost the controller mapping row");
+    s.press({Key::left,Key::circle});s.wait(.6f);
+    s.shoot("switch-mapping-returned-controllers");
+    s.press({Key::circle});s.wait(0.7f);s.render();
     const auto returned=cover_quads(s);
     check(std::any_of(returned.begin(),returned.end(),[](const auto &q) {
         return visible_cover(q) && std::fabs(q.rect.w-384.0f)<0.5f;
-    }),"HOME mapping Back did not return directly to HOME");
+    }),"Controllers Back did not return directly to HOME");
     s.shoot("switch-home-mapping-returned-home");
-    s.press({Key::cross,Key::right});
+    s.press({Key::cross,Key::down,Key::down,Key::cross,Key::right});
     check(s.services.preferences().mapping==mapped,"HOME mapping Back lost Controllers shortcut focus");
-    s.services.set_preferences(mapping_start);
-    category(4);s.press({Key::down,Key::down,Key::cross,Key::circle});s.wait(0.4f);
-    s.press({Key::cross,Key::right});
-    check(s.services.preferences().mapping==mapped,"Settings mapping Back no longer returns to its Controls row");
     s.services.set_preferences(mapping_start);
     std::fprintf(stderr,"Switch usable-menu contract checks completed: %d checks\n",checks);
 }
@@ -1062,7 +1093,7 @@ void switch_presentation_contract_checks(Stage &s)
     };
     // Basic White changes the whole presentation, survives a new launcher and
     // stays outside emulator/game preferences and the user's games folder.
-    category(9);s.press({Key::cross});s.wait(0.4f);
+    category(7);s.press({Key::cross});s.wait(0.4f);
     s.shoot("switch-theme-basic-white-settings");
     s.restart();s.wait(1.0f);
     check(background_light()>220,"Basic White did not survive launcher restart");
@@ -1073,7 +1104,7 @@ void switch_presentation_contract_checks(Stage &s)
               after.mapping==prefs.mapping,
           "UI theme changed emulator preferences");
     check(s.services.saved_files_folder()==folder,"UI theme changed the games folder");
-    category(9);s.press({Key::down,Key::cross});s.wait(0.4f);
+    category(7);s.press({Key::down,Key::cross});s.wait(0.4f);
     s.restart();s.wait(1.0f);
     check(background_light()<90,"Basic Black did not survive launcher restart");
 
@@ -1298,7 +1329,7 @@ void update110_workflow_checks(Stage &s)
     s.fixture_services=nullptr; s.services.room={};
     s.services.people={{"Eden",true},{"Marina",false}};
     s.services.has_server=false;
-    category(10); s.shoot("110-01-settings-downloads");
+    category(8); s.shoot("110-01-settings-downloads");
     s.press({Key::cross,Key::cross}); s.wait(.5f); s.shoot("110-02-downloads-not-configured");
     s.press({Key::circle}); s.wait(.5f); s.shoot("110-03-downloads-return-to-settings");
 
@@ -1336,11 +1367,11 @@ void update110_workflow_checks(Stage &s)
     check(s.launcher->selected_game().empty(),"failed download never launches");
     s.press({Key::square}); s.wait(.5f); s.shoot("110-13-download-cancelled");
     s.services.download_fails=false;
-    category(10); s.press({Key::cross,Key::cross}); s.wait(.5f); s.shoot("110-14-download-sources");
+    category(8); s.press({Key::cross,Key::cross}); s.wait(.5f); s.shoot("110-14-download-sources");
 
     s.services.has_server=false;
-    category(12); s.shoot("110-15-settings-multiplayer");
-    s.press({Key::cross,Key::cross}); s.wait(.6f); s.shoot("110-16-multiplayer-choice");
+    s.restart(); s.wait(.8f); home_shortcut(s,3); s.shoot("110-15-home-multiplayer");
+    s.wait(.6f); s.shoot("110-16-multiplayer-choice");
     s.press({Key::cross}); settle_async(); s.wait(.6f); s.shoot("110-17-public-rooms");
     s.press({Key::down,Key::down,Key::down,Key::cross}); s.wait(.4f);
     check(s.services.room.phase==Eden::Multiplayer::Phase::Idle,"incompatible public room is blocked");
@@ -1354,7 +1385,7 @@ void update110_workflow_checks(Stage &s)
     s.restart(); s.wait(.8f); s.press({Key::cross});
     check(s.launcher->selected_game().empty(),"connecting room blocks game start");
     s.services.room={Eden::Multiplayer::Phase::Connected,"","Friends' room",{"PlayerPS5","Desktop player"}};
-    category(12); s.press({Key::cross,Key::cross,Key::down,Key::cross}); s.wait(.5f);
+    s.restart(); s.wait(.8f); home_shortcut(s,3); s.press({Key::down,Key::cross}); s.wait(.5f);
     s.shoot("110-20-room-connected");
     for(int i=3;i<=16;++i) s.services.room.members.push_back("Player "+std::to_string(i));
     for(int i=0;i<20;++i) s.press({Key::down});
@@ -1382,7 +1413,7 @@ void update110_workflow_checks(Stage &s)
     s.press({Key::circle}); s.wait(.5f);
     check(s.launcher->selected_game().empty(),"cancelling failed save sync does not launch");
     s.services.save_sync_fails=false; s.services.save_sync_on=false;
-    category(11); s.shoot("110-27-settings-save-sync");
+    category(9); s.shoot("110-27-settings-save-sync");
     s.press({Key::cross,Key::cross}); s.wait(.5f); s.shoot("110-28-save-sync-profiles");
     s.press({Key::cross}); s.wait(.5f); s.shoot("110-29-pairing-servers");
     s.press({Key::cross}); s.wait(1.5f); s.shoot("110-30-pairing-qr-code");
@@ -1580,7 +1611,7 @@ void update2000_settings_checks(Stage &s)
         for (int i = 0; i < value; ++i) s.press({Key::down});
         s.press({Key::cross}); s.wait(.3f);
     };
-    category(4); s.press({Key::down}); strength(2);
+    s.restart();s.wait(.8f);home_shortcut(s,4);s.press({Key::down});strength(2);
     check(s.services.preferences().vibration_strength == 75, "vibration strength not saved");
     check(s.services.last_vibration_pulse == 75, "strength preview did not match saved setting");
     s.services.fail_settings = true;
@@ -1978,7 +2009,8 @@ void pictures(Stage &s,const std::string &assets)
     s.press({Key::circle, Key::down, Key::cross});
     s.wait(0.8f);
     s.shoot("16-audio");
-    s.press({Key::circle, Key::down, Key::cross});
+    s.press({Key::circle,Key::circle});s.wait(.8f);s.restart();s.wait(1.0f);
+    home_shortcut(s,4);
     s.wait(0.8f);
     s.shoot("17-controls");
     // The button mapping: B moved to Circle takes A's place (A gets Cross), then all back.
@@ -1998,7 +2030,9 @@ void pictures(Stage &s,const std::string &assets)
     }
     s.press({Key::circle});
     s.wait(0.4f);
-    s.press({Key::circle, Key::down, Key::cross});
+    s.press({Key::circle});s.wait(.8f);s.restart();s.wait(1.0f);home_settings(s);
+    for(int i=0;i<4;++i)s.press({Key::down});
+    s.press({Key::cross});
     s.wait(0.8f);
     s.shoot("30-accessibility");
     s.press({Key::down, Key::down});
@@ -2007,7 +2041,7 @@ void pictures(Stage &s,const std::string &assets)
     s.press({Key::circle, Key::down, Key::cross});
     s.wait(0.8f);
     s.shoot("18-diagnostics");
-    s.press({Key::circle, Key::down, Key::cross, Key::cross});
+    s.press({Key::circle,Key::circle});s.wait(.8f);s.restart();s.wait(1.0f);home_shortcut(s,2);
     s.wait(1.0f);
     s.shoot("19-game-files");
     s.press({Key::down, Key::down, Key::triangle});
@@ -2015,7 +2049,9 @@ void pictures(Stage &s,const std::string &assets)
     s.shoot("20-game-files-saved");
     s.press({Key::circle});
     s.wait(0.5f);
-    s.press({Key::circle, Key::down, Key::cross, Key::cross});
+    s.restart();s.wait(1.0f);home_settings(s);
+    for(int i=0;i<6;++i)s.press({Key::down});
+    s.press({Key::cross,Key::cross});
     s.wait(1.0f);
     s.shoot("21-language");
     s.press({Key::down, Key::down, Key::down, Key::down, Key::down, Key::down, Key::down,

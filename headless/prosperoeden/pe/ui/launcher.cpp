@@ -46,9 +46,7 @@ Launcher::Launcher(Services &services, Textures &textures, const Fonts &fonts, b
     const bool continue_ready = home_.setup_ready && !home_tiles_.empty();
     home_focus_ = continue_ready ? 0 : home_.setup_ready ? kHomeAllSoftware : 5;
     home_springs_[static_cast<std::size_t>(home_focus_)].snap(1.0f);
-    settings_.visible = 10;
-    settings_.pitch = 68.0f;
-    settings_.reset(13, 0);
+    initialize_settings();
     section_.snap(1.0f);
     detail_.snap(1.0f);
     cue(home_.launch_failed ? Cue::notify : first_start ? Cue::welcome : Cue::resume);
@@ -86,7 +84,7 @@ void Launcher::cue(Cue value)
                 screen_ == Screen::settings && !settings_content_ ? Cue::focus_navigation : Cue::focus_menu;
     }
     if (value == Cue::open && leaving_ == Screen::home && screen_ == Screen::about) value = Cue::news_open;
-    if (value == Cue::open && leaving_ == Screen::home && screen_ == Screen::settings && home_focus_ == 4) value = Cue::controllers_open;
+    if (value == Cue::open && leaving_ == Screen::home && screen_ == Screen::controllers) value = Cue::controllers_open;
     if (value == Cue::modal_open && modal_ == Modal::profiles && !profile_for_launch_) value = Cue::profile_open;
     if (value == Cue::launch && screen_ == Screen::library) value = Cue::library_launch;
     cues_.push_back(value);
@@ -294,6 +292,8 @@ void Launcher::press(Key key)
         return press_library(key);
     case Screen::settings:
         return press_settings(key);
+    case Screen::controllers:
+        return press_controller_settings(key);
     case Screen::files:
         return press_files(key);
     case Screen::language:
@@ -350,7 +350,8 @@ void Launcher::update(float dt)
     library_.update(dt);
     const float selected_top = kLibraryTileY + (library_.selected / kLibraryColumns) * kLibraryTilePitch;
     const float max_scroll = std::max(0.0f, kLibraryTileY + ((static_cast<int>(games_.size()) + 5) / 6 - 1) * kLibraryTilePitch + kLibraryTileSize - 940.0f);
-    if (selected_top - library_scroll_.target < 250.0f) library_scroll_.target = std::max(0.0f, selected_top - 250.0f);
+    // Reserve the opening row's title-bubble margin above every focused cover.
+    if (selected_top - library_scroll_.target < kLibraryTileY) library_scroll_.target = std::max(0.0f, selected_top - kLibraryTileY);
     if (selected_top + kLibraryTileSize - library_scroll_.target > 940.0f) library_scroll_.target = std::min(max_scroll, selected_top + kLibraryTileSize - 940.0f);
     if (look().reduce_motion) library_scroll_.snap(library_scroll_.target);
     else library_scroll_.update(dt, 24.0f);
@@ -481,6 +482,8 @@ void Launcher::draw_screen(Canvas &c, Screen screen)
         return draw_library(c);
     case Screen::settings:
         return draw_settings(c);
+    case Screen::controllers:
+        return draw_controller_settings(c);
     case Screen::files:
         return draw_files(c);
     case Screen::language:

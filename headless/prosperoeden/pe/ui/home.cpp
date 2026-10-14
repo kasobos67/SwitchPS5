@@ -217,8 +217,7 @@ void Launcher::press_home(Key key)
         else if (focus == 2) { open(Screen::files, true); enter_files(); }
         else if (focus == 4)
         {
-            prefs_ = services_.preferences();
-            open_mapping(false);
+            open_controller_settings();
         }
         else if (focus == 6) { screen_off_ = true; cue(Cue::select); }
         else if (focus >= kHomeFirstRecent && focus < kHomeFirstRecent + recent_count && ready)

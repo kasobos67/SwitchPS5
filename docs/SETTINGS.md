@@ -2,6 +2,8 @@
 
 The settings that take more than a line to explain: the Performance switches, frame generation, profiles, settings per game, button mapping, language and accessibility.
 
+Open global controller settings, Game Files and Multiplayer from their HOME shortcuts. These pages have no duplicate entry in System Settings. Mapping returns to Controllers; the shortcut pages return to HOME.
+
 ## Performance settings
 
 **Settings > Performance** trades accuracy for speed, for every game. A change applies when a game starts.
@@ -80,16 +82,16 @@ The output resolution, the menu's sounds and the accessibility settings are the 
 
 ## Button mapping
 
-**Settings > Controls > Vibration strength** sets how strong the DualSense vibrates, from 25% to 100% of what a game asks for; **Vibration** turns it off altogether.
+**HOME > Controllers > Vibration strength** sets how strong the DualSense vibrates, from 25% to 100% of what a game asks for; **Vibration** turns it off altogether.
 
-**Settings > Controls > Button mapping** lists the game's buttons (A, B, X, Y, L, R, ZL, ZR, Plus, Minus and the two stick presses) with the DualSense button that presses each one. Left and right choose another DualSense button; when another game button had it, the two swap, so one DualSense button never presses two game buttons. Square puts every button back. The mapping applies to every controller.
+**HOME > Controllers > Change Button Mapping** lists the game's buttons (A, B, X, Y, L, R, ZL, ZR, Plus, Minus and the two stick presses) with the DualSense button that presses each one. Left and right choose another DualSense button; when another game button had it, the two swap, so one DualSense button never presses two game buttons. Square puts every button back. The mapping applies to every controller.
 
-A game can have its own: in its settings, **Controls**, set **Button mapping** to **This game**, then press Cross to change it. It starts as a copy of the one in Settings.
+A game can have its own: in its settings, **Controls**, set **Button mapping** to **This game**, then press Cross to change it. It starts as a copy of the one in Controllers.
 
-The D-pad, the sticks and the [in-game shortcuts](../README.md#in-game-shortcuts) do not change. With the usual mapping the touchpad is the game's Minus; the Create button presses whatever the touchpad presses, unless it has a game button of its own.
+The D-pad, the sticks and the in-game shortcuts (Touchpad + L1 to end a game, Touchpad + R1 to toggle the FPS overlay) do not change. With the usual mapping the touchpad is the game's Minus; the Create button presses whatever the touchpad presses, unless it has a game button of its own.
 
 ## Language and accessibility
 
-The launcher follows the language the PS5 is set to: Arabic, Chinese (simplified and traditional), Czech, Danish, Dutch, Finnish, French, German, Greek, Hungarian, Indonesian, Italian, Japanese, Korean, Norwegian, Polish, Portuguese, Romanian, Russian, Spanish, Swedish, Thai, Turkish, Ukrainian and Vietnamese (with the regional variants the PS5 has for French, Portuguese and Spanish), and English otherwise. Arabic, Chinese, Greek, Japanese, Korean and Thai are drawn with the PS5's own system fonts. Arabic text runs right to left; the screens themselves are not mirrored. To use another one, put a file named `language.txt` holding its tag (for example `en-US` or `pt-BR`) in `/data/homebrew/PPSA99008`. The language *games* use is a separate setting, **Settings > Language**.
+The launcher follows the language the PS5 is set to: Arabic, Chinese (simplified and traditional), Czech, Danish, Dutch, Finnish, French, German, Greek, Hungarian, Indonesian, Italian, Japanese, Korean, Norwegian, Polish, Portuguese, Romanian, Russian, Spanish, Swedish, Thai, Turkish, Ukrainian and Vietnamese (with the regional variants the PS5 has for French, Portuguese and Spanish), and English otherwise. Arabic, Chinese, Greek, Japanese, Korean and Thai are drawn with the PS5's own system fonts. Arabic text runs right to left; the screens themselves are not mirrored. To use another one, put a file named `language.txt` holding its tag (for example `en-US` or `pt-BR`) in `/data/homebrew/PPSA99009`. The language *games* use is a separate setting, **Settings > Language**.
 
 **Settings > Accessibility** has three switches. **Larger text** draws the menu's small text about a third larger. **High contrast** uses solid panels, brighter text and an outlined highlight. **Reduce motion** stops the background drifting and the screens sliding, in the menu and on the loading screen. There is no screen reader.

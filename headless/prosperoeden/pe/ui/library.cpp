@@ -281,6 +281,7 @@ void Launcher::enter_library()
     library_.visible = 8;
     library_.pitch = 88.0f;
     library_.reset(static_cast<int>(games_.size()), 0);
+    library_scroll_.snap(0.0f);
     refresh_selected_game();
     detail_.snap(1.0f);
     mode_.snap(selected_docked_ ? 0.0f : 1.0f);
@@ -474,10 +475,23 @@ void Launcher::draw_library(Canvas &c)
         const float label_width=std::clamp(text_width(c,game.name,30)+42.0f,180.0f,980.0f);
         const float label_x=std::clamp(card_x+kLibraryTileSize*.5f-label_width*.5f,112.0f,1808.0f-label_width);
         const Rect label{label_x,card_y-84.0f,label_width,65.0f};
-        glass(c,label,4.5f,theme::kShortcut,theme::kPanelEdge.with_alpha(0),.6f);
-        // The stock title pointer extends down from the label to the selected cover.
-        if(c.textures.stock_ui()) l.image(c.textures.stock_ui(),{card_x+114,card_y-22,33,39},
-            stock_assets::icon_uv(stock_assets::Icon::balloon_tip),theme::kShortcut);
+        const Rect tip{card_x+(kLibraryTileSize-33.0f)*.5f,label.y+label.h-3.0f,33.0f,19.5f};
+        const Color shadow=Color::rgb(0,c.dialog_shadow*.6f);
+        l.shadow({label.x,label.y+1.5f,label.w,label.h},4.5f,6.0f,shadow);
+        if(c.textures.stock_ui()) {
+            // FlcBalloon mirrors each half texture across U=1. The pointer and
+            // its authored shadow share the centre; the label covers their join.
+            const auto mirrored=[&](stock_assets::Icon icon,const Rect &r,Color tint) {
+                auto uv=stock_assets::icon_uv(icon);
+                l.image(c.textures.stock_ui(),{r.x,r.y,r.w*.5f,r.h},uv,tint);
+                uv.x+=uv.w; uv.w=-uv.w;
+                l.image(c.textures.stock_ui(),{r.x+r.w*.5f,r.y,r.w*.5f,r.h},uv,tint);
+            };
+            mirrored(stock_assets::Icon::balloon_shadow,
+                     {tip.x+1.5f,tip.y-3.75f,30.0f,27.0f},shadow);
+            mirrored(stock_assets::Icon::balloon_tip,tip,theme::kShortcut);
+        }
+        glass(c,label,4.5f,theme::kShortcut,theme::kPanelEdge.with_alpha(0),0);
         text_marquee(c,game.name,{label.x+21,label.y,label.w-42,label.h},30,theme::kLime,focus_elapsed_,Align::center);
         l.pop_clip();
         const float total_height=((count+5)/6)*kLibraryTilePitch;

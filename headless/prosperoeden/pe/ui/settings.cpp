@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "pe/ui/launcher.hpp"
+#include "pe/ui/stock_assets.hpp"
 
 #include <algorithm>
 #include <string>
@@ -22,20 +23,18 @@ enum Category
     kVideo,
     kPerformance,
     kAudio,
-    kControls,
     kAccessibility,
     kDiagnostics,
-    kFiles,
     kLanguage,
     kThemes,
     kDownloads,
     kSaveSync,
-    kMultiplayer,
     kCategoryCount,
 };
 constexpr const char *kCategories[kCategoryCount] = {
-    TR("Profiles"), TR("Video"), TR("Performance"), TR("Audio"), TR("Controls"), TR("Accessibility"),
-    TR("System"), TR("Data Management"), TR("Language"), TR("Themes"), TR("Downloads"), TR("Save sync"), TR("Multiplayer")};
+    TR("Profiles"), TR("Video"), TR("Performance"), TR("Audio"), TR("Accessibility"),
+    TR("System"), TR("Language"), TR("Themes"), TR("Downloads"), TR("Save sync")};
+constexpr int kControllerChoices = -1;
 
 // The Video dialog's rows, and the window that shows five of them (placed as a game's settings
 // are).
@@ -114,11 +113,69 @@ Launcher::Modal Launcher::settings_modal() const
     case kVideo: return Modal::video;
     case kPerformance: return Modal::performance;
     case kAudio: return Modal::audio;
-    case kControls: return Modal::controls;
     case kAccessibility: return Modal::accessibility;
     case kDiagnostics: return Modal::diagnostics;
     default: return Modal::none;
     }
+}
+
+void Launcher::initialize_settings()
+{
+    settings_.visible = 10;
+    settings_.pitch = 68.0f;
+    settings_.reset(kCategoryCount, 0);
+}
+
+void Launcher::open_controller_settings()
+{
+    prefs_ = services_.preferences();
+    settings_content_ = false;
+    option_ = 0;
+    option_cursor_.snap(dialog_row_top(Modal::controls, option_));
+    const auto states = switch_states(Modal::controls);
+    for (std::size_t i = 0; i < states.size(); ++i)
+        switches_[i].snap(states[i] ? 1.0f : 0.0f);
+    open(Screen::controllers, true);
+}
+
+void Launcher::press_controller_settings(Key key)
+{
+    if (key == Key::circle)
+    {
+        modal_shown_ = Modal::none;
+        modal_closing_ = false;
+        open(Screen::home, false);
+        return;
+    }
+    if (option_ == 1 && (key == Key::cross || key == Key::right))
+    {
+        open_settings_choice();
+        return;
+    }
+    modal_ = Modal::controls;
+    press_dialog(key);
+    if (modal_ == Modal::controls)
+        modal_ = Modal::none;
+    option_cursor_.snap(dialog_row_top(Modal::controls, option_));
+}
+
+void Launcher::draw_controller_settings(Canvas &c)
+{
+    if (c.textures.stock_ui())
+        c.list.image(c.textures.stock_ui(), {93.0f, 67.0f, 66.0f, 66.0f},
+                     stock_assets::icon_uv(stock_assets::Icon::joycon), theme::kText);
+    text_shrink(c, tr("Controllers"), 178.0f, baseline(66.0f, 68.0f, 40.0f),
+                40.0f, theme::kTitle, 1430.0f);
+    c.list.line(96.0f, 157.0f, 1824.0f, 157.0f, 1.0f, theme::kRule);
+    c.list.push_transform(1.0f, 0.0f, 0.0f, -294.0f, 0.0f);
+    draw_dialog(c, Modal::controls, 1.0f);
+    if (!message_.empty())
+        notice(c, message_, 750.0f, 947.0f, 24.0f,
+               message_warning_ ? theme::kWarning : theme::kCopy, 1008.0f, message_warning_);
+    c.list.pop_transform();
+    static constexpr Hint hints[] = {{Pad::updown, TR("Select")}, {Pad::circle, TR("Back")},
+                                     {Pad::cross, TR("OK")}};
+    draw_footer(c, hints, 3);
 }
 
 void Launcher::enter_settings_content()
@@ -196,11 +253,9 @@ void Launcher::press_settings(Key key)
         switch (settings_.selected)
         {
         case kProfiles: open_profiles(); break;
-        case kFiles: open(Screen::files, true); enter_files(); break;
         case kLanguage: open(Screen::language, true); enter_language(); break;
         case kDownloads: open_sources(); break;
         case kSaveSync: open_sync_setup(); break;
-        case kMultiplayer: open_multiplayer(); break;
         default: break;
         }
         return;
@@ -217,7 +272,7 @@ void Launcher::press_settings(Key key)
             return;
         }
         const bool choice = (editor == Modal::video && option_ != video_overlay) ||
-            (editor == Modal::audio && option_ != 1) || (editor == Modal::controls && option_ == 1);
+            (editor == Modal::audio && option_ != 1);
         if (choice)
         {
             if(editor == Modal::video && option_ >= video_frame_gen && services_.frame_gen_state() != 2) {
@@ -303,11 +358,6 @@ void Launcher::draw_settings(Canvas &c)
                     list.ring(x + 44.0f, 439.0f, 50.0f, 3.0f, theme::kLime);
             }
         }
-        else if (settings_.selected == kFiles)
-        {
-            action = tr("Manage Game Files");
-            copy = services_.files_folder();
-        }
         else if (settings_.selected == kDownloads)
         {
             action = tr("Downloads");
@@ -318,12 +368,6 @@ void Launcher::draw_settings(Canvas &c)
         {
             action = tr("Save sync");
             copy = tr("Each profile's save data on a server of its own, synced before and after a game.");
-        }
-        else if (settings_.selected == kMultiplayer)
-        {
-            action = tr("Multiplayer");
-            copy = tr("Join an Eden room, then choose Local Wireless in a supported game. Everyone needs a compatible game version.");
-            copy += "\n" + std::string(services_.room_status().phase == Eden::Multiplayer::Phase::Connected ? tr("Connected") : tr("Off"));
         }
         else
         {
@@ -366,7 +410,7 @@ SettingChoices setting_choices(int category, int option, const Preferences &pref
         default: return {tr("Refresh rate"), {"60 Hz", "120 Hz"}, prefs.refresh};
         }
     }
-    if (category == kControls)
+    if (category == kControllerChoices)
         return {tr("Vibration strength"), {percent(25), percent(50), percent(75), percent(100)},
                 std::clamp(prefs.vibration_strength / 25 - 1, 0, 3)};
     SettingChoices choices;
@@ -380,7 +424,7 @@ SettingChoices setting_choices(int category, int option, const Preferences &pref
 
 void Launcher::open_settings_choice()
 {
-    setting_choice_category_ = settings_.selected;
+    setting_choice_category_ = screen_ == Screen::controllers ? kControllerChoices : settings_.selected;
     setting_choice_option_ = option_;
     const auto choices = setting_choices(setting_choice_category_, setting_choice_option_, prefs_, services_);
     setting_choice_rows_.visible = 6;
@@ -423,7 +467,7 @@ void Launcher::press_settings_choice(Key key)
         default: prefs_.refresh = value; break;
         }
     }
-    else if (setting_choice_category_ == kControls)
+    else if (setting_choice_category_ == kControllerChoices)
         prefs_.vibration_strength = (value + 1) * 25;
     else if (setting_choice_option_ == 0)
         prefs_.volume = value * 10;
@@ -435,7 +479,7 @@ void Launcher::press_settings_choice(Key key)
         cue(Cue::error);
         return;
     }
-    if (setting_choice_category_ == kControls && prefs_.vibration)
+    if (setting_choice_category_ == kControllerChoices && prefs_.vibration)
         services_.vibration_pulse(prefs_.vibration_strength);
     apply_look();
     close_modal();
@@ -708,7 +752,8 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
     const Rect &window = modal == Modal::performance ? kPerformanceWindow : kVideoWindow;
     const int first = scrolls ? view.first_row() : 0;
     const int last = scrolls ? view.last_row() : rows - 1;
-    const bool focus = settings_content_ && (modal_ == Modal::none || modal_ == Modal::hud);
+    const bool focus = (settings_content_ && (modal_ == Modal::none || modal_ == Modal::hud)) ||
+                       (screen_ == Screen::controllers && modal == Modal::controls && modal_ == Modal::none);
     if (scrolls)
         list.push_clip({708.0f, window.y - 6.0f, 1110.0f, window.h + 12.0f});
     for (int row = first; row <= last; ++row)
@@ -780,7 +825,6 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         break;
     case Modal::controls:
     {
-        text(c, tr("Controllers"), 750.0f, 256.0f, 30.0f, theme::kText);
         // Connection is read from the PS5 controller service; no pairing or battery is invented.
         const unsigned connected = controllers_;
         for (int player = 0; player < 4; ++player)
@@ -803,11 +847,10 @@ void Launcher::draw_dialog(Canvas &c, Modal modal, float open)
         switch_row(0, tr("Vibration"), prefs_.vibration);
         value(1, tr("Vibration strength"), percent(prefs_.vibration_strength));
         value(2, tr("Change Button Mapping"), prefs_.mapping == kDefaultMapping ? tr("Default") : tr("Changed"));
-        list.line(714.0f, 826.0f, 1800.0f, 826.0f, 1.0f, theme::kRule);
         text_shrink(c, std::string(tr("Touchpad")) + " + L1  " + tr("End the game and return to this menu"),
-                    750.0f, 858.0f, 24.0f, theme::kCopy, 1008.0f);
+                    750.0f, 867.0f, 24.0f, theme::kCopy, 1008.0f);
         text_shrink(c, std::string(tr("Touchpad")) + " + R1  " + tr("Show or hide the FPS overlay"),
-                    750.0f, 902.0f, 24.0f, theme::kCopy, 1008.0f);
+                    750.0f, 907.0f, 24.0f, theme::kCopy, 1008.0f);
         break;
     }
     case Modal::accessibility:

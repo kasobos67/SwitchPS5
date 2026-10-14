@@ -1,5 +1,5 @@
 // ProsperoEden - Launcher: a game's own settings by category (Library > Game settings > Video,
-// Performance, Audio, Controls, System, Language) and the button mapping (Settings > Controls, or a
+// Performance, Audio, Controls, System, Language) and the button mapping (Controllers, or a
 // game's own).
 // Copyright (C) 2026 BlackBearReloaded
 // SPDX-License-Identifier: GPL-3.0-or-later
@@ -479,7 +479,7 @@ void Launcher::press_mapping(Key key)
     switch (key)
     {
     case Key::circle:
-        // Return to the editor's entry point: HOME, Settings or game Controls.
+        // Return to the controller page or the game's own Controls editor.
         if (mapping_for_game_)
         {
             modal_ = modal_shown_ = Modal::game_options;
@@ -490,9 +490,8 @@ void Launcher::press_mapping(Key key)
         else
         {
             close_modal();
-            if (screen_ == Screen::settings)
+            if (screen_ == Screen::controllers)
             {
-                settings_content_ = true;
                 option_ = 2;
                 option_cursor_.snap(dialog_row_top(Modal::controls, option_));
             }

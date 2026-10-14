@@ -81,9 +81,7 @@ void Launcher::press_files(Key key)
     switch (key)
     {
     case Key::circle:
-        // Folder navigation stays on this screen, so leaving_ retains its
-        // entry screen: HOME shortcut or the System Settings category.
-        open(leaving_ == Screen::home ? Screen::home : Screen::settings, false);
+        open(Screen::home, false);
         return;
     case Key::up:
     case Key::down:
@@ -179,7 +177,7 @@ auto &l=c.list;
         text_shrink(c,values[i],1778,baseline(y,70,24),24,theme::kLime,570,Align::right);
         l.line(844,y+76,1796,y+76,1,theme::kRule.with_alpha(0.5f));
     }
-    text_block(c,tr("Use extracted firmware NCA files. Choose the folder in Settings, Game files; restart the app after changing it."),
+    text_block(c,tr("Use extracted firmware NCA files. Choose the folder here; restart the app after changing it."),
                844,baseline(750,34,22),22,34,theme::kCopy,952,3,kShrink);
     if(!message_.empty()) notice_block(c,message_,844,872,20,26,
                 message_warning_ ? theme::kWarning : theme::kLime,950,2,message_warning_);

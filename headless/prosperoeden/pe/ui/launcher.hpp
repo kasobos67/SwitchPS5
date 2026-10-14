@@ -67,6 +67,7 @@ class Launcher
         home,
         library,
         settings,
+        controllers,
         files,
         language,
         about,
@@ -84,7 +85,7 @@ class Launcher
         game,
         mods,         // a game's mods, opened from its settings
         game_options, // one category of a game's own settings, opened from its settings
-        mapping,      // the button mapping: Settings > Controls', or a game's own
+        mapping,      // the button mapping: Controllers, or a game's own
         profiles,     // who is playing: Settings > Profiles
         settings_choice,
         update,       // a newer release of the app: install it or not (update.cpp)
@@ -214,6 +215,10 @@ class Launcher
     // ---- settings and its dialogs (settings.cpp) ----
     void press_settings(Key key);
     void draw_settings(Canvas &c);
+    void initialize_settings();
+    void open_controller_settings();
+    void press_controller_settings(Key key);
+    void draw_controller_settings(Canvas &c);
     void press_dialog(Key key);
     void draw_dialog(Canvas &c, Modal modal, float open);
     int dialog_rows(Modal modal) const;
