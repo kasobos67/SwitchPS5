@@ -50,9 +50,8 @@ For upstream emulator development, technical documentation, and build informatio
 
 ## Credits
 
-ProsperoEden creator: **[BlackBearReloaded](https://github.com/blackbearreloaded/ProsperoEden)**. Emulator core: [Eden and contributors](https://github.com/eden-emulator/mirror). See the [release notes](https://github.com/kasobos67/SwitchPS5/releases/tag/1.002.000), the upstream credits, and the source licenses. This is unofficial and is not affiliated with Nintendo or Sony.
-
-## Disclaimer
+ProsperoEden creator: **[BlackBearReloaded](https://github.com/blackbearreloaded/ProsperoEden)**.\
+Emulator core: [Eden and contributors](https://github.com/eden-emulator/mirror).
 
 SwitchPS5 is an unofficial homebrew project and is not affiliated with, endorsed by, or sponsored by Nintendo, Sony Interactive Entertainment, or the original emulator developers.\
 Nintendo Switch, PlayStation, and all associated trademarks belong to their respective owners.\
