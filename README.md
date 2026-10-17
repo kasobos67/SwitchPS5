@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **SwitchPS5 development has ended.** The project has transitioned to [SwitchLauncher](https://github.com/kasobos67/SwitchLauncher).
+
 <p align="center">
   <img src="sce_sys/icon-source.png" alt="SwitchPS5 icon" width="160" height="160">
 </p>
