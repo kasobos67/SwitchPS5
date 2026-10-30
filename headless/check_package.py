@@ -17,14 +17,15 @@ if 'EDEN_PACKAGE_DIR' in os.environ:
 OUT = ROOT / 'build/headless-native'
 BASE_REQUIRED = {'eboot.bin', 'core-homebrew.nro', 'sce_module/libc.prx',
             'sce_sys/param.json', 'sce_sys/icon0.png', 'sce_sys/pic0.dds', 'sce_sys/pic1.dds',
-            'lapy.elf', 'lapy-manifest.json', 'licenses/Lapy-MIT.txt',
-            'self-updater.elf'}
+            'lapy.elf', 'lapy-manifest.json', 'licenses/Lapy-MIT.txt'}
 REQUIRED = set(BASE_REQUIRED)
 REQUIRED.update(p.relative_to(APP).as_posix() for p in (APP / 'ui').rglob('*') if p.is_file())
 # The runner's switches (headless/main.cpp): only a development package carries them, so they
 # are required exactly when the build put them there (tools/package-headless-native.sh).
 if (APP / 'dev-settings.txt').is_file():
     REQUIRED.add('dev-settings.txt')
+if (APP / 'mihawkgen/network.fgw').is_file():
+    REQUIRED.add('mihawkgen/network.fgw')
 RECEIPT = ROOT / 'HEADLESS_CANDIDATE.json'
 # The pinned OpenGL SDK release (tools/deps.json): digest of its manifest.sha256.
 GL_SDK_MANIFEST_SHA256 = '0d432edc9d648d6e0cccb4d5eb3db8484f10ba4b075b5ccf23edda3251b66360'
@@ -62,7 +63,7 @@ def check():
     assert lapy['protocol_sha256'] == LAPY_PROTOCOL_SHA256
     assert lapy['elf_sha256'] == digest(APP / 'lapy.elf')
     assert (APP / 'lapy.elf').read_bytes()[:6] == b'\x7fELF\x02\x01'
-    assert not (APP / 'sce_sys/snd0.at9').exists(), 'package must not include PS5 hover music'
+    assert not (APP / 'sce_sys/snd0.at9').exists(), 'SwitchPS5 has no PS5 home screen music'
     fixture((APP / 'core-homebrew.nro').read_bytes())
     runpy.run_path(str(ROOT / 'tools/load_alignment.py'))['check_load_alignment']((APP / 'eboot.bin').read_bytes())
     imports = (OUT / 'imports.txt').read_text()

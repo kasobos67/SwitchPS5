@@ -2,6 +2,107 @@
 
 What changed in each release of ProsperoEden, newest first. A release's notes on GitHub are its section here.
 
+## v1.005.000
+
+This alpha keeps each game in a folder of its own with everything that belongs to it, gives cheats their own list, adds a speed limit and a second frame generation method, and fixes a lost graphics device and black boxes that spread over the picture. Performance and compatibility still vary by game.
+
+### New and improved
+
+- **One folder per game.** A game can sit in a folder of its own in `roms/`, together with its update and DLC files, its mods (`mods/`), its cheats (`cheats/`) and its own post-processing presets (`reshade/`). ProsperoEden tells the game from its update and DLC by what each file holds, so the files can have any names. **Delete from console** removes the folder's update and DLC too. Games downloaded from a source now go into a folder of their own the same way. Your files stay where they are and keep working. See [Game files folder](https://github.com/blackbearreloaded/ProsperoEden/blob/main/docs/INSTALL.md#game-files-folder).
+- **Cheats in a list of their own.** A game's settings have a **Cheats** row next to **Mods**: every cheat of the game with its own switch, and an **All cheats** switch apart from the Mods one. **Mods** now lists patches and replacement files only. Cheats you chose before stay on.
+- **A game's own post-processing presets.** Presets and effects in a game folder's `reshade/` are offered in that game's **Post-processing** list, after the shared ones.
+- **Speed limit (new Performance setting).** **Settings > Performance > Speed limit**, and the same row in a game's own settings: 100% (as before), 150%, 200%, 300% or Unlimited. A game locked to 30 FPS can run faster when the console has time to spare; for a game whose logic follows its frame rate, the whole game runs faster.
+- **MihawkGen frame generation.** **Frame gen method** in **Settings > Video**, and per game, chooses between MihawkGen, a neural network that comes with the app, and Lossless Scaling with your own copy of it.
+- **Update notices (new setting).** **Settings > Diagnostics > Update notices** turns the update dialog at start off. **About** still says when a newer version is on homebrew.page.
+
+### Fixes
+
+- **A lost graphics device while a game loads a new area.** Long runs of uploads and copies could grow past what the console's GPU takes in one submission, and the game stopped. The graphics driver now splits them.
+- **Black boxes that grew until they covered the screen.** A few pixels whose colour was not a number spread through a game's glow and blur effects. Such a colour is now written as black, and stays one pixel.
+- **Games that ask for a large GPU address space start** instead of stopping at once.
+- **No update offered for the version already installed**, when the app's files named an older version than the program.
+
+### Thank you
+
+Thanks to everyone whose contributions landed since v1.004.000:
+
+- [bawsdeep](https://github.com/bawsdeep) — MihawkGen frame generation in the app.
+- [mihawk-99](https://github.com/mihawk-99) — MihawkGen itself, the neural frame generation it uses.
+- [BlackBearReloaded](https://github.com/blackbearreloaded) — game folders, the Cheats list, a game's own presets, the speed limit, update notices, the graphics fixes, translations and integration.
+
+Thanks also to everyone testing and reporting problems on Discord and GitHub, the **Eden developers** for the emulator, and **Mihawk** and the graphics contributors for the platform work this port builds on.
+
+### Before updating
+
+Back up your saves and settings. The package contains no games, firmware or keys; keep your existing user-provided files. This remains an experimental pre-release.
+
+## v1.004.000
+
+This alpha adds post-processing looks and wallpapers of your own, frees more memory, and makes games with many shaders start and start again faster. Performance and compatibility still vary by game.
+
+### New and improved
+
+- **Post-processing (new setting).** **Settings > Video > Post-processing**, and the same row in a game's own settings, draws a look over the picture with ReShade FX effects: Off, or one of six presets that come with the app (Anime, Cinematic, Clean, Dreamy, Retro, Vivid). Presets of your own go in `/data/prosperoeden/user/post_presets/` and their effects in `/data/prosperoeden/user/post_shaders/`. It works with the Vulkan renderer; see [Post-processing](https://github.com/blackbearreloaded/ProsperoEden/blob/main/docs/SETTINGS.md#post-processing).
+- **A wallpaper of your own (new setting).** **Settings > Appearance > Wallpaper** shows an image from `/data/prosperoeden/wallpapers` behind the launcher's screens instead of the theme's artwork: PNG or JPEG (also BMP, GIF, TGA and DDS), put in the folder over FTP and listed when the dialog opens. A game's own cover still takes the place where the theme shows one. An image of another shape is resized to fit the screen whole, with the theme behind what it leaves over. See [Wallpapers](WALLPAPERS.md).
+- **More free memory in 64-bit games.** The emulated console's memory is now taken from the PS5 only where a game writes it, and given back where the game's console clears or frees it, or where it holds only zeroes again. Two games measured on the console held 644 MiB and 1,956 MiB less, at the same frame rate. After "A Compressed RAM Service" (Gregory Price, Linux Plumbers 2026).
+- **Compact memory (new Performance setting, off by default).** Gives back memory a game wrote but left mostly empty, 16 KiB at a time: 100 to 300 MiB more in the same two games. A game that keeps rewriting such memory can stutter; leave it off unless a game runs short of memory.
+- **Games with many shaders start, and start faster the next time.** A game with thousands of pipelines could stop during its loading screen because the locks that guard pipeline builds ran out; they are now shared. The graphics driver keeps its compiled shaders between starts on every setup, and its pipeline cache is kept when a write is cut short, so a large game compiles them once instead of at every start. A line at launch says where the cache is kept.
+- **A game's language from its update.** A game whose languages come from a packed update (NSP or XCI) is offered them again, instead of falling back to English.
+- **Crash reports name the allocation that failed** when a game runs out of memory.
+- **Public rooms.** The project's own rooms are listed first, the list scrolls, and L1/R1 move a page at a time.
+- **Launcher packs update themselves.** A custom launcher pack can name an update feed: ProsperoEden checks it, downloads a newer pack after you confirm, verifies its size and SHA-256, and can go back to the previous version. Libraries load faster in packs. See [Runtime launcher packs](https://github.com/blackbearreloaded/ProsperoEden/blob/main/docs/RUNTIME_LAUNCHERS.md).
+- **Slate theme polish** and the launcher texts of the new settings in all 30 languages.
+
+### Thank you
+
+Thanks to everyone whose contributions landed since v1.003.000:
+
+- [Oliv3rmoon](https://github.com/Oliv3rmoon) — games with many pipelines start, the pipeline cache kept when a write is cut short, the refused allocation in crash reports, and a game's language from a packed update.
+- [bawsdeep](https://github.com/bawsdeep) — wallpapers of your own and Slate theme polish.
+- [kasobos67](https://github.com/kasobos67) — launcher pack updates from a feed and a faster library for packs.
+- [BlackBearReloaded](https://github.com/blackbearreloaded) — post-processing, more free memory and Compact memory, the shader cache between starts, public rooms, translations and integration.
+
+Thanks also to everyone testing and reporting problems on Discord and GitHub, the **Eden developers** for the emulator, and **Mihawk** and the graphics contributors for the platform work this port builds on.
+
+### Before updating
+
+Back up your saves and settings. The package contains no games, firmware or keys; keep your existing user-provided files. This remains an experimental pre-release.
+
+## v1.003.000
+
+This alpha focuses on mod stability, controller support, graphics correctness and lower emulation overhead. Performance and compatibility still vary by game; these changes do not guarantee a particular frame rate.
+
+### Fixes and improvements
+
+- **TOTK + UltraCam startup crash fixed.** Large modded RomFS rebuilds could overflow the filesystem thread stack during cleanup and close the whole app. Cleanup is now iterative. Tested with TOTK **1.1.1** and an older UltraCam mod: the game reached its menu, and the user confirmed the free camera works in gameplay. Game/mod versions still need to match; this is not a claim that every UltraCam version or TOTK update works.
+- **Memory size per game.** Choose 4, 6 or 8 GiB of emulated console memory under **Settings > Performance > Memory**, with game-specific overrides for demanding mods. This uses the PS5's existing shared memory pool; it does not add physical RAM. See [Console memory](SETTINGS.md#console-memory).
+- **DualSense audio haptics.** HD rumble can use the controller's audio haptics path, with lifecycle and failure handling fixes.
+- **Touchpad and controls.** Split touchpad clicks are supported, shortcuts use the left half, and transient upright Joy-Con button events are suppressed. Core menu actions can be remapped, with translated menu keybinding labels.
+- **Clearer performance overlay.** An optional Vulkan readout shows the game's own render resolution, rather than the TV output resolution. CPU-load integration and a stray HUD accent line were corrected.
+- **Launcher polish and customization.** Slate theme and accent presets, persistent accent selection, corrected status layout, and experimental external launcher packs. See [Runtime launcher packs](RUNTIME_LAUNCHERS.md).
+- **Startup and diagnostics.** Font access is detected correctly behind sandbox data mounts; OnionHEN app-jailbreak support supplements Lapy elevation. The launcher exposes the crash-report location.
+- **Graphics fixes.** Vulkan dynamic vertex input fixes address scenes rendered as one flat colour. A RADV geometry-shader path no longer reads through null pointers. Texture updates can upload only changed block rows in large textures.
+- **CPU and GPU efficiency.** JIT page-table and instruction-generation improvements, safer batched code-cache commits, checked-fastmem improvements, reduced GPU cache-lock contention, faster register-command processing, adjusted guest scheduling/vsync, and a larger OpenGL command queue. The video core uses ThinLTO targeting Zen 2; worker topology is detected once per process.
+- **Build and language support.** Malay translation, fixes for host checks and symlinked checkouts, and refreshed contributor credits.
+
+### Thank you
+
+Thanks to everyone whose contributions landed since v1.002.000:
+
+- [Rockiu0](https://github.com/Rockiu0) — CPU/JIT, graphics, scheduling, elevation and build improvements.
+- [Tiang-88](https://github.com/Tiang-88) — per-game memory layouts and the render-resolution overlay.
+- [GuilhermeAmado](https://github.com/GuilhermeAmado) — DualSense audio haptics.
+- [kasobos67](https://github.com/kasobos67) — custom runtime launcher support.
+- [bawsdeep](https://github.com/bawsdeep) — remappable menu actions.
+- [cippy-9](https://github.com/cippy-9) — Malay translation.
+- [BlackBearReloaded](https://github.com/blackbearreloaded) — integration, testing, launcher/controller fixes, font access and the RomFS crash fix.
+
+Thanks also to [zhangmu34](https://github.com/zhangmu34) for the font-access issue report, everyone testing and reporting problems, the **Eden developers** for the emulator, and **Mihawk** and the graphics contributors for the platform work this port builds on.
+
+### Before updating
+
+Back up your saves and settings. The package contains no games, firmware or keys; keep your existing user-provided files. This remains an experimental pre-release. Long gameplay sessions and all game/mod combinations have not been exhaustively tested.
+
 ## v1.002.000
 
 - **More free memory for demanding games.** The console's memory is one pool shared by the emulated console, the emulator itself and the graphics, and part of it was held without being used. The emulated console's memory, the code caches and a reserve on the system's side now take memory only when they need it. A large open-world game at 2x has about 3.5 GiB free during play instead of 2.2 GiB, at the same frame rate, so a long session runs out of memory far later.

@@ -143,6 +143,7 @@ struct Stage
     {
         if (tour)
             return;
+        for(int i=0;i<16;++i){render();frame();}
         render();
         const std::string path = output + "/" + name + ".png";
         const bool written =
@@ -237,7 +238,7 @@ class WideLibraryServices final : public pe::ui::Services
     std::string version() override { return base_.version(); }
     std::vector<pe::ui::Game> games() override { return entries; }
     std::string game_path(const std::string &file) override { return base_.game_path(file); }
-    bool game_exists(const std::string &file) override { return base_.game_exists(file); }
+    bool game_exists(const std::string &file) override { return std::any_of(entries.begin(),entries.end(),[&](const pe::ui::Game& g){return g.file==file;}); }
     bool docked(std::uint64_t title) override { return base_.docked(title); }
     bool set_docked(std::uint64_t title,bool value) override { return base_.set_docked(title,value); }
     pe::ui::GameSettings game_settings(std::uint64_t title) override { return base_.game_settings(title); }
@@ -2446,6 +2447,47 @@ int interactive(Stage &s, const std::string &assets)
 
 } // namespace
 
+void native_switch_checks(Stage& s) {
+    int checks=0;
+    s.services.available_frame_gen=2;
+    auto check=[&](bool ok,const char* label){++checks;if(!ok){s.ok=false;std::fprintf(stderr,"FAIL %s\n",label);}else std::fprintf(stderr,"PASS %s\n",label);};
+    auto enter=[&](int category){s.restart();s.wait(1);home_shortcut(s,5);for(int i=0;i<category;++i)s.press({Key::down});s.press({Key::cross});};
+    auto down=[&](int n){for(int i=0;i<n;++i)s.press({Key::down});};
+    s.restart();s.wait(1);s.shoot("01-home");
+    enter(1);s.wait(.5f);s.shoot("02-video");down(10);s.press({Key::right});
+    check(s.services.preferences().frame_gen_method==1,"global frame generation method changes to MihawkGen");
+    s.wait(.5f);s.shoot("03-frame-generation");
+    enter(2);down(7);s.press({Key::right});check(s.services.preferences().compact_memory,"compact memory switch saves");
+    s.press({Key::down,Key::right});check(s.services.preferences().speed_limit==1,"speed limit saves 150 percent");s.wait(.5f);s.shoot("04-performance");
+    s.services.fail_settings=true;s.press({Key::right});check(s.services.preferences().speed_limit==1,"failed preference save rolls back the edit");s.services.fail_settings=false;
+    s.restart();s.wait(1);home_shortcut(s,4);s.wait(.5f);s.shoot("05-controllers");
+    down(3);s.press({Key::cross});s.wait(.5f);s.shoot("06-menu-buttons");
+    s.restart();s.wait(1);home_shortcut(s,1);s.shoot("07-about");s.press({Key::square});s.wait(.5f);s.shoot("08-credits");
+    s.restart();s.wait(1);home_shortcut(s,3);s.shoot("09-multiplayer");s.press({Key::cross});s.wait(.5f);s.shoot("10-public-rooms");
+    s.services.room.error="The room host could not be reached. Check the address and your connection, then try again.";s.wait(.1f);s.shoot("11-multiplayer-error");s.services.room={};
+    enter(0);s.press({Key::cross});s.wait(.5f);s.shoot("12-profiles");
+    // Game-specific frame generation uses the current native service model too.
+    s.restart();s.wait(1);s.press({Key::triangle});s.wait(.4f);s.press({Key::down,Key::cross});down(10);s.press({Key::right,Key::right});
+    check(s.services.game_settings(0).frame_gen_method==1,"per-game frame generation method saves without opening another launcher");
+    s.wait(.3f);s.shoot("13-game-video");
+    // A large library exercises 12 HOME games, the final All Software button and the right edge bubble.
+    WideLibraryServices wide{s.services,s.output};s.launcher.reset();s.fixture_services=&wide;s.restart();s.wait(1);s.shoot("14-twelve-home-games");
+    for(int i=0;i<12;++i)s.press({Key::right});s.press({Key::cross});s.wait(1);s.press({Key::right,Key::right,Key::right,Key::right,Key::right});s.wait(.5f);s.shoot("15-library-right-edge");
+    s.press({Key::triangle});s.wait(.5f);s.shoot("16-game-options");s.press({Key::circle});s.wait(.3f);
+    s.launcher.reset();s.fixture_services=nullptr;
+    struct Empty:pe::host::FakeServices {
+        using pe::host::FakeServices::FakeServices;
+        std::vector<pe::ui::Game> games()override{return {};}
+        pe::ui::Home home()override{auto h=pe::host::FakeServices::home();h.last_exists=false;h.last_file.clear();h.recents.clear();return h;}
+    } empty{s.output};
+    s.fixture_services=&empty;s.restart();s.wait(1);s.shoot("17-empty-home");s.launcher.reset();s.fixture_services=nullptr;
+    // UI-only portrait data round trips independently of emulator settings.
+    pe::ui::PresentationState a;a.set_avatar("Player 1",24,18);a.remember("roms/example.nsp");
+    const std::string file=s.output+"/persistence-check.cfg";check(a.save(file),"profile picture settings write succeeds");
+    pe::ui::PresentationState b;check(b.load(file)&&b.avatar("Player 1").icon==24&&b.avatar("Player 1").color==18,"profile picture settings survive reload");
+    std::fprintf(stderr,"SwitchPS5 checks: %d, %s\n",checks,s.ok?"passed":"failed");
+}
+
 int main(int argc, char **argv)
 {
     if (argc < 3)
@@ -2632,25 +2674,6 @@ int main(int argc, char **argv)
     stage.pixels.resize(static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 4);
     stbi_flip_vertically_on_write(1);
     if (make_interactive) return interactive(stage,assets);
-    if (checks_only) {
-        integration_checks(stage, assets);
-        std::fprintf(stderr, "launcher integration checks: %s\n", stage.ok ? "passed" : "failed");
-        return stage.ok ? 0 : 1;
-    }
-    const char *which_tour = std::getenv("PE_TOUR");
-    if (make_tour && which_tour && std::strcmp(which_tour, "update") == 0)
-        update_tour(stage);
-    else if (make_tour)
-        tour(stage);
-    else
-        pictures(stage,assets);
-    if (!make_tour) {
-        switch_opening_pictures(stage);
-        switch_loading_picture(stage,assets);
-    }
-    std::fprintf(stderr, "cues heard: %zu\n", stage.heard.size());
-    std::fprintf(stderr, "system fonts read: %s\n", font.system_fonts_read().c_str());
-    for (const auto &[text, fit] : fits)
-        std::fprintf(stderr, "%s %.2f: %s\n", fit.second ? "cut" : "shrunk", fit.first, text.c_str());
+    native_switch_checks(stage);
     return stage.ok ? 0 : 1;
 }

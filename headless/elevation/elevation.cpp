@@ -137,11 +137,20 @@ bool verify_data(pid_t pid, int &open_error) noexcept
     return passed;
 }
 
+bool verify_access(pid_t pid, int &open_error) noexcept
+{
+    if (!verify_data(pid, open_error)) return false;
+    // ShadowMountPlus can expose /data while system fonts remain outside the sandbox.
+    File fonts{open("/preinst/common/font", O_RDONLY | O_DIRECTORY)};
+    open_error = fonts.get() < 0 ? errno : 0;
+    return fonts.get() >= 0;
+}
+
 bool wait_for_data(pid_t pid, unsigned polls, int &open_error, bool &proof_failed) noexcept
 {
     for (unsigned poll = 0; poll < polls; ++poll)
     {
-        if (verify_data(pid, open_error))
+        if (verify_access(pid, open_error))
             return true;
         if (open_error == 0)
         {
@@ -168,6 +177,38 @@ struct ResidentResult
     bool allow_helper;
 };
 
+// OnionHEN's app jailbreak (for title IDs in its [app_jailbreak] exact_title_ids list) reads
+// this file instead of Lapy's: it gives the process root credentials and the console's root.
+// Written beside Lapy's request; whichever service is loaded answers, and /data proves it.
+bool publish_onionhen_request(pid_t pid) noexcept
+{
+    constexpr char path[] = "/download0/onionhen_jailbreak";
+    std::array<char, 80> temporary{};
+    std::array<char, 64> body{};
+    const int body_length =
+        std::snprintf(body.data(), body.size(), "{\"PID\":\"%ld\"}\n", static_cast<long>(pid));
+    const int path_length = std::snprintf(temporary.data(), temporary.size(),
+                                          "/download0/.onionhen_jailbreak.%ld", static_cast<long>(pid));
+    if (body_length <= 0 || static_cast<std::size_t>(body_length) >= body.size() ||
+        path_length <= 0 || static_cast<std::size_t>(path_length) >= temporary.size())
+        return false;
+    (void)unlink(temporary.data());
+    File output{open(temporary.data(), O_WRONLY | O_CREAT | O_EXCL, 0644)};
+    if (output.get() < 0 ||
+        !write_all(output.get(), body.data(), static_cast<std::size_t>(body_length)))
+    {
+        (void)unlink(temporary.data());
+        return false;
+    }
+    const int descriptor = output.release();
+    if (close(descriptor) != 0 || rename(temporary.data(), path) != 0)
+    {
+        (void)unlink(temporary.data());
+        return false;
+    }
+    return true;
+}
+
 ResidentResult try_resident(pid_t pid) noexcept
 {
     using elevation::Status;
@@ -177,7 +218,8 @@ ResidentResult try_resident(pid_t pid) noexcept
     (void)fchmod(result.get(), 0644);
     if (seteuid(geteuid()) != 0)
         return {Status::prepare_failed, false};
-    if (!publish_request(pid))
+    const bool onionhen_asked = publish_onionhen_request(pid);
+    if (!publish_request(pid) && !onionhen_asked)
         return {Status::transport_error, true};
 
     int open_error = 0;
@@ -309,8 +351,9 @@ elevation::Status run_helper(const char *path, const elevation::wire::Message &r
 }
 } // namespace
 
-elevation::Status elevation::request(Capability capability, const char *helper_path) noexcept
+static elevation::Status request_access(elevation::Capability capability, const char *helper_path) noexcept
 {
+    using namespace elevation;
     selected_path = "none";
     if (capability != Capability::filesystem)
         return Status::unsupported_capability;
@@ -322,11 +365,13 @@ elevation::Status elevation::request(Capability capability, const char *helper_p
         return Status::invalid_request;
 
     int open_error = 0;
-    if (verify_data(pid, open_error))
+    if (verify_access(pid, open_error))
     {
         selected_path = "existing";
         return Status::ok;
     }
+    std::fprintf(stderr, "EDEN_FILESYSTEM probe=data-and-system-fonts errno=%d; requesting elevation\n",
+                 open_error);
     if (open_error == 0)
         return Status::apply_failed;
 
@@ -345,6 +390,20 @@ elevation::Status elevation::request(Capability capability, const char *helper_p
     return wait_for_data(pid, cancellation_grace_polls, open_error, proof_failed)
                ? Status::ok
                : proof_failed ? Status::apply_failed : Status::timeout;
+}
+
+elevation::Status elevation::request(Capability capability, const char *helper_path) noexcept
+{
+    const Status result = request_access(capability, helper_path);
+    int error = 0;
+    if (result != Status::ok && capability == Capability::filesystem && verify_data(getpid(), error)) {
+        // Missing fonts must not move an existing user's saves back into the sandbox.
+        std::fprintf(stderr, "EDEN_FILESYSTEM font-access recovery failed status=%d; keeping verified data access\n",
+                     static_cast<int>(result));
+        selected_path = "data-only";
+        return Status::ok;
+    }
+    return result;
 }
 
 const char *elevation::path() noexcept

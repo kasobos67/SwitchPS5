@@ -28,6 +28,7 @@
 #include <cstdlib>
 #include <mutex>
 #include <thread>
+#include <bit>
 #include <new>
 #include <string_view>
 #include <stdexcept>
@@ -96,6 +97,7 @@ extern "C" std::int32_t sceKernelAvailableFlexibleMemorySize(std::size_t*);
 #pragma GCC diagnostic pop
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-private-field"
+#include "common/page_table.h"
 #include "core/hle/kernel/k_process.h"  // every build: the game's code address (jit_list.h)
 #ifdef PS5_NATIVE
 #include "core/hle/kernel/k_thread.h"
@@ -107,15 +109,33 @@ extern "C" std::int32_t sceKernelAvailableFlexibleMemorySize(std::size_t*);
 #include "core/arm/debug.h"
 #include "core/memory.h"
 extern "C" bool eden_jit_shared;  // headless/dynarmic/jit_group_support.inc
+extern "C" bool eden_page_reuse;  // headless/dynarmic/page_reuse_pass.inc
+extern "C" unsigned long long eden_page_reuse_groups, eden_page_reuse_accesses;
+extern "C" bool eden_free_moves;  // headless/dynarmic/reg_alloc.cmake
+extern "C" bool eden_alloc_r13;  // headless/dynarmic/reg_alloc.cmake
+extern "C" bool eden_plain_ordered_reads;  // headless/CMakeLists.txt
+extern "C" unsigned long long eden_free_moves_done, eden_free_moves_spilled;
+extern "C" bool eden_fcmp_adc, eden_light_dmb, eden_checkbit_flags;  // headless/dynarmic/fast_paths.cmake
+extern "C" unsigned long long eden_dmb_dropped, eden_checkbit_fused;
 #endif
 #include "video_core/gpu.h"
 #ifdef EDEN_PS5_FRAMEGEN
 #include "video_core/frame_gen/lossless_dll.h"
+#include "video_core/post_processing/fx_effect.h"
+#include "video_core/post_processing/fx_effect.h"
+#include "video_core/post_processing/fx_preset.h"
+#include "reshade_folder.h"
+#include "reshade_folder.h"
+#endif
+#ifdef EDEN_PS5_MIHAWKGEN
+#include "mihawkgen_bridge.h"
 #endif
 #include "profiles.h"
 #include "stop_limit.h"
 namespace Common {
 bool SparseTablesAvailable() noexcept; // src/memory_pages.cpp
+void SetGuestMemoryService(bool on, bool scan, bool dedup) noexcept; // src/guest_memory_service.inc
+void SetGuestMemoryFine(bool on) noexcept;
 }
 #if defined(EDEN_DEV_PROFILE) || defined(EDEN_DEV_ROM_ID)
 static bool dev_stop_hang = false; // dev-settings stop_hang=on
@@ -136,6 +156,34 @@ public:
 // First start with filesystem access: copy what the sandbox kept (settings, covers, Eden's saves
 // and caches) into /data/prosperoeden. Only folders that do not exist yet are filled, and the
 // sandbox copy stays, so an older ProsperoEden still finds its data.
+// dev-settings jit_table_check=on: the JIT's direct page table (headless/jit-page-table.cmake) must
+// hold, for every page, the pointer of Eden's entry, or 0 where the entry is marked or empty. A
+// difference that is still there when read again is a write path that missed the direct table.
+[[maybe_unused]] static bool jit_table_check = false;
+[[maybe_unused]] static void CheckDirectTable(Common::PageTable& table) {
+    const std::size_t mirror = table.entries.mirror_index;
+    if (mirror == 0) return;
+    using Entry = Common::PageTable::PageEntryData;
+    const auto* raw = reinterpret_cast<const volatile std::uint64_t*>(table.entries.data());
+    const auto expected = [](std::uint64_t entry) {
+        return std::uint64_t(Entry::ExtractPointer(std::bit_cast<Entry::Data>(entry)));
+    };
+    const std::size_t count = std::size_t{1} << (table.GetAddressSpaceBits() - 12);
+    std::size_t pages = 0, mismatches = 0;
+    for (std::size_t page = 0; page < count; ++page) {
+        if (raw[page] == 0 && raw[mirror + page] == 0) continue;
+        ++pages;
+        if (expected(raw[page]) == raw[mirror + page]) continue;
+        std::this_thread::yield(); // an update may be between its two stores
+        const std::uint64_t entry = raw[page], direct = raw[mirror + page];
+        if (expected(entry) == direct) continue;
+        if (++mismatches <= 8)
+            std::printf("EDEN_JIT_TABLE mismatch page=%zx entry=%llx direct=%llx\n", page,
+                        static_cast<unsigned long long>(entry), static_cast<unsigned long long>(direct));
+    }
+    std::printf("EDEN_JIT_TABLE check pages=%zu mismatches=%zu\n", pages, mismatches);
+}
+
 static void MigrateSandboxData() {
     const std::filesystem::path sandbox{"/mnt/sandbox/PPSA99009_000/download0"};
     const std::pair<std::filesystem::path, std::string> moves[] = {
@@ -333,7 +381,8 @@ int main(int argc, char** argv) {
             Eden::Crash::Fail(detail);
         });
         {
-            // The ids too: Mesa's disk cache turns itself off when the effective and real ids differ.
+            // The ids too: Mesa's disk cache turned itself off when the effective and real ids differed
+            // (no longer: tools/patch-radv-disk-cache.py).
             const std::string access = "status=" + std::to_string(Eden::FilesystemAccessStatus()) +
                 " elevation=" + elevation::path() +
                 " app=" + Eden::AppDir() + " data=" + Eden::UserDir() + " game_files=" + Eden::AssetsDir() +
@@ -355,6 +404,28 @@ int main(int argc, char** argv) {
                     Eden::Report("cache", "The driver's shader cache could not move to the data folder; it starts empty");
                 (void)mkdir(cache.c_str(), 0777);
                 setenv("MESA_SHADER_CACHE_DIR", cache.c_str(), 1);
+                // Mesa caps its cache at 1 GiB, shared by every game, and past that each new entry
+                // drops an older one: with a large game (13,000 pipelines) among them, every start
+                // could drop part of what it compiled the time before (#170). An environment that
+                // sets a size keeps it.
+                setenv("MESA_SHADER_CACHE_MAX_SIZE", "4G", 0);
+            }
+            // Where the driver keeps compiled shaders between starts. Without a folder it can write,
+            // every start compiles all of a game's pipelines again (minutes for a large game). The
+            // driver no longer turns the cache off for differing ids (tools/patch-radv-disk-cache.py).
+            {
+                const char* folder = std::getenv("MESA_SHADER_CACHE_DIR");
+                std::string line = folder ? folder : "none: no access to the data folder, so shaders are compiled at every start";
+                if (folder) {
+                    const std::string probe = std::string{folder} + "/.write-check";
+                    FILE* file = std::fopen(probe.c_str(), "wb");
+                    line += file ? ", writable" : ", NOT writable: shaders are compiled at every start";
+                    if (file) {
+                        std::fclose(file);
+                        (void)std::remove(probe.c_str());
+                    }
+                }
+                Eden::Report("driver shader cache", line.c_str());
             }
         }
         // Whether Eden's large tables can be sparse on this console (src/memory_pages.cpp),
@@ -615,6 +686,14 @@ int main(int argc, char** argv) {
         const uint64_t game_title = 0;
 #endif
         Eden::session_title.store(game_title);
+        // The loading screen shows the game's cover: the one the launcher keeps of it, found by
+        // the file's name in the game files folder (loading_art.h).
+        {
+            const std::string roms = Eden::AssetsPath("roms/");
+            Eden::Loading::SetArtFromCover(Eden::CoverFile(
+                selected_game.rfind(roms, 0) == 0 ? selected_game.substr(roms.size()) :
+                                                    std::filesystem::path(selected_game).filename().string()));
+        }
         const unsigned cycles = game ? 1 : 3;
         const bool devices = EDEN_DEVICE_FRONTEND;
         if (game) {
@@ -756,6 +835,8 @@ int main(int argc, char** argv) {
         Settings::values.memory_layout_mode = Settings::MemoryLayout::Memory_4Gb;
         // A development run that names jit_list in dev-settings decides the block list by itself.
         [[maybe_unused]] bool dev_block_list = false;  // read where a session applies its settings
+        [[maybe_unused]] int dev_vertex_input = -1;  // likewise: dev-settings vertex_input_dynamic=off/on
+        [[maybe_unused]] bool dev_cram_on = true, dev_cram_scan = true, dev_cram_dedup = false, dev_cram_fine = false;
 #ifdef EDEN_DEV_PROFILE
         // One-run A/B switches written by the development runner; absent = defaults.
         {
@@ -763,27 +844,76 @@ int main(int argc, char** argv) {
             for (std::string entry; dev_settings >> entry;) {
                 if (entry == "dma_accuracy=unsafe") {
                     Settings::values.dma_accuracy.SetValue(Settings::DmaAccuracy::Unsafe);
+                } else if (entry == "cram=off" || entry == "cram_scan=off" || entry == "cram_dedup=on" ||
+                           entry == "cram_fine=on") {
+                    // The guest's memory as a service (src/guest_memory_service.inc).
+                    if (entry == "cram=off") dev_cram_on = false;
+                    if (entry == "cram_scan=off") dev_cram_scan = false;
+                    if (entry == "cram_dedup=on") dev_cram_dedup = true;
+                    if (entry == "cram_fine=on") dev_cram_fine = true;
                 } else if (entry == "placement=off") {
                     Eden::Performance::SetSecondaryPlacement(false);
                 } else if (entry == "fastmem=off" || entry == "fastmem=on") {
                     Eden::Fastmem::Request(entry.ends_with("on"));
+                } else if (entry == "fastmem_large=off") {
+                    // Window aliases stay 16 KiB mappings, never 2 MiB ones.
+                    Eden::Fastmem::RequestLarge(false);
+                } else if (entry == "fastmem_sites=off") {
+                    // Window and reserved register kept, every access on the page-table path.
+                    Eden::Fastmem::RequestSites(false);
+                } else if (entry == "jit_table=off") {
+                    // The JIT reads Eden's packed page table instead of the direct one
+                    // (headless/jit-page-table.cmake). Read when the first page table is sized.
+                    Common::PageTable::direct_tables_requested = false;
+                } else if (entry == "jit_table_check=on") {
+                    // Every 30 s compare the direct table with Eden's entries (EDEN_JIT_TABLE check).
+                    jit_table_check = true;
+                } else if (entry == "cpu_write_detail=on") {
+                    // EDEN_DEV_CPUWRITE: guest writes to GPU-tracked pages broken down per core.
+                    Eden::Performance::cpu_write_detail = true;
+                } else if (entry.starts_with("cpu_write_ahead=")) {
+                    // Buffer pages after a tracked write marked CPU-modified with it (performance.h).
+                    Eden::Performance::cpu_write_ahead = static_cast<unsigned>(std::min(256UL, std::strtoul(entry.c_str() + 16, nullptr, 10)));
                 } else if (entry.starts_with("cache_spin=")) {
                     // try_lock retries before a guest core sleeps on a GPU cache lock (0 = upstream).
                     Eden::Performance::cache_lock_spins = static_cast<unsigned>(std::strtoul(entry.c_str() + 11, nullptr, 10));
+                } else if (entry == "cpu_write_defer=off") {
+                    // Guest writes wait for a GPU cache lock the GPU thread holds, as upstream (performance.h).
+                    Eden::Performance::cpu_write_defer = false;
+                } else if (entry == "cpu_read_skip=on") {
+                    // Guest reads skip the download check while the GPU thread holds the texture cache lock.
+                    Eden::Performance::cpu_read_skip = true;
                 } else if (entry == "gc_dirty=upstream") {
                     // Eden's rule: evict GPU-written textures from the "expected" memory mark on.
                     Eden::Performance::gc_keep_dirty = false;
+                } else if (entry == "tex_partial=off") {
+                    // Whole-image uploads after every guest write, as upstream (texture_partial.h).
+                    Eden::Performance::tex_partial = false;
+                } else if (entry == "tex_partial_check=on") {
+                    Eden::Performance::tex_partial_check = true;
+                } else if (entry.starts_with("tex_partial_kb=")) {
+                    Eden::Performance::tex_partial_min = std::strtoull(entry.c_str() + 15, nullptr, 10) << 10;
                 } else if (entry == "gc_scan=upstream") {
                     // Eden's rule: the collector's budget counts visits, not evictions.
                     Eden::Performance::gc_count_visits = true;
+                } else if (entry == "dma_batch=off") {
+                    // One engine call per GPU command word, as upstream (performance.h dma_batch).
+                    Eden::Performance::dma_batch = false;
+                    std::printf("EDEN_DEV_DMA_BATCH 0\n");
                 } else if (entry.starts_with("dispatch_draws=")) {
                     // Draws between Vulkan worker hand-offs: a power of two from 8 (upstream) to 512.
                     const unsigned long draws = std::strtoul(entry.c_str() + 15, nullptr, 10);
                     if (draws >= 8 && draws <= 512 && (draws & (draws - 1)) == 0)
                         Eden::Performance::dispatch_mask = static_cast<unsigned>(draws - 1);
+                } else if (entry.starts_with("compose_delay_us=")) {
+                    // Guest vsync signalled first, composition N us later (VI conductor; 0 = upstream).
+                    Eden::Performance::compose_delay_us = std::stoi(entry.substr(17));
                 } else if (entry.starts_with("idle_spin_us=")) {
                     // Guest cores spin this long on their interrupt flag before sleeping (W1).
                     Eden::Performance::idle_spin_iterations = static_cast<unsigned>(std::stoul(entry.substr(13)) * 50);
+                } else if (entry.starts_with("kspin=")) {
+                    // PAUSE iterations a guest kernel spin lock retries before blocking (performance.h).
+                    Eden::Performance::kernel_spin_iterations = static_cast<unsigned>(std::stoul(entry.substr(6)));
                 } else if (entry.starts_with("pc_core=") && entry.size() == 9 && entry[8] >= '0' && entry[8] <= '3') {
                     // Host PC samples from this guest core instead of core 0 (with --pc-sample).
                     Eden::Performance::pc_sample_core = static_cast<unsigned>(entry[8] - '0');
@@ -801,6 +931,27 @@ int main(int argc, char** argv) {
                     // The saved block list (jit_list.h), whatever the settings file says.
                     Eden::JitList::enabled = entry.ends_with("on");
                     dev_block_list = true;
+                } else if (entry == "jit_page_reuse=off") {
+                    // One page-table lookup per A64 access, as upstream (headless/dynarmic/page-reuse.cmake).
+                    eden_page_reuse = false;
+                } else if (entry == "jit_plain_ordered_reads=off") {
+                    // Ordered and exclusive reads are a locked RMW again, as upstream (headless/CMakeLists.txt).
+                    eden_plain_ordered_reads = false;
+                } else if (entry == "jit_fcmp_adc=off") {
+                    // FCMP turns host flags into NZCV with rcl again, as upstream (headless/dynarmic/fast_paths.cmake).
+                    eden_fcmp_adc = false;
+                } else if (entry == "jit_light_dmb=off") {
+                    // Every DMB is an mfence again, as upstream (headless/dynarmic/fast_paths.cmake).
+                    eden_light_dmb = false;
+                } else if (entry == "jit_checkbit_flags=off") {
+                    // CBZ/TBZ-style terminals reload their condition from the stack, as upstream (headless/dynarmic/fast_paths.cmake).
+                    eden_checkbit_flags = false;
+                } else if (entry == "jit_r13=off") {
+                    // The JIT allocator skips R13 in every block, as upstream (headless/dynarmic/reg_alloc.cmake).
+                    eden_alloc_r13 = false;
+                } else if (entry == "jit_free_moves=off") {
+                    // Registers moved out of the way go to the stack, as upstream (headless/dynarmic/reg_alloc.cmake).
+                    eden_free_moves = false;
                 } else if (entry == "jit_shared=off") {
                     // Every guest core keeps its own compiled blocks (headless/dynarmic/jit_group.h).
                     eden_jit_shared = false;
@@ -829,8 +980,10 @@ int main(int argc, char** argv) {
                     Eden::DevVulkan::disable_descriptor_buffer = true;
                 } else if (entry == "robustness2=on") {
                     Eden::DevVulkan::robustness2 = true;
-                } else if (entry == "vertex_input_dynamic=off") {
-                    Settings::values.vertex_input_dynamic_state.SetValue(false);
+                } else if (entry == "vertex_input_dynamic=off" || entry == "vertex_input_dynamic=on") {
+                    dev_vertex_input = entry.ends_with("on") ? 1 : 0;
+                } else if (entry == "static_vi=off") {
+                    Eden::DevVulkan::static_vertex_input = false;
                 } else if (entry == "pipeline_trace=on") {
                     Eden::DevVulkan::trace_pipelines = true;
                 } else if (entry.starts_with("radv_debug=")) {
@@ -906,19 +1059,19 @@ int main(int argc, char** argv) {
             }
             std::printf("EDEN_DEV_SETTINGS dma_accuracy=%u gpu_accuracy=%u null_descriptor=%u "
                         "descriptor_buffer=%u robustness2=%u vertex_input_dynamic=%u dyna_state=%u "
-                        "sparse=%u multirange=%u custom_border=%u submit_sync=%u fastmem=%u\n",
+                        "sparse=%u multirange=%u custom_border=%u submit_sync=%u fastmem=%u fastmem_sites=%u\n",
                         unsigned(Settings::values.dma_accuracy.GetValue()),
                         unsigned(Settings::values.current_gpu_accuracy),
                         unsigned(!Eden::DevVulkan::disable_null_descriptor),
                         unsigned(!Eden::DevVulkan::disable_descriptor_buffer),
                         unsigned(Eden::DevVulkan::robustness2),
-                        unsigned(Settings::values.vertex_input_dynamic_state.GetValue()),
+                        unsigned(dev_vertex_input != 0),
                         unsigned(Settings::values.dyna_state.GetValue()),
                         unsigned(!Eden::DevVulkan::disable_sparse),
                         unsigned(!Eden::DevVulkan::disable_multi_range),
                         unsigned(!Eden::DevVulkan::disable_custom_border),
                         unsigned(Eden::DevVulkan::sync_submissions),
-                        unsigned(Eden::Fastmem::Requested()));
+                        unsigned(Eden::Fastmem::Requested()), unsigned(Eden::Fastmem::SitesRequested()));
             std::printf("EDEN_DEV_MEMORY direct_memory=%lld vram_mode=%u\n",
                         static_cast<long long>(sceKernelGetDirectMemorySize()),
                         unsigned(Settings::values.vram_usage_mode.GetValue()));
@@ -934,6 +1087,8 @@ int main(int argc, char** argv) {
         Eden::Report("launch", docked ? "Console mode: Docked" : "Console mode: Handheld");
 #endif
 #endif
+        // The guest's memory as a service, before the session takes it (dev-settings cram=off ...).
+        Common::SetGuestMemoryService(dev_cram_on, dev_cram_scan, dev_cram_dedup);
 #if defined(PS5_NATIVE) && defined(EDEN_PS5_OPENGL)
         {
             // Settings > Video: internal resolution and the filter scaling it to the output.
@@ -979,20 +1134,42 @@ int main(int argc, char** argv) {
                                                           : Settings::AstcDecodeMode::Gpu);
             Settings::values.scaling_filter.SetValue(filters[filter]);
             Settings::UpdateRescalingInfo();
-#ifdef EDEN_PS5_FRAMEGEN
-            // Lossless Scaling frame generation (EDEN_PS5_FRAMEGEN, headless/vulkan.cmake).
-            // Settings > Video's switch, or the game's own in Library > Triangle > Video, asks
-            // for it. The app folder's framegen.txt overrides all of it, the way block-list.txt
-            // turns the block list on: its first number is the target rate in Hz, its second the
-            // multiplier.
-            //
-            // Eden's two controls work the way Eden defines them (settings.cpp). A target rate
-            // makes the pacer add as many frames as that rate needs, up to Eden's own maximum;
-            // "auto" passes 0 and leaves the multiplier in charge, which is the ratio Eden uses
-            // when no target is asked for. Per session, and before the renderer starts: the
-            // swapchain and the presentation manager read them as they are created. Vulkan only,
-            // and only when the build has the feature at all (it needs the user's own
-            // Lossless.dll).
+            // Settings > Video > Post-processing, or the game's own: one of Eden's ReShade FX presets
+            // (the bundled ones and the .fxp files in post_presets), applied by Eden's own preset code
+            // before the renderer reads the chain. Every session starts with none: one app run starts
+            // many games. The pass is drawn by the Vulkan renderer only.
+            Settings::values.post_shader_enabled.SetValue(false);
+            Settings::values.post_shader_chain.SetValue(std::string{});
+            Settings::values.post_shader_preset.SetValue(std::string{});
+            // A game in its own folder in roms/ (issue 168) brings its update, DLC, mods, cheats
+            // and its own post-processing (reshade_folder.h): its presets and effects are read
+            // again when the folder is another than the last game's.
+            Eden::Mods::SessionGameFolder().clear();
+            if (guest) {
+                const std::string roms = Eden::AssetsPath("roms/");
+                const std::string_view path{guest};
+                if (path.starts_with(roms))
+                    if (const auto slash = path.find('/', roms.size()); slash != std::string_view::npos)
+                        Eden::Mods::SessionGameFolder() = std::string{path.substr(0, slash)};
+            }
+            if (Eden::Reshade::SetGameFolder(Eden::Mods::SessionGameFolder())) {
+                VideoCore::ReloadFxPresetCatalog();
+                VideoCore::ReloadFxCatalog();
+            }
+            if (!video.post_processing.empty()) {
+                std::string line = "Post-processing: " + video.post_processing;
+                if (backend != Eden::GraphicsBackend::Vulkan) {
+                    line += " (off: it needs the Vulkan renderer)";
+                } else if (VideoCore::ApplyFxPreset(video.post_processing)) {
+                    Settings::values.post_shader_enabled.SetValue(true);
+                } else {
+                    line += " (off: no preset of that name)";
+                }
+                Eden::Report("launch", line.c_str());
+            }
+            // Frame generation: common setup for both methods (LSFG and MihawkGen).
+            // The target rate and multiplier control the pacer regardless of which method
+            // generates the frames. framegen.txt overrides them; Vulkan only.
             {
                 const auto at = [](int index, auto count) {
                     return std::clamp(index, 0, static_cast<int>(count) - 1);
@@ -1010,21 +1187,17 @@ int main(int argc, char** argv) {
                 (void)(frame_gen_file >> override_multiplier);
                 if (override_rate > 0) target = override_rate;
                 if (override_multiplier >= 2) multiplier = override_multiplier;
-                const bool active = (override_rate >= 0 || override_multiplier >= 0 || video.frame_gen) &&
+                const bool wants_framegen = (override_rate >= 0 || override_multiplier >= 0 || video.frame_gen) &&
                                     video.backend == Eden::GraphicsBackend::Vulkan;
-                Settings::values.frame_gen.SetValue(active);
+#ifdef EDEN_PS5_FRAMEGEN
+                const bool use_lsfg = wants_framegen && video.frame_gen_method == 0;
+                Settings::values.frame_gen.SetValue(use_lsfg);
                 Settings::values.frame_gen_target_rate.SetValue(
-                    active ? static_cast<unsigned>(std::min(target, 240)) : 0u);
+                    use_lsfg ? static_cast<unsigned>(std::min(target, 240)) : 0u);
                 Settings::values.frame_gen_multiplier.SetValue(
                     static_cast<unsigned>(std::clamp(multiplier, 2, 4)));
-                if (active)
+                if (use_lsfg)
                 {
-                    // Both of frame generation's gates give up silently, so a session that
-                    // cannot run it looks exactly like one that never asked: the shaders load
-                    // only from the user's own Lossless Scaling library, and the shader stage
-                    // needs Vulkan memory model plus robustBufferAccess2's null descriptors.
-                    // Say what this session found, in the log and in the crash report, so the
-                    // answer does not need another console round trip.
                     const auto folder = Common::FS::GetEdenPath(Common::FS::EdenPath::LosslessDir);
                     const auto status =
                         static_cast<unsigned>(VideoCore::FrameGen::GetInstalledLosslessStatus());
@@ -1043,8 +1216,31 @@ int main(int argc, char** argv) {
                                   (Eden::DevVulkan::disable_null_descriptor ? "off" : "on"))
                                      .c_str());
                 }
-            }
 #endif
+#ifdef EDEN_PS5_MIHAWKGEN
+                const bool use_mihawkgen = wants_framegen && video.frame_gen_method == 1;
+                Eden::MihawkGenBridge::active.store(use_mihawkgen);
+                if (use_mihawkgen) {
+                    Eden::MihawkGenBridge::weights_path =
+                        Eden::FileExists(Eden::UserDir() + "/mihawkgen/network.fgw")
+                            ? Eden::UserDir() + "/mihawkgen/network.fgw"
+                            : Eden::AppDir() + "/mihawkgen/network.fgw";
+                    Eden::MihawkGenBridge::target_rate.store(target);
+                    Eden::MihawkGenBridge::multiplier.store(multiplier);
+                    Settings::values.frame_gen.SetValue(true);
+                    Settings::values.frame_gen_target_rate.SetValue(
+                        static_cast<unsigned>(std::min(target, 240)));
+                    Settings::values.frame_gen_multiplier.SetValue(
+                        static_cast<unsigned>(std::clamp(multiplier, 2, 4)));
+                }
+                Eden::Report("launch",
+                             (std::string("MihawkGen frame generation: ") +
+                              (use_mihawkgen ? "active" : "inactive") + "; weights " +
+                              (Eden::FileExists(Eden::MihawkGenBridge::weights_path)
+                                   ? "found" : "not found") +
+                              " at " + Eden::MihawkGenBridge::weights_path).c_str());
+#endif
+            }
             // The output's refresh rate while the game runs (display_refresh.h): the renderer asks
             // for it as it opens the output.
             const int refresh = video.refresh;
@@ -1074,9 +1270,42 @@ int main(int argc, char** argv) {
             if (speed.unsafe_dma) Settings::values.dma_accuracy.SetValue(Settings::DmaAccuracy::Unsafe);
             Settings::values.use_reactive_flushing.SetValue(speed.reactive_flushing);
             Settings::values.skip_cpu_inner_invalidation.SetValue(speed.skip_invalidation);
+            // Settings > Performance > Compact memory: the guest's memory in 16 KiB pages where a
+            // written slot is mostly zeroes (src/guest_memory_service.inc), before the session takes it.
+            Common::SetGuestMemoryFine(speed.compact_memory || dev_cram_fine);
+            // Settings > Performance > Memory: the memory the guest's console is told it has
+            // (Eden's memory layout). A mod that keeps a heap of its own asks the kernel how much
+            // memory there is and reserves what it wants from it; on the Switch's own 4 GiB it finds
+            // less than it asked for and the game stops before its first picture, which is the
+            // kernel's "jumped to an unmapped address" and not a crash of ours. The larger layouts
+            // are the console's developer memories: the guest's kernel divides the larger block the
+            // same way, so the mod's heap is there. Above 4 GiB the guest's memory is the block
+            // backed where the kernel uses it (src/memory_pages.cpp), so the pool below only has to
+            // hold what a session touches, not the whole of it.
+            Settings::values.memory_layout_mode =
+                speed.memory_layout == 1 ? Settings::MemoryLayout::Memory_6Gb
+                : speed.memory_layout == 2 ? Settings::MemoryLayout::Memory_8Gb
+                                           : Settings::MemoryLayout::Memory_4Gb;
+            Eden::Report("launch",
+                         ("Memory layout: " + std::string{Eden::kMemoryLayoutKeys[speed.memory_layout]} +
+                          " (" + std::to_string(Eden::kMemoryLayoutGib[speed.memory_layout]) +
+                          " GiB), direct memory pool " +
+                          std::to_string(sceKernelGetDirectMemorySize() >> 20) + " MiB")
+                             .c_str());
+            // Settings > Performance > Speed limit: how fast the game may run, as a percentage of
+            // the console it was made for. Eden's vsync clock comes that much sooner (vi/conductor.cpp
+            // on several cores), so a game that waits for it runs faster: one locked to 30 FPS can
+            // reach 60 at 200% where the console has the time to spare, and one that counts its
+            // frames to keep time plays faster with them. Unlimited switches the limit off. 100%,
+            // the default, is Eden's own default and what every session had before.
+            const int speed_percent = Eden::kSpeedLimitPercent[speed.speed_limit];
+            Settings::values.use_speed_limit.SetValue(speed_percent > 0);
+            Settings::values.speed_limit.SetValue(static_cast<u16>(speed_percent > 0 ? speed_percent : 100));
             // The block list is off unless the settings turn it on (block-list.txt in the app
             // folder still does, further down).
             if (!dev_block_list) Eden::JitList::enabled = speed.block_list;
+            // Set for every session: the value outlives one.
+            Settings::values.vertex_input_dynamic_state.SetValue(dev_vertex_input != 0);
             // The report reads the values back: what the emulator has, whoever set it.
             const auto on = [](bool value) { return value ? "on" : "off"; };
             Eden::Report("launch", (std::string("Performance: block list ") + on(Eden::JitList::enabled) +
@@ -1088,25 +1317,30 @@ int main(int argc, char** argv) {
                                     on(Settings::values.dma_accuracy.GetValue() == Settings::DmaAccuracy::Unsafe) +
                                     ", reactive flushing " + on(Settings::values.use_reactive_flushing.GetValue()) +
                                     ", skip invalidation " +
-                                    on(Settings::values.skip_cpu_inner_invalidation.GetValue())).c_str());
+                                    on(Settings::values.skip_cpu_inner_invalidation.GetValue()) +
+                                    ", speed limit " +
+                                    (Settings::values.use_speed_limit.GetValue() ?
+                                         std::to_string(Settings::values.speed_limit.GetValue()) + "%" :
+                                         std::string{"unlimited"})).c_str());
             // What a crash report says was running.
             char title_id[20];
             std::snprintf(title_id, sizeof(title_id), "%016llx",
                           static_cast<unsigned long long>(eden_game_title_id(guest)));
             // The game's mods, minus those switched off in the launcher (Library > Game settings >
-            // Mods): Eden's patch manager skips the names in this list. With the Library's Mods
-            // switch off for the game, every one of them is in it.
+            // Mods and Cheats): Eden's patch manager skips the names in this list. The game's Mods
+            // and Cheats switches add theirs (mods.h).
             const u64 title = eden_game_title_id(guest);
-            const auto all_mods = Eden::Mods::List(Eden::AssetsPath("mods"), title);
-            auto mods_off = Eden::LoadDisabledMods(title);
-            if (!Eden::LoadModsEnabled(title)) {
-                for (const auto& mod : all_mods)
-                    if (std::find(mods_off.begin(), mods_off.end(), mod.name) == mods_off.end())
-                        mods_off.push_back(mod.name);
-            }
+            // The game's own folder (Mods::SessionGameFolder) was found with its post-processing.
+            const auto all_mods = Eden::Mods::List(
+                {Eden::AssetsPath("mods"), Eden::AssetsPath("cheats"), Eden::Mods::SessionGameFolder()}, title);
             // Of a mod that lists several cheats, only the ones chosen there run (cheats.h).
-            const auto cheats_on = Eden::LoadChosenCheats(title);
-            Eden::Cheats::Off() = Eden::Mods::CheatsOff(all_mods, cheats_on);
+            const bool cheats_enabled = Eden::LoadCheatsEnabled(title);
+            const auto cheats_on = cheats_enabled ? Eden::LoadChosenCheats(title) : std::vector<std::string>{};
+            auto switched = Eden::Mods::Switches(all_mods, Eden::LoadDisabledMods(title), cheats_on,
+                                                 Eden::LoadCheatsOff(title), Eden::LoadModsEnabled(title),
+                                                 cheats_enabled);
+            Eden::Cheats::Off() = std::move(switched.cheats_off);
+            const auto& mods_off = switched.mods_off;
             const std::string mods = Eden::Mods::Summary(all_mods, mods_off, cheats_on);
             Settings::values.disabled_addons[title] = mods_off;
             Eden::Report("launch", ("Mods: " + mods).c_str());
@@ -1303,7 +1537,10 @@ int main(int argc, char** argv) {
                 system.SetShuttingDown(false);
                 // Update and DLC files (NSP or XCI) in the game files' updates folder apply to their
                 // base game: Eden's ExternalContentProvider, which the patch manager checks first.
+                // So do those in the game's own folder, when it has one (roms/<folder>/, issue 168).
                 Settings::values.external_content_dirs = {Eden::AssetsPath("updates")};
+                if (const std::string& folder = Eden::Mods::SessionGameFolder(); !folder.empty())
+                    Settings::values.external_content_dirs.push_back(folder);
                 system.GetFileSystemController().CreateFactories(*system.GetFilesystem());
                 // The game's own contents, registered as Eden's desktop frontends do before booting a
                 // game (ConfigureFilesystemProvider). An update's data is a patch on the base game's:
@@ -1704,6 +1941,22 @@ int main(int argc, char** argv) {
                                 if (poll % 20 == 0) {
                                     lock.unlock();
                                     Eden::Crash::DevelopmentRequest(Eden::AppFile("crash-app.txt"));
+                                    if (poll == 0)
+                                        std::printf("EDEN_JIT_PAGE_REUSE enabled=%d groups=%llu accesses=%llu\n", eden_page_reuse ? 1 : 0,
+                                                    __atomic_load_n(&eden_page_reuse_groups, __ATOMIC_RELAXED),
+                                                    __atomic_load_n(&eden_page_reuse_accesses, __ATOMIC_RELAXED));
+                                    if (jit_table_check && poll == 0) {
+                                        if (auto* process = system.ApplicationProcess())
+                                            CheckDirectTable(process->GetPageTable().GetImpl());
+                                    }
+                                    if (poll == 0)
+                                        std::printf("EDEN_JIT_FREE_MOVES enabled=%d r13=%d plain_ordered_reads=%d moves=%llu spills=%llu\n", eden_free_moves ? 1 : 0, eden_alloc_r13 ? 1 : 0, eden_plain_ordered_reads ? 1 : 0,
+                                                    __atomic_load_n(&eden_free_moves_done, __ATOMIC_RELAXED),
+                                                    __atomic_load_n(&eden_free_moves_spilled, __ATOMIC_RELAXED));
+                                    if (poll == 0)
+                                        std::printf("EDEN_JIT_FAST_PATHS fcmp_adc=%d light_dmb=%d checkbit_flags=%d dmb_dropped=%llu checkbit_fused=%llu\n", eden_fcmp_adc ? 1 : 0, eden_light_dmb ? 1 : 0, eden_checkbit_flags ? 1 : 0,
+                                                    __atomic_load_n(&eden_dmb_dropped, __ATOMIC_RELAXED),
+                                                    __atomic_load_n(&eden_checkbit_fused, __ATOMIC_RELAXED));
                                     lock.lock();
                                 }
 #ifndef EDEN_DEV_VULKAN

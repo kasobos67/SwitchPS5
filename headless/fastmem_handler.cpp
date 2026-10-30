@@ -45,6 +45,10 @@ void Forward(int signal, siginfo_t* info, void* context) {
 }
 
 void Handle(int signal, siginfo_t* info, void* context) {
+    // A write to the guest's memory where it is shared (the service, src/guest_memory_service.inc).
+    if (const auto guest = Eden::Fastmem::guest_write_fault.load(std::memory_order_acquire);
+        guest != nullptr && guest(info ? info->si_addr : nullptr))
+        return;
     const std::uint64_t pc = Eden::Fastmem::ContextRip(context);
     for (auto& range : ranges) {
         const auto begin = range.begin.load(std::memory_order_acquire);
@@ -120,8 +124,33 @@ void ExceptionHandler::SetFastmemCallback(std::function<FakeCall(u64)> cb) {
 
 } // namespace Dynarmic::Backend
 
+namespace Dynarmic::Backend::X64 {
+namespace {
+std::atomic<std::uint64_t> demotion_count{0};
+std::atomic<bool> sites_enabled{true};
+}
+// Whether A32 loads/stores may use the window (headless/checked-fastmem.cmake).
+bool CheckedFastmemSites() noexcept {
+    return sites_enabled.load(std::memory_order_relaxed);
+}
+// A checked fastmem site recompiled onto the page-table path after its blocked budget
+// (headless/checked-fastmem.cmake).
+void CheckedFastmemDemoted() noexcept {
+    demotion_count.fetch_add(1, std::memory_order_relaxed);
+}
+} // namespace Dynarmic::Backend::X64
+
 namespace Eden::Fastmem {
 std::uint64_t Faults() noexcept {
     return Dynarmic::Backend::fault_count.load(std::memory_order_relaxed);
+}
+std::uint64_t Demotions() noexcept {
+    return Dynarmic::Backend::X64::demotion_count.load(std::memory_order_relaxed);
+}
+void RequestSites(bool enabled) noexcept {
+    Dynarmic::Backend::X64::sites_enabled.store(enabled, std::memory_order_relaxed);
+}
+bool SitesRequested() noexcept {
+    return Dynarmic::Backend::X64::CheckedFastmemSites();
 }
 } // namespace Eden::Fastmem

@@ -20,7 +20,7 @@ struct Color
     float b = 0.0f;
     float a = 1.0f;
 
-    static Color rgb(std::uint32_t hex, float alpha = 1.0f)
+    static constexpr Color rgb(std::uint32_t hex, float alpha = 1.0f)
     {
         return {static_cast<float>((hex >> 16) & 0xff) / 255.0f,
                 static_cast<float>((hex >> 8) & 0xff) / 255.0f,
@@ -98,6 +98,7 @@ class DrawList
 {
   public:
     void clear();
+    void reset_state(); // Retain recorded geometry, reset clip/transform/opacity stacks.
 
     // ---- shapes ----
     void rounded_rect(const Rect &r, float radius, Color fill);

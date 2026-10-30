@@ -6,31 +6,34 @@
 //     "video": { "renderer": "vulkan", "fps_overlay": true, "resolution": "1x",
 //                "upscaling_filter": "bilinear", "astc_textures": "compressed",
 //                "refresh_rate": "60",
-//                "output_resolution": "1080p", "frame_gen": false,
-//                "frame_gen_target": "auto", "frame_gen_multiplier": "2" },
+//                "output_resolution": "1080p", "frame_gen": false, "frame_gen_method": "lsfg",
+//                "frame_gen_target": "auto", "frame_gen_multiplier": "2", "post_processing": "Cinematic" },
 //     "audio": { "volume": 100, "mute": false, "menu_volume": 70 },
 //     "controls": { "vibration": true, "vibration_strength": 100,
 //                   "mapping": { "a": "cross", "b": "circle" } },
-//     "system": { "language": "en-US" },
+//     "system": { "language": "en-US", "update_notices": true },
 //     "accessibility": { "large_text": false, "high_contrast": false, "reduce_motion": false },
+//     "launcher": { "theme": "canopy" },
 //     "diagnostics": { "detailed_logging": false, "immediate_logs": false },
 //     "performance": { "block_list": false, "async_shaders": false, "fast_gpu": false,
 //                      "unsafe_cpu": false, "unsafe_dma": false, "reactive_flushing": true,
-//                      "skip_invalidation": false },
+//                      "skip_invalidation": false, "compact_memory": false, "memory_layout": "4Gb",
+//                      "speed_limit": "100" },
 //     "game_files": "/mnt/ext1/eden",
 //     "library": { "last_game": "Game [id].nsp", "recent": ["Game [id].nsp"] },
 //     "games": { "0100000000010000": { "console_mode": "handheld", "renderer": "opengl",
 //                                      "resolution": "0.75x", "upscaling_filter": "fsr",
 //                                      "astc_textures": "full",
 //                                      "refresh_rate": "120", "fps_overlay": false,
-//                                      "frame_gen": true,
+//                                      "frame_gen": true, "frame_gen_method": "mihawkgen",
 //                                      "frame_gen_target": "120", "frame_gen_multiplier": "3",
 //                                      "volume": 80, "mute": false, "vibration": false,
 //                                      "language": "ja", "mapping": { "a": "cross" },
 //                                      "controller": "handheld",
-//                                      "mods": false,
+//                                      "mods": false, "cheats": false,
 //                                      "mods_off": ["A mod's folder name"],
 //                                      "cheats_on": ["A mod's folder name#A cheat's name"],
+//                                      "cheats_off": ["A mod's folder name#Its one cheat's name"],
 //                                      "performance": { "fast_gpu": true } } }
 //   }
 //
@@ -38,6 +41,7 @@
 // text files of earlier versions (settings.txt, last-game.txt, recent-games.txt, assets-dir.txt,
 // game-<title>-mode.txt) are read once into the JSON file and left in place.
 #pragma once
+#include "hud.h"
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -45,6 +49,7 @@
 #include <cinttypes>
 #include <cstdint>
 #include <cstdio>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -87,6 +92,11 @@ inline constexpr int kRefreshHz[] = {60, 120};
 // ignores the multiplier once a target rate is set (FrameGenMaxGenerations in settings.cpp lets
 // the pacer add up to its own maximum then), so "auto" passes 0 and leaves the ratio in charge.
 // The target's limits are Eden's own: 0 to 240 Hz.
+// Frame generation method: which generator to use (Vulkan only). LSFG needs the user's own
+// Lossless.dll; MihawkGen uses its own neural network weights shipped in the build.
+inline constexpr const char* kFrameGenMethodKeys[] = {"lsfg", "mihawkgen"};
+inline constexpr const char* kFrameGenMethodLabels[] = {"Lossless Scaling", "MihawkGen"};
+static_assert(std::size(kFrameGenMethodKeys) == std::size(kFrameGenMethodLabels));
 inline constexpr const char* kFrameGenTargetKeys[] = {"auto", "60", "90", "120", "144", "240"};
 inline constexpr int kFrameGenTargetHz[] = {0, 60, 90, 120, 144, 240};
 static_assert(std::size(kFrameGenTargetKeys) == std::size(kFrameGenTargetHz));
@@ -134,9 +144,11 @@ struct Preferences {
     int astc_textures = 0;               // index into kAstcTextureKeys (0 is compressed)
     int refresh = 0;                     // index into kRefreshKeys
     int output = 0;                      // index into kOutputKeys
-    bool frame_gen = false;              // Lossless Scaling frame generation (Vulkan only)
+    bool frame_gen = false;              // frame generation (Vulkan only)
+    int frame_gen_method = 0;            // index into kFrameGenMethodKeys (0 is LSFG)
     int frame_gen_target = 0;            // index into kFrameGenTargetKeys (0 is "auto")
     int frame_gen_multiplier = 0;        // index into kFrameGenMultiplierKeys (0 is 2x)
+    std::string post_processing;         // Settings > Video > Post-processing: a preset's name ("": off)
     bool vibration = true;
     int vibration_strength = 100;        // percent of what a game asks for: 25, 50, 75 or 100
     int language = 0;                    // index into kLanguageKeys (English (US), Eden's default)
@@ -144,6 +156,8 @@ struct Preferences {
     bool large_text = false;             // Settings > Accessibility: the launcher's look
     bool high_contrast = false;
     bool reduce_motion = false;
+    std::string theme = "canopy";        // Settings > Theme: the launcher's look, by its id
+    std::string accent;                   // Settings > Theme > Colour: accent preset id ("": theme's own)
     ButtonMapping mapping = kDefaultMapping;  // Settings > Controls > Button mapping
     int controller = -1;                 // a game's own Controller type (kControllerKeys); -1: automatic
     bool immediate_logs = false;         // Settings > Diagnostics: log lines written as they come
@@ -153,8 +167,16 @@ struct Preferences {
     int hud_corner = 0;      // index into kHudCornerKeys: which corner of the picture it stands in
     bool hud_colors = true;  // the line in its inks rather than one (bake-loading-text.py)
     // What the overlay's line may say, bit by bit (hud.h's kHudField*): the pieces the user has
-    // chosen to show. All of them by default.
-    int hud_fields = 0xff;
+    // chosen to show. All of them by default, the game's own resolution (bit 9) with the rest.
+    int hud_fields = 0x2ff;
+    // Which face button presses each core menu action (Settings > Controls > Menu keybinds).
+    MenuBinding menu_bind = kDefaultMenuBinding;
+    // Settings > Appearance > Wallpaper: the image file's name in the wallpapers folder ("" when
+    // the theme's own art shows).
+    std::string wallpaper;
+    // Settings > Diagnostics > Update notices: off, the launcher keeps a newer release to itself at
+    // its start (About still names it).
+    bool update_notices = true;
 };
 
 inline int KeyIndex(const std::string& value, const char* const* keys, int count, int fallback) {
@@ -163,13 +185,32 @@ inline int KeyIndex(const std::string& value, const char* const* keys, int count
     return fallback;
 }
 
-inline bool ValidRomFilename(std::string_view name) {
-    if (name.size() < 5 || name.size() > 255) return false;
+// A game's file as the Library names it: its path in the game files folder's roms/, either its
+// name ("Game.nsp") or a game folder and its name ("Game/Game.nsp", the game's update and DLC
+// beside it). Readable characters, one folder at most, never a hidden folder, "." or "..".
+inline bool ValidRomPath(std::string_view name) {
+    if (name.size() < 5 || name.size() > 511) return false;
     for (unsigned char c : name)
-        if (c < 32 || c == 127 || c == '/' || c == '\\') return false;
+        if (c < 32 || c == 127 || c == '\\') return false;
+    if (const auto slash = name.find('/'); slash != std::string_view::npos) {
+        if (slash == 0 || name[0] == '.' || name.find('/', slash + 1) != std::string_view::npos) return false;
+        if (slash > 255 || name.size() - slash - 1 < 5 || name.size() - slash - 1 > 255) return false;
+    } else if (name.size() > 255) {
+        return false;
+    }
     std::string extension(name.substr(name.size() - 4));
     for (char& c : extension) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
     return extension == ".nsp" || extension == ".xci";
+}
+
+// A wallpaper's file name: the name alone (the image lives in the wallpapers folder), readable
+// characters, at most 128 bytes. Empty means no wallpaper; "." and ".." are never a file.
+inline bool ValidWallpaperName(std::string_view name) {
+    if (name.empty()) return true;
+    if (name.size() > 128 || name == "." || name == "..") return false;
+    for (unsigned char c : name)
+        if (c < 32 || c == 127 || c == '/' || c == '\\') return false;
+    return true;
 }
 
 inline std::string SettingsFile() { return ConfigFile("prosperoeden.json"); }
@@ -234,13 +275,13 @@ inline Json Legacy(const std::string& folder) {
             document["diagnostics"] = {{"detailed_logging", logging != 0}};
         }
     }
-    if (ReadFile(folder + "/last-game.txt", text) && ValidRomFilename(text))
+    if (ReadFile(folder + "/last-game.txt", text) && ValidRomPath(text))
         document["library"]["last_game"] = text;
     if (ReadFile(folder + "/recent-games.txt", text)) {
         Json recent = Json::array();
         std::istringstream lines(text);
         for (std::string line; std::getline(lines, line) && recent.size() < 4;)
-            if (ValidRomFilename(line)) recent.push_back(line);
+            if (ValidRomPath(line)) recent.push_back(line);
         if (!recent.empty()) document["library"]["recent"] = recent;
     }
     if (ReadFile(folder + "/assets-dir.txt", text)) {
@@ -338,6 +379,28 @@ inline Json MappingJson(const ButtonMapping& mapping) {
     return result;
 }
 
+// A menu button binding as the file names it: the default with the actions it names. One that names
+// a face button twice, or none of the four, is the fallback.
+inline MenuBinding MenuMapping(const Json& document, const Json::json_pointer& at, const MenuBinding& fallback) {
+    if (!document.contains(at) || !document.at(at).is_object()) return fallback;
+    MenuBinding result = kDefaultMenuBinding;
+    for (const auto& [name, value] : document.at(at).items()) {
+        const int action = KeyIndex(name, kMenuActionKeys, kMenuActions, -1);
+        const int pad = value.is_string() ? KeyIndex(value.get<std::string>(), kPadButtonKeys, kMenuActions, -1) : -1;
+        if (action < 0 || pad < 0) return fallback;
+        result[action] = pad;
+    }
+    return ValidMenuBinding(result) ? result : fallback;
+}
+// What differs from the default, by name.
+inline Json MenuMappingJson(const MenuBinding& binding) {
+    Json result = Json::object();
+    for (int action = 0; action < kMenuActions; ++action)
+        if (binding[action] != kDefaultMenuBinding[action])
+            result[kMenuActionKeys[action]] = kPadButtonKeys[binding[action]];
+    return result;
+}
+
 inline bool Bool(const Json& document, const Json::json_pointer& at, bool fallback) {
     return document.contains(at) && document.at(at).is_boolean() ? document.at(at).get<bool>() : fallback;
 }
@@ -348,6 +411,15 @@ inline std::string String(const Json& document, const Json::json_pointer& at) {
     return document.contains(at) && document.at(at).is_string() ? document.at(at).get<std::string>() : std::string{};
 }
 } // namespace Settings
+
+// Post-processing: the name of one of Eden's ReShade FX presets (the ones it bundles and the
+// .fxp files in post_presets), as Eden names them; "" is off. Kept by name because the presets
+// a console has can change. A name that is not a preset any more leaves the picture as it is.
+inline bool ValidPostProcessing(std::string_view name) {
+    return name.size() <= 64 && std::all_of(name.begin(), name.end(), [](char c) {
+        return static_cast<unsigned char>(c) >= 32 && c != 127 && c != '/' && c != '\\';
+    });
+}
 
 inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     using Settings::Json;
@@ -362,7 +434,7 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
                                        result.hud_colors);
     const int hud_fields =
         Settings::Int(document, Json::json_pointer("/video/fps_overlay_fields"), result.hud_fields);
-    if (hud_fields >= 0 && hud_fields <= 0x1ff) result.hud_fields = hud_fields;
+    if (ValidHudFields(hud_fields)) result.hud_fields = hud_fields;
     result.backend = Settings::String(document, Json::json_pointer("/video/renderer")) == "opengl" ?
         GraphicsBackend::OpenGL : GraphicsBackend::Vulkan;
     const int volume = Settings::Int(document, Json::json_pointer("/audio/volume"), result.volume);
@@ -370,6 +442,17 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     result.mute = Settings::Bool(document, Json::json_pointer("/audio/mute"), result.mute);
     const int menu_volume = Settings::Int(document, Json::json_pointer("/audio/menu_volume"), result.menu_volume);
     if (menu_volume >= 0 && menu_volume <= 100) result.menu_volume = menu_volume;
+    // A theme's id is a short plain word; anything else reads as the default.
+    const std::string theme = Settings::String(document, Json::json_pointer("/launcher/theme"));
+    if (!theme.empty() && theme.size() <= 32 &&
+        std::all_of(theme.begin(), theme.end(), [](char c) { return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-'; }))
+        result.theme = theme;
+    const std::string accent = Settings::String(document, Json::json_pointer("/launcher/accent"));
+    if (accent.size() <= 32 &&
+        std::all_of(accent.begin(), accent.end(), [](char c) { return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-'; }))
+        result.accent = accent;
+    const std::string wallpaper = Settings::String(document, Json::json_pointer("/launcher/wallpaper"));
+    if (ValidWallpaperName(wallpaper)) result.wallpaper = wallpaper;
     result.detailed_logging = Settings::Bool(document, Json::json_pointer("/diagnostics/detailed_logging"),
                                              result.detailed_logging);
     result.immediate_logs = Settings::Bool(document, Json::json_pointer("/diagnostics/immediate_logs"),
@@ -386,12 +469,18 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
     result.output = KeyIndex(Settings::String(document, Json::json_pointer("/video/output_resolution")),
                              kOutputKeys, int(std::size(kOutputKeys)), result.output);
     result.frame_gen = Settings::Bool(document, Json::json_pointer("/video/frame_gen"), result.frame_gen);
+    result.frame_gen_method = KeyIndex(
+        Settings::String(document, Json::json_pointer("/video/frame_gen_method")), kFrameGenMethodKeys,
+        int(std::size(kFrameGenMethodKeys)), result.frame_gen_method);
     result.frame_gen_target = KeyIndex(
         Settings::String(document, Json::json_pointer("/video/frame_gen_target")), kFrameGenTargetKeys,
         int(std::size(kFrameGenTargetKeys)), result.frame_gen_target);
     result.frame_gen_multiplier = KeyIndex(
         Settings::String(document, Json::json_pointer("/video/frame_gen_multiplier")),
         kFrameGenMultiplierKeys, int(std::size(kFrameGenMultiplierKeys)), result.frame_gen_multiplier);
+    if (const auto preset = Settings::String(document, Json::json_pointer("/video/post_processing"));
+        ValidPostProcessing(preset))
+        result.post_processing = preset;
     result.vibration = Settings::Bool(document, Json::json_pointer("/controls/vibration"), result.vibration);
     // A strength between the steps is read as the step below it; out of range as the nearest end.
     result.vibration_strength = std::clamp(
@@ -399,10 +488,14 @@ inline Preferences LoadPreferences(const std::string& file = SettingsFile()) {
         100) / 25 * 25;
     result.language = KeyIndex(Settings::String(document, Json::json_pointer("/system/language")),
                                kLanguageKeys, int(std::size(kLanguageKeys)), result.language);
+    result.update_notices = Settings::Bool(document, Json::json_pointer("/system/update_notices"),
+                                           result.update_notices);
     result.large_text = Settings::Bool(document, Json::json_pointer("/accessibility/large_text"), false);
     result.high_contrast = Settings::Bool(document, Json::json_pointer("/accessibility/high_contrast"), false);
     result.reduce_motion = Settings::Bool(document, Json::json_pointer("/accessibility/reduce_motion"), false);
     result.mapping = Settings::Mapping(document, Json::json_pointer("/controls/mapping"), kDefaultMapping);
+    result.menu_bind =
+        Settings::MenuMapping(document, Json::json_pointer("/controls/menu_mapping"), kDefaultMenuBinding);
     return result;
 }
 
@@ -417,7 +510,9 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
         value.language < 0 || value.language >= int(std::size(kLanguageKeys)) ||
         value.hud_size < 0 || value.hud_size >= int(std::size(kHudSizeKeys)) ||
         value.hud_corner < 0 || value.hud_corner >= int(std::size(kHudCornerKeys)) ||
-        value.hud_fields < 0 || value.hud_fields > 0x1ff || !ValidMapping(value.mapping)) return false;
+        !ValidHudFields(value.hud_fields) || !ValidMapping(value.mapping) ||
+        !ValidMenuBinding(value.menu_bind) || !ValidWallpaperName(value.wallpaper) ||
+        !ValidPostProcessing(value.post_processing)) return false;
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
     document["video"]["renderer"] = value.backend == GraphicsBackend::Vulkan ? "vulkan" : "opengl";
@@ -432,8 +527,11 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     document["video"]["refresh_rate"] = kRefreshKeys[value.refresh];
     document["video"]["output_resolution"] = kOutputKeys[value.output];
     document["video"]["frame_gen"] = value.frame_gen;
+    document["video"]["frame_gen_method"] = kFrameGenMethodKeys[value.frame_gen_method];
     document["video"]["frame_gen_target"] = kFrameGenTargetKeys[value.frame_gen_target];
     document["video"]["frame_gen_multiplier"] = kFrameGenMultiplierKeys[value.frame_gen_multiplier];
+    if (value.post_processing.empty()) document["video"].erase("post_processing");
+    else document["video"]["post_processing"] = value.post_processing;
     document["audio"]["volume"] = value.volume;
     document["audio"]["mute"] = value.mute;
     document["audio"]["menu_volume"] = value.menu_volume;
@@ -441,12 +539,23 @@ inline bool SavePreferences(const Preferences& value, const std::string& file = 
     document["controls"]["vibration_strength"] = value.vibration_strength;
     if (value.mapping == kDefaultMapping) document["controls"].erase("mapping");
     else document["controls"]["mapping"] = Settings::MappingJson(value.mapping);
+    if (value.menu_bind == kDefaultMenuBinding) document["controls"].erase("menu_mapping");
+    else document["controls"]["menu_mapping"] = Settings::MenuMappingJson(value.menu_bind);
     document["system"]["language"] = kLanguageKeys[value.language];
+    document["system"]["update_notices"] = value.update_notices;
     document["diagnostics"]["detailed_logging"] = value.detailed_logging;
     document["diagnostics"]["immediate_logs"] = value.immediate_logs;
     document["accessibility"]["large_text"] = value.large_text;
     document["accessibility"]["high_contrast"] = value.high_contrast;
     document["accessibility"]["reduce_motion"] = value.reduce_motion;
+    document["launcher"]["theme"] = value.theme;
+    document["launcher"]["wallpaper"] = value.wallpaper;
+    if (document["launcher"].contains("wallpaper_blur"))
+        document["launcher"].erase("wallpaper_blur"); // a switch this build no longer has
+    if (!value.accent.empty())
+        document["launcher"]["accent"] = value.accent;
+    else if (document["launcher"].contains("accent"))
+        document["launcher"].erase("accent");
     return Settings::Write(document, file);
 }
 
@@ -474,8 +583,29 @@ inline bool SaveGameDocked(uint64_t title_id, bool docked, const std::string& fi
 
 // The Performance switches by name, in the order of PerformanceSettings and of the launcher.
 inline constexpr const char* kPerformanceKeys[] = {"block_list", "async_shaders", "fast_gpu", "unsafe_cpu",
-                                                   "unsafe_dma", "reactive_flushing", "skip_invalidation"};
+                                                   "unsafe_dma", "reactive_flushing", "skip_invalidation",
+                                                   "compact_memory"};
 inline constexpr int kPerformanceSwitches = int(std::size(kPerformanceKeys));
+// Settings > Performance > Memory: how much memory the guest's console is told it has. Eden calls
+// this the memory layout, and it is what a mod that keeps a heap of its own (an HD camera pack)
+// asks for: the standard layout is the Switch's 4 GiB, and a mod written against a larger one
+// reads the size from the kernel and reserves what it does not find, which stops the game before
+// its first picture rather than the mod. Above 4 GiB the guest's memory is a block backed where
+// the game's kernel uses it, so a 6 GiB layout holds only what a session touches; the pool the CPU
+// shares with the GPU still has to take that much, so a demanding game can run out of it instead
+// of running out of graphics memory. The menu shows the three as plain sizes (settings.cpp's
+// kMemoryLayouts); the line at launch in main.cpp says which one a session took.
+inline constexpr const char* kMemoryLayoutKeys[] = {"4Gb", "6Gb", "8Gb"};
+inline constexpr int kMemoryLayoutGib[] = {4, 6, 8};
+static_assert(std::size(kMemoryLayoutKeys) == std::size(kMemoryLayoutGib));
+// Settings > Performance > Speed limit: how fast a game may run, as a percentage of the console it
+// was made for (Eden's speed limit). Above 100% the emulated console's vsync comes that much
+// sooner, so a game locked to 30 FPS can reach 60 at 200% where the console has the time to spare,
+// and a game that counts its frames to keep time plays faster with it. 0 is Eden's limit switched
+// off: as fast as the console can. The menu writes the percentages (settings.cpp).
+inline constexpr const char* kSpeedLimitKeys[] = {"100", "150", "200", "300", "unlimited"};
+inline constexpr int kSpeedLimitPercent[] = {100, 150, 200, 300, 0};
+static_assert(std::size(kSpeedLimitKeys) == std::size(kSpeedLimitPercent));
 
 // Library > Game settings: what one game does differently from Settings. Each value is -1 (absent
 // from the file) while the game follows Settings; switches are 0 off, 1 on.
@@ -487,9 +617,11 @@ struct GameSettings {
     int hud = -1;               // FPS overlay
     int hud_size = -1;          // index into kHudSizeKeys
     int hud_corner = -1;        // index into kHudCornerKeys
-    int frame_gen = -1;         // Lossless Scaling frame generation (Vulkan only)
+    int frame_gen = -1;         // frame generation (Vulkan only)
+    int frame_gen_method = -1;  // index into kFrameGenMethodKeys
     int frame_gen_target = -1;  // index into kFrameGenTargetKeys
     int frame_gen_multiplier = -1;  // index into kFrameGenMultiplierKeys
+    std::optional<std::string> post_processing;  // a preset's name, "" off; none: as Settings
     int astc_textures = -1;     // index into kAstcTextureKeys
     int volume = -1;            // game volume, 0 to 100
     int mute = -1;
@@ -498,8 +630,9 @@ struct GameSettings {
     int controller = -1;        // index into kControllerKeys
     bool own_mapping = false;   // the game has a button mapping of its own: mapping
     ButtonMapping mapping = kDefaultMapping;
-    std::array<int, kPerformanceSwitches> performance{-1, -1, -1, -1, -1, -1, -1};  // kPerformanceKeys
+    std::array<int, kPerformanceSwitches> performance{-1, -1, -1, -1, -1, -1, -1, -1};  // kPerformanceKeys
     int64_t rng_seed = -1;      // 0 to 4294967295, or -1: no seed (load_address.h)
+    int speed_limit = -1;       // index into kSpeedLimitKeys ("performance" / "speed_limit")
 };
 // The seed a typed text names: digits and nothing else, 0 to 4294967295. -1 for any other text.
 inline int64_t RngSeedFromText(std::string_view text) {
@@ -529,10 +662,15 @@ inline GameSettings LoadGameSettings(uint64_t title_id, const std::string& file 
     result.upscaling_filter = KeyIndex(key("upscaling_filter"), kUpscalingFilterKeys,
                                        int(std::size(kUpscalingFilterKeys)), -1);
     result.astc_textures = KeyIndex(key("astc_textures"), kAstcTextureKeys, int(std::size(kAstcTextureKeys)), -1);
+    if (const Json::json_pointer at(base + "/post_processing");
+        document.contains(at) && document.at(at).is_string() && ValidPostProcessing(document.at(at).get<std::string>()))
+        result.post_processing = document.at(at).get<std::string>();
     result.refresh = KeyIndex(key("refresh_rate"), kRefreshKeys, int(std::size(kRefreshKeys)), -1);
     result.hud_size = KeyIndex(key("fps_overlay_size"), kHudSizeKeys, int(std::size(kHudSizeKeys)), -1);
     result.hud_corner = KeyIndex(key("fps_overlay_corner"), kHudCornerKeys,
                                  int(std::size(kHudCornerKeys)), -1);
+    result.frame_gen_method = KeyIndex(key("frame_gen_method"), kFrameGenMethodKeys,
+                                       int(std::size(kFrameGenMethodKeys)), -1);
     result.frame_gen_target = KeyIndex(key("frame_gen_target"), kFrameGenTargetKeys,
                                        int(std::size(kFrameGenTargetKeys)), -1);
     result.frame_gen_multiplier = KeyIndex(key("frame_gen_multiplier"), kFrameGenMultiplierKeys,
@@ -549,6 +687,8 @@ inline GameSettings LoadGameSettings(uint64_t title_id, const std::string& file 
     result.vibration = flag("/vibration");
     for (int i = 0; i < kPerformanceSwitches; ++i)
         result.performance[i] = flag(std::string("/performance/") + kPerformanceKeys[i]);
+    result.speed_limit = KeyIndex(key("performance/speed_limit"), kSpeedLimitKeys,
+                                  int(std::size(kSpeedLimitKeys)), -1);
     const int volume = Settings::Int(document, Json::json_pointer(base + "/volume"), -1);
     result.volume = volume >= 0 && volume <= 100 ? volume : -1;
     const Json::json_pointer seed_at(base + "/rng_seed");
@@ -573,15 +713,18 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
         value.astc_textures >= int(std::size(kAstcTextureKeys)) ||
         value.refresh >= int(std::size(kRefreshKeys)) || value.language >= int(std::size(kLanguageKeys)) ||
         value.controller >= int(std::size(kControllerKeys)) ||
+        value.frame_gen_method >= int(std::size(kFrameGenMethodKeys)) ||
         value.frame_gen_target >= int(std::size(kFrameGenTargetKeys)) ||
         value.frame_gen_multiplier >= int(std::size(kFrameGenMultiplierKeys)) ||
         value.volume > 100 || value.rng_seed < -1 || value.rng_seed > 0xffffffffLL ||
         value.hud_size >= int(std::size(kHudSizeKeys)) ||
         value.hud_corner >= int(std::size(kHudCornerKeys)) ||
+        value.speed_limit >= int(std::size(kSpeedLimitKeys)) ||
         !flag_ok(value.hud) || !flag_ok(value.frame_gen) ||
         !flag_ok(value.mute) ||
         !flag_ok(value.vibration) ||
         !std::all_of(value.performance.begin(), value.performance.end(), flag_ok) ||
+        (value.post_processing && !ValidPostProcessing(*value.post_processing)) ||
         (value.own_mapping && !ValidMapping(value.mapping))) return false;
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
@@ -598,8 +741,11 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
     store("refresh_rate", value.refresh, kRefreshKeys);
     store("fps_overlay_size", value.hud_size, kHudSizeKeys);
     store("fps_overlay_corner", value.hud_corner, kHudCornerKeys);
+    store("frame_gen_method", value.frame_gen_method, kFrameGenMethodKeys);
     store("frame_gen_target", value.frame_gen_target, kFrameGenTargetKeys);
     store("frame_gen_multiplier", value.frame_gen_multiplier, kFrameGenMultiplierKeys);
+    if (value.post_processing) game["post_processing"] = *value.post_processing;
+    else game.erase("post_processing");
     store("language", value.language, kLanguageKeys);
     store("controller", value.controller, kControllerKeys);
     const auto flag = [](Settings::Json& owner, const char* name, int value) {
@@ -619,6 +765,8 @@ inline bool SaveGameSettings(uint64_t title_id, const GameSettings& value, const
     auto& performance = game["performance"];
     if (!performance.is_object()) performance = Settings::Json::object();
     for (int i = 0; i < kPerformanceSwitches; ++i) flag(performance, kPerformanceKeys[i], value.performance[i]);
+    if (value.speed_limit < 0) performance.erase("speed_limit");
+    else performance["speed_limit"] = kSpeedLimitKeys[value.speed_limit];
     if (performance.empty()) game.erase("performance");
     return Settings::Write(document, file);
 }
@@ -637,8 +785,10 @@ inline Preferences PreferencesFor(uint64_t title_id, const std::string& file = S
     if (game.hud_size >= 0) result.hud_size = game.hud_size;
     if (game.hud_corner >= 0) result.hud_corner = game.hud_corner;
     if (game.frame_gen >= 0) result.frame_gen = game.frame_gen == 1;
+    if (game.frame_gen_method >= 0) result.frame_gen_method = game.frame_gen_method;
     if (game.frame_gen_target >= 0) result.frame_gen_target = game.frame_gen_target;
     if (game.frame_gen_multiplier >= 0) result.frame_gen_multiplier = game.frame_gen_multiplier;
+    if (game.post_processing) result.post_processing = *game.post_processing;
     if (game.volume >= 0) result.volume = game.volume;
     if (game.mute >= 0) result.mute = game.mute == 1;
     if (game.vibration >= 0) result.vibration = game.vibration == 1;
@@ -664,6 +814,9 @@ struct PerformanceSettings {
     bool unsafe_dma = false;     // Eden's unsafe DMA accuracy
     bool reactive_flushing = true;   // Eden's reactive flushing: off is faster, some effects break
     bool skip_invalidation = false;  // Eden's skip_cpu_inner_invalidation: fewer cache invalidations
+    bool compact_memory = false;     // the guest's memory in 16 KiB pages where it is mostly zeroes
+    int memory_layout = 0;           // index into kMemoryLayoutKeys (0 is the Switch's own 4 GiB)
+    int speed_limit = 0;             // index into kSpeedLimitKeys (0 is 100%, the console's own pace)
 };
 
 inline PerformanceSettings LoadPerformance(uint64_t title_id, const std::string& file = SettingsFile()) {
@@ -681,6 +834,14 @@ inline PerformanceSettings LoadPerformance(uint64_t title_id, const std::string&
         value("unsafe_dma", result.unsafe_dma);
         value("reactive_flushing", result.reactive_flushing);
         value("skip_invalidation", result.skip_invalidation);
+        value("compact_memory", result.compact_memory);
+        // A name that is not one of the layouts leaves the value the general settings gave.
+        result.memory_layout = KeyIndex(Settings::String(document,
+                                                         Json::json_pointer(base + "/performance/memory_layout")),
+                                        kMemoryLayoutKeys, int(std::size(kMemoryLayoutKeys)), result.memory_layout);
+        result.speed_limit = KeyIndex(Settings::String(document,
+                                                       Json::json_pointer(base + "/performance/speed_limit")),
+                                      kSpeedLimitKeys, int(std::size(kSpeedLimitKeys)), result.speed_limit);
     };
     read("");
     if (title_id) read("/games/" + Settings::TitleKey(title_id));
@@ -690,6 +851,8 @@ inline PerformanceSettings LoadPerformance(uint64_t title_id, const std::string&
 // Title 0 saves the general values.
 inline bool SavePerformance(uint64_t title_id, const PerformanceSettings& value,
                             const std::string& file = SettingsFile()) {
+    if (value.memory_layout < 0 || value.memory_layout >= int(std::size(kMemoryLayoutKeys)) ||
+        value.speed_limit < 0 || value.speed_limit >= int(std::size(kSpeedLimitKeys))) return false;
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
     auto& owner = title_id ? document["games"][Settings::TitleKey(title_id)] : document;
@@ -697,7 +860,10 @@ inline bool SavePerformance(uint64_t title_id, const PerformanceSettings& value,
     owner["performance"] = {{"block_list", value.block_list}, {"async_shaders", value.async_shaders},
                             {"fast_gpu", value.fast_gpu}, {"unsafe_cpu", value.unsafe_cpu},
                             {"unsafe_dma", value.unsafe_dma}, {"reactive_flushing", value.reactive_flushing},
-                            {"skip_invalidation", value.skip_invalidation}};
+                            {"skip_invalidation", value.skip_invalidation},
+                            {"compact_memory", value.compact_memory},
+                            {"memory_layout", kMemoryLayoutKeys[value.memory_layout]},
+                            {"speed_limit", kSpeedLimitKeys[value.speed_limit]}};
     return Settings::Write(document, file);
 }
 
@@ -731,24 +897,44 @@ inline bool SaveModEnabled(uint64_t title_id, std::string_view name, bool enable
     return Settings::Write(document, file);
 }
 
+namespace Settings {
+// A game's switch that is on unless the player turned it off (`key`: false).
+inline bool LoadGameSwitch(uint64_t title_id, const char* key, const std::string& file) {
+    if (!title_id) return true;
+    return Bool(Load(file), Json::json_pointer("/games/" + TitleKey(title_id) + "/" + key), true);
+}
+
+inline bool SaveGameSwitch(uint64_t title_id, const char* key, bool enabled, const std::string& file) {
+    if (!title_id) return false;
+    Json document = Load(file);
+    document["version"] = 1;
+    auto& game = document["games"][TitleKey(title_id)];
+    if (!game.is_object()) game = Json::object();
+    if (enabled) game.erase(key);
+    else game[key] = false;
+    return Write(document, file);
+}
+} // namespace Settings
+
 // The Library's Mods switch: one switch for all of a game's mods, on unless the player turned it
 // off ("mods": false). The mods' own switches (mods_off) keep their state behind it.
 inline bool LoadModsEnabled(uint64_t title_id, const std::string& file = SettingsFile()) {
-    if (!title_id) return true;
-    using Settings::Json;
-    return Settings::Bool(Settings::Load(file),
-                          Json::json_pointer("/games/" + Settings::TitleKey(title_id) + "/mods"), true);
+    return Settings::LoadGameSwitch(title_id, "mods", file);
 }
 
 inline bool SaveModsEnabled(uint64_t title_id, bool enabled, const std::string& file = SettingsFile()) {
-    if (!title_id) return false;
-    Settings::Json document = Settings::Load(file);
-    document["version"] = 1;
-    auto& game = document["games"][Settings::TitleKey(title_id)];
-    if (!game.is_object()) game = Settings::Json::object();
-    if (enabled) game.erase("mods");
-    else game["mods"] = false;
-    return Settings::Write(document, file);
+    return Settings::SaveGameSwitch(title_id, "mods", enabled, file);
+}
+
+// Game settings > Cheats: one switch for all of a game's cheats, apart from the Mods switch, on
+// unless the player turned it off ("cheats": false). The cheats' own switches keep their state
+// behind it.
+inline bool LoadCheatsEnabled(uint64_t title_id, const std::string& file = SettingsFile()) {
+    return Settings::LoadGameSwitch(title_id, "cheats", file);
+}
+
+inline bool SaveCheatsEnabled(uint64_t title_id, bool enabled, const std::string& file = SettingsFile()) {
+    return Settings::SaveGameSwitch(title_id, "cheats", enabled, file);
 }
 
 // The cheats chosen for a game, each as "<mod>#<cheat>" (mods.h). A mod that lists several cheats
@@ -778,14 +964,44 @@ inline bool SaveChosenCheats(uint64_t title_id, const std::vector<std::string>& 
     return Settings::Write(document, file);
 }
 
+// The single cheats of mods that also patch the code or replace files, switched off on their own
+// in the Cheats list, each as "<mod>#<cheat>" (cheats.h). They run unless listed, as before the
+// Cheats list had them.
+inline std::vector<std::string> LoadCheatsOff(uint64_t title_id, const std::string& file = SettingsFile()) {
+    std::vector<std::string> keys;
+    if (!title_id) return keys;
+    using Settings::Json;
+    const Json document = Settings::Load(file);
+    const Json::json_pointer at("/games/" + Settings::TitleKey(title_id) + "/cheats_off");
+    if (!document.contains(at) || !document.at(at).is_array()) return keys;
+    for (const auto& entry : document.at(at))
+        if (entry.is_string() && std::find(keys.begin(), keys.end(), entry.get<std::string>()) == keys.end())
+            keys.push_back(entry.get<std::string>());
+    return keys;
+}
+
+inline bool SaveCheatOff(uint64_t title_id, std::string_view key, bool off, const std::string& file = SettingsFile()) {
+    if (!title_id || key.empty() || key.size() > 512) return false;
+    auto keys = LoadCheatsOff(title_id, file);
+    keys.erase(std::remove(keys.begin(), keys.end(), key), keys.end());
+    if (off) keys.emplace_back(key);
+    Settings::Json document = Settings::Load(file);
+    document["version"] = 1;
+    auto& game = document["games"][Settings::TitleKey(title_id)];
+    if (!game.is_object()) game = Settings::Json::object();
+    if (keys.empty()) game.erase("cheats_off");
+    else game["cheats_off"] = keys;
+    return Settings::Write(document, file);
+}
+
 inline std::string LoadLastGame(const std::string& file = SettingsFile()) {
     const Settings::Json document = Settings::Load(file);
     const std::string name = Settings::String(document, Settings::Json::json_pointer("/library/last_game"));
-    return ValidRomFilename(name) ? name : std::string{};
+    return ValidRomPath(name) ? name : std::string{};
 }
 
 inline bool SaveLastGame(std::string_view name, const std::string& file = SettingsFile()) {
-    if (!ValidRomFilename(name)) return false;
+    if (!ValidRomPath(name)) return false;
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
     document["library"]["last_game"] = std::string(name);
@@ -801,18 +1017,18 @@ inline std::vector<std::string> LoadRecentGames(const std::string& file = Settin
     for (const auto& entry : document.at(at)) {
         if (!entry.is_string()) continue;
         const std::string name = entry.get<std::string>();
-        if (recent.size() < 4 && ValidRomFilename(name) && std::find(recent.begin(), recent.end(), name) == recent.end())
+        if (recent.size() < 8 && ValidRomPath(name) && std::find(recent.begin(), recent.end(), name) == recent.end())
             recent.push_back(name);
     }
     return recent;
 }
 
 inline bool SaveRecentGame(std::string_view name, const std::string& file = SettingsFile()) {
-    if (!ValidRomFilename(name)) return false;
+    if (!ValidRomPath(name)) return false;
     auto recent = LoadRecentGames(file);
     recent.erase(std::remove(recent.begin(), recent.end(), name), recent.end());
     recent.insert(recent.begin(), std::string(name));
-    if (recent.size() > 4) recent.resize(4);
+    if (recent.size() > 8) recent.resize(8);
     Settings::Json document = Settings::Load(file);
     document["version"] = 1;
     document["library"]["recent"] = recent;

@@ -1,0 +1,12 @@
+{
+  "stock_prosperoeden_version": "1.005.000",
+  "stock_prosperoeden_commit": "a26ba788222465ec7fb94dc813958fc749734e07",
+  "stock_archive_sha256": "4b7625de3a1ae3ca7a6fb141705bab0bd1841192f2fc3b649b1d2899f744c590",
+  "switchps5_source_commit": "179c568a4409af7a0ce2e67274ed7b681eee3b53",
+  "switchlauncher_release": "v1.005.000",
+  "switchlauncher_asset_sha256": "48f3be72f7c9a98b423645da968cf778b5ff892dd9e11eadb32ff080706bf6b7",
+  "launcher_language": "C++",
+  "automatic_updates": false,
+  "theme_selection": false,
+  "launcher_selection": false
+}

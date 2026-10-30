@@ -1,3 +1,5 @@
+> **SwitchPS5 1.005.000:** This edition is the standalone C++ app, named Switch, with title ID PPSA99009. Install SwitchPS5 updates manually by replacing its app folder. It has no automatic updater, theme selector, or launcher selector. The emulator data layout and backend requirements below are inherited from ProsperoEden.
+
 # Starting a game from a home screen forwarder
 
 A forwarder is a separate small app with its own home screen tile (its own title ID, icon and

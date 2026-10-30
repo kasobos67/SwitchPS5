@@ -4,6 +4,7 @@
 
 #include "pe/ui/launcher.hpp"
 #include "pe/ui/stock_motion.hpp"
+#include "pe/ui/launch_commit.hpp"
 
 #include <algorithm>
 
@@ -44,7 +45,7 @@ Launcher::Launcher(Services &services, Textures &textures, const Fonts &fonts, b
     read_profiles();
     read_home();
     const bool continue_ready = home_.setup_ready && !home_tiles_.empty();
-    home_focus_ = continue_ready ? 0 : home_.setup_ready ? kHomeAllSoftware : 5;
+    home_focus_ = continue_ready ? 0 : home_.setup_ready ? 2 : 5;
     home_springs_[static_cast<std::size_t>(home_focus_)].snap(1.0f);
     initialize_settings();
     section_.snap(1.0f);
@@ -116,13 +117,13 @@ void Launcher::open_modal(Modal modal)
     option_cursor_.snap(dialog_row_top(modal, 0));
     message_.clear();
     // Switches show their state at once; they only animate when changed.
-    const std::array<bool, 7> states = switch_states(modal);
+    const std::array<bool, 8> states = switch_states(modal);
     for (std::size_t i = 0; i < states.size(); ++i)
         switches_[i].snap(states[i] ? 1.0f : 0.0f);
     cue(Cue::modal_open);
 }
 
-std::array<bool, 7> Launcher::switch_states(Modal modal) const
+std::array<bool, 8> Launcher::switch_states(Modal modal) const
 {
     switch (modal)
     {
@@ -130,7 +131,7 @@ std::array<bool, 7> Launcher::switch_states(Modal modal) const
         return {prefs_.hud, false, false};
     case Modal::performance:
         return {prefs_.block_list,  prefs_.async_shaders,     prefs_.fast_gpu, prefs_.unsafe_cpu,
-                prefs_.unsafe_dma,  prefs_.reactive_flushing, prefs_.skip_invalidation};
+                prefs_.unsafe_dma,  prefs_.reactive_flushing, prefs_.skip_invalidation, prefs_.compact_memory};
     case Modal::audio:
         return {prefs_.mute, false, false};
     case Modal::controls:
@@ -154,6 +155,7 @@ void Launcher::close_modal()
 void Launcher::apply_look()
 {
     look() = {prefs_.large_text, prefs_.high_contrast, prefs_.reduce_motion, presentation_.white_theme};
+    look().menu_bind=prefs_.menu_bind;
     theme::set_white(presentation_.white_theme);
 }
 
@@ -242,8 +244,8 @@ void Launcher::start_game(const std::string &file, const std::string &title, con
         cue(Cue::error);
         return;
     }
-    services_.will_play(file);
-    selected_game_ = services_.game_path(file);
+    selected_game_ = commit_launch(services_, file);
+    if (selected_game_.empty()) { say("Game cannot start now.", true); cue(Cue::error); return; }
     launch_title_ = title;
     launch_cover_ = cover;
     launch_.start(theme::kLaunchSeconds);
@@ -258,6 +260,11 @@ void Launcher::start_game(const std::string &file, const std::string &title, con
 
 void Launcher::press(Key key)
 {
+    home_user_input_ = true;
+    key = menu_key_for(key, prefs_.menu_bind);
+    if (modal_ == Modal::credits) { if(key==Key::circle || key==Key::square || key==Key::cross) close_modal(); return; }
+    if (modal_ == Modal::menu_mapping) return press_menu_mapping(key);
+    if (modal_ == Modal::cheats) return press_cheats(key);
     if (screen_off_) { screen_off_ = false; cue(Cue::resume); return; }
     if (!selected_game_.empty())
         return; // a game is starting
@@ -284,6 +291,7 @@ void Launcher::press(Key key)
     if (modal_ == Modal::pairing) return press_pairing(key);
     if (modal_ != Modal::none)
         return press_dialog(key);
+    if (screen_ == Screen::about && key == Key::square) { open_modal(Modal::credits); return; }
     switch (screen_)
     {
     case Screen::home:
@@ -310,6 +318,12 @@ void Launcher::update(float dt)
     time_ += dt;
     intro_ += dt;
     focus_elapsed_ += dt;
+    marquee_elapsed_ += dt;
+    if (marquee_home_ != home_focus_ || marquee_library_ != library_.selected) {
+        marquee_elapsed_ = 0; marquee_home_ = home_focus_; marquee_library_ = library_.selected;
+    }
+    cheat_rows_.update(dt);
+    menu_mapping_rows_.update(dt);
     modal_elapsed_ += dt;
     message_age_ += dt;
     backdrop_.update(dt);
@@ -386,7 +400,7 @@ void Launcher::update(float dt)
     else if (modal_ != Modal::none)
         option_cursor_.target = dialog_row_top(modal_, option_);
     option_cursor_.update(dt, theme::kCursorSpring);
-    const std::array<bool, 7> states = switch_states(modal_shown_);
+    const std::array<bool, 8> states = switch_states(modal_shown_);
     for (std::size_t i = 0; i < states.size(); ++i)
     {
         switches_[i].target = states[i] ? 1.0f : 0.0f;
@@ -402,8 +416,9 @@ void Launcher::update(float dt)
     }
 
     // A newer release: the update dialog, or a notification when the app cannot install it.
-    update_offer(dt);
-    update_install(dt);
+    // SwitchPS5 updates are installed manually.
+
+
     if (update_notice_left_ > 0.0f)
         update_notice_left_ = std::max(0.0f, update_notice_left_ - dt);
     // It slides away over its last moments.
@@ -587,19 +602,19 @@ void Launcher::draw(gfx::DrawList &list)
     if (modal_shown_ != Modal::none)
     {
         const float frame=modal_elapsed_*60.0f;
-        const float opened=(modal_closing_ ? stock_motion::modal_out_alpha(frame) : stock_motion::modal_alpha(frame))/255.0f;
+        const float opened=(modal_closing_ ? stock_motion::modal_out_alpha(frame+12) : stock_motion::modal_alpha(frame))/255.0f;
         const bool settings_page = modal_shown_ == Modal::hud || modal_shown_ == Modal::video || modal_shown_ == Modal::performance ||
             modal_shown_ == Modal::audio || modal_shown_ == Modal::controls ||
             modal_shown_ == Modal::accessibility || modal_shown_ == Modal::diagnostics;
         const bool full_page = modal_shown_ == Modal::game || modal_shown_ == Modal::game_options ||
-                               (modal_shown_ == Modal::profiles && !profile_for_launch_) || modal_shown_ == Modal::mapping;
-        c.dialog_shadow = modal_closing_ ? stock_motion::modal_out_shadow(frame) : stock_motion::modal_shadow(frame);
+                               (modal_shown_ == Modal::profiles && !profile_for_launch_) || modal_shown_ == Modal::mapping || modal_shown_ == Modal::menu_mapping;
+        c.dialog_shadow = modal_closing_ ? stock_motion::modal_out_shadow(frame+12) : stock_motion::modal_shadow(frame);
         if (!settings_page && !full_page) {
-            const float mask=(modal_closing_ ? stock_motion::modal_out_mask_alpha(frame) : stock_motion::modal_mask_alpha(frame))/255.0f;
+            const float mask=(modal_closing_ ? stock_motion::modal_out_mask_alpha(frame+12) : stock_motion::modal_mask_alpha(frame))/255.0f;
             list.rounded_rect(kScreen,0,theme::kScrim.with_alpha(mask*.65f));
         }
         const float modal_scale = settings_page || full_page ? 1.0f : 1.0f+
-            ((modal_closing_ ? stock_motion::modal_out_scale(frame) : stock_motion::modal_scale(frame))-1.0f)*motion();
+            ((modal_closing_ ? stock_motion::modal_out_scale(frame+12) : stock_motion::modal_scale(frame))-1.0f)*motion();
         list.push_transform(modal_scale,960,540,0,0);
         if (modal_shown_ == Modal::game) draw_game(c,opened);
         else if (modal_shown_ == Modal::mods) draw_mods(c,opened);
@@ -612,6 +627,9 @@ void Launcher::draw(gfx::DrawList &list)
         else if (modal_shown_ == Modal::source) draw_choice(c,opened);
         else if (modal_shown_ == Modal::sources) draw_sources(c,opened);
         else if (modal_shown_ == Modal::save_sync) draw_save_sync(c,opened);
+        else if (modal_shown_ == Modal::credits) draw_credits(c,opened);
+        else if (modal_shown_ == Modal::cheats) draw_cheats(c,opened);
+        else if (modal_shown_ == Modal::menu_mapping) draw_menu_mapping(c,opened);
         else if (modal_shown_ == Modal::multiplayer) draw_multiplayer(c,opened);
         else if (modal_shown_ == Modal::sync_setup) draw_sync_setup(c,opened);
         else if (modal_shown_ == Modal::pairing) draw_pairing(c,opened);
@@ -625,7 +643,7 @@ void Launcher::draw(gfx::DrawList &list)
         else draw_dialog(c,modal_shown_,opened);
         list.pop_transform();
     }
-    draw_update_notice(c);
+
     draw_save_sync_notice(c);
     if (launching) draw_launch(c);
     if (modal_shown_ == Modal::update && update_stage_ == UpdateStage::closing) {

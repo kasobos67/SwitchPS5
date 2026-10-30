@@ -97,17 +97,35 @@ bool PadEngine::TakeRumble(std::size_t player, Rumble& out) {
     auto& sides = rumble[player];
     if (!sides.changed) return false;
     sides.changed = false;
-    // The console's HD rumble per side -> one DualSense: the low band drives the large motor and the
-    // high band the small one, with the amplitude curves of Eden's SDL driver.
-    const auto level = [](float amplitude, Common::Input::VibrationAmplificationType type) {
+    // Both routes share the perceptual amplitude curve of Eden's SDL driver, which lifts the
+    // middle of the range where human intensity perception compresses it, so falling back
+    // does not change the feel. Each band follows the side that asks for more of it after
+    // the curve (ties go to the left).
+    const auto curve = [](float amplitude, Common::Input::VibrationAmplificationType type) {
         const float factor = type == Common::Input::VibrationAmplificationType::Linear ? 0.5f : 0.35f;
         amplitude = std::clamp(amplitude, 0.0f, 1.0f);
-        return static_cast<u8>(std::lround((amplitude + std::pow(amplitude, factor)) * 0.5f * 255.0f));
+        return (amplitude + std::pow(amplitude, factor)) * 0.5f;
+    };
+    const auto level = [&](float amplitude, Common::Input::VibrationAmplificationType type) {
+        return static_cast<u8>(std::lround(curve(amplitude, type) * 255.0f));
     };
     out.large = std::max(level(sides.left.low_amplitude, sides.left.type),
                          level(sides.right.low_amplitude, sides.right.type));
     out.small = std::max(level(sides.left.high_amplitude, sides.left.type),
                          level(sides.right.high_amplitude, sides.right.type));
+    const auto pick = [&](const Common::Input::VibrationStatus& left,
+                          const Common::Input::VibrationStatus& right, float Common::Input::VibrationStatus::*amplitude,
+                          float Common::Input::VibrationStatus::*frequency, float& out_amplitude, float& out_hz) {
+        const float left_curved = curve(left.*amplitude, left.type);
+        const float right_curved = curve(right.*amplitude, right.type);
+        const auto& winner = right_curved > left_curved ? right : left;
+        out_amplitude = std::max(left_curved, right_curved);
+        out_hz = winner.*frequency;
+    };
+    pick(sides.left, sides.right, &Common::Input::VibrationStatus::low_amplitude,
+         &Common::Input::VibrationStatus::low_frequency, out.large_amplitude, out.large_hz);
+    pick(sides.left, sides.right, &Common::Input::VibrationStatus::high_amplitude,
+         &Common::Input::VibrationStatus::high_frequency, out.small_amplitude, out.small_hz);
     return true;
 }
 
@@ -153,9 +171,19 @@ void Pad::OpenSlot(std::size_t player, int user) {
                     static_cast<unsigned>(handle));
         return;
     }
-    slots[player] = {user, handle, 0, 0};
-    // Classic two-motor rumble, and motion reports (on by default; failures only lose the feature).
-    const int vibration_mode = scePadSetVibrationMode(handle, ps5::pad::kVibrationModeCompatible);
+    slots[player] = {user, handle};
+    ps5::pad::ControllerInformation info{};
+    if (scePadGetControllerInformation(handle, &info) == 0)
+        slots[player].touch_width = info.touchpad.resolution_x;
+    slots[player].haptics = std::make_unique<HapticStream>();
+    const bool haptics = slots[player].haptics->Ensure(user, handle);
+    const auto haptic_stats = slots[player].haptics->GetStats();
+    slots[player].last_haptic_stats = haptic_stats;
+    LOG_INFO(Input, "EDEN_PAD_HAPTICS player={} route={} port={} format={}", player + 1,
+             haptics ? "pcm" : "motors", haptic_stats.port,
+             haptic_stats.float_format ? "f32" : "s16");
+    const int vibration_mode = haptic_stats.vibration_mode;
+    // Motion reports are on by default; failures only lose the feature.
     const int motion = scePadSetMotionSensorState(handle, true);
     if (vibration_mode < 0 || motion < 0)
         LOG_INFO(Input, "EDEN_PAD_FEEDBACK player={} vibration_mode={:#x} motion={:#x}", player + 1,
@@ -167,10 +195,10 @@ void Pad::OpenSlot(std::size_t player, int user) {
 void Pad::CloseSlot(std::size_t player) {
     auto& slot = slots[player];
     if (slot.handle < 0) return;
+    // Stop haptics first: it still uses the pad handle.
+    if (slot.haptics) slot.haptics->Stop();
     const auto neutral = ps5::pad::neutral_data();
     Consume(player, {&neutral, 1});
-    const ps5::pad::Vibration stop{};
-    (void)scePadSetVibration(slot.handle, &stop);
     const int closed = scePadClose(slot.handle);
     LOG_INFO(Input, "EDEN_PAD_CLOSE player={} user={} close={}", player + 1, slot.user, closed);
     slot = {};
@@ -202,16 +230,24 @@ void Pad::Rescan() {
 }
 void Pad::Close() {
     engine->ResetControllers();
+    u64 haptic_outputs = 0, haptic_errors = 0, haptic_fallbacks = 0;
+    for (std::size_t player = 0; player < kMaxPlayers; ++player) {
+        if (!slots[player].haptics) continue;
+        const auto stats = slots[player].haptics->GetStats();
+        haptic_outputs += stats.outputs;
+        haptic_errors += stats.output_errors;
+        haptic_fallbacks += stats.fallbacks;
+    }
     for (std::size_t player = 0; player < kMaxPlayers; ++player) {
         if (slots[player].handle < 0) continue;
-        const ps5::pad::Vibration stop{};
-        (void)scePadSetVibration(slots[player].handle, &stop);
+        if (slots[player].haptics) slots[player].haptics->Stop();
         const int closed = scePadClose(slots[player].handle);
         if (player == 0) {
             LOG_INFO(Input, "EDEN_PAD_CLOSED polls={} samples={} usable={} intercepted={} circle={} errors={} last={} close={} "
-                     "rumble={} rumble_errors={} rumble_last={:#x}",
+                     "rumble={} rumble_errors={} rumble_last={:#x} haptics={} haptic_errors={} haptic_fallbacks={}",
                      polls, samples_read, usable_samples, intercepted_samples, circle_samples, read_errors, last_result, closed,
-                     rumble_updates, rumble_errors, static_cast<unsigned>(rumble_last_error));
+                     rumble_updates, rumble_errors, static_cast<unsigned>(rumble_last_error),
+                     haptic_outputs, haptic_errors, haptic_fallbacks);
         }
         slots[player] = {};
     }
@@ -241,8 +277,13 @@ bool Pad::Poll() {
         if (handle < 0) continue;
         PadEngine::Rumble rumble;
         if (engine->TakeRumble(player, rumble)) {
-            const ps5::pad::Vibration vibration{.large_motor = rumble.large, .small_motor = rumble.small};
-            const int result = scePadSetVibration(handle, &vibration);
+            const HapticLevels levels{.large = rumble.large,
+                                      .small = rumble.small,
+                                      .large_amplitude = rumble.large_amplitude,
+                                      .small_amplitude = rumble.small_amplitude,
+                                      .large_hz = rumble.large_hz,
+                                      .small_hz = rumble.small_hz};
+            const int result = slots[player].haptics->Submit(levels);
             ++rumble_updates;
             if (result < 0) { ++rumble_errors; rumble_last_error = result; }
         }
@@ -261,6 +302,16 @@ bool Pad::Poll() {
             circle_samples += ps5::pad::is_usable(samples[i]) && (samples[i].buttons & ps5::pad::kButtonCircle);
         }
         Consume(player, {samples.data(), static_cast<std::size_t>(count)});
+        slots[player].haptics->RetryTick();
+        const auto haptic_stats = slots[player].haptics->GetStats();
+        auto& last_haptic_stats = slots[player].last_haptic_stats;
+        if (haptic_stats.fallbacks != last_haptic_stats.fallbacks)
+            LOG_INFO(Input, "EDEN_PAD_HAPTIC_FALLBACK player={} outputs={} errors={}", player + 1,
+                     haptic_stats.outputs, haptic_stats.output_errors);
+        if (haptic_stats.active && !last_haptic_stats.active)
+            LOG_INFO(Input, "EDEN_PAD_HAPTICS player={} route=pcm port={} format={}", player + 1,
+                     haptic_stats.port, haptic_stats.float_format ? "f32" : "s16");
+        last_haptic_stats = haptic_stats;
         primary |= player == 0;
     }
     return primary;
@@ -292,21 +343,21 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
     // presses it too while it has no game button of its own.
     const int touch_button = MappedTo(mapping, pad_touchpad);
     const bool create_free = MappedTo(mapping, pad_create) < 0;
-    const auto set_touch = [&](u32 pressed) {
-        if (touch_button < 0) return;
-        engine->SetButtonState(player, kGame[touch_button],
-            (create_free && (pressed & kButtonCreate) != 0) || slot.select_held || slot.select_pulse > 0);
-    };
-    // Whether the DualSense button mapped to a game button is down (the analog triggers count
-    // from the threshold; the touchpad as set_touch has it).
     const auto down = [&](int game, u32 buttons, bool left, bool right) {
         const int pad = mapping[game];
-        if (pad == pad_touchpad)
-            return (create_free && (buttons & kButtonCreate) != 0) || slot.select_held || slot.select_pulse > 0;
-        return (buttons & kPad[pad]) != 0 || (pad == pad_l2 && left) || (pad == pad_r2 && right);
+        const int clicked = slot.touch_right ? game_plus : touch_button;
+        const bool touch_down = game == clicked && (slot.select_held || slot.select_pulse > 0);
+        const bool create_down = game == touch_button && create_free && (buttons & kButtonCreate) != 0;
+        return touch_down || create_down || (pad != pad_touchpad &&
+            ((buttons & kPad[pad]) != 0 || (pad == pad_l2 && left) || (pad == pad_r2 && right)));
+    };
+    const auto set_touch = [&](u32 pressed, bool left, bool right) {
+        if (touch_button >= 0)
+            engine->SetButtonState(player, kGame[touch_button], down(touch_button, pressed, left, right));
+        engine->SetButtonState(player, kGame[game_plus], down(game_plus, pressed, left, right));
     };
     // A single Joy-Con held upright has Minus or Plus, not both: what presses either presses
-    // the one it has. Applied after every set_touch, which sets the touchpad's button alone.
+    // the one it has. Applied after every set_touch, which also updates the right-click Plus.
     const auto set_menu = [&](u32 buttons, bool left, bool right) {
         if (grip != Grip::upright_left && grip != Grip::upright_right) return;
         engine->SetButtonState(player, grip == Grip::upright_left ? Button::ButtonMinus : Button::ButtonPlus,
@@ -325,26 +376,30 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
     for (const auto& raw : samples) {
         if (recording) GameplayTest::Record(raw);
         auto sample = is_usable(raw) ? raw : neutral_data(raw.timestamp_us);
-        // The shortcuts work from every controller.
-        constexpr ButtonMask menu_chord = kButtonTouchPad | kButtonL1;
-        constexpr ButtonMask hud_chord = kButtonTouchPad | kButtonR1;
         const auto pressed = sample.buttons;
-        if ((pressed & menu_chord) == menu_chord &&
-            (last_buttons & menu_chord) != menu_chord)
-            return_to_menu = true;
-        if ((pressed & hud_chord) == hud_chord &&
-            (last_buttons & hud_chord) != hud_chord)
-            hud_toggle = true;
-        if ((pressed & menu_chord) == menu_chord || (pressed & hud_chord) == hud_chord)
-            sample.buttons &= ~(kButtonTouchPad | kButtonL1 | kButtonR1);
-        // The touchpad on its own: see kSelectTapPolls.
+        // Latch the click side before checking shortcuts, including simultaneous presses.
         const bool touch = (pressed & kButtonTouchPad) != 0;
         const bool touched = (last_buttons & kButtonTouchPad) != 0;
         if (touch && !touched) {
             slot.touch_chord = false;
             slot.touch_polls = 0;
+            slot.select_pulse = 0;
+            slot.touch_right = slot.touch_width > 0 && sample.touch.count == 1 &&
+                sample.touch.points[0].x < slot.touch_width &&
+                sample.touch.points[0].x >= slot.touch_width / 2;
         }
-        if (touch && (pressed & (kButtonL1 | kButtonR1)) != 0) {
+        // Only the Select (left) side owns shortcuts; the right side remains game input.
+        constexpr ButtonMask menu_chord = kButtonTouchPad | kButtonL1;
+        constexpr ButtonMask hud_chord = kButtonTouchPad | kButtonR1;
+        const bool menu = !slot.touch_right && (pressed & menu_chord) == menu_chord;
+        const bool hud = !slot.touch_right && (pressed & hud_chord) == hud_chord;
+        if (menu && (last_buttons & menu_chord) != menu_chord)
+            return_to_menu = true;
+        if (hud && (last_buttons & hud_chord) != hud_chord)
+            hud_toggle = true;
+        if (menu || hud)
+            sample.buttons &= ~(kButtonTouchPad | kButtonL1 | kButtonR1);
+        if (menu || hud) {
             slot.touch_chord = true;
             slot.select_held = false;
         }
@@ -358,18 +413,21 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
             slot.select_held = false;
         }
         last_buttons = pressed;
-        for (const auto [mask, button] : fixed)
+        // Do not emit a D-pad edge before remapping it: callbacks can observe transient presses.
+        for (const auto [mask, button] : fixed) {
+            if (grip == Grip::upright_left &&
+                (mask & (kButtonLeft | kButtonUp | kButtonRight | kButtonDown))) continue;
             engine->SetButtonState(player, button, (sample.buttons & mask) != 0);
+        }
         // The game's buttons are digital: the analog triggers count from the threshold.
         const bool left = sample.triggers.l2 / 255.0f >= trigger_threshold;
         const bool right = sample.triggers.r2 / 255.0f >= trigger_threshold;
         for (int game = 0; game < kGameButtons; ++game) {
             const int pad = mapping[game];
             if (pad == pad_touchpad) continue;  // set_touch
-            engine->SetButtonState(player, kGame[game], (sample.buttons & kPad[pad]) != 0 ||
-                                                        (pad == pad_l2 && left) || (pad == pad_r2 && right));
+            engine->SetButtonState(player, kGame[game], down(game, sample.buttons, left, right));
         }
-        set_touch(sample.buttons);
+        set_touch(sample.buttons, left, right);
         last_left = left;
         last_right = right;
         float left_x = axis(sample.left_stick.x), left_y = -axis(sample.left_stick.y);
@@ -468,7 +526,7 @@ void Pad::Consume(std::size_t player, std::span<const ps5::pad::Data> samples) {
         ++slot.touch_polls >= kSelectHoldPolls)
         slot.select_held = true;
     if (slot.select_pulse > 0) --slot.select_pulse;
-    set_touch(last_buttons);
+    set_touch(last_buttons, last_left, last_right);
     set_menu(last_buttons, last_left, last_right);
 }
 }

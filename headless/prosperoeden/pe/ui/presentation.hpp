@@ -32,7 +32,7 @@ struct PresentationState
     {
         recent_games.erase(std::remove(recent_games.begin(), recent_games.end(), file), recent_games.end());
         recent_games.insert(recent_games.begin(), file);
-        if (recent_games.size() > 7) recent_games.resize(7);
+        if (recent_games.size() > 12) recent_games.resize(12);
     }
     bool load(const std::string &file)
     {
@@ -44,8 +44,8 @@ struct PresentationState
         while (in >> key)
         {
             if (key == "white") { int value; if (!(in >> value) || value < 0 || value > 1) return false; next.white_theme = value != 0; }
-            else if (key == "recent") { std::string value; if (!(in >> std::quoted(value)) || value.size() > 4096 || next.recent_games.size() >= 7) return false; next.recent_games.push_back(value); }
-            else if (key == "avatar") { std::string name; int icon, color; if (!(in >> std::quoted(name) >> icon >> color) || name.size() > 1024 || icon < 0 || icon > 146 || color < 0 || color > 71 || next.avatars.size() >= 64) return false; next.set_avatar(name, icon, color); }
+            else if (key == "recent") { std::string value; if (!(in >> std::quoted(value)) || value.size() > 4096 || next.recent_games.size() >= 12) return false; next.recent_games.push_back(value); }
+            else if (key == "avatar") { std::string name; int icon, color; if (!(in >> std::quoted(name) >> icon >> color) || name.size() > 1024 || icon < 0 || icon > 146 || color < 0 || color > 121 || next.avatars.size() >= 64) return false; next.set_avatar(name, icon, color); }
             else return false;
         }
         if (!in.eof()) return false;

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
+#include <atomic>
 #include <cstdint>
 #ifdef __linux__
 #include <ucontext.h>
@@ -12,9 +13,16 @@
 // GPU-tracked) without faulting. The fault handler only covers races with remapping.
 namespace Eden::Fastmem {
 
+// The guest's memory as a service (src/guest_memory_service.inc): a write to a slot that is read
+// where it lies faults and is promoted. Asked first by every fault handler, so a JIT write that
+// faults for that reason is never taken for a fastmem miss. Null until the service runs.
+inline std::atomic<bool (*)(void*) noexcept> guest_write_fault{nullptr};
+
 // Select before Core::System (and so HostMemory) is constructed.
 void Request(bool enabled) noexcept;
 bool Requested() noexcept;
+// Development A/B (dev-settings fastmem_large=off): keep every alias at 16 KiB.
+void RequestLarge(bool enabled) noexcept;
 
 struct Stats {
     std::uint64_t window;          // window base, 0 without a window
@@ -24,11 +32,18 @@ struct Stats {
     std::uint64_t map_calls, unmap_calls, protect_calls; // HostMemory requests
     std::uint64_t kernel_calls, kernel_ns; // mapping system calls and their duration
     std::uint64_t failures;        // mappings the kernel refused (chunk left unaliased)
+    std::uint64_t large_blocks;    // 2 MiB blocks mapped as one large mapping
 };
 Stats WindowStats() noexcept;
 
 // JIT faults redirected to an access fallback (dynarmic exception handler): races only.
 std::uint64_t Faults() noexcept;
+// Checked access sites moved to the page-table path because their pages kept being blocked.
+std::uint64_t Demotions() noexcept;
+// Development A/B (dev-settings fastmem_sites=off): keep the window and its reserved register
+// but emit every access on the page-table path. Select before the JITs are created.
+void RequestSites(bool enabled) noexcept;
+bool SitesRequested() noexcept;
 
 // Registers of an interrupted thread in a signal handler's context argument
 // (targets without PS5_NATIVE, such as dynarmic, still build for the console).

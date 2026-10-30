@@ -56,21 +56,43 @@ constexpr std::array<const char*, 18> language_names{
     "BrazilianPortuguese", "Polish", "Thai",
 };
 
-FileSys::VirtualDir OpenControlRomFs(const FileSys::VirtualFile& file, bool xci) {
-    std::shared_ptr<FileSys::NCA> control;
-    if (xci) {
-        FileSys::XCI image(file);
-        if (image.GetStatus() != Loader::ResultStatus::Success) return {};
-        control = image.GetNCAByType(FileSys::NCAContentType::Control);
-    } else {
-        FileSys::NSP package(file);
-        if (package.GetStatus() != Loader::ResultStatus::Success) return {};
-        control = package.GetNCA(FileSys::GetBaseTitleID(package.GetProgramTitleID()),
-                                 FileSys::ContentRecordType::Control);
-    }
+FileSys::VirtualDir ExtractControl(const std::shared_ptr<FileSys::NCA>& control) {
     if (!control || control->GetStatus() != Loader::ResultStatus::Success) return {};
     const auto romfs = control->GetRomFS();
     return romfs ? FileSys::ExtractRomFS(romfs) : FileSys::VirtualDir{};
+}
+
+// The control data of an update packed into the same NSP or XCI as the game (a dump holding the
+// game together with its update), or nothing. Eden runs such an update (AppLoader_NSP/XCI::
+// ReadUpdateRaw), and its control data replaces the game's.
+FileSys::VirtualDir PackedUpdateControl(const FileSys::NSP& package) {
+    const u64 update = FileSys::GetUpdateTitleID(FileSys::GetBaseTitleID(package.GetProgramTitleID()));
+    const auto ncas = package.GetNCAs();
+    const auto found = ncas.find(update);
+    if (found == ncas.end()) return {};
+    for (const auto& [key, nca] : found->second)
+        if (key.second == FileSys::ContentRecordType::Control)
+            if (auto romfs = ExtractControl(nca)) return romfs;
+    return {};
+}
+
+// The game's control RomFS; with `packed_update`, also that of an update packed in the same file.
+FileSys::VirtualDir OpenControlRomFs(const FileSys::VirtualFile& file, bool xci,
+                                     FileSys::VirtualDir* packed_update = nullptr) {
+    if (xci) {
+        FileSys::XCI image(file);
+        if (image.GetStatus() != Loader::ResultStatus::Success) return {};
+        if (packed_update)
+            if (const auto secure = image.GetSecurePartitionNSP();
+                secure && secure->GetStatus() == Loader::ResultStatus::Success)
+                *packed_update = PackedUpdateControl(*secure);
+        return ExtractControl(image.GetNCAByType(FileSys::NCAContentType::Control));
+    }
+    FileSys::NSP package(file);
+    if (package.GetStatus() != Loader::ResultStatus::Success) return {};
+    if (packed_update) *packed_update = PackedUpdateControl(package);
+    return ExtractControl(package.GetNCA(FileSys::GetBaseTitleID(package.GetProgramTitleID()),
+                                         FileSys::ContentRecordType::Control));
 }
 
 std::string ReadTitle(const FileSys::VirtualDir& romfs) {
@@ -99,6 +121,14 @@ uint32_t ReadLanguages(const FileSys::VirtualDir& romfs) {
     FileSys::RawNACP raw{};
     if (!nacp || nacp->ReadObject(&raw) != sizeof(raw)) return 0;
     return static_cast<uint32_t>(raw.supported_languages);
+}
+
+// The game's language flags: a packed update's when it has them (a game can gain languages in an
+// update), else the game's own.
+uint32_t ReadLanguages(const FileSys::VirtualDir& game, const FileSys::VirtualDir& packed_update) {
+    if (packed_update)
+        if (const uint32_t languages = ReadLanguages(packed_update)) return languages;
+    return game ? ReadLanguages(game) : 0;
 }
 
 // Game file -> its language flags, kept from the Library's metadata pass over the same data.
@@ -218,9 +248,10 @@ int eden_extract_game_metadata(const char* rom_path, const char* keys_dir,
     std::transform(path.begin(), path.end(), path.begin(),
                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     const bool xci = path.size() >= 4 && path.substr(path.size() - 4) == ".xci";
-    const auto romfs = OpenControlRomFs(file, xci);
+    FileSys::VirtualDir packed_update;
+    const auto romfs = OpenControlRomFs(file, xci, &packed_update);
     if (!romfs) return 0;
-    GameLanguages()[rom_path] = ReadLanguages(romfs);
+    GameLanguages()[rom_path] = ReadLanguages(romfs, packed_update);
 
     int result = 0;
     const auto extracted_title = ReadTitle(romfs);
@@ -244,9 +275,10 @@ uint32_t eden_game_supported_languages(const char* rom_path, const char* keys_di
         std::string path = rom_path;
         std::transform(path.begin(), path.end(), path.begin(),
                        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-        const auto romfs = OpenControlRomFs(file, path.ends_with(".xci"));
+        FileSys::VirtualDir packed_update;
+        const auto romfs = OpenControlRomFs(file, path.ends_with(".xci"), &packed_update);
         if (!romfs) return 0;
-        return GameLanguages()[rom_path] = ReadLanguages(romfs);
+        return GameLanguages()[rom_path] = ReadLanguages(romfs, packed_update);
     } catch (const std::exception& error) {
         std::fprintf(stderr, "[ProsperoEden] languages: %s\n", error.what());
         return 0;
@@ -266,16 +298,63 @@ std::map<uint64_t, AddOns>& ScannedAddOns() {
 }
 }
 
-void eden_scan_addons(const char* updates_dir, const char* keys_dir) {
+int eden_rom_content(const char* rom_path, const char* keys_dir) {
+    if (!rom_path || !keys_dir) return EDEN_CONTENT_UNKNOWN;
+    try {
+        Common::FS::SetEdenPath(Common::FS::EdenPath::KeysDir, keys_dir);
+        FileSys::RealVfsFilesystem vfs;
+        const auto file = vfs.OpenFile(rom_path, FileSys::OpenMode::Read);
+        if (!file) return EDEN_CONTENT_UNKNOWN;
+        std::string path = rom_path;
+        std::transform(path.begin(), path.end(), path.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        std::shared_ptr<FileSys::NSP> package;
+        if (path.ends_with(".nsp")) {
+            package = std::make_shared<FileSys::NSP>(file);
+        } else if (path.ends_with(".xci")) {
+            FileSys::XCI image(file);
+            if (image.GetStatus() == Loader::ResultStatus::Success) package = image.GetSecurePartitionNSP();
+        }
+        if (!package || package->GetStatus() != Loader::ResultStatus::Success) return EDEN_CONTENT_UNKNOWN;
+        int content = EDEN_CONTENT_UNKNOWN;
+        for (const auto& [title_id, contents] : package->GetNCAs())
+            for (const auto& [key, nca] : contents) {
+                if (key.first == FileSys::TitleType::Application) return EDEN_CONTENT_GAME;
+                if (key.first == FileSys::TitleType::Update) content = EDEN_CONTENT_UPDATE;
+                else if (key.first == FileSys::TitleType::AOC && content != EDEN_CONTENT_UPDATE)
+                    content = EDEN_CONTENT_DLC;
+            }
+        return content;
+    } catch (const std::exception&) {
+        return EDEN_CONTENT_UNKNOWN;
+    }
+}
+
+namespace {
+// The folders of roms/ that are game folders (one per game, its update and DLC beside it):
+// every folder in it but hidden ones.
+std::vector<FileSys::VirtualDir> GameFolders(FileSys::RealVfsFilesystem& vfs, const char* roms_dir) {
+    std::vector<FileSys::VirtualDir> folders;
+    if (!roms_dir) return folders;
+    if (const auto roms = vfs.OpenDirectory(roms_dir, FileSys::OpenMode::Read))
+        for (auto& folder : roms->GetSubdirectories())
+            if (!folder->GetName().empty() && folder->GetName().front() != '.') folders.push_back(std::move(folder));
+    return folders;
+}
+} // namespace
+
+void eden_scan_addons(const char* updates_dir, const char* roms_dir, const char* keys_dir) {
     auto& scanned = ScannedAddOns();
     scanned.clear();
     if (!updates_dir || !keys_dir) return;
     try {
         Common::FS::SetEdenPath(Common::FS::EdenPath::KeysDir, keys_dir);
         FileSys::RealVfsFilesystem vfs;
-        auto directory = vfs.OpenDirectory(updates_dir, FileSys::OpenMode::Read);
-        if (!directory) return;
-        const FileSys::ExternalContentProvider provider({std::move(directory)});
+        std::vector<FileSys::VirtualDir> directories = GameFolders(vfs, roms_dir);
+        if (auto updates = vfs.OpenDirectory(updates_dir, FileSys::OpenMode::Read))
+            directories.insert(directories.begin(), std::move(updates));
+        if (directories.empty()) return;
+        const FileSys::ExternalContentProvider provider(std::move(directories));
         for (const auto& entry : provider.ListEntriesFilter(FileSys::TitleType::Update, std::nullopt, std::nullopt)) {
             auto& addons = scanned[FileSys::GetBaseTitleID(entry.title_id)];
             if (!addons.update.empty()) continue;
@@ -333,14 +412,16 @@ int FindAddOnFiles(const FileSys::VirtualDir& directory, uint64_t base, eden_fou
 }
 } // namespace
 
-int eden_game_addon_files(uint64_t title_id, const char* updates_dir, const char* keys_dir, eden_found_file found,
-                          void* user) {
+int eden_game_addon_files(uint64_t title_id, const char* updates_dir, const char* game_dir, const char* keys_dir,
+                          eden_found_file found, void* user) {
     if (!title_id || !updates_dir || !keys_dir || !found) return 0;
     try {
         Common::FS::SetEdenPath(Common::FS::EdenPath::KeysDir, keys_dir);
         FileSys::RealVfsFilesystem vfs;
-        return FindAddOnFiles(vfs.OpenDirectory(updates_dir, FileSys::OpenMode::Read),
-                              FileSys::GetBaseTitleID(title_id), found, user, 0);
+        const uint64_t base = FileSys::GetBaseTitleID(title_id);
+        int count = FindAddOnFiles(vfs.OpenDirectory(updates_dir, FileSys::OpenMode::Read), base, found, user, 0);
+        if (game_dir) count += FindAddOnFiles(vfs.OpenDirectory(game_dir, FileSys::OpenMode::Read), base, found, user, 0);
+        return count;
     } catch (const std::exception& error) {
         std::fprintf(stderr, "[ProsperoEden] updates: %s\n", error.what());
         return 0;

@@ -7,6 +7,7 @@
 #include "pe/gfx/draw_list.hpp"
 
 #include <algorithm>
+#include <array>
 
 namespace pe::ui
 {
@@ -85,6 +86,7 @@ struct Look
     bool high_contrast = false; // solid panels, brighter text, an outlined highlight
     bool reduce_motion = false; // nothing drifts, slides or zooms: screens fade
     bool white_theme = false;
+    std::array<int,4> menu_bind{0,1,2,3};
 };
 inline Look &look()
 {

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# ProsperoEden build. `make` builds the release files in dist/; `make help` lists every target.
+# SwitchPS5 build. `make` builds the release files in dist/; `make help` lists every target.
 # Missing dependencies are fetched at their pinned revisions (tools/deps.json); nothing that
 # already exists is changed. The build runs on Linux (Ubuntu 26.04; WSL works).
 
@@ -23,7 +23,7 @@ RELEASE_APP := build/release/PPSA99009
 .PHONY: help release package dev prepare deps deps-status toolchain test install clean distclean
 
 help: ## List the targets and variables
-	@echo 'ProsperoEden build - make [target] [VARIABLE=value]'
+	@echo 'SwitchPS5 build - make [target] [VARIABLE=value]'
 	@echo
 	@awk 'BEGIN { FS = ":.*## " } /^[a-z][a-z-]*:.*## / { printf "  %-12s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 	@echo

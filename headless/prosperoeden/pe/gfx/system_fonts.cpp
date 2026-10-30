@@ -29,6 +29,8 @@
 #include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <cerrno>
+#include <cstring>
 #include <cstdlib>
 
 namespace pe::gfx
@@ -91,8 +93,12 @@ struct Stopwatch
 bool exists(const std::string &path)
 {
     std::FILE *file = std::fopen(path.c_str(), "rb");
-    if (file == nullptr)
+    if (file == nullptr) {
+        const int error = errno;
+        std::fprintf(stderr, "EDEN_FONT_OPEN path=%s errno=%d reason=%s\n",
+                     path.c_str(), error, std::strerror(error));
         return false;
+    }
     std::fclose(file);
     return true;
 }

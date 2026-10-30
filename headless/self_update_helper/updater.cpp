@@ -455,6 +455,67 @@ int title_running(const std::string &sandboxes, const std::string &title)
     return kind(sandboxes + "/" + title + "_000") == Kind::absent ? -1 : 1;
 }
 
+bool launcher_update_compatible(const std::string& data_root, const std::string& staged, std::string& reason)
+{
+    if(data_root.empty()) return true;
+    std::string selection;
+    if(!read_small(data_root+"/config/launcher.json",65536,selection)) return true;
+    char id[64]{};
+    if(update_check_json_string(selection.data(),selection.size(),"selected",id,sizeof(id))!=1 || std::string{id}=="builtin") return true;
+    const std::string selected=id;
+    if(selected.empty() || selected.size()>48 || !std::all_of(selected.begin(),selected.end(),[](char c){return (c>='a' && c<='z') || (c>='0' && c<='9') || c=='-';})) { reason="Invalid selected launcher";return false; }
+    std::string manifest,descriptor;
+    char contract[80]{},supports[512]{};
+    if(!read_small(data_root+"/launchers/"+selected+"/manifest.json",65536,manifest) ||
+       update_check_json_string(manifest.data(),manifest.size(),"host_contract",contract,sizeof(contract))!=1 ||
+       !read_small(staged+"/launcher-runtime.json",65536,descriptor) ||
+       update_check_json_string(descriptor.data(),descriptor.size(),"supports",supports,sizeof(supports))!=1) {
+        reason="This release cannot preserve the selected launcher. Select the built-in launcher before updating.";return false;
+    }
+    // Sharing a contract name does not imply support for every additive API/capability.
+    const auto fail_api=[&] { reason="The selected launcher needs APIs or capabilities missing from this release. Select the built-in launcher before updating.";return false; };
+    const char* api=nullptr; std::size_t api_size=0;
+    const int has_api=update_check_json_value(manifest.data(),manifest.size(),"api",&api,&api_size);
+    if(has_api<0) return fail_api();
+    if(has_api==1) {
+        unsigned major=0,minor=0,host_major=0,host_minor=0;
+        const int has_minor=update_check_json_uint(api,api_size,"min_minor",&minor);
+        if(update_check_json_uint(api,api_size,"major",&major)!=1 || has_minor<0 ||
+           update_check_json_uint(descriptor.data(),descriptor.size(),"api_major",&host_major)!=1 ||
+           update_check_json_uint(descriptor.data(),descriptor.size(),"api_minor",&host_minor)!=1 ||
+           major!=host_major || minor>host_minor) return fail_api();
+    }
+    const char* required=nullptr; std::size_t required_size=0;
+    const int has_required=update_check_json_value(manifest.data(),manifest.size(),"required_capabilities",&required,&required_size);
+    if(has_required<0) return fail_api();
+    if(has_required==1) {
+        const char* available=nullptr; std::size_t available_size=0;
+        const int has_available=update_check_json_value(descriptor.data(),descriptor.size(),"capabilities",&available,&available_size);
+        for(std::size_t index=0;index<=64;++index) {
+            char capability[128]{};
+            const int found=update_check_json_array_string(required,required_size,index,capability,sizeof(capability));
+            if(found==0) break;
+            if(found<0 || index==64 || has_available!=1) return fail_api();
+            bool supported=false;
+            for(std::size_t item=0;item<=64;++item) {
+                char candidate[128]{};
+                const int present=update_check_json_array_string(available,available_size,item,candidate,sizeof(candidate));
+                if(present==0) break;
+                if(present<0 || item==64) return fail_api();
+                if(std::string{candidate}==capability) supported=true;
+            }
+            if(!supported) return fail_api();
+        }
+    }
+    const std::string supported=supports;
+    for(std::size_t at=0;at<=supported.size();) {
+        const auto end=supported.find(',',at);
+        if(supported.substr(at,end==supported.npos?supported.size()-at:end-at)==contract) return true;
+        if(end==supported.npos) break;at=end+1;
+    }
+    reason="The selected launcher needs a different runtime contract. Select the built-in launcher before updating.";return false;
+}
+
 bool swap_entries(const std::string &target, const std::string &staged, const std::string &backup)
 {
     std::vector<std::string> present, new_names;
@@ -644,6 +705,7 @@ int run(const Environment &environment, const Io &io)
     if (!read_param(staged, staged_title, staged_version) || staged_title != title ||
         staged_version != available)
         return fail("The download isn't the version the catalog lists");
+    if(!launcher_update_compatible(environment.launcher_data,staged,error)) return fail(error);
     session.say("p " + std::to_string(info.unpacked) + " " + std::to_string(info.unpacked) + "\n");
     if (!session.say("staged\n"))
     {
@@ -660,6 +722,7 @@ int run(const Environment &environment, const Io &io)
         }
         session.sleep(50);
     }
+    if(!launcher_update_compatible(environment.launcher_data,staged,error)) return fail(error);
     session.say("applying\n");
 
     // Only a closed app is touched. Unknown counts as running.

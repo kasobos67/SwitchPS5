@@ -56,6 +56,8 @@ class Textures
         return controller_;
     }
     // Selectively converted HOME symbols from the supplied firmware.
+    std::uint32_t home_blank() const { return home_blank_; }
+    std::uint32_t about_icon() const { return about_icon_; }
     std::uint32_t stock_icons() const
     {
         return stock_icons_;
@@ -92,6 +94,7 @@ class Textures
     std::uint32_t backdrop_blur_ = 0;
     std::uint32_t brand_ = 0;
     std::uint32_t controller_ = 0;
+    std::uint32_t home_blank_ = 0, about_icon_ = 0;
     std::uint32_t stock_icons_ = 0;
     std::uint32_t stock_ui_ = 0;
     std::uint32_t stock_profiles_ = 0;

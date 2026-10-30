@@ -270,31 +270,26 @@ void Launcher::draw_language(Canvas &c)
 
 // ---------------------------------------------------------------- about
 
-void Launcher::draw_about(Canvas &c)
-{
-auto &l=c.list;
-    draw_frame(c,tr("About Switch"),"");
-    l.line(740,196,740,916,1,theme::kRule.with_alpha(0.6f));
-    cover(c,{}, {244,270,328,328},0,0);
-    text(c,"Switch",408,666,36,theme::kTitle,Align::center);
-    text(c,tr("PS5 edition"),408,714,24,theme::kMeta,Align::center);
-    text(c,version_,408,856,22,theme::kMeta,Align::center);
-    text_shrink(c,tr("Powered by Eden"),804,baseline(238,62,34),34,theme::kTitle,974);
-    text_block(c,tr("All credit for the Eden emulator goes to its developers and contributors."),
-                   804,baseline(324,34,24),24,34,theme::kCopy,974,2,kShrink);
-    text(c,"PS5 port: BlackBearReloaded",804,430,24,theme::kMeta);
-    text(c,"Menu sounds: supplied Nintendo Switch sound bank",804,478,22,theme::kMeta);
-    l.line(804,520,1796,520,1,theme::kRule);
-    const std::string folder=services_.files_folder();
-    const std::string labels[]={tr("KEYS"),tr("FIRMWARE"),tr("GAMES"),tr("UPDATES, DLC"),tr("MODS")};
-    const std::string values[]={folder+"/keys/prod.keys",folder+"/firmware",folder+"/roms",folder+"/updates",folder+"/mods"};
-    for(int i=0;i<5;++i) {
-        float y=558.0f+i*63.0f;
-        text_shrink(c,labels[i],804,baseline(y,54,22),22,theme::kCopy,240);
-        text_shrink(c,values[i],1780,baseline(y,54,22),22,theme::kText,720,Align::right);
-    }
-    static constexpr Hint hints[]={{Pad::circle,TR("Back")}};
-    draw_footer(c,hints,1);
+void Launcher::draw_about(Canvas& c) {
+    draw_frame(c,"About Switch","");
+    const float left=420,right=1500;
+    text(c,"SwitchPS5",left,300,40,theme::kTitle);
+    text(c,"v1.005.000",right,300,30,theme::kText,Align::right);
+    c.list.line(384,344,1536,344,1,theme::kRule);
+    text(c,"ProsperoEden",left,410,28,theme::kCopy);
+    text(c,"v1.005.000",right,410,28,theme::kCopy,Align::right);
+    const char* labels[]={"Keys","Firmware","Games","Updates and DLC","Mods"};
+    const char* paths[]={"/keys/prod.keys","/firmware","/roms","/updates","/mods"};
+    for(int i=0;i<5;++i) {float y=520+i*64; text(c,labels[i],left,y,24,theme::kMeta);text_fit(c,services_.files_folder()+paths[i],right,y,24,theme::kCopy,790,Align::right);}
+    static constexpr Hint hints[]={{Pad::square,"Credits"},{Pad::circle,"Back"}};draw_footer(c,hints,2);
 }
 
+void Launcher::draw_credits(Canvas& c,float open) {
+    c.list.push_opacity(open);glass(c,{480,160,960,760},0,theme::kBase,theme::kPanelEdge,1);
+    text(c,"Credits",528,248,40,theme::kTitle);c.list.line(528,282,1392,282,1,theme::kRule);
+    const char* roles[]={"Emulation","PS5 port","Switch UI","Artwork & menu sounds"};
+    const char* names[]={"Eden developers and contributors","BlackBearReloaded","kasobos67","Nintendo"};
+    for(int i=0;i<4;++i) {float y=342+i*108;text(c,roles[i],528,y,22,theme::kMeta);text_fit(c,names[i],528,y+40,28,theme::kText,864);}
+    c.list.line(528,798,1392,798,1,theme::kRule);static constexpr Hint hints[]={{Pad::circle,"Back"}};draw_hints_right(c,hints,1,1392,856,theme::kText);c.list.pop_opacity();
+}
 } // namespace pe::ui

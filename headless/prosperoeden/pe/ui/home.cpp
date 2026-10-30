@@ -18,7 +18,7 @@ using audio::Cue;
 
 int Launcher::home_recent_count() const
 {
-    return home_.status.empty() && !home_tiles_.empty() ?
+    return !home_tiles_.empty() ?
         static_cast<int>(home_tiles_.size()) - 1 : 0;
 }
 
@@ -52,13 +52,13 @@ void Launcher::rebuild_home_tiles()
     for (const Game &game : games_)
         add({game.file, game.name, game.cover});
     home_tiles_ = std::move(tiles);
+    if(!home_user_input_ && !home_tiles_.empty())home_focus_=0;
     if (selected >= 0) {
         if (home_tiles_.empty()) {
-            home_focus_ = home_.setup_ready ? kHomeAllSoftware : 5;
+            home_focus_ = home_.setup_ready ? 2 : 5;
             return;
         }
-        const int visible = home_.status.empty() ? static_cast<int>(home_tiles_.size()) :
-                                                  std::min(1, static_cast<int>(home_tiles_.size()));
+        const int visible = static_cast<int>(home_tiles_.size());
         int slot = std::min(selected, std::max(0, visible - 1));
         for (int i = 0; i < visible; ++i)
             if (home_tiles_[static_cast<std::size_t>(i)].file == selected_file)
@@ -164,7 +164,7 @@ void Launcher::press_home(Key key)
     switch (key)
     {
     case Key::up:
-        if (focus >= 1 && focus <= 6) focus = 0;
+        if (focus >= 1 && focus <= 6) { if (!home_tiles_.empty()) focus = 0; else if (!profiles_.empty()) home_profile_focus_ = true; }
         else if (!profiles_.empty()) home_profile_focus_ = true;
         break;
     case Key::down:
@@ -177,7 +177,8 @@ void Launcher::press_home(Key key)
         if (focus >= 1 && focus <= 6) {
             focus = std::clamp(focus + delta, 1, 6);
         } else {
-            const int length = recent_count + 2;
+            const int length = static_cast<int>(home_tiles_.size()) + (games_.size() > home_tiles_.size() ? 1 : 0);
+            if(length == 0) break;
             int position = focus == 0 ? 0 : focus == kHomeAllSoftware ? length - 1 : focus - 6;
             focus = tile_focus(std::clamp(position + delta, 0, length - 1));
         }
@@ -310,15 +311,16 @@ void Launcher::draw_home(Canvas &c)
     for (int i = 0; i < static_cast<int>(profiles_.size()); ++i) {
         const Rect r{100.5f + 90.0f * i, 62.0f, 72.0f, 72.0f};
         const auto avatar = presentation_.avatar(profiles_[static_cast<std::size_t>(i)].name);
+        if (i == previous_home_profile_ && focus_elapsed_ < .05f)
+            stock_focus(c,r,stock_motion::home_unfocus_alpha(focus_elapsed_*60)/255.0f,focus_elapsed_,true);
+        if(home_profile_focus_ && i==home_profile_)stock_focus(c,r,1.0f,focus_elapsed_,true);
         profile_avatar(c, avatar.icon, avatar.color, r, true);
         l.ring(r.x + 36.0f, r.y + 36.0f, 37.0f, 2.0f, theme::kTitle.with_alpha(0.7f));
         if (profiles_[static_cast<std::size_t>(i)].playing &&
             !(home_profile_focus_ && i == home_profile_))
             l.rounded_rect({r.x + 16.0f, r.y + r.h + 10.0f, 40.0f, 4.0f}, 2.0f, theme::kLime);
-        if (i == previous_home_profile_ && focus_elapsed_ < .05f)
-            stock_focus(c,r,stock_motion::home_unfocus_alpha(focus_elapsed_*60)/255.0f,focus_elapsed_,true);
         if (home_profile_focus_ && i == home_profile_) {
-            stock_focus(c, r, 1.0f, focus_elapsed_, true);
+
             text_fit(c, profiles_[static_cast<std::size_t>(i)].name, r.x + 36.0f, 178.0f, 28.0f,
                      theme::kLime, 240.0f, Align::center);
         }
@@ -346,7 +348,7 @@ void Launcher::draw_home(Canvas &c)
         const float width = std::min(900.0f, std::max(450.0f, text_width(c, selected, 32.0f)));
         const float x = std::clamp(center - width * 0.5f, 112.0f, 1808.0f - width);
         l.push_opacity(games_alpha);
-        text_marquee(c, selected, {x, 222.0f, width, 52.0f}, 32.0f, theme::kLime, focus_elapsed_, Align::center);
+        text_marquee(c, selected, {x, 222.0f, width, 52.0f}, 32.0f, theme::kLime, marquee_elapsed_, Align::center);
         l.pop_opacity();
     }
 
@@ -355,6 +357,7 @@ void Launcher::draw_home(Canvas &c)
     l.push_clip({0, 278, 1920, 426});
     const auto tile = [&](int slot, int id, const std::string &path, bool all) {
         Rect r{kHomeTileX + kHomeTilePitch * slot - home_strip_.value, kHomeTileY, kHomeTileSize, kHomeTileSize};
+        if(r.x+r.w < 0 || r.x > 1920) return;
         const bool focus = id == home_focus_ && !home_profile_focus_;
         const bool starting = !selected_game_.empty() && focus && !all;
         const float launch_frame = launch_.elapsed * 60.0f;
@@ -362,7 +365,8 @@ void Launcher::draw_home(Canvas &c)
         l.push_transform(1.0f + (scale - 1.0f) * motion(), r.x+r.w*.5f, r.y+r.h*.5f, 0, 0);
         if (all) {
             r = {r.x + 72.0f, r.y + 72.0f, 240.0f, 240.0f};
-            l.shadow({r.x, r.y + 1.5f, r.w, r.h},120,7.5f,Color::rgb(0,0.4f));
+            l.shadow({r.x, r.y + 1.5f, r.w, r.h},120,7.5f,Color::rgb(0,look().white_theme?.12f:.4f));
+            if(focus) stock_focus(c,r,1,focus_elapsed_,true);
             l.circle(r.x+120,r.y+120,120,theme::kShortcut);
             l.push_transform(1.8f, r.x+120, r.y+120, 0, 0);
             home_symbol(c,0,r.x+120,r.y+120,theme::kTitle);
@@ -370,7 +374,7 @@ void Launcher::draw_home(Canvas &c)
         } else cover(c, path, r, 0.0f, 1.0f);
         if (!focus && id == previous_home_focus_ && focus_elapsed_ < .05f)
             stock_focus(c,r,stock_motion::home_unfocus_alpha(focus_elapsed_*60)/255.0f,focus_elapsed_,all);
-        if (focus) stock_focus(c, r, stock_motion::home_focus_alpha(focus_elapsed_*60.0f)/255.0f, focus_elapsed_, all);
+        if (focus && !all) stock_focus(c, r, stock_motion::home_focus_alpha(focus_elapsed_*60.0f)/255.0f, focus_elapsed_, all);
         if (starting) {
             l.rounded_rect(r,0,Color::rgb(0xffffff,stock_motion::decide_flash(launch_frame)/255.0f));
             const float effect_scale = stock_motion::launch_effect_scale(launch_frame);
@@ -389,17 +393,23 @@ void Launcher::draw_home(Canvas &c)
         }
         l.pop_transform();
     };
-    tile(0,0,!home_tiles_.empty() ? home_tiles_.front().cover : std::string{},false);
+    if (!home_tiles_.empty()) tile(0,0,home_tiles_.front().cover,false);
     for (int i=0;i<count;++i) tile(i+1,i+kHomeFirstRecent,home_tiles_[static_cast<std::size_t>(i+1)].cover,false);
-    tile(count+1,kHomeAllSoftware,{},true);
+    const bool has_library = games_.size() > home_tiles_.size();
+    if (has_library) tile(count+1,kHomeAllSoftware,{},true);
+    for(int slot=static_cast<int>(home_tiles_.size())+(has_library?1:0);slot<12;++slot) {
+        const float x=kHomeTileX+kHomeTilePitch*slot-home_strip_.value;
+        if(x+408>0 && x<1920 && c.textures.home_blank())
+            l.image(c.textures.home_blank(),{x-12,279,408,408},
+                    {look().white_theme?.5f:0.0f,0,.5f,1},Color::rgb(0xffffff));
+    }
     l.pop_clip();
     l.pop_transform();
     l.pop_opacity();
 
-    if (!message_.empty()) notice_block(c,message_,160.5f,baseline(706,32,22),22,32,
-        message_warning_ ? theme::kWarning : theme::kLime,1680,2,message_warning_);
-    else if (!home_.status.empty()) notice_block(c,home_.status,160.5f,baseline(706,32,22),22,32,theme::kCopy,1680,2,home_.launch_failed);
-    else if (home_tiles_.empty()) text_shrink(c,tr("Games you launch will appear here."),160.5f,731,22,theme::kMeta,1680);
+    const std::string notice = !message_.empty() ? message_ : home_.status;
+    if(!notice.empty()) text_fit(c,notice,960,720,22,message_warning_?theme::kWarning:theme::kCopy,1608,Align::center);
+    else if(home_tiles_.empty()) text(c,"Add software in Game files.",160.5f,258,30,theme::kCopy);
 
     const char *names[] = {TR("About"),TR("Game files"),TR("Multiplayer"),TR("Controllers"),TR("System Settings"),TR("Screen off")};
     const Color inks[] = {Color::rgb(0xff4d4d),Color::rgb(0xffae2e),Color::rgb(0x4a9bdb),theme::kTitle,theme::kTitle,theme::kTitle};
@@ -407,21 +417,26 @@ void Launcher::draw_home(Canvas &c)
     l.push_transform(1+(applet_scale-1)*motion(),960,816,0,0);
     for (int i=0;i<6;++i) {
         const float x=555.0f+162*i,y=816.0f;
-        l.shadow({x-66,y-64.5f,132,132},66,7.5f,Color::rgb(0,.35f));
-        l.circle(x,y,66,theme::kShortcut);
+        l.shadow({x-66,y-64.5f,132,132},66,7.5f,Color::rgb(0,look().white_theme?.105f:.35f));
+
         if (previous_home_focus_ == i+1 && focus_elapsed_ < .05f)
             stock_focus(c,{x-66,y-66,132,132},stock_motion::home_unfocus_alpha(focus_elapsed_*60)/255.0f,focus_elapsed_,true);
         if (!home_profile_focus_ && home_focus_==i+1) {
             stock_focus(c,{x-66,y-66,132,132},1,focus_elapsed_,true);
             text_shrink(c,tr(names[i]),x,baseline(892,40,24),24,theme::kLime,330,Align::center);
         }
-        applet_symbol(c,i,x,y,inks[i]);
+        l.circle(x,y,66,theme::kShortcut);
+        if(i==0 && c.textures.about_icon()) l.image(c.textures.about_icon(),{x-33,y-33,66,66},{0,0,1,1},inks[i]);
+        else applet_symbol(c,i,x,y,inks[i]);
     }
     l.pop_transform();
     l.pop_opacity();
     if (draw_chrome_) {
-        static constexpr Hint hints[]={{Pad::triangle,TR("Game settings")},{Pad::cross,TR("Select")}};
-        draw_footer(c,hints,2);
+        static constexpr Hint open[]={{Pad::cross,"Select"}};
+        static constexpr Hint choose[]={{Pad::cross,"Choose user"}};
+        static constexpr Hint start[]={{Pad::triangle,"Game settings"},{Pad::cross,"Start"}};
+        draw_footer(c,home_profile_focus_?choose:home_focus_>=1&&home_focus_<=6?open:start,
+                    home_profile_focus_||(home_focus_>=1&&home_focus_<=6)?1:2);
     }
 }
 

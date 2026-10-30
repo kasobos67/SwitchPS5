@@ -1,6 +1,6 @@
 // ProsperoEden - Launcher: a game's own settings by category (Library > Game settings > Video,
-// Performance, Audio, Controls, System, Language) and the button mapping (Controllers, or a
-// game's own).
+// Performance, Audio, Controls, System, Language) and the button mapping (Settings > Controls,
+// or a game's own).
 // Copyright (C) 2026 BlackBearReloaded
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -21,11 +21,13 @@ namespace
 {
 
 // Placed as the game settings dialog is (library.cpp): five rows show, the list scrolls.
-constexpr float kRowsTop = 300.0f;
+constexpr float kRowsTop = 334.0f;
 constexpr float kRowPitch = 96.0f;
 constexpr float kRowHeight = 94.0f;
 constexpr int kRowsShown = 5;
-constexpr Rect kWindow{714.0f, kRowsTop, 1086.0f, kRowPitch * (kRowsShown - 1) + kRowHeight};
+constexpr Rect kWindow{592.0f, kRowsTop, 736.0f, kRowPitch * (kRowsShown - 1) + kRowHeight};
+
+constexpr const char* kCategoryNames[]={"Video","Performance","Audio","Controls","System"};
 
 enum Category : int
 {
@@ -36,21 +38,31 @@ enum Category : int
     category_system,
     category_language,
 };
-constexpr const char *kCategoryNames[] = {TR("Video"), TR("Performance"), TR("Audio"), TR("Controls"),
-                                          TR("System"), TR("Language")};
+// The Video category's rows that say something of their own once chosen.
 constexpr int kAstcRow = 3;
 constexpr int kRefreshRow = 4;
-constexpr int kSeedRow = 0;
-constexpr int kHudSizeRow = 6, kHudCornerRow = 7, kFrameGenRow = 8, kFrameGenTargetRow = 9;
+constexpr int kHudRow = 5;
+constexpr int kHudSizeRow = 6;
+constexpr int kHudCornerRow = 7;
+constexpr int kPostProcessingRow = 8;
+// Frame generation follows the overlay's rows wherever it is shown (with_option): toggle, method,
+// target and multiplier. The last needs no row constant (the chain falls through).
+constexpr int kFrameGenRow = 9, kFrameGenMethodRow = 10, kFrameGenTargetRow = 11;
 // The Controls category's rows.
 constexpr int kVibrationRow = 0;
 constexpr int kMappingRow = 1;
 constexpr int kControllerRow = 2;
+// The Performance category's row after its eight switches: the row Settings > Performance has
+// there too (settings.cpp's speed_limit_row), so performance_about() describes it.
+constexpr int kSpeedLimitRow = 8;
+// The System category's row.
+constexpr int kSeedRow = 0;
 
 // The game's buttons and the DualSense buttons, in the mapping's order (services.hpp). The game's
 // are its own names; the stick presses and the DualSense's named buttons are translated.
 constexpr const char *kGameButtonNames[kGameButtons] = {
     "A", "B", "X", "Y", "L", "R", "ZL", "ZR", "+", "-", TR("Left stick press"), TR("Right stick press")};
+// The DualSense buttons as they are drawn, in the same order.
 constexpr const char *kPadButtonNames[kPadButtons] = {
     TR("Cross"), TR("Circle"), TR("Square"), TR("Triangle"), "L1", "R1", "L2", "R2", "L3", "R3",
     TR("Options"), TR("Create"), TR("Touchpad")};
@@ -71,6 +83,15 @@ std::string pick(const std::vector<std::string> &values, int index)
                                                                    std::string{"-"};
 }
 
+// The speed limits as the menu writes them (settings.cpp): percentages, then Unlimited.
+std::vector<std::string> speed_limit_names()
+{
+    std::vector<std::string> names;
+    for (const int value : kSpeedLimitPercents)
+        names.push_back(value > 0 ? percent(value) : std::string{tr("Unlimited")});
+    return names;
+}
+
 // One setting of a game: its choices, the one the game has (-1: it follows Settings), and what
 // Settings has.
 struct Option
@@ -86,8 +107,8 @@ bool *performance_switch(Preferences &prefs, int index)
 {
     bool *const switches[] = {&prefs.block_list, &prefs.async_shaders,     &prefs.fast_gpu,
                               &prefs.unsafe_cpu, &prefs.unsafe_dma,        &prefs.reactive_flushing,
-                              &prefs.skip_invalidation};
-    return switches[std::clamp(index, 0, 6)];
+                              &prefs.skip_invalidation, &prefs.compact_memory};
+    return switches[std::clamp(index, 0, 7)];
 }
 
 // rates: the refresh rates as the launcher writes them (Launcher::hertz).
@@ -113,18 +134,27 @@ std::vector<Option> options(int category, const GameSettings &game, Preferences 
                         pick(services.astc_labels(), prefs.astc)});
         rows.push_back({tr("Refresh rate"), rates, game.refresh, pick(rates, prefs.refresh)});
         rows.push_back({tr("FPS overlay"), off_on, game.hud, on_off(prefs.hud)});
+        // The overlay's chip: how large it is drawn, and which corner of the picture it stands in.
         rows.push_back({tr("Overlay size"), {tr("Regular"), tr("Medium"), tr("Large")}, game.hud_size,
                         tr(kHudSizeNames[std::clamp(prefs.hud_size, 0, 2)])});
-        rows.push_back({tr("Overlay corner"), {tr("Top left"), tr("Top right"), tr("Bottom left"), tr("Bottom right")},
+        rows.push_back({tr("Overlay corner"), {tr("Top left"), tr("Top right"), tr("Bottom left"),
+                                               tr("Bottom right")},
                         game.hud_corner, tr(kHudCornerNames[std::clamp(prefs.hud_corner, 0, 3)])});
-        // Appended last on purpose: the rows above keep the indexes with_option() and the
-        // saved game settings use. Vulkan only -- the OpenGL renderer has no frame generation.
-        // Not shown in a build without it; greyed out while the user's Lossless.dll is missing.
-        const int frame_gen = services.frame_gen_state();
-        if (frame_gen == 0)
+        // One of Eden's ReShade FX presets, or off (the Vulkan renderer draws it).
+        rows.push_back({tr("Post-processing"), services.post_processing_labels(), game.post_processing,
+                        pick(services.post_processing_labels(), prefs.post_processing)});
+        // Frame generation comes last on purpose: the rows above keep the indexes with_option()
+        // and the saved game settings use. Vulkan only -- the OpenGL renderer has no frame
+        // generation. Not shown in a build without either method compiled.
+        if (services.frame_gen_state() == 0 && services.mihawkgen_state() == 0)
             break;
-        const bool locked = frame_gen == 1;
+        const int method = game.frame_gen_method >= 0 ? game.frame_gen_method : prefs.frame_gen_method;
+        const bool locked = method == 0 ? services.frame_gen_state() != 2
+                                        : services.mihawkgen_state() != 2;
         rows.push_back({tr("Frame generation"), off_on, game.frame_gen, on_off(prefs.frame_gen), locked});
+        const std::vector<std::string> methods = {"Lossless Scaling", "MihawkGen"};
+        rows.push_back({tr("Frame gen method"), methods, game.frame_gen_method,
+                        pick(methods, prefs.frame_gen_method)});
         // Indexes match the settings layer's tables (settings_store.h). Eden's two controls work the
         // way Eden defines them: a target rate makes the pacer add as many frames as that rate
         // needs, up to Eden's own maximum; "Auto" asks for none and leaves the multiplier in charge.
@@ -143,14 +173,17 @@ std::vector<Option> options(int category, const GameSettings &game, Preferences 
         static constexpr const char *kNames[] = {
             TR("Compile ahead"),        TR("Asynchronous shaders"), TR("Faster GPU emulation"),
             TR("Faster CPU emulation"), TR("Faster DMA"),           TR("Reactive flushing"),
-            TR("Skip CPU invalidation")};
-        for (int i = 0; i < 7; ++i)
+            TR("Skip CPU invalidation"), TR("Compact memory")};
+        for (int i = 0; i < 8; ++i)
         {
             // Asynchronous shaders act with Vulkan only (settings.cpp).
             rows.push_back({std::string(tr(kNames[i])) + (i == 1 ? " (Vulkan)" : ""), off_on,
                             game.performance[static_cast<std::size_t>(i)],
                             on_off(*performance_switch(prefs, i))});
         }
+        // How fast this game may run (kSpeedLimitRow).
+        const std::vector<std::string> speeds = speed_limit_names();
+        rows.push_back({tr("Speed limit"), speeds, game.speed_limit, pick(speeds, prefs.speed_limit)});
         break;
     }
     case category_audio:
@@ -175,6 +208,8 @@ std::vector<Option> options(int category, const GameSettings &game, Preferences 
                         game.controller, tr("Automatic")});
         break;
     case category_system:
+        // The seed is a number: the row's one choice is the game's (0 until one is typed, with
+        // Cross). Without a seed the game is loaded at a new random address at every start.
         rows.push_back({tr("RNG seed"), {std::to_string(std::max<std::int64_t>(game.rng_seed, 0))},
                         game.rng_seed >= 0 ? 0 : -1, tr("Random")});
         break;
@@ -193,12 +228,17 @@ GameSettings with_option(GameSettings game, int category, int row, int value, co
     {
     case category_video:
         (row == 0 ? game.renderer : row == 1 ? game.resolution : row == 2 ? game.filter :
-         row == kAstcRow ? game.astc : row == kRefreshRow ? game.refresh : row == 5 ? game.hud :
+         row == kAstcRow ? game.astc : row == kRefreshRow ? game.refresh : row == kHudRow ? game.hud :
          row == kHudSizeRow ? game.hud_size : row == kHudCornerRow ? game.hud_corner :
-         row == kFrameGenRow ? game.frame_gen : row == kFrameGenTargetRow ? game.frame_gen_target : game.frame_gen_multiplier) = value;
+         row == kPostProcessingRow ? game.post_processing :
+         row == kFrameGenRow ? game.frame_gen : row == kFrameGenMethodRow ? game.frame_gen_method :
+         row == kFrameGenTargetRow ? game.frame_gen_target : game.frame_gen_multiplier) = value;
         break;
     case category_performance:
-        game.performance[static_cast<std::size_t>(std::clamp(row, 0, 6))] = value;
+        if (row == kSpeedLimitRow)
+            game.speed_limit = value;
+        else
+            game.performance[static_cast<std::size_t>(std::clamp(row, 0, 7))] = value;
         break;
     case category_audio:
         if (row == 0)
@@ -237,12 +277,14 @@ int Launcher::game_overrides(int category) const
     switch (category)
     {
     case category_video:
-        return (game.renderer >= 0) + (game.resolution >= 0) + (game.filter >= 0) + (game.astc >= 0) + (game.refresh >= 0) +
-               (game.hud >= 0) + (game.hud_size >= 0) + (game.hud_corner >= 0) + (game.frame_gen >= 0) + (game.frame_gen_target >= 0) +
-               (game.frame_gen_multiplier >= 0);
+        return (game.renderer >= 0) + (game.resolution >= 0) + (game.filter >= 0) + (game.astc >= 0) +
+               (game.refresh >= 0) + (game.hud >= 0) + (game.hud_size >= 0) + (game.hud_corner >= 0) +
+               (game.post_processing >= 0) + (game.frame_gen >= 0) + (game.frame_gen_method >= 0) +
+               (game.frame_gen_target >= 0) + (game.frame_gen_multiplier >= 0);
     case category_performance:
         return static_cast<int>(
-            std::count_if(game.performance.begin(), game.performance.end(), [](int v) { return v >= 0; }));
+                   std::count_if(game.performance.begin(), game.performance.end(), [](int v) { return v >= 0; })) +
+               (game.speed_limit >= 0);
     case category_audio:
         return (game.volume >= 0) + (game.mute >= 0);
     case category_controls:
@@ -326,14 +368,13 @@ void Launcher::update_game_options()
 
 void Launcher::press_game_options(Key key)
 {
+    // The keyboard is open: Circle takes it away, nothing else is for this dialog.
     if (seed_edit_.valid())
     {
         if (key == Key::circle)
             seed_edit_stop_ = true;
         return;
     }
-    if (games_.empty() || library_.selected < 0 || library_.selected >= static_cast<int>(games_.size()))
-        return;
     const Game &game = games_[static_cast<std::size_t>(library_.selected)];
     const std::vector<Option> rows = options(game_options_, game_settings_, prefs_, services_, {hertz(0), hertz(1)});
     switch (key)
@@ -341,8 +382,6 @@ void Launcher::press_game_options(Key key)
     case Key::circle:
         // Back to the game's settings, on this category's row.
         modal_ = modal_shown_ = Modal::game;
-        modal_elapsed_ = 0.0f;
-        modal_closing_ = false;
         option_ = game_rows_.selected;
         message_.clear();
         cue(Cue::back);
@@ -371,15 +410,16 @@ void Launcher::press_game_options(Key key)
         open_mapping(true);
         return;
     }
+    // The seed is typed.
+    if (game_options_ == category_system && row == kSeedRow && key == Key::cross)
+    {
+        edit_seed();
+        return;
+    }
     if (option.locked)
     {
         say(tr("Frame generation needs Lossless.dll, from Lossless Scaling, in the lossless folder."), true);
         cue(Cue::error);
-        return;
-    }
-    if (game_options_ == category_system && row == kSeedRow && key == Key::cross)
-    {
-        edit_seed();
         return;
     }
     // Settings' value (-1), then each of the game's choices.
@@ -393,10 +433,12 @@ void Launcher::press_game_options(Key key)
     // 120 Hz is a request: the display has the last word.
     const bool fast = saved && game_options_ == category_video && row == kRefreshRow &&
                       (game_settings_.refresh >= 0 ? game_settings_.refresh : prefs_.refresh) == 1;
+    // Held decoded, these textures take four times the memory they take compressed.
     const bool full = saved && game_options_ == category_video && row == kAstcRow &&
                       (game_settings_.astc >= 0 ? game_settings_.astc : prefs_.astc) == 1;
     say(fast ? tr("Saved. A display that cannot show 120 Hz stays at 60 Hz.") :
-        full ? tr("Saved. Full quality uses four times the graphics memory for these textures and can run out above 1x.") :
+        full ? tr("Saved. Full quality uses four times the graphics memory for these textures and can run out "
+                  "above 1x.") :
         saved ? tr("Saved for this game. Applies on next launch.") : tr("Could not save. Please try again."),
         !saved);
     cue(saved ? Cue::toggle : Cue::error);
@@ -586,4 +628,79 @@ void Launcher::draw_mapping(Canvas &c, float open)
     list.pop_opacity();
 }
 
+void Launcher::open_menu_mapping()
+{
+    menu_mapping_rows_.visible = kRowsShown;
+    menu_mapping_rows_.pitch = kRowPitch;
+    menu_mapping_rows_.reset(kMenuActions, 0);
+    modal_ = modal_shown_ = Modal::menu_mapping;
+    message_.clear();
+    cue(Cue::open);
+}
+
+void Launcher::press_menu_mapping(Key key)
+{
+    MenuBinding binding = prefs_.menu_bind;
+    const int row = std::clamp(menu_mapping_rows_.selected, 0, kMenuActions - 1);
+    switch (key)
+    {
+    case Key::circle:
+        // Back to Settings > Controls, on the Menu keybinds row.
+        modal_ = modal_shown_ = Modal::none;
+        option_ = 3; // the Menu keybinds row (settings.cpp's ControlRow)
+        option_cursor_.snap(dialog_row_top(Modal::controls, option_));
+        message_.clear();
+        cue(Cue::back);
+        return;
+    case Key::up:
+    case Key::down:
+        if (menu_mapping_rows_.move(key == Key::down ? 1 : -1))
+        {
+            message_.clear();
+            cue(Cue::focus);
+        }
+        return;
+    case Key::square:
+        // Every action back on its usual face button.
+        binding = kDefaultMenuBinding;
+        break;
+    case Key::left:
+    case Key::right:
+    case Key::cross:
+    {
+        // The next face button; the action that had it takes this one's old one.
+        const int step = key == Key::left ? -1 : 1;
+        const int pad = (binding[static_cast<std::size_t>(row)] + step + kMenuActions) % kMenuActions;
+        binding = assign_menu(binding, row, pad);
+        break;
+    }
+    default:
+        return;
+    }
+    const Preferences before = prefs_;
+    prefs_.menu_bind = binding;
+    const bool saved = save_preferences();
+    if (!saved)
+        prefs_ = before;
+    cue(saved ? Cue::toggle : Cue::error);
+}
+
+
+void Launcher::draw_menu_mapping(Canvas &c, float open)
+{
+    c.list.push_opacity(open);
+    c.list.rounded_rect({0,0,1920,1080},0,theme::kBase);
+    draw_frame(c,"Menu buttons","");
+    const char *labels[]={"Select","Back","Secondary action","Game settings"};
+    const char *buttons[]={"Cross","Circle","Square","Triangle"};
+    for(int i=0;i<4;++i) {
+        Rect row{480,250.0f+i*112,960,96};
+        plate(c,kRowPlate,row,i==menu_mapping_rows_.selected ? 1.0f : 0.0f);
+        text(c,labels[i],516,baseline(row.y,row.h,28),28,theme::kText);
+        text(c,buttons[std::clamp(prefs_.menu_bind[i],0,3)],1404,baseline(row.y,row.h,28),28,theme::kCopy,Align::right);
+    }
+    static constexpr Hint hints[]={{Pad::square,"Reset"},{Pad::leftright,"Change"},{Pad::circle,"Back"}};
+    draw_footer(c,hints,3);
+    c.list.pop_opacity();
+}
 } // namespace pe::ui

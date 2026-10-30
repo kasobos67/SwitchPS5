@@ -1,4 +1,4 @@
-// ProsperoEden - RGBA images for textures: TGA files and box downsampling.
+// ProsperoEden - RGBA images for textures: image files, TGA files and box downsampling.
 // Copyright (C) 2026 BlackBearReloaded
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -26,6 +26,11 @@ struct Image
 // format of the launcher's own art and of the covers extracted from games.
 bool load_tga(const std::string &path, Image *image);
 
+// Reads any image file a wallpaper can be: PNG, JPEG, BMP, GIF, TGA, PSD, HDR or PNM through
+// stb_image, and a BC7 DDS through bcdec. An image over 8192 pixels a side is halved until it
+// fits, as the other loaders allow that much at most. False for anything else.
+bool load_image(const std::string &path, Image *image);
+
 // A picture kept compressed, as the graphics card reads it: BC7 blocks, top row first.
 struct Blocks
 {
@@ -40,5 +45,9 @@ bool load_dds_bc7(const std::string &path, Blocks *blocks);
 
 // Half the size in each direction, averaging 2x2 blocks (alpha-weighted).
 Image halve(const Image &image);
+
+// Box blur at the image's own resolution. Three horizontal+vertical passes at the given radius
+// (clamped to half the shorter side). Treats alpha as opaque for the backdrop use case.
+void blur(Image &image, int radius);
 
 } // namespace pe::gfx

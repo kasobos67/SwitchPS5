@@ -1,6 +1,8 @@
-# Building SwitchPS5
+> **SwitchPS5 1.005.000:** This edition is the standalone C++ app, named Switch, with title ID PPSA99009. Install SwitchPS5 updates manually by replacing its app folder. It has no automatic updater, theme selector, or launcher selector. The emulator data layout and backend requirements below are inherited from ProsperoEden.
 
-SwitchPS5 uses the ProsperoEden v1.001.000 backend and builds on Linux (Ubuntu 26.04; WSL works). One command builds the release:
+# Building ProsperoEden
+
+ProsperoEden builds on Linux (Ubuntu 26.04; WSL works). One command builds the release:
 
 ```bash
 make
@@ -79,9 +81,12 @@ Downloads are cached in `~/.cache/prosperoeden-deps` (`PROSPEROEDEN_DEPS_CACHE`)
 Inside this repository, in `.deps/`:
 
 - **Eden** at commit `67bada77f8a43a90da2e94e89b8e7da73c256989` (GitHub mirror archive), with
-  Eden's own hash-pinned packages, which its configure step downloads. ProsperoEden does not
-  modify Eden's files: the PS5 frontend in `headless/` replaces and derives sources at
-  configure time (`headless/inject.cmake`).
+  Eden's own hash-pinned packages, which its configure step downloads. The PS5 frontend in
+  `headless/` replaces and derives sources at configure time (`headless/inject.cmake`). This
+  fork also patches a few of Eden's files when `make prepare` extracts them
+  (`tools/eden-patches/*.diff`, in name order, each applied once): faster reads of game files,
+  per-game cache storage, bounds-checked shader local memory, and CPU reads of GPU-cached
+  pages without reactive flushing.
 - **FFmpeg** at the commit Eden pins, built with only the decoders games use.
 - **PS5 OpenGL 4.6 SDK 1.0.2** (release archive), for the launcher and the OpenGL renderer.
 - **OpenSSL, zlib, libcurl and libpsl** from pacbrew v0.40.2.
@@ -113,7 +118,7 @@ sounds through the console's audio output; it needs no other library. Its font a
 and sounds are committed in `headless/prosperoeden/ui`, so a build does not regenerate them.
 The tools that made them are in `tools/launcher`:
 
-- `assets.sh` bakes the supplied Nintendo UI font with Montserrat fallback glyphs and renders the art from
+- `assets.sh` bakes the font (`third_party/fonts/Montserrat-Medium.ttf`) and renders the art from
   the source pictures in `sce_sys/`; it needs a host C++ compiler and Python with Pillow.
 - `process-sfx.py` trims and levels the raw sound effects (needs `ffmpeg` and `numpy`).
 - `bake-loading-text.py` writes the lettering of the loading screen
@@ -130,7 +135,8 @@ The tools that made them are in `tools/launcher`:
 
 What the PS5's home screen shows for the app is in `sce_sys/`, as it goes into the package:
 `param.json` (title, ID, version, and the 120 Hz output declaration), `icon0.png`, `pic0.dds`,
-`pic1.dds`. The pictures' sources are beside them; this package does not include PS5 hover music.
+`pic1.dds`. The pictures' sources are beside them. SwitchPS5 does not include a PS5 home
+screen music file (`snd0.at9`).
 
 ## Host tools
 

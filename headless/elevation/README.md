@@ -4,17 +4,21 @@ ProsperoEden uses [PS5-Lapy-JB-Daemon](https://github.com/ArkSama/PS5-Lapy-JB-Da
 created by ArkSama, and pins the cooperative owned-root implementation from
 [ProsperoEden's Lapy fork](https://github.com/blackbearreloaded/PS5-Lapy-JB-Daemon), based on
 [mpereiraesaa's cooperative helper](https://github.com/mpereiraesaa/PS5-Lapy-JB-Daemon). The build invokes
-upstream's own `owned-helper` target for `PPSA99009`; it does not copy or modify Lapy's privileged
+upstream's own `owned-helper` target for `PPSA99008`; it does not copy or modify Lapy's privileged
 source. Before packaging, it verifies the generated manifest's title, mode, ELF and protocol
 hashes, and `root_layout_probe_retry` feature.
 
-At single-threaded startup, the client first publishes the cooperative resident-service request
-through `/download0/elevate_proc`. It waits 1.5 seconds for verified `/data` read/write access. If
+At single-threaded startup, the client checks both writable /data and access to
+/preinst/common/font. A sandbox mount of /data alone must not skip elevation (#42).
+If either is inaccessible, it publishes the cooperative resident-service request
+through `/download0/elevate_proc`. It waits 1.5 seconds for verified `/data` read/write access and an accessible system-font directory. If
 the resident service claimed the marker, the one-shot path is not started. If the app cancels an
 unclaimed marker, it observes one further grace interval and then sends `/app0/lapy.elf` to the
 local ELF loader on TCP port 9021. The same connection carries upstream's fixed-width
 request/prepare/prepared/response exchange. Only a successful response followed by an actual
-`/data` write/read/delete probe enables the normal data paths.
+`/data` write/read/delete probe and system-font directory check confirm full access. If font recovery fails but
+/data is still verified writable, the client logs the failure and keeps the existing data paths
+(`data-only`); the launcher can fall back to English without hiding the user's saves.
 
 The package includes `lapy.elf`, `lapy-manifest.json`, and Lapy's MIT license. It contains no
 locally implemented kernel mutation code. A jailbreak environment with an ELF loader on port

@@ -41,6 +41,38 @@ int main() {
     assert(Eden::LoadPreferences(file).backend == Eden::GraphicsBackend::Vulkan);
     assert(Eden::LoadPreferences(file).hud);
 
+    // Appearance survives reopening and an unrelated settings write.
+    {
+        Eden::Preferences value;
+        value.theme = "slate"; value.accent = "ice";
+        assert(Eden::SavePreferences(value, file));
+        auto reopened = Eden::LoadPreferences(file);
+        assert(reopened.theme == "slate" && reopened.accent == "ice");
+        reopened.volume = 75;
+        assert(Eden::SavePreferences(reopened, file));
+        assert(Eden::LoadPreferences(file).accent == "ice");
+    }
+
+    // A wallpaper (docs/WALLPAPERS.md) survives reopening; a name that could leave the folder
+    // is neither read nor saved.
+    {
+        Eden::Preferences value;
+        value.wallpaper = "Sky Pond.png";
+        assert(Eden::SavePreferences(value, file));
+        assert(Eden::LoadPreferences(file).wallpaper == "Sky Pond.png");
+        const std::string by_name = std::string(directory) + "/wallpaper.json";
+        std::ofstream(by_name) << R"({"launcher": {"wallpaper": "beach.png", "wallpaper_blur": true}})";
+        // A "wallpaper_blur" an older build wrote reads as nothing and leaves on the next save.
+        assert(Eden::LoadPreferences(by_name).wallpaper == "beach.png");
+        assert(Eden::SavePreferences(Eden::LoadPreferences(by_name), by_name));
+        assert(Read(by_name).find("wallpaper_blur") == std::string::npos);
+        std::ofstream(by_name) << R"({"launcher": {"wallpaper": "../secrets.png"}})";
+        assert(Eden::LoadPreferences(by_name).wallpaper.empty());
+        Eden::Preferences named;
+        named.wallpaper = "a/b.png"; // the folder is not part of what is saved
+        assert(!Eden::SavePreferences(named, by_name));
+    }
+
     // Preferences round trip and validation.
     assert(Eden::SavePreferences({false, 40, true, true, Eden::GraphicsBackend::OpenGL}, file));
     auto saved = Eden::LoadPreferences(file);
@@ -49,6 +81,13 @@ int main() {
     assert(!saved.immediate_logs);
     saved.immediate_logs = true;
     assert(Eden::SavePreferences(saved, file) && Eden::LoadPreferences(file).immediate_logs);
+    // Update notices (Settings > Diagnostics): on until switched off, and kept under "system".
+    assert(saved.update_notices);
+    saved.update_notices = false;
+    assert(Eden::SavePreferences(saved, file) && !Eden::LoadPreferences(file).update_notices);
+    assert(Read(file).find("\"update_notices\": false") != std::string::npos);
+    saved.update_notices = true;
+    assert(Eden::SavePreferences(saved, file) && Eden::LoadPreferences(file).update_notices);
     assert(!Eden::SavePreferences({true, 101, false, false}, file));
     assert(Eden::LoadPreferences(file).volume == 40);
     assert(Read(file).find("\"renderer\": \"opengl\"") != std::string::npos);
@@ -81,14 +120,21 @@ int main() {
     // Last and recent games.
     assert(Eden::SaveLastGame("Sample Quest [id].nsp", file));
     assert(Eden::LoadLastGame(file) == "Sample Quest [id].nsp");
-    for (const char* invalid : {"../escape.nsp", "game.zip", "a/b.nsp"}) assert(!Eden::SaveLastGame(invalid, file));
+    for (const char* invalid : {"../escape.nsp", "game.zip", "a/b/c.nsp", "/game.nsp", ".hidden/game.nsp", "a/",
+                                "a/.nsp", "a\b.nsp", "Game/game.zip"})
+        assert(!Eden::SaveLastGame(invalid, file));
     assert(Eden::LoadLastGame(file) == "Sample Quest [id].nsp");
+    // A game in its own folder in roms/ (issue 168), and back to one directly in it.
+    assert(Eden::SaveLastGame("Sample Quest/Sample Quest [id].nsp", file));
+    assert(Eden::LoadLastGame(file) == "Sample Quest/Sample Quest [id].nsp");
+    assert(Eden::SaveLastGame("Sample Quest [id].nsp", file));
     assert(Eden::SaveRecentGame("Sample Quest.nsp", file));
     assert(Eden::SaveRecentGame("Demo Racer.xci", file));
     assert(Eden::SaveRecentGame("Sample Quest.nsp", file));
     assert((Eden::LoadRecentGames(file) == std::vector<std::string>{"Sample Quest.nsp", "Demo Racer.xci"}));
     for (int i = 0; i < 5; ++i) assert(Eden::SaveRecentGame("Game" + std::to_string(i) + ".nsp", file));
-    assert((Eden::LoadRecentGames(file) == std::vector<std::string>{"Game4.nsp", "Game3.nsp", "Game2.nsp", "Game1.nsp"}));
+    assert((Eden::LoadRecentGames(file) == std::vector<std::string>{"Game4.nsp", "Game3.nsp", "Game2.nsp", "Game1.nsp",
+                                                                    "Game0.nsp", "Sample Quest.nsp", "Demo Racer.xci"}));
 
     // Console mode per title.
     constexpr uint64_t racer = 0x0100000000010000, quest = 0x0100000000030000;
@@ -182,6 +228,15 @@ int main() {
     video.frame_gen_target = 0;
     video.frame_gen_multiplier = 0;
     assert(Eden::SavePreferences(video, file));
+    // The frame generation method defaults to LSFG (index 0) and round-trips as its key.
+    assert(video.frame_gen_method == 0);
+    assert(Read(file).find("\"frame_gen_method\": \"lsfg\"") != std::string::npos);
+    video.frame_gen_method = 1;  // "mihawkgen"
+    assert(Eden::SavePreferences(video, file));
+    assert(Eden::LoadPreferences(file).frame_gen_method == 1);
+    assert(Read(file).find("\"frame_gen_method\": \"mihawkgen\"") != std::string::npos);
+    video.frame_gen_method = 0;
+    assert(Eden::SavePreferences(video, file));
 
     // Vibration (Settings > Controls): on unless turned off.
     auto controls = Eden::LoadPreferences(file);
@@ -249,6 +304,19 @@ int main() {
            Eden::LoadGameSettings(racer, file).frame_gen == -1);
     game.frame_gen = 2;
     assert(!Eden::SaveGameSettings(racer, game, file));
+
+    // A game's own frame gen method: -1 follows Settings, 0 is LSFG, 1 is MihawkGen, 2+ refused.
+    assert(Eden::LoadGameSettings(racer, file).frame_gen_method == -1);
+    game = Eden::LoadGameSettings(racer, file);
+    game.frame_gen_method = 1;  // "mihawkgen"
+    assert(Eden::SaveGameSettings(racer, game, file));
+    assert(Eden::LoadGameSettings(racer, file).frame_gen_method == 1);
+    assert(Eden::PreferencesFor(racer, file).frame_gen_method == 1);
+    game.frame_gen_method = -1;
+    assert(Eden::SaveGameSettings(racer, game, file));
+    game.frame_gen_method = 2;  // one past the last method
+    assert(!Eden::SaveGameSettings(racer, game, file));
+    game.frame_gen_method = -1;
 
     // A game's own target rate and multiplier ride along the same path, and an index outside the
     // tables is refused the way the boolean above is.
@@ -320,6 +388,66 @@ int main() {
     speed = Eden::LoadPerformance(racer, by_hand);
     assert(!speed.skip_invalidation && !speed.reactive_flushing);
     assert(Eden::LoadPerformance(quest, by_hand).skip_invalidation && Eden::LoadPerformance(quest, by_hand).reactive_flushing);
+    // Console memory ("performance/memory_layout", settings_store.h): the Switch's own 4 GiB unless
+    // named, a title's own value before the general one, and a name that is not one of the three
+    // reads as if it were absent. The launcher's game settings write the switches by name, so a
+    // layout saved here stays with the title.
+    assert(Eden::LoadPerformance(racer, by_hand).memory_layout == 0);
+    std::ofstream(by_hand) << R"({"performance": {"memory_layout": "6Gb"},
+        "games": {"0100000000010000": {"performance": {"memory_layout": "8Gb"}}}})";
+    assert(Eden::LoadPerformance(racer, by_hand).memory_layout == 2);
+    assert(Eden::LoadPerformance(quest, by_hand).memory_layout == 1);
+    std::ofstream(by_hand) << R"({"performance": {"memory_layout": "16Gb"},
+        "games": {"0100000000010000": {"performance": {"memory_layout": 6}}}})";
+    assert(Eden::LoadPerformance(racer, by_hand).memory_layout == 0 &&
+           Eden::LoadPerformance(quest, by_hand).memory_layout == 0);
+    speed = Eden::LoadPerformance(quest, by_hand);
+    speed.memory_layout = 1;
+    assert(Eden::SavePerformance(0, speed, by_hand));
+    assert(Read(by_hand).find("\"memory_layout\": \"6Gb\"") != std::string::npos);
+    assert(Eden::LoadPerformance(0, by_hand).memory_layout == 1);
+    // A layout out of the list is refused rather than written.
+    speed.memory_layout = int(std::size(Eden::kMemoryLayoutKeys));
+    assert(!Eden::SavePerformance(0, speed, by_hand));
+    {
+        const std::string layout_file = std::string(directory) + "/layout.json";
+        std::ofstream(layout_file) << R"({"games": {"0100000000010000": {"performance": {"memory_layout": "6Gb"}}}})";
+        assert(Eden::LoadPerformance(racer, layout_file).memory_layout == 1);
+        auto saved_game = Eden::LoadGameSettings(racer, layout_file);
+        saved_game.performance[2] = 1;  // Settings > Performance > fast GPU, the launcher's write
+        assert(Eden::SaveGameSettings(racer, saved_game, layout_file));
+        assert(Eden::LoadPerformance(racer, layout_file).memory_layout == 1);
+    }
+    // Speed limit ("performance/speed_limit"): 100% without a file, a game's own before the general
+    // one, a value that is not one of the steps read as 100%, and both kinds of write keep it.
+    {
+        const std::string speed_file = std::string(directory) + "/speed.json";
+        assert(Eden::LoadPerformance(racer, speed_file).speed_limit == 0);
+        std::ofstream(speed_file) << R"({"performance": {"speed_limit": "200"},
+            "games": {"0100000000010000": {"performance": {"speed_limit": "unlimited"}}}})";
+        assert(Eden::LoadPerformance(racer, speed_file).speed_limit == 4);
+        assert(Eden::LoadPerformance(quest, speed_file).speed_limit == 2);
+        assert(Eden::LoadGameSettings(racer, speed_file).speed_limit == 4);
+        assert(Eden::LoadGameSettings(quest, speed_file).speed_limit == -1);
+        std::ofstream(speed_file) << R"({"performance": {"speed_limit": 200}})";
+        assert(Eden::LoadPerformance(quest, speed_file).speed_limit == 0);
+        auto general = Eden::LoadPerformance(0, speed_file);
+        general.speed_limit = 3;
+        assert(Eden::SavePerformance(0, general, speed_file));
+        assert(Read(speed_file).find("\"speed_limit\": \"300\"") != std::string::npos);
+        general.speed_limit = int(std::size(Eden::kSpeedLimitKeys));
+        assert(!Eden::SavePerformance(0, general, speed_file));
+        auto own = Eden::LoadGameSettings(racer, speed_file);
+        own.speed_limit = 1;
+        assert(Eden::SaveGameSettings(racer, own, speed_file));
+        assert(Eden::LoadPerformance(racer, speed_file).speed_limit == 1 &&
+               Eden::LoadPerformance(quest, speed_file).speed_limit == 3);
+        own.speed_limit = -1;  // back to Settings
+        assert(Eden::SaveGameSettings(racer, own, speed_file));
+        assert(Eden::LoadPerformance(racer, speed_file).speed_limit == 3);
+        own.speed_limit = int(std::size(Eden::kSpeedLimitKeys));
+        assert(!Eden::SaveGameSettings(racer, own, speed_file));
+    }
 
     // Button mapping (button_mapping.h): the usual one, a changed one, and one the file names
     // badly. Choosing a button another game button has swaps the two.
@@ -348,6 +476,91 @@ int main() {
                read[Eden::game_minus] == Eden::pad_l2 && read[Eden::game_x] == Eden::pad_triangle);
         std::ofstream(by_hand) << R"({"controls": {"mapping": {"a": "share"}}})";
         assert(Eden::LoadPreferences(by_hand).mapping == Eden::kDefaultMapping);  // no such button
+    }
+
+    // Post-processing (settings_store.h): a preset by name for every game, a game's own over it
+    // ("" is off for that game), and back to Settings; a name with a path in it is refused.
+    {
+        auto prefs = Eden::LoadPreferences(file);
+        assert(prefs.post_processing.empty());
+        prefs.post_processing = "Cinematic";
+        assert(Eden::SavePreferences(prefs, file) && Eden::LoadPreferences(file).post_processing == "Cinematic");
+        constexpr uint64_t pp_game = 0x0100000000077000;
+        auto game = Eden::LoadGameSettings(pp_game, file);
+        assert(!game.post_processing && Eden::PreferencesFor(pp_game, file).post_processing == "Cinematic");
+        game.post_processing = "";
+        assert(Eden::SaveGameSettings(pp_game, game, file));
+        assert(Eden::LoadGameSettings(pp_game, file).post_processing == std::string{});
+        assert(Eden::PreferencesFor(pp_game, file).post_processing.empty());
+        game.post_processing = "My look";
+        assert(Eden::SaveGameSettings(pp_game, game, file) && Eden::PreferencesFor(pp_game, file).post_processing == "My look");
+        game.post_processing.reset();
+        assert(Eden::SaveGameSettings(pp_game, game, file) && !Eden::LoadGameSettings(pp_game, file).post_processing);
+        assert(Eden::PreferencesFor(pp_game, file).post_processing == "Cinematic");
+        prefs.post_processing = "../escape";
+        assert(!Eden::SavePreferences(prefs, file));
+        prefs.post_processing = "";
+        assert(Eden::SavePreferences(prefs, file) && Read(file).find("post_processing") == std::string::npos);
+    }
+
+    // Menu keybinds (button_mapping.h): the face button that presses each core menu action. A
+    // binding names each of the four face buttons once; one that names one twice, or a button that
+    // is not a face button, is refused or read as the default.
+    {
+        auto prefs = Eden::LoadPreferences(file);
+        assert(prefs.menu_bind == Eden::kDefaultMenuBinding);
+        // Swap Select and Back: Cross presses Back, Circle presses Select.
+        prefs.menu_bind[Eden::menu_select] = Eden::pad_circle;
+        prefs.menu_bind[Eden::menu_back] = Eden::pad_cross;
+        assert(Eden::ValidMenuBinding(prefs.menu_bind));
+        assert(Eden::SavePreferences(prefs, file));
+        const auto read = Eden::LoadPreferences(file).menu_bind;
+        assert(read == prefs.menu_bind && read[Eden::menu_select] == Eden::pad_circle &&
+               read[Eden::menu_back] == Eden::pad_cross && read[Eden::menu_secondary] == Eden::pad_square);
+        assert(Read(file).find("\"menu_mapping\": {") != std::string::npos &&
+               Read(file).find("\"select\": \"circle\"") != std::string::npos &&
+               Read(file).find("\"back\": \"cross\"") != std::string::npos &&
+               Read(file).find("\"secondary\":") == std::string::npos);  // only what differs is written
+        // Two actions on one face button is refused.
+        auto twice = prefs;
+        twice.menu_bind[Eden::menu_secondary] = twice.menu_bind[Eden::menu_select];
+        assert(!Eden::ValidMenuBinding(twice.menu_bind) && !Eden::SavePreferences(twice, file));
+        // Back to the default: nothing is written.
+        prefs.menu_bind = Eden::kDefaultMenuBinding;
+        assert(Eden::SavePreferences(prefs, file) && Read(file).find("\"menu_mapping\"") == std::string::npos);
+        // A file written by hand: a valid swap, a button that is not a face button, one named twice.
+        const std::string by_hand = std::string(directory) + "/menu-mapping.json";
+        std::ofstream(by_hand) << R"({"controls": {"menu_mapping": {"select": "circle", "back": "cross"}}})";
+        const auto ok = Eden::LoadPreferences(by_hand).menu_bind;
+        assert(ok[Eden::menu_select] == Eden::pad_circle && ok[Eden::menu_back] == Eden::pad_cross &&
+               ok[Eden::menu_secondary] == Eden::pad_square && ok[Eden::menu_settings] == Eden::pad_triangle);
+        std::ofstream(by_hand) << R"({"controls": {"menu_mapping": {"select": "l1"}}})";
+        assert(Eden::LoadPreferences(by_hand).menu_bind == Eden::kDefaultMenuBinding);  // not a face button
+        std::ofstream(by_hand) << R"({"controls": {"menu_mapping": {"select": "circle", "back": "circle"}}})";
+        assert(Eden::LoadPreferences(by_hand).menu_bind == Eden::kDefaultMenuBinding);  // Circle twice
+    }
+
+    // Settings > Theme > Colour: the accent preset within a theme (settings_store.h, THEMES.md).
+    // "" is the theme's own colours and nothing is written for it; a preset id is kept as chosen;
+    // an id written by hand is read only when it is lowercase letters, digits or '-' and short.
+    {
+        auto prefs = Eden::LoadPreferences(file);
+        assert(prefs.accent.empty());
+        prefs.accent = "ice";
+        assert(Eden::SavePreferences(prefs, file));
+        assert(Eden::LoadPreferences(file).accent == "ice");
+        assert(Read(file).find("\"accent\": \"ice\"") != std::string::npos);
+        // The theme's own colours: nothing is written.
+        prefs.accent.clear();
+        assert(Eden::SavePreferences(prefs, file) && Read(file).find("\"accent\"") == std::string::npos);
+        // A file written by hand: a preset id, an id that is not lowercase, one with other characters.
+        const std::string by_hand = std::string(directory) + "/accent.json";
+        std::ofstream(by_hand) << R"({"launcher": {"theme": "slate", "accent": "ember"}})";
+        assert(Eden::LoadPreferences(by_hand).accent == "ember");
+        std::ofstream(by_hand) << R"({"launcher": {"accent": "ICE"}})";
+        assert(Eden::LoadPreferences(by_hand).accent.empty());  // not lowercase
+        std::ofstream(by_hand) << R"({"launcher": {"accent": "../../secret"}})";
+        assert(Eden::LoadPreferences(by_hand).accent.empty());  // not an id's shape
     }
 
     // A game's own settings over Settings: video, audio, controls, language and Performance,

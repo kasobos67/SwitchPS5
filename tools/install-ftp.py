@@ -8,7 +8,8 @@ Needs a running FTP server on the console (for example the Payload SDK's ftpsrv)
 ProsperoEden closed. Every file goes to /data/homebrew/PPSA99009 under a temporary name and is
 renamed into place once complete. Executables are read back and compared when the server offers
 raw SELF transfers. Files already on the console that the package does not contain (your
-settings, saves and logs live elsewhere) are left alone.
+settings, saves and logs live elsewhere) are left alone. The retired PS5 home screen music
+file is removed when it is absent from this package.
 """
 import argparse
 import ftplib
@@ -66,6 +67,13 @@ def main(argv):
                 pass
             client.rename(f'{target}.partial', target)
             print(f'copied {relative}', flush=True)
+        if not (app / 'sce_sys/snd0.at9').exists():
+            try:
+                client.voidcmd(f'DELE {REMOTE}/sce_sys/snd0.at9')
+                print('removed old PS5 home screen music', flush=True)
+            except ftplib.error_perm as error:
+                if not str(error).startswith('550'):
+                    raise
     with connect(host, port) as client:
         try:
             client.sendcmd('SELF')  # raw transfers of executables, where supported

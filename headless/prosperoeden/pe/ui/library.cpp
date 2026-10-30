@@ -34,7 +34,7 @@ enum GameRow : int
     row_audio,
     row_controls,
     row_system,
-    row_language,
+    row_cheats,
     row_mods,
     row_save,   // in builds that move saves
     row_delete, // a game a download source has: deleted from the console
@@ -114,9 +114,7 @@ void Launcher::apply_games(std::vector<Game> games)
         return library_sort_ == 1 ? a.file < b.file : a.name < b.name;
     });
     games_loaded_ = true;
-    for (Game &game : games_)
-        if (game.title_id != 0)
-            count_mods(game, services_.mods(game.title_id));
+    // Read mods and cheats when the game editor opens; scanning a library does not read every mod folder.
     if (!same)
     {
         int index = 0;
@@ -230,6 +228,8 @@ void Launcher::count_mods(Game &game, const std::vector<Mod> &mods)
 void Launcher::read_mods(Game &game)
 {
     mods_ = services_.mods(game.title_id);
+    mods_.erase(std::remove_if(mods_.begin(),mods_.end(),[](const Mod& m){return m.cheats_only;}),mods_.end());
+    read_cheats(game);
     count_mods(game, mods_);
     mod_list_.clear();
     for (int mod = 0; mod < static_cast<int>(mods_.size()); ++mod)
@@ -280,8 +280,7 @@ void Launcher::enter_library()
     }
     library_.visible = 8;
     library_.pitch = 88.0f;
-    library_.reset(static_cast<int>(games_.size()), 0);
-    library_scroll_.snap(0.0f);
+    library_.reset(static_cast<int>(games_.size()), std::min(library_.selected,std::max(0,static_cast<int>(games_.size())-1)));
     refresh_selected_game();
     detail_.snap(1.0f);
     mode_.snap(selected_docked_ ? 0.0f : 1.0f);
@@ -301,6 +300,8 @@ void Launcher::refresh_selected_game()
 
 void Launcher::press_library(Key key)
 {
+    if(games_.empty() && key==Key::cross) {open(Screen::files,true);enter_files();return;}
+
     if (library_sort_open_)
     {
         if (key == Key::up || key == Key::down) { library_sort_choice_ = 1 - library_sort_choice_; cue(Cue::focus_menu); }
@@ -319,7 +320,7 @@ void Launcher::press_library(Key key)
     switch (key)
     {
     case Key::circle:
-        home_focus_ = kHomeAllSoftware;
+        if(games_.size()>home_tiles_.size())home_focus_=kHomeAllSoftware;
         open(Screen::home, false);
         return;
     case Key::up:
@@ -473,7 +474,7 @@ void Launcher::draw_library(Canvas &c)
         const float card_x=kLibraryTileX+(library_.selected%6)*kLibraryTilePitch;
         const float card_y=kLibraryTileY+(library_.selected/6)*kLibraryTilePitch-scroll;
         const float label_width=std::clamp(text_width(c,game.name,30)+42.0f,180.0f,980.0f);
-        const float label_x=std::clamp(card_x+kLibraryTileSize*.5f-label_width*.5f,112.0f,1808.0f-label_width);
+        const float label_x=std::clamp(card_x+kLibraryTileSize*.5f-label_width*.5f,130.5f,1786.5f-label_width);
         const Rect label{label_x,card_y-84.0f,label_width,65.0f};
         const Rect tip{card_x+(kLibraryTileSize-33.0f)*.5f,label.y+label.h-3.0f,33.0f,19.5f};
         const Color shadow=Color::rgb(0,c.dialog_shadow*.6f);
@@ -492,7 +493,7 @@ void Launcher::draw_library(Canvas &c)
             mirrored(stock_assets::Icon::balloon_tip,tip,theme::kShortcut);
         }
         glass(c,label,4.5f,theme::kShortcut,theme::kPanelEdge.with_alpha(0),0);
-        text_marquee(c,game.name,{label.x+21,label.y,label.w-42,label.h},30,theme::kLime,focus_elapsed_,Align::center);
+        text_marquee(c,game.name,{label.x+21,label.y,label.w-42,label.h},30,theme::kLime,marquee_elapsed_,Align::center);
         l.pop_clip();
         const float total_height=((count+5)/6)*kLibraryTilePitch;
         if (total_height > grid_clip.h) {
@@ -515,7 +516,8 @@ void Launcher::draw_library(Canvas &c)
             static constexpr Hint remote[]={{Pad::square,TR("Download")},{Pad::circle,TR("Back")},{Pad::cross,TR("Download and play")}};
             static constexpr Hint queued[]={{Pad::square,TR("Cancel download")},{Pad::circle,TR("Back")},{Pad::cross,TR("Play when downloaded")}};
             draw_footer(c,download_of(selected->key) != nullptr ? queued : remote,3);
-        } else draw_footer(c,hints,3);
+        } else if(games_.empty()) {static constexpr Hint empty[]={{Pad::circle,"Back"},{Pad::cross,"Open Game files"}};draw_footer(c,empty,2);}
+        else draw_footer(c,hints,3);
     }
     if (library_sort_open_) {
         const float frame=modal_elapsed_*60.0f;
@@ -581,11 +583,15 @@ void Launcher::press_game(Key key)
     default:
         return;
     }
-    if (kind >= row_video && kind <= row_language)
+    if (kind >= row_video && kind <= row_system)
     {
         // A kind of setting has its own list.
         if (key == Key::cross)
             open_game_options(kind - row_video);
+        return;
+    }
+    if(kind==row_cheats) {
+        if(key==Key::cross) { read_cheats(game);cheat_rows_.visible=6;cheat_rows_.pitch=80;cheat_rows_.reset(cheats_.empty()?0:static_cast<int>(cheats_.size())+1,0);open_modal(Modal::cheats); }
         return;
     }
     if (kind == row_mods)
@@ -709,7 +715,7 @@ void Launcher::draw_game(Canvas &c, float open)
         changed(row_audio - row_video),
         changed(row_controls - row_video),
         changed(row_system - row_video),
-        changed(row_language - row_video),
+        cheats_.empty() ? "No cheats" : !cheats_enabled_ ? "Off" : std::to_string(cheats_.size()) + " cheats",
         // With the game's Mods switch off (the Library's), none of them is on.
         mods_.empty() ? std::string{tr("No mods")} :
         game != nullptr && !game->mods_enabled ? std::string{tr("Off")} :
@@ -722,7 +728,7 @@ void Launcher::draw_game(Canvas &c, float open)
         game != nullptr ? game->size : std::string{},
     };
     static constexpr const char *kLabels[] = {TR("Console mode"), TR("Video"),    TR("Performance"),
-                                              TR("Audio"),        TR("Controls"), TR("System"), TR("Language"),
+                                              TR("Audio"),        TR("Controls"), TR("System"), TR("Cheats"),
                                               TR("Mods"),         TR("Save data"), TR("Delete from console")};
     const float top=228.0f;
     list.push_clip({586,top-6,1228,5*96.0f+12});
@@ -943,4 +949,83 @@ void Launcher::draw_mods(Canvas &c, float open)
     list.pop_opacity();
 }
 
+void Launcher::read_cheats(const Game &game)
+{
+    cheats_ = services_.cheats(game.title_id);
+    cheats_enabled_ = services_.cheats_enabled(game.title_id);
+}
+
+void Launcher::press_cheats(Key key)
+{
+    const Game &game = games_[static_cast<std::size_t>(library_.selected)];
+    switch (key)
+    {
+    case Key::circle:
+        // Back to the game's settings, on its Cheats row.
+        modal_ = modal_shown_ = Modal::game;
+        message_.clear();
+        cue(Cue::back);
+        return;
+    case Key::up:
+    case Key::down:
+        if (cheat_rows_.move(key == Key::down ? 1 : -1))
+        {
+            message_.clear();
+            cue(Cue::focus);
+        }
+        return;
+    case Key::cross:
+    case Key::left:
+    case Key::right:
+    {
+        if (cheats_.empty())
+            return;
+        bool saved = false;
+        if (cheat_rows_.selected == 0)
+        {
+            // The game's Cheats switch: all of its cheats on or off at once.
+            saved = services_.set_cheats_enabled(game.title_id, !cheats_enabled_);
+        }
+        else
+        {
+            // One cheat. With the game's Cheats switch off, choosing one turns the switch on and
+            // that cheat with it, as in the Mods list. One of a group (two frame rates) takes the
+            // other's place, so the list is read again.
+            const GameCheat &cheat = cheats_[static_cast<std::size_t>(cheat_rows_.selected - 1)];
+            const bool revive = !cheats_enabled_;
+            saved = (!revive || services_.set_cheats_enabled(game.title_id, true)) &&
+                    services_.set_cheat_enabled(game.title_id, cheat.mod, cheat.name, revive || !cheat.enabled);
+        }
+        read_cheats(game);
+        const int rows = cheats_.empty() ? 0 : 1 + static_cast<int>(cheats_.size());
+        if (cheat_rows_.count != rows)
+            cheat_rows_.reset(rows, 0);
+        say(saved ? tr("Saved for this game. Applies on next launch.") :
+                    tr("Could not save. Please try again."),
+            !saved);
+        cue(saved ? Cue::toggle : Cue::error);
+        return;
+    }
+    default:
+        return;
+    }
+}
+
+
+void Launcher::draw_cheats(Canvas& c,float open) {
+    c.list.push_opacity(open);c.list.rounded_rect({0,0,1920,1080},0,theme::kBase);draw_frame(c,"Cheats","");
+    if(cheats_.empty()) {text(c,"No cheats for this game yet.",420,350,30,theme::kText);if(!games_.empty())text_block(c,services_.cheats_folder(games_[library_.selected].title_id),420,420,24,34,theme::kCopy,1080,3);}
+    else {
+        c.list.push_clip({408,222,1104,488});
+        for(int i=cheat_rows_.first_row();i<=cheat_rows_.last_row();++i) {
+            Rect r{420,228+i*80-cheat_rows_.scroll(),1080,78};plate(c,kRowPlate,r,i==cheat_rows_.selected?1:0);
+            const std::string name=i==0?"All cheats":cheats_[i-1].name;
+            bool on=i==0?cheats_enabled_:cheats_[i-1].enabled;
+            text_fit(c,name,456,baseline(r.y,r.h,28),28,theme::kText,850);
+            text(c,on?"On":"Off",1464,baseline(r.y,r.h,28),28,on?theme::kLime:theme::kCopy,Align::right);
+        }c.list.pop_clip();scrollbar(c,cheat_rows_,1518,228,478);
+    }
+    if(!message_.empty())notice_block(c,message_,420,810,24,32,theme::kCopy,1080,3,message_warning_);
+    static constexpr Hint hints[]={{Pad::circle,"Back"},{Pad::cross,"Turn on or off"}};draw_footer(c,hints,2);c.list.pop_opacity();
+}
 } // namespace pe::ui

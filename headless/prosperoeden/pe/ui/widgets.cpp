@@ -112,7 +112,10 @@ void text_marquee(Canvas &c, std::string_view value, const Rect &r, float size, 
     const float phase = std::fmod(std::max(0.0f,elapsed),cycle);
     const float offset = look().reduce_motion ? 0.0f : std::clamp((phase-2.4f)*72.0f,0.0f,distance);
     c.list.push_clip(r);
+    const float wrap_alpha=phase>cycle-.25f ? std::max(0.0f,(cycle-phase)/.25f) : phase<.25f ? phase/.25f : 1.0f;
+    c.list.push_opacity(look().reduce_motion?1.0f:wrap_alpha);
     text(c,value,r.x-offset,baseline(r.y,r.h,size),size,color);
+    c.list.pop_opacity();
     c.list.pop_clip();
 }
 
@@ -267,7 +270,7 @@ void cover(Canvas &c, const std::string &path, const Rect &r, float radius, floa
 {
     if (shadow > 0.0f)
         c.list.shadow({r.x, r.y + 1.5f, r.w, r.h}, radius,
-                      7.5f, kBlack.with_alpha(0.4f * shadow));
+                      7.5f, kBlack.with_alpha(0.4f * shadow * (look().white_theme?.3f:1.0f)));
     const Cover image = c.textures.cover(path, r.w);
     const float fade = image.texture != 0 ? 1.0f : 0.0f;
     if (fade < 1.0f)
@@ -302,7 +305,9 @@ void stock_focus(Canvas &c, const Rect &r, float amount, float elapsed, bool cir
         {box.x-18,r.y+r.h,box.w+36,box.y+box.h+18-r.y-r.h},
         {box.x-18,r.y,r.x-box.x+18,r.h},
         {r.x+r.w,r.y,box.x+box.w+18-r.x-r.w,r.h}};
-    for(const auto &clip:glow_clips) {
+    if(circular) c.list.shadow({box.x,box.y+4.5f,box.w,box.h},radius,6,
+        Color::rgb(0x15516e,(80.0f/255.0f)*amount*(.5f+strength)*(look().white_theme?.3f:1.0f)));
+    else for(const auto &clip:glow_clips) {
         c.list.push_clip(clip);
         c.list.shadow({box.x,box.y+4.5f,box.w,box.h},radius,6,
                       Color::rgb(0x15516e,(80.0f/255.0f)*amount*(.5f+strength)));
@@ -415,6 +420,9 @@ float pad_width(Pad button, float size)
 
 void draw_pad(Canvas &c, Pad button, float x, float cy, float size, float alpha)
 {
+    const Pad faces[]={Pad::cross,Pad::circle,Pad::square,Pad::triangle};
+    for(int i=0;i<4;++i)if(button==faces[i]){button=faces[std::clamp(look().menu_bind[i],0,3)];break;}
+
     const float width = pad_width(button, size);
     const float cx = x + width * 0.5f;
     const float half = size * 0.5f;

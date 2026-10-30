@@ -23,6 +23,9 @@ struct State
     bool request_open_fails{};
     bool corrupt_read{};
     bool resident_claimed{};
+    unsigned font_open_failures{};
+    unsigned font_open_calls{};
+    int font_error = ENOENT;
     unsigned data_open_failures{};
     unsigned data_open_calls{};
     unsigned sleeps{};
@@ -117,6 +120,16 @@ extern "C"
                 return -1;
             }
             return 12;
+        }
+        if (std::strcmp(path, "/preinst/common/font") == 0)
+        {
+            assert((flags & O_DIRECTORY) != 0);
+            if (++test::state.font_open_calls <= test::state.font_open_failures)
+            {
+                errno = test::state.font_error;
+                return -1;
+            }
+            return 14;
         }
         if (std::strcmp(path, "/app0/lapy.elf") == 0)
             return 13;
@@ -258,6 +271,32 @@ int main()
     assert(std::strcmp(elevation::path(), "existing") == 0);
     assert(test::state.prepare_calls == 0 && test::state.socket_calls == 0);
 
+    // Writable /data is not proof that the sandbox exposes the system fonts (#42).
+    for (const int error : {ENOENT, EACCES}) {
+        test::reset();
+        test::state.font_error = error;
+        test::state.font_open_failures = 1;
+        assert(elevation::request(Capability::filesystem) == Status::ok);
+        assert(std::strcmp(elevation::path(), "resident") == 0);
+        assert(test::state.prepare_calls == 1 && test::state.socket_calls == 0);
+        assert(test::state.font_open_calls == 2);
+
+        test::reset();
+        test::state.font_error = error;
+        test::state.font_open_failures = 51;
+        test::helper_replies();
+        assert(elevation::request(Capability::filesystem) == Status::ok);
+        assert(std::strcmp(elevation::path(), "helper") == 0);
+        assert(test::state.socket_calls == 1);
+
+        test::reset();
+        test::state.font_error = error;
+        test::state.font_open_failures = 1000;
+        test::helper_replies();
+        assert(elevation::request(Capability::filesystem) == Status::ok);
+        assert(std::strcmp(elevation::path(), "data-only") == 0);
+    }
+
     test::reset();
     test::state.data_open_failures = 1;
     assert(elevation::request(Capability::filesystem) == Status::ok);
@@ -282,14 +321,14 @@ int main()
     assert(test::state.socket_calls == 0);
 
     test::reset();
-    test::state.data_open_failures = 1;
+    test::state.data_open_failures = 1000;
     test::state.result_open_fails = true;
     test::helper_replies(Status::target_mismatch);
     assert(elevation::request(Capability::filesystem) == Status::target_mismatch);
     assert(test::state.socket_calls == 1 && test::state.prepare_calls == 1);
 
     test::reset();
-    test::state.data_open_failures = 1;
+    test::state.data_open_failures = 1000;
     test::state.prepare_fails = true;
     assert(elevation::request(Capability::filesystem) == Status::prepare_failed);
     assert(test::state.socket_calls == 0);
@@ -304,7 +343,7 @@ int main()
     assert(test::state.data_open_calls == 0 && test::state.socket_calls == 0);
 
     test::reset();
-    test::state.data_open_failures = 1;
+    test::state.data_open_failures = 1000;
     test::state.result_open_fails = true;
     assert(elevation::request(Capability::filesystem, nullptr) == Status::invalid_request);
 

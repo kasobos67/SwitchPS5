@@ -1,8 +1,9 @@
 # Experimental local-wireless multiplayer
 
-This guide describes the experimental local-wireless room support in v1.000.110.
-Compatibility varies by game and network setup. Host tests and native builds pass;
-internet play and Tailscale forwarding require separate qualification.
+This guide describes the implementation proposed for [issue #98](https://github.com/blackbearreloaded/ProsperoEden/issues/98).
+It is not a claim that the current release supports multiplayer. Host tests and native
+builds pass; PS5 gameplay, internet play and Tailscale forwarding remain unqualified.
+See [validation status](MULTIPLAYER_IMPLEMENTATION.md) for the evidence and remaining gates.
 
 ## What connects to what
 
@@ -20,7 +21,7 @@ Use a private room server on a PC/Linux host for initial tests. The PS5 build is
 client; it does not host a room or browse public rooms. Obtain the host address, UDP port
 and optional room password from the room operator. The usual UDP port is **24872**.
 
-1. In SwitchPS5, open the **Multiplayer** shortcut on HOME before launching a game.
+1. In ProsperoEden, open **Multiplayer** (a section of the menu: R1 twice from the home screen) before launching a game.
 2. Select **Room address** and enter a numeric IPv4 address or hostname. Enter the port
    separately. IPv6 literals are not supported by this connection form.
    The current PS5 candidate failed hostname resolution in the public-cloud test; use
@@ -130,7 +131,8 @@ does not require LAN broadcast to cross Tailscale.
 The holdmysocks relay has a two-minute idle threshold and a 256-datagram queue per flow.
 These are not a total daemon memory bound or a guarantee of game performance. Qualification
 must cover cross-process loopback access, two clients, lobby idle/reconnection, packet sizes,
-payload restart, and both direct and DERP-relayed paths.
+payload restart, and both direct and DERP-relayed paths. The complete matrix is in the
+[implementation plan](MULTIPLAYER_PLAN.md#8-validation-matrix-and-evidence).
 
 ## Troubleshooting during qualification
 

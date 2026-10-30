@@ -102,8 +102,15 @@ int scePadOpen(int user, int type, int index, const void*) {
     return state.pad_open_result;
 }
 int scePadGetHandle(int, int, int) { return -1; }
+int scePadGetControllerInformation(int, ps5::pad::ControllerInformation* info) {
+    *info = {}; info->touchpad.resolution_x = 1920; return 0;
+}
 int scePadClose(int) { ++state.pad_closes; return 0; }
-int scePadSetVibrationMode(int, int) { return 0; }
+int scePadSetVibrationMode(int handle, int mode) {
+    std::scoped_lock lock(state.mutex);
+    state.vibration_modes.emplace_back(handle, mode);
+    return mode == 1 ? state.vibration_mode_1_result : 0;
+}
 int scePadSetMotionSensorState(int, bool) { return 0; }
 int scePadSetVibration(int, const ps5::pad::Vibration* vibration) {
     std::scoped_lock lock(state.mutex);
@@ -137,6 +144,16 @@ int sceAudioOutInit() { return 0; }
 int sceAudioOutOpen(int user, int type, int index, std::uint32_t grain,
                     std::uint32_t rate, std::uint32_t format) {
     std::scoped_lock lock(state.mutex);
+    if (type == 10) {
+        if (state.fail_haptic_open || user < 0 || index != 0 || grain != 256 || rate != 48000 ||
+            (format != 1 && format != 4) || static_cast<int>(format) == state.haptic_fail_format)
+            return -1;
+        const auto handle = 300 + ++state.haptic_opens;
+        state.haptic_audio[handle];
+        state.haptic_open_users.push_back(user);
+        state.haptic_open_formats.push_back(static_cast<int>(format));
+        return handle;
+    }
     if (state.fail_audio_open || user != 0xff || type != 0 || index != 0 ||
         grain != 256 || rate != 48000 || format != 1) return -1;
     const auto handle = 100 + ++state.audio_opens;
@@ -149,18 +166,50 @@ int sceAudioOutSetVolume(int, int flags, const int* volume) {
 int sceAudioOutOutput(int handle, const void* samples) {
     {
         std::scoped_lock lock(state.mutex);
-        if (!samples) { ++state.audio_drains; return 0; }
-        if (state.fail_output) return -1;
-        // Bound capture memory during whole-core offline runs.
-        auto& blocks = state.audio[handle];
-        if (blocks.size() < 256) {
-            auto& block = blocks.emplace_back();
-            std::copy_n(static_cast<const std::int16_t*>(samples), block.size(), block.begin());
+        if (const auto haptic = state.haptic_audio.find(handle); haptic != state.haptic_audio.end()) {
+            if (!samples) { ++state.haptic_drains; return 0; }
+            if (state.fail_haptic_output) return -1;
+            auto& blocks = haptic->second;
+            if (blocks.size() < 64) {
+                const std::size_t opened = static_cast<std::size_t>(handle - 300 - 1);
+                const std::size_t bytes = opened < state.haptic_open_formats.size() &&
+                                                  state.haptic_open_formats[opened] == 4
+                                              ? 256 * 2 * sizeof(float)
+                                              : 256 * 2 * sizeof(std::int16_t);
+                const auto* first = static_cast<const std::uint8_t*>(samples);
+                blocks.emplace_back(first, first + bytes);
+            }
+            state.wake.notify_all();
+        } else {
+            if (!samples) { ++state.audio_drains; return 0; }
+            if (state.fail_output) return -1;
+            // Bound capture memory during whole-core offline runs.
+            auto& blocks = state.audio[handle];
+            if (blocks.size() < 256) {
+                auto& block = blocks.emplace_back();
+                std::copy_n(static_cast<const std::int16_t*>(samples), block.size(), block.begin());
+            }
+            state.wake.notify_all();
         }
-        state.wake.notify_all();
     }
     std::this_thread::sleep_for(std::chrono::microseconds(5333));
     return 0;
 }
-int sceAudioOutClose(int) { std::scoped_lock lock(state.mutex); ++state.audio_closes; return 0; }
+int sceAudioOutClose(int handle) {
+    std::chrono::milliseconds delay{0};
+    {
+        std::scoped_lock lock(state.mutex);
+        if (state.haptic_audio.contains(handle)) delay = state.haptic_close_delay;
+    }
+    // Delay outside the lock so tests must wait for close completion.
+    std::this_thread::sleep_for(delay);
+    std::scoped_lock lock(state.mutex);
+    if (state.haptic_audio.contains(handle)) {
+        ++state.haptic_closes;
+        state.wake.notify_all();
+        return 0;
+    }
+    ++state.audio_closes;
+    return 0;
+}
 }

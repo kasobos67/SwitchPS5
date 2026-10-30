@@ -13,7 +13,7 @@ app="${EDEN_PACKAGE_DIR:-$root/dist/headless/PPSA99009}"
 # A separate clean staging directory lets driver candidates omit private game
 # assets without deleting or copying the existing development installation.
 if [[ -n ${EDEN_PACKAGE_DIR:-} ]]; then
-    [[ $(realpath -m "$app") == "$root"/build/*/PPSA99009 ]] || exit 2
+    [[ $(realpath -m "$app") == "$(realpath -m "$root")"/build/*/PPSA99009 ]] || exit 2
     [[ ${1:-} != --game ]] || exit 2
 fi
 test -x "$builder"
@@ -50,17 +50,16 @@ mkdir -p "$app/licenses"
 cp "$root/build/lapy-owned-helper/LICENSE.Lapy" "$app/licenses/Lapy-MIT.txt"
 # What the console's home screen shows for the title is in sce_sys/, as it goes into the package
 # (the source pictures beside it stay in the repository).
-# The self-update helper (headless/self_update_helper, the boilerplate's) is an ordinary payload:
-# the app sends it to the console's payload loader to replace the app's files once it has closed.
-# It does file work with the rights every payload has and never touches the kernel.
-make -s -C "$root/headless/self_update_helper" PS5_PAYLOAD_SDK="$template/.deps/native/ps5-payload-sdk" \
-    OUTPUT="$root/build/self-update/self-updater.elf"
-python3 "$root/tools/validate-loader-elf.py" "$root/build/self-update/self-updater.elf"
-cp "$root/build/self-update/self-updater.elf" "$app/self-updater.elf"
 cp "$root/sce_sys/"{param.json,icon0.png,pic0.dds,pic1.dds} "$app/sce_sys/"
-rm -f "$app/sce_sys/snd0.at9" # The app uses its own menu audio.
+rm -f "$app/sce_sys/snd0.at9"
 rm -rf "$app/ui"
 cp -a "$root/headless/prosperoeden/ui" "$app/ui"
+# MihawkGen neural frame generation weights (headless/prosperoeden/eden_services.cpp: mihawkgen_state).
+mihawkgen_weights="$root/../mihawk-framegen-review/framegen/models/network.fgw"
+if grep -qx 'EDEN_PS5_MIHAWKGEN:BOOL=ON' "$out/CMakeCache.txt" && [[ -f "$mihawkgen_weights" ]]; then
+    mkdir -p "$app/mihawkgen"
+    cp "$mihawkgen_weights" "$app/mihawkgen/network.fgw"
+fi
 # The switches the runner reads from the app folder (headless/main.cpp). Only a development
 # package gets them: the profile title otherwise takes its timed input replay instead of the
 # controller, and a release build never parses the file.
@@ -118,6 +117,7 @@ shutil.copy2(root / 'build/fixture' / fixture_name, app / 'core-homebrew.nro')
     'hardware_qualified': False,
 }, indent=2) + '\n')
 PY
+
 llvm-readobj-18 --dyn-symbols --needed-libs "$out/llvm-pie.elf" > "$out/imports.txt"
 "$builder" self --inspect --file "$app/eboot.bin" > "$out/fself-inspection.txt"
 sha256sum "$app/eboot.bin" "$app/core-homebrew.nro" "$app/sce_module/libc.prx" \

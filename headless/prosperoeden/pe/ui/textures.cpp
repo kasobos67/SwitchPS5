@@ -49,12 +49,14 @@ bool Textures::load_art(const std::string &directory)
     (void)load("art/stock-icons.tga", &stock_icons_);
     (void)load("art/stock-ui.tga", &stock_ui_);
     (void)load("art/stock-profiles.tga", &stock_profiles_);
+    (void)load("art/home-blank.tga", &home_blank_);
+    (void)load("art/about-outline.tga", &about_icon_);
     return backdrop && blur && brand;
 }
 
 void Textures::release()
 {
-    for (std::uint32_t *texture : {&backdrop_, &backdrop_blur_, &brand_, &controller_, &stock_icons_, &stock_ui_, &stock_profiles_})
+    for (std::uint32_t *texture : {&backdrop_, &backdrop_blur_, &brand_, &controller_, &stock_icons_, &stock_ui_, &stock_profiles_, &home_blank_, &about_icon_})
     {
         batch_.delete_texture(*texture);
         *texture = 0;

@@ -96,6 +96,9 @@ class Launcher
         sync_setup,   // Settings > Save sync: the profiles and their servers (pairing.cpp)
         pairing,      // a profile paired with a server by a QR code (pairing.cpp)
         multiplayer,
+        credits,
+        cheats,
+        menu_mapping,
     };
     // The update dialog's steps: the offer, installing, stopping it, closing for the helper to
     // finish, and a failure.
@@ -132,7 +135,7 @@ class Launcher
     // quiet: a change that shows at once needs no "Saved" line.
     bool save_preferences(bool quiet = false);
     // The switches of a dialog as the preferences have them, in the order of its rows.
-    std::array<bool, 7> switch_states(Modal modal) const;
+    std::array<bool, 8> switch_states(Modal modal) const;
     // Shows the launcher as the preferences' accessibility switches say.
     void apply_look();
 
@@ -144,9 +147,9 @@ class Launcher
     void open_library_at_last();
     void rebuild_home_tiles();
     int home_recent_count() const;
-    static constexpr int kHomeGames = 7;
+    static constexpr int kHomeGames = 12;
     static constexpr int kHomeFirstRecent = 7;
-    static constexpr int kHomeAllSoftware = 13;
+    static constexpr int kHomeAllSoftware = 18;
     static constexpr float kHomeTileSize = 384.0f;
     static constexpr float kHomeTilePitch = 405.0f;
     static constexpr float kHomeTileX = 160.5f;
@@ -194,7 +197,7 @@ class Launcher
     // ---- a game's own settings by category, and the button mapping (game_options.cpp) ----
     // Categories, in the order of the game settings' rows: video, performance, audio, controls,
     // system, language.
-    static constexpr int kGameOptionCategories = 6;
+    static constexpr int kGameOptionCategories = 5;
     void open_game_options(int category);
     void edit_seed();
     void update_game_options();
@@ -222,6 +225,7 @@ class Launcher
     void press_dialog(Key key);
     void draw_dialog(Canvas &c, Modal modal, float open);
     int dialog_rows(Modal modal) const;
+    int dialog_kind(Modal modal) const;
     float dialog_row_top(Modal modal, int row) const;
     Modal settings_modal() const;
     void enter_settings_content();
@@ -320,6 +324,20 @@ class Launcher
     void press_language(Key key);
     void draw_language(Canvas &c);
     void draw_about(Canvas &c);
+    void draw_credits(Canvas &c, float open);
+    void open_menu_mapping();
+    void press_menu_mapping(Key key);
+    void draw_menu_mapping(Canvas &c, float open);
+    void read_cheats(const Game &game);
+    void press_cheats(Key key);
+    void draw_cheats(Canvas &c, float open);
+    std::vector<GameCheat> cheats_;
+    bool cheats_enabled_ = true;
+    ListView cheat_rows_;
+    ListView menu_mapping_rows_;
+    float marquee_elapsed_ = 0.0f;
+    int marquee_home_ = -1, marquee_library_ = -1;
+
 
     Services &services_;
     Textures &textures_;
@@ -410,6 +428,7 @@ class Launcher
     std::array<float, 4> controller_pop_{}; // 1 when a controller appears, then decays
     int home_focus_ = 0;
     bool home_profile_focus_ = false;
+    bool home_user_input_ = false;
     int home_profile_ = 0;
     bool screen_off_ = false;
     float focus_elapsed_ = 0.0f;
@@ -445,7 +464,7 @@ class Launcher
     tween::Spring section_;
     int option_ = 0;
     tween::Spring option_cursor_; // highlight position in pixels
-    std::array<tween::Spring, 7> switches_{};
+    std::array<tween::Spring, 8> switches_{};
     ListView video_rows_;
     ListView hud_rows_; // the Video dialog's rows (more than it shows)
     ListView performance_rows_; // the Performance dialog's rows (more than it shows)

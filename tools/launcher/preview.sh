@@ -17,7 +17,7 @@ root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 source_dir="$root/headless/prosperoeden"
 build=${PROSPEROEDEN_LAUNCHER_BUILD:-"$HOME/.cache/prosperoeden-launcher"}
 cxx=${HOST_CXX:-c++}
-jobs=${HOST_BUILD_JOBS:-2}
+jobs=${HOST_BUILD_JOBS:-4}
 if [[ ! $jobs =~ ^[1-9][0-9]*$ ]] || ((jobs > 32)); then
     echo "HOST_BUILD_JOBS must be an integer from 1 to 32" >&2
     exit 2
